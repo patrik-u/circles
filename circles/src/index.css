@@ -1,0 +1,900 @@
+@import "../node_modules/charter-webfont/charter.css";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+html {
+    height: 100%;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+.mapboxgl-map {
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.embedChatHtmlContent {
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    white-space: pre-line;
+}
+
+.embedHtmlContent {
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: var(--chakra-colors-gray-800);
+    font-size: 16px;
+    white-space: normal;
+}
+
+.embedHtmlContent h1 {
+    font-size: 32px;
+    font-weight: normal;
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #1c1c1c;
+}
+
+.embedHtmlContent h2 {
+    font-size: 28px;
+    font-weight: normal;
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #1c1c1c;
+}
+
+.embedHtmlContent h3 {
+    font-size: 24px;
+    font-weight: normal;
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #1c1c1c;
+}
+
+.embedHtmlContent h4 {
+    font-size: 24px;
+    font-weight: normal;
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #1c1c1c;
+}
+
+.embedHtmlContent p {
+}
+
+.embedHtmlContent a {
+    color: #894384;
+}
+
+.embedHtmlContent ol {
+    padding-left: 40px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-right: 15px;
+    background-color: #fafafa;
+    border-radius: 20px;
+}
+
+.embedHtmlContent ul {
+    padding-left: 40px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-right: 15px;
+    background-color: #fafafa;
+    border-radius: 20px;
+}
+.embedHtmlContent li {
+    margin-bottom: 17px;
+}
+
+.embedRiksdagenHtmlContent {
+    font-family: "Charter";
+    color: black;
+    font-size: 18px;
+    white-space: normal;
+}
+
+.embedRiksdagenHtmlContent h1 {
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.embedRiksdagenHtmlContent p {
+    margin-bottom: 18px;
+}
+
+.cardAspectRatio {
+    aspect-ratio: 1 / 1.389;
+}
+
+.ql-editor {
+    min-height: 200px;
+    font-size: var(--chakra-fontSizes-md);
+}
+
+.swiper {
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-slide {
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-button-prev {
+    pointer-events: auto;
+    color: #aa98b1;
+}
+
+.swiper-button-next {
+    pointer-events: auto;
+    color: #aa98b1;
+}
+
+.swiper-pagination {
+    pointer-events: auto;
+}
+
+.a4PosterBody {
+    background: rgb(204, 204, 204);
+    width: 100%;
+    height: 100%;
+}
+
+.a4Poster {
+    background: white;
+    width: 100%;
+    height: 100%;
+    max-width: 210mm;
+    max-height: 297mm;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.5);
+}
+
+.posterInfo {
+    background: #f1f1f1;
+    width: 100%;
+    height: 80px;
+}
+
+@media print {
+    .a4PosterBody,
+    .a4Poster {
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+    }
+
+    .no-print,
+    no-print * {
+        display: none !important;
+    }
+    @page {
+        margin: 0mm;
+    }
+}
+
+:root {
+    --swiper-navigation-color: #aa98b1 !important;
+    --swiper-theme-color: #aa98b1 !important;
+}
+
+.App {
+    text-align: center;
+}
+
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 10s linear;
+    }
+}
+
+.App-header {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.screenHeader {
+    font-weight: 500;
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.contentHeader {
+    font-weight: 700;
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.contentSubHeader {
+    font-weight: 700;
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.contentText {
+    font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    white-space: pre-line;
+    color: black;
+    font-size: 16px;
+}
+
+.contentMeta {
+    font-size: 12px;
+    color: #8b8787;
+    text-align: left;
+}
+
+.screenBreadcrumb {
+    font-size: 12px;
+    color: #8b8787;
+}
+
+.titleBase {
+    font-weight: 700;
+    color: white;
+}
+
+.ppTitle {
+    font-weight: 800;
+    font-size: 28px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    color: #493d8a;
+    text-align: center;
+}
+
+.ppHeader {
+    font-size: 18px;
+    color: #493d8a;
+}
+
+.social-media-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.sectionContent {
+}
+
+.sectionContentLeftSidebar {
+}
+
+.sectionContentRightSidebar {
+}
+
+.sectionContentHeader {
+}
+
+.questIcon {
+    width: 100px;
+    height: 100px;
+}
+
+.smallQuestIcon {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+.questHeader {
+    font-size: 18px;
+    font-weight: 500;
+    text-align: left;
+}
+
+.questDescription {
+    text-align: left;
+}
+
+.appTitle {
+    font-size: 28px;
+    font-weight: 500;
+    margin-left: 25px;
+}
+
+.userProfile {
+    margin-right: 25px;
+}
+
+.leftMenuHeader {
+    margin-left: 15px;
+}
+
+.user-picture {
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    border: 3px solid white;
+}
+
+#map-marker1 {
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+#map-marker2 {
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.map-container {
+    width: 100%;
+    height: 100%;
+}
+
+.map-info {
+    background-color: rgba(35, 55, 75, 0.9);
+    color: #fff;
+    padding: 6px 12px;
+    font-family: monospace;
+    z-index: 1;
+    position: absolute;
+    top: 20px;
+    margin: 12px;
+    border-radius: 40px;
+}
+
+.notificationsBoxParent {
+    top: 83px;
+    right: 5px;
+    width: 400px;
+    border-radius: 20px;
+    border-width: 1px;
+    background-color: white;
+    border-color: #e2e8f0;
+    height: calc(100% - 88px);
+}
+
+.notificationsBox {
+    border-radius: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+.pointHistoryBoxParent {
+    top: 83px;
+    right: 5px;
+    width: 400px;
+    border-radius: 20px;
+    border-width: 1px;
+    background-color: white;
+    border-color: #e2e8f0;
+    height: calc(100% - 88px);
+}
+
+.circle-marker {
+    cursor: pointer !important;
+}
+
+.circle-marker:hover {
+    z-index: 60;
+}
+
+.circle-marker-picture {
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    overflow: hidden;
+    background-color: white;
+    position: absolute;
+    top: 3px;
+    left: 9px;
+}
+
+.circle-marker-d {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.circle-marker-chat {
+    position: relative;
+    top: 3px;
+    left: 9px;
+}
+
+.circle-marker-chat-bubble {
+    background-color: rgb(245, 245, 245);
+    border-radius: 20px;
+    width: fit-content;
+    padding: 5px;
+}
+
+.circle-picture {
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.circle-picture-preview {
+    border-radius: 50%;
+    width: 88px;
+    height: 88px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.circle-picture-header {
+    border-radius: 50%;
+    width: 63px;
+    height: 63px;
+    background-color: white;
+}
+
+.circle-overview-picture {
+    border-radius: 50%;
+    width: 84px;
+    height: 84px;
+    border: 4px solid white;
+    background-color: white;
+}
+
+.overviewStack {
+}
+
+.circle-overview-content {
+}
+
+.circle-list-picture {
+    border-radius: 50%;
+    width: 76px;
+    height: 76px;
+    min-width: 76px;
+    min-height: 76px;
+    overflow: hidden;
+    border: 3px solid white;
+    object-fit: cover;
+}
+
+.circle-list-picture-map {
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    overflow: hidden;
+    border: 1px solid white;
+}
+
+.notification-picture {
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    overflow: hidden;
+    border: 3px solid white;
+}
+
+.notification-picture1 {
+    position: absolute;
+    top: 10px;
+    left: 5px;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    overflow: hidden;
+    border: 3px solid white;
+}
+
+.notification-picture2 {
+    position: absolute;
+    top: 29px;
+    left: 24px;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    overflow: hidden;
+    border: 3px solid white;
+}
+
+.user-list-picture {
+    border-radius: 50%;
+    width: 76px;
+    height: 76px;
+    overflow: hidden;
+    border: 3px solid white;
+    object-fit: cover;
+}
+
+.members-picture {
+    border-radius: 50%;
+    width: 76px;
+    height: 76px;
+    overflow: hidden;
+    border: 3px solid white;
+}
+
+.circle-chat-picture {
+    border-radius: 50%;
+    width: 33px;
+    height: 33px;
+    min-width: 33px;
+    min-height: 33px;
+    overflow: hidden;
+}
+
+.circle-chat-bubble {
+    background-color: rgb(245, 245, 245);
+    border-radius: 10px;
+    padding: 11px;
+}
+
+.messageInput {
+}
+
+.messageInput::-webkit-scrollbar {
+    display: none;
+}
+
+.chatScrollbars {
+    overflow-x: hidden;
+}
+
+.menuHeader {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+.pointsText {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ff8e71;
+}
+
+.circle-title {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.circle-title-header {
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.circle-list-title {
+    font-size: 16px;
+}
+
+.user-list-title {
+    font-size: 16px;
+}
+
+.circle-info {
+    font-size: 10px;
+    color: #aaa;
+}
+
+.circle-info-header {
+    font-size: 16px;
+    color: #888;
+}
+
+.circle-list-info {
+    font-size: 12px;
+    color: #888;
+}
+
+.user-list-info {
+    font-size: 12px;
+    color: #888;
+}
+
+.new-badge {
+    border-radius: 10px;
+    background-color: #d5f4d6;
+    color: #22543d;
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: 700;
+    font-size: 12px;
+    padding-left: 2px;
+    padding-right: 5px;
+}
+
+.members-icon {
+    margin-bottom: 2px;
+}
+
+.followers-icon {
+}
+
+.custom-scrollbars > div:last-child {
+    opacity: 0;
+    transition: opacity 200ms ease;
+}
+
+.custom-scrollbars:hover > div:last-child {
+    opacity: 1;
+}
+
+.main-content {
+    background-color: white;
+}
+
+.mapboxgl-canvas {
+    cursor: default;
+}
+
+.cornerRadius {
+    border-radius: 0px;
+}
+
+.circleSectionRegion {
+    width: 400px;
+    min-width: 400px;
+    margin-right: 0px;
+    overflow: hidden;
+    background-color: white;
+    padding: 10px 0px 5px 0px;
+    height: 100%;
+}
+
+.circleItem {
+    /* min-width: 280px; */
+    height: 345px;
+    border-radius: 20px;
+}
+
+.userItem {
+    /* min-width: 280px; */
+    height: 330px;
+    border-radius: 20px;
+}
+
+.dummyCircleItem {
+}
+
+.circleOverviewSectionRegion {
+    width: 500px;
+    min-width: 100px;
+    margin-right: 0px;
+    overflow: hidden;
+    background-color: white;
+    height: 100%;
+}
+
+.circleSubSectionRegion {
+    width: 200px;
+    min-width: 200px;
+    margin-right: 5px;
+    overflow: hidden;
+    background-color: rgb(250, 250, 250);
+    padding: 20px 0px 5px 0px;
+    height: 100%;
+}
+
+.circleChatSubSectionRegion {
+    width: 120px;
+    min-width: 120px;
+    margin-right: 5px;
+    overflow: hidden;
+    background-color: rgb(250, 250, 250);
+    padding: 20px 0px 5px 0px;
+    height: 100%;
+}
+
+.circleAdminSubSectionRegion {
+    width: 185px;
+    min-width: 185px;
+    max-width: 185px;
+    margin-right: 5px;
+    overflow: hidden;
+    background-color: rgb(250, 250, 250);
+    padding: 20px 0px 5px 0px;
+    height: 100%;
+}
+
+.userSectionHeader {
+    font-weight: 500;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.circleSectionContent {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.discoverCirclesList {
+}
+
+.strike {
+    display: block;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-right: 14px;
+    margin-left: 14px;
+}
+
+.strike > span {
+    position: relative;
+    display: inline-block;
+}
+
+.strike > span:before,
+.strike > span:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 9999px;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.strike > span:before {
+    right: 100%;
+    margin-right: 15px;
+}
+
+.strike > span:after {
+    left: 100%;
+    margin-left: 15px;
+}
+
+.fixedSize {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.notificationsBoxParent {
+    top: 83px;
+    right: 5px;
+    width: 400px;
+    border-radius: 20px;
+    border-width: 1px;
+    background-color: white;
+    border-color: #e2e8f0;
+    height: calc(100% - 88px);
+}
+
+.notificationsBox {
+    border-radius: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+.circle-marker {
+    cursor: pointer !important;
+}
+
+*:focus {
+    box-shadow: none !important;
+}
+
+div.ReactTags__tags {
+    position: relative;
+}
+
+div.ReactTags__tagInput {
+    width: 100%;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+input.ReactTags__tagInputField {
+    width: 100%;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    appearance: none;
+    transition-property: var(--chakra-transition-property-common);
+    transition-duration: var(--chakra-transition-duration-normal);
+    font-size: var(--chakra-fontSizes-md);
+    -webkit-padding-start: var(--chakra-space-4);
+    padding-inline-start: var(--chakra-space-4);
+    -webkit-padding-end: var(--chakra-space-10);
+    padding-inline-end: var(--chakra-space-10);
+    height: var(--chakra-sizes-10);
+    border-radius: var(--chakra-radii-md);
+    border: 1px solid;
+    border-color: var(--chakra-colors-gray-200);
+}
+
+input.ReactTags__tagInputField:hover {
+    border-color: var(--chakra-colors-gray-300);
+}
+
+input.ReactTags__tagInputField:focus {
+    border: 1px solid #3182ce;
+}
+
+div.ReactTags__selected span.ReactTags__tag {
+    border: 0px solid #ddd;
+    border-color: var(--chakra-colors-gray-300);
+    background: #9cb5f7;
+    font-size: 14px;
+    display: inline-block;
+    padding: 2px 10px 2px 10px;
+    margin: 0px 2px 4px 2px;
+    cursor: move;
+    border-radius: 20px;
+    color: white;
+}
+div.ReactTags__selected .ReactTags__remove {
+    color: white;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+div.ReactTags__suggestions {
+    position: absolute;
+}
+div.ReactTags__suggestions ul {
+    list-style-type: none;
+    box-shadow: 0.05em 0.01em 0.5em rgba(0, 0, 0, 0.2);
+    background: white;
+    width: 200px;
+}
+div.ReactTags__suggestions li {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 10px;
+    margin: 0;
+}
+div.ReactTags__suggestions li mark {
+    text-decoration: underline;
+    background: none;
+    font-weight: 600;
+}
+div.ReactTags__suggestions ul li.ReactTags__activeSuggestion {
+    background: #b7cfe0;
+    cursor: pointer;
+}
