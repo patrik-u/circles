@@ -1280,7 +1280,7 @@ const App = () => {
                     {/* Graph panel */}
                     {displayMode === "graph" && (
                         <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
-                            <Graph circle={circle} />
+                            <Graph circle={circle} setCircle={setCircle} circles={circles} setCircles={setCircles} />
                         </Box>
                     )}
 
