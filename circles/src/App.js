@@ -702,8 +702,6 @@ const App = () => {
         }
     }, [userPublic, userData, userConnections, connectionsToUser]);
 
-    // CONNECT123 a currentPublic, currentData, currentConnections
-
     const [filterConnected, setFilterConnected] = useState(false);
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [isSigningIn, setIsSigningIn] = useState(true);
@@ -1019,7 +1017,6 @@ const App = () => {
                     setUserData((previousUser) => userData.data);
                     setUserConnections((previousUser) => userData.connections);
                     setConnectionsToUser((previousUser) => userData.connectionsToUser);
-                    //setFilterConnected(userData.connections?.length > 0);
 
                     // subscribe to user public data
                     unsubscribeGetUser = onSnapshot(doc(db, "circles", uid), (doc) => {
@@ -1133,7 +1130,6 @@ const App = () => {
             message: `Switching to page ${location.pathname}`,
             level: Sentry.Severity.Info,
         });
-        // let circleId = parseCircleId(location.pathname);
         // CONNECT123 we can track circle history here
     }, [location]);
 
