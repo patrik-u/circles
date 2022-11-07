@@ -243,16 +243,14 @@ export const getNavigationItems = (circle, user) => {
     let navigationItems = [];
     navigationItems.push({ route: routes.circle(id).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
 
-    if (circle?.type === "room") {
-        navigationItems.push({
-            route: routes.circle(id).chat,
-            name: i18n.t("Chat"),
-            icon: BsChatText,
-            switchOffMap: true,
-            matchSubPaths: true,
-            category: "chat",
-        });
-    }
+    navigationItems.push({
+        route: routes.circle(id).chat,
+        name: i18n.t("Chat"),
+        icon: BsChatText,
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "chat",
+    });
     navigationItems.push({
         route: routes.circle(id).circles,
         name: i18n.t("Circles"),
@@ -269,16 +267,14 @@ export const getNavigationItems = (circle, user) => {
         matchSubPaths: true,
         category: "events",
     });
-    if (circle?.type !== "room") {
-        navigationItems.push({
-            route: routes.circle(id).rooms,
-            name: i18n.t("Rooms"),
-            switchOffMap: true,
-            matchSubPaths: true,
-            category: "rooms",
-            image: require("../assets/images/room_icon.png"),
-        });
-    }
+    navigationItems.push({
+        route: routes.circle(id).rooms,
+        name: i18n.t("Rooms"),
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "rooms",
+        image: require("../assets/images/room_icon.png"),
+    });
     navigationItems.push({ route: routes.circle(id).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
     navigationItems.push({
         route: routes.circle(id).settings.home,
