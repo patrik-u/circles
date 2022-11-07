@@ -51,6 +51,7 @@ import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCre
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
 import { toastError, log } from "./components/Helpers";
+import Graph from "./components/Graph";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Navigate, Route, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Circle, CircleMarker, CirclesMapMarkers, CircleConnections, CircleMapEdges, CreateNewCircle } from "screens/Circle";
@@ -60,6 +61,7 @@ import i18n from "i18n/Localization";
 import Notifications from "./components/Notifications";
 import { FaSatellite, FaMapMarkedAlt } from "react-icons/fa";
 import { IoAdd, IoList, IoMap } from "react-icons/io5";
+import { BiNetworkChart } from "react-icons/bi";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import {
     LeftNavigator,
@@ -106,12 +108,12 @@ const LocationPickerMarker = ({ position }) => {
     );
 };
 
-const FloatingActionButtons = ({ isMapActive, setIsMapActive, satelliteMode, setSatelliteMode, mapOnly, circle }) => {
+const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, setSatelliteMode, mapOnly, circle }) => {
     const isMobile = useContext(IsMobileContext);
     const navigate = useNavigate();
 
     return (
-        <VStack position="absolute" right="18px" bottom={isMobile ? (isMapActive ? "300px" : "300px") : "30px"} zIndex="50">
+        <VStack position="absolute" right="18px" bottom={isMobile ? "300px" : "30px"} zIndex="50">
             {isMobile && !mapOnly && (
                 <>
                     <Flex
@@ -136,37 +138,56 @@ const FloatingActionButtons = ({ isMapActive, setIsMapActive, satelliteMode, set
                         cursor="pointer"
                         alignItems="center"
                         justifyContent="center"
-                        onClick={() => setIsMapActive(!isMapActive)}
+                        onClick={() => setDisplayMode(displayMode === "map" ? "list" : "map")}
                     >
-                        <Icon width="28px" height="28px" color="black" as={isMapActive ? IoList : IoMap} cursor="pointer" />
+                        <Icon width="28px" height="28px" color="black" as={displayMode === "map" ? IoList : IoMap} cursor="pointer" />
                     </Flex>
                 </>
             )}
 
-            {isMapActive ||
-                (!isMobile && (
-                    <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
-                        <Flex
-                            backgroundColor="#f4f4f4dd"
-                            _hover={{ backgroundColor: "#f5f5f5dd" }}
-                            borderRadius="50%"
+            {(!isMobile || displayMode === "map" || displayMode === "graph") && (
+                <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
+                    <Flex
+                        backgroundColor="#f4f4f4dd"
+                        _hover={{ backgroundColor: "#f5f5f5dd" }}
+                        borderRadius="50%"
+                        cursor="pointer"
+                        width="48px"
+                        height="48px"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Icon
+                            width="28px"
+                            height="28px"
+                            color="black"
+                            as={satelliteMode ? FaMapMarkedAlt : FaSatellite}
+                            onClick={() => {
+                                if (displayMode === "map") {
+                                    setSatelliteMode(!satelliteMode);
+                                }
+                                setDisplayMode("map");
+                            }}
                             cursor="pointer"
-                            width="48px"
-                            height="48px"
-                            alignItems="center"
-                            justifyContent="center"
-                        >
-                            <Icon
-                                width="28px"
-                                height="28px"
-                                color="black"
-                                as={satelliteMode ? FaMapMarkedAlt : FaSatellite}
-                                onClick={() => setSatelliteMode(!satelliteMode)}
-                                cursor="pointer"
-                            />
-                        </Flex>
+                        />
                     </Flex>
-                ))}
+                </Flex>
+            )}
+
+            <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
+                <Flex
+                    backgroundColor="#f4f4f4dd"
+                    _hover={{ backgroundColor: "#f5f5f5dd" }}
+                    borderRadius="50%"
+                    cursor="pointer"
+                    width="48px"
+                    height="48px"
+                    alignItems="center"
+                    justifyContent="center"
+                >
+                    <Icon width="28px" height="28px" color="black" as={BiNetworkChart} onClick={() => setDisplayMode("graph")} cursor="pointer" />
+                </Flex>
+            </Flex>
         </VStack>
     );
 };
@@ -231,13 +252,14 @@ const ProfileMenu = ({ onSignOutClick, circle, setCircle }) => {
     );
 };
 
-const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, isMapActive }) => {
+const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode }) => {
     const isMobile = useContext(IsMobileContext);
     const { windowWidth } = useWindowDimensions();
     const user = useContext(UserContext);
     const navigate = useNavigate();
     const iconSize = isMobile ? "24px" : "30px";
     const circlePictureSize = isMobile ? "30px" : "63px";
+    const isMapActive = displayMode === "map" || displayMode === "graph";
 
     const onBack = () => {
         navigate(routes.home);
@@ -708,7 +730,7 @@ const App = () => {
     const [hasSignedOut, setHasSignedOut] = useState(false);
     const [gsiScriptLoaded, setGsiScriptLoaded] = useState(false);
     const [isMobile, setIsMobile] = useState(detectIsMobile);
-    const [isMapActive, setIsMapActive] = useState(false);
+    const [displayMode, setDisplayMode] = useState(isMobile ? "list" : "map");
     const [uid, setUid] = useState(null);
     const [circle, setCircle] = useState(null);
     const [circles, setCircles] = useState(null);
@@ -1190,7 +1212,7 @@ const App = () => {
                                 isSignedIn={isSignedIn}
                                 gsiScriptLoaded={gsiScriptLoaded}
                                 satelliteMode={satelliteMode}
-                                isMapActive={isMapActive}
+                                displayMode={displayMode}
                             />
                         )}
                         <Scrollbars autoHide>
@@ -1203,8 +1225,8 @@ const App = () => {
                                             setCircle={setCircle}
                                             circles={circles}
                                             setCircles={setCircles}
-                                            isMapActive={isMapActive}
-                                            setIsMapActive={setIsMapActive}
+                                            displayMode={displayMode}
+                                            setDisplayMode={setDisplayMode}
                                             isSignedIn={isSignedIn}
                                             isSigningIn={isSigningIn}
                                             mustLogInOnOpen={mustLogInOnOpen}
@@ -1222,6 +1244,7 @@ const App = () => {
                                     }
                                 />
                                 <Route path="/appAdmin" element={<AppAdmin />} />
+                                <Route path="/graph" element={<></>} />
                                 <Route path="*" element={<Navigate to="/circle/earth" replace />} />
                             </Routes>
                         </Scrollbars>
@@ -1229,7 +1252,7 @@ const App = () => {
                     </Flex>
 
                     {/* Map panel */}
-                    {(!isMobile || isMapActive) && (
+                    {displayMode === "map" && (
                         <Box id="mapRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
                             {!mapOnly && !isMobile && (
                                 <TopMenu
@@ -1254,10 +1277,17 @@ const App = () => {
                         </Box>
                     )}
 
+                    {/* Graph panel */}
+                    {displayMode === "graph" && (
+                        <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
+                            <Graph circle={circle} />
+                        </Box>
+                    )}
+
                     {/* Floating action buttons */}
                     <FloatingActionButtons
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        displayMode={displayMode}
+                        setDisplayMode={setDisplayMode}
                         setSatelliteMode={setSatelliteMode}
                         satelliteMode={satelliteMode}
                         mapOnly={mapOnly}
