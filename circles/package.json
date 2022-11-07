@@ -57,6 +57,7 @@
         "react-spring": "^9.3.0",
         "react-tag-input": "^6.8.0",
         "react-tsparticles": "^2.0.6",
+        "reactflow": "^11.2.0",
         "stream-chat": "^6.7.2",
         "stream-chat-react": "^9.1.4",
         "swiper": "^8.1.4",

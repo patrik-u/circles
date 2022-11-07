@@ -198,10 +198,10 @@ const CircleHome = ({
     setCircle,
     circles,
     setCircles,
-    isMapActive,
+    displayMode,
     events,
     subcircles,
-    setIsMapActive,
+    setDisplayMode,
     isSignedIn,
     isSigningIn,
     mustLogInOnOpen,
@@ -224,8 +224,8 @@ const CircleHome = ({
 
     useEffect(() => {
         log("CircleHome.useEffect 1", 0);
-        if (!mapOnly) {
-            setIsMapActive(false);
+        if (!mapOnly && isMobile) {
+            setDisplayMode("list");
         }
 
         let circleId = circle?.id;
@@ -302,7 +302,7 @@ const CircleHome = ({
             }
             setCircles([]);
         };
-    }, [setIsMapActive, mapOnly, circle?.id, setCircles]);
+    }, [setDisplayMode, mapOnly, circle?.id, setCircles]);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -509,7 +509,7 @@ const CircleHome = ({
 const CircleSettings = ({
     circle,
     setCircle,
-    isMapActive,
+    displayMode,
     isSignedIn,
     isSigningIn,
     mustLogInOnOpen,
@@ -815,8 +815,8 @@ export const CircleMarker = ({ circle }) => {
 export const CreateNewCircle = ({
     circle,
     setCircle,
-    isMapActive,
-    setIsMapActive,
+    displayMode,
+    setDisplayMode,
     locationPickerPosition,
     setLocationPickerPosition,
     setLocationPickerActive,
@@ -868,10 +868,12 @@ export const CreateNewCircle = ({
         }
         // for some reason it gets reset here we need to fix it
         setIsInitialized(() => true);
-        setIsMapActive(false);
+        if (isMobile) {
+            setDisplayMode("list");
+        }
         createCircleReset();
         setCreatedCircle(null);
-    }, [createCircleReset, isSignedIn, mustLogInOnOpen, setIsMapActive, isInitialized]);
+    }, [createCircleReset, isSignedIn, mustLogInOnOpen, setDisplayMode, isInitialized, isMobile]);
 
     const onCreateCircleCloseClick = () => {
         setLocationPickerActive(false);
@@ -1219,8 +1221,8 @@ export const Circle = ({
     setCircle,
     circles,
     setCircles,
-    isMapActive,
-    setIsMapActive,
+    displayMode,
+    setDisplayMode,
     isSignedIn,
     isSigningIn,
     mustLogInOnOpen,
@@ -1264,7 +1266,7 @@ export const Circle = ({
                 unsubscribeGetCircle();
             }
         };
-    }, [circleId, setCircle, setIsMapActive]);
+    }, [circleId, setCircle, setDisplayMode]);
 
     useEffect(() => {
         log("Circle.useEffect 2", 0);
@@ -1293,8 +1295,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         isSignedIn={isSignedIn}
                         isSigningIn={isSigningIn}
                         mustLogInOnOpen={mustLogInOnOpen}
@@ -1313,8 +1315,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerActive={setLocationPickerActive}
@@ -1339,8 +1341,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerActive={setLocationPickerActive}
@@ -1365,8 +1367,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerActive={setLocationPickerActive}
@@ -1391,8 +1393,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerActive={setLocationPickerActive}
@@ -1415,7 +1417,7 @@ export const Circle = ({
                     <CircleSettings
                         circle={circle}
                         setCircle={setCircle}
-                        isMapActive={isMapActive}
+                        setDisplayMode={setDisplayMode}
                         isSignedIn={isSignedIn}
                         isSigningIn={isSigningIn}
                         mustLogInOnOpen={mustLogInOnOpen}
@@ -1433,8 +1435,8 @@ export const Circle = ({
                     <CreateNewCircle
                         circle={circle}
                         setCircle={setCircle}
-                        isMapActive={isMapActive}
-                        setIsMapActive={setIsMapActive}
+                        setDisplayMode={setDisplayMode}
+                        setDisplayMode={setDisplayMode}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerPosition={setLocationPickerPosition}
                         setLocationPickerActive={setLocationPickerActive}
@@ -1802,8 +1804,8 @@ export const Circles = ({
     circles,
     setCircles,
     type,
-    isMapActive,
-    setIsMapActive,
+    displayMode,
+    setDisplayMode,
     userLocation,
     locationPickerPosition,
     setLocationPickerActive,
@@ -2060,7 +2062,7 @@ export const Circles = ({
 
     //#endregion
 
-    return isMapActive ? (
+    return displayMode === "map" ? (
         <Flex
             flexGrow="1"
             flexDirection="row"
