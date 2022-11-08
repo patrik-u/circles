@@ -198,6 +198,7 @@ const CircleHome = ({
     setCircle,
     circles,
     setCircles,
+    circleConnections,
     displayMode,
     events,
     subcircles,
@@ -228,81 +229,20 @@ const CircleHome = ({
             setDisplayMode("list");
         }
 
-        let circleId = circle?.id;
-        if (!circleId) {
-            return;
-        }
-
-        // show all connections on the map
-        // subscribe to connected circles
-        let q = query(collection(db, "connections"), where("circle_ids", "array-contains", circleId));
-
-        let unsubscribeGetCircles = onSnapshot(q, (snap) => {
-            let circleConnections = snap.docs.map((doc) => doc.data());
-
-            // merge circle connections of the same type
-            let connections = [];
-            if (Array.isArray(circleConnections)) {
-                let seen = {};
-                connections = circleConnections?.filter((entry) => {
-                    var previous;
-
-                    // ignore connections to earth circle
-                    if (circleId !== "earth" && (entry.source.id === "earth" || entry.target.id === "earth")) {
-                        return false;
+        let startDate = getDateWithoutTime(); // today
+        setCircles(
+            circleConnections
+                ?.map((x) => x.display_circle)
+                .filter((x) => {
+                    // remove old events
+                    if (x.type === "event") {
+                        return fromFsDate(x.starts_at) > startDate;
+                    } else {
+                        return true;
                     }
-
-                    // wether to use source or target depends
-                    let parentCircleIsSource = entry.source.id === circleId;
-                    let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
-
-                    // have we seen this label before?
-                    if (seen.hasOwnProperty(mergeId)) {
-                        // yes, grab it and add this data to it
-                        previous = seen[mergeId];
-                        previous.type.push(entry.type);
-
-                        // don't keep this entry, we've merged it into the previous one
-                        return false;
-                    }
-
-                    // entry.type probably isn't an array; make it one for consistency
-                    if (!Array.isArray(entry.type)) {
-                        entry.type = [entry.type];
-                    }
-
-                    entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
-
-                    // remember that we've seen it
-                    seen[mergeId] = entry;
-                    return true;
-                });
-            }
-
-            // console.log("connections = " + JSON.stringify(connections, null, 2));
-
-            let startDate = getDateWithoutTime(); // today
-            setCircles(
-                connections
-                    .map((x) => x.display_circle)
-                    .filter((x) => {
-                        // remove old events
-                        if (x.type === "event") {
-                            return fromFsDate(x.starts_at) > startDate;
-                        } else {
-                            return true;
-                        }
-                    })
-            );
-        });
-
-        return () => {
-            if (unsubscribeGetCircles) {
-                unsubscribeGetCircles();
-            }
-            setCircles([]);
-        };
-    }, [setDisplayMode, mapOnly, circle?.id, setCircles]);
+                })
+        );
+    }, [setDisplayMode, isMobile, mapOnly, setCircles, circleConnections]);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -1221,6 +1161,8 @@ export const Circle = ({
     setCircle,
     circles,
     setCircles,
+    circleConnections,
+    setCircleConnections,
     displayMode,
     setDisplayMode,
     isSignedIn,
@@ -1245,6 +1187,8 @@ export const Circle = ({
         log("Circle.useEffect 1", 0);
         if (!circleId || circleId === "undefined") {
             //navigate(routes.home);
+            setCircles([]);
+            setCircleConnections([]);
             return;
         }
 
@@ -1261,12 +1205,75 @@ export const Circle = ({
             setCircle((currentCircle) => newCircle);
         });
 
+        // show all connections on the map
+        // subscribe to connected circles
+        let q = query(collection(db, "connections"), where("circle_ids", "array-contains", circleId));
+
+        let unsubscribeGetCircles = onSnapshot(q, (snap) => {
+            let circleConnections = snap.docs.map((doc) => doc.data());
+
+            // merge circle connections of the same type
+            let connections = [];
+            if (Array.isArray(circleConnections)) {
+                let seen = {};
+                connections = circleConnections?.filter((entry) => {
+                    var previous;
+
+                    // wether to use source or target depends
+                    let parentCircleIsSource = entry.source.id === circleId;
+                    let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
+
+                    // have we seen this label before?
+                    if (seen.hasOwnProperty(mergeId)) {
+                        // yes, grab it and add this data to it
+                        previous = seen[mergeId];
+                        previous.type.push(entry.type);
+
+                        // don't keep this entry, we've merged it into the previous one
+                        return false;
+                    }
+
+                    // entry.type probably isn't an array; make it one for consistency
+                    if (!Array.isArray(entry.type)) {
+                        entry.type = [entry.type];
+                    }
+
+                    entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
+
+                    // remember that we've seen it
+                    seen[mergeId] = entry;
+                    return true;
+                });
+            }
+
+            setCircleConnections(connections);
+
+            let startDate = getDateWithoutTime(); // today
+            setCircles(
+                connections
+                    ?.map((x) => x.display_circle)
+                    .filter((x) => {
+                        // remove old events
+                        if (x.type === "event") {
+                            return fromFsDate(x.starts_at) > startDate;
+                        } else {
+                            return true;
+                        }
+                    })
+            );
+        });
+
         return () => {
             if (unsubscribeGetCircle) {
                 unsubscribeGetCircle();
             }
+            if (unsubscribeGetCircles) {
+                unsubscribeGetCircles();
+            }
+            setCircles([]);
+            setCircleConnections([]);
         };
-    }, [circleId, setCircle, setDisplayMode]);
+    }, [circleId, setCircle, setDisplayMode, setCircles, setCircleConnections]);
 
     useEffect(() => {
         log("Circle.useEffect 2", 0);
@@ -1295,7 +1302,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        setDisplayMode={setDisplayMode}
+                        circleConnections={circleConnections}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         isSignedIn={isSignedIn}
                         isSigningIn={isSigningIn}
@@ -1315,7 +1323,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        setDisplayMode={setDisplayMode}
+                        circleConnections={circleConnections}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
@@ -1341,7 +1350,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        setDisplayMode={setDisplayMode}
+                        circleConnections={circleConnections}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
@@ -1367,7 +1377,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        setDisplayMode={setDisplayMode}
+                        circleConnections={circleConnections}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
@@ -1393,7 +1404,8 @@ export const Circle = ({
                         setCircle={setCircle}
                         circles={circles}
                         setCircles={setCircles}
-                        setDisplayMode={setDisplayMode}
+                        circleConnections={circleConnections}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         userLocation={userLocation}
                         locationPickerPosition={locationPickerPosition}
@@ -1435,7 +1447,7 @@ export const Circle = ({
                     <CreateNewCircle
                         circle={circle}
                         setCircle={setCircle}
-                        setDisplayMode={setDisplayMode}
+                        displayMode={displayMode}
                         setDisplayMode={setDisplayMode}
                         locationPickerPosition={locationPickerPosition}
                         setLocationPickerPosition={setLocationPickerPosition}
@@ -1803,6 +1815,7 @@ export const Circles = ({
     setCircle,
     circles,
     setCircles,
+    circleConnections,
     type,
     displayMode,
     setDisplayMode,
@@ -1824,7 +1837,6 @@ export const Circles = ({
     const navigate = useNavigate();
     const [unfilteredCircles, setUnfilteredCircles] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
-    const [isLoadingCircles, setIsLoadingCircles] = useState(true);
     const embed = searchParams.get("embed") === "true";
     const mapOnly = searchParams.get("mapOnly") === "true";
     const { circleId } = useParams();
@@ -1836,76 +1848,15 @@ export const Circles = ({
 
     useEffect(() => {
         log("Circles.useEffect 1", 0);
-        if (!circle?.type) {
+        if (!circle?.type || !circleConnections) {
+            setUnfilteredCircles([]);
             return;
         }
 
-        let unsubscribeGetCircles = null;
-        setIsLoadingCircles(true);
-        // TODO we need pagination here
-
-        // subscribe to connected circles
-        let q = query(
-            collection(db, "connections"),
-            where("circle_ids", "array-contains", circleId),
-            where("circle_types", "==", getCircleTypes(circle.type, type))
-        );
-
-        unsubscribeGetCircles = onSnapshot(q, (snap) => {
-            let circleConnections = snap.docs.map((doc) => doc.data());
-
-            // merge circle connections of the same type
-            let connections = [];
-            if (Array.isArray(circleConnections)) {
-                let seen = {};
-                connections = circleConnections?.filter((entry) => {
-                    var previous;
-
-                    // ignore connections to earth circle
-                    if (circleId !== "earth" && (entry.source.id === "earth" || entry.target.id === "earth")) {
-                        return false;
-                    }
-
-                    // wether to use source or target depends
-                    let parentCircleIsSource = entry.source.id === circleId;
-                    let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
-
-                    // have we seen this label before?
-                    if (seen.hasOwnProperty(mergeId)) {
-                        // yes, grab it and add this data to it
-                        previous = seen[mergeId];
-                        previous.type.push(entry.type);
-
-                        // don't keep this entry, we've merged it into the previous one
-                        return false;
-                    }
-
-                    // entry.type probably isn't an array; make it one for consistency
-                    if (!Array.isArray(entry.type)) {
-                        entry.type = [entry.type];
-                    }
-
-                    entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
-
-                    // remember that we've seen it
-                    seen[mergeId] = entry;
-                    return true;
-                });
-            }
-
-            // console.log("connections = " + JSON.stringify(connections, null, 2));
-
-            setUnfilteredCircles(connections.map((x) => x.display_circle));
-            setIsLoadingCircles(false);
-        });
-
-        return () => {
-            if (unsubscribeGetCircles) {
-                unsubscribeGetCircles();
-            }
-            setCircles([]);
-        };
-    }, [setCircles, circleId, type, circle?.type]);
+        // filter connections
+        const circleTypes = getCircleTypes(circle.type, type);
+        setUnfilteredCircles(circleConnections.filter((x) => x.circle_types === circleTypes).map((x) => x.display_circle));
+    }, [circleConnections, circleId, type, circle?.type]);
 
     useEffect(() => {
         log("Circles.useEffect 2", 0);
@@ -2108,9 +2059,7 @@ export const Circles = ({
                             />
                         ))}
 
-                        {isLoadingCircles && <Spinner marginLeft="12px" marginTop="10px" />}
-
-                        {circles?.length <= 0 && !isLoadingCircles && (
+                        {circles?.length <= 0 && (
                             <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                                 {i18n.t(`No ${type}s`)}
                             </Text>
