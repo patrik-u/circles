@@ -734,6 +734,7 @@ const App = () => {
     const [uid, setUid] = useState(null);
     const [circle, setCircle] = useState(null);
     const [circles, setCircles] = useState(null);
+    const [circleConnections, setCircleConnections] = useState(null);
     const [userLocation, setUserLocation] = useState({ latitude: undefined, longitude: undefined });
     const mapRef = useRef(null);
     const toast = useToast();
@@ -1225,6 +1226,8 @@ const App = () => {
                                             setCircle={setCircle}
                                             circles={circles}
                                             setCircles={setCircles}
+                                            circleConnections={circleConnections}
+                                            setCircleConnections={setCircleConnections}
                                             displayMode={displayMode}
                                             setDisplayMode={setDisplayMode}
                                             isSignedIn={isSignedIn}
@@ -1280,7 +1283,7 @@ const App = () => {
                     {/* Graph panel */}
                     {displayMode === "graph" && (
                         <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
-                            <Graph circle={circle} setCircle={setCircle} circles={circles} setCircles={setCircles} />
+                            <Graph circle={circle} circles={circles} circleConnections={circleConnections} />
                         </Box>
                     )}
 

@@ -287,8 +287,6 @@ export const getNavigationItems = (circle, user) => {
         category: "settings",
     });
 
-    navigationItems.push({ route: routes.graph, name: i18n.t("Graph"), icon: BiNetworkChart, switchOffMap: true, matchSubPaths: true });
-
     if (user?.is_admin) {
         navigationItems.push({ route: routes.appAdmin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
     }
