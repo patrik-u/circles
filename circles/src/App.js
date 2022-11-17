@@ -51,7 +51,7 @@ import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCre
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
 import { toastError, log } from "./components/Helpers";
-import Graph from "./components/Graph";
+import { FlowGraph, ForceGraph } from "./components/Graph";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Navigate, Route, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Circle, CircleMarker, CirclesMapMarkers, CircleConnections, CircleMapEdges, CreateNewCircle } from "screens/Circle";
@@ -59,6 +59,7 @@ import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, Ci
 import AppAdmin from "./screens/AppAdmin";
 import i18n from "i18n/Localization";
 import Notifications from "./components/Notifications";
+import Messages from "./components/Messages";
 import { FaSatellite, FaMapMarkedAlt } from "react-icons/fa";
 import { IoAdd, IoList, IoMap } from "react-icons/io5";
 import { BiNetworkChart } from "react-icons/bi";
@@ -252,7 +253,7 @@ const ProfileMenu = ({ onSignOutClick, circle, setCircle }) => {
     );
 };
 
-const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode }) => {
+const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode, chatCircle }) => {
     const isMobile = useContext(IsMobileContext);
     const { windowWidth } = useWindowDimensions();
     const user = useContext(UserContext);
@@ -272,13 +273,13 @@ const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, g
             flexBasis={isMobile ? "40px" : "90px"}
             height={isMobile ? "40px" : "90px"}
             maxHeight={isMobile ? "40px" : "90px"}
+            backgroundColor={isMobile ? "white" : "transparent"}
             //style={{ background: isMobile ? "linear-gradient(to left top, #c463c0, #4883f8)" : "transparent" }}
-            backgroundColor="transparent"
-            position="absolute"
+            position={isMobile ? "relative" : "absolute"}
             top="0px"
-            right={isMobile ? (isMapActive ? "40px" : "0px") : "50px"}
+            right={isMobile ? "0px" : "50px"}
             zIndex="1000"
-            width={isMobile ? (isMapActive ? "calc(100% - 40px)" : "100%") : "calc(100% - 50px)"}
+            width={isMobile ? "100%" : "calc(100% - 50px)"}
             pointerEvents={isMobile && isMapActive ? "none" : "auto"}
         >
             {isMobile && circle && circle.id !== "earth" && (
@@ -328,6 +329,8 @@ const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, g
                 {user && (
                     <HStack spacing={isMobile ? "20px" : "50px"} align="center">
                         {/* <Points satelliteMode={satelliteMode} /> */}
+
+                        <Messages satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} chatCircle={chatCircle} />
 
                         <Notifications satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} />
 
@@ -706,6 +709,7 @@ const App = () => {
     const [userData, setUserData] = useState(null);
     const [userConnections, setUserConnections] = useState([]);
     const [connectionsToUser, setConnectionsToUser] = useState([]);
+    const [chatCircle, setChatCircle] = useState(null);
     const user = useMemo(() => {
         if (userPublic) {
             // merge user connections of the same type
@@ -1214,6 +1218,7 @@ const App = () => {
                                 gsiScriptLoaded={gsiScriptLoaded}
                                 satelliteMode={satelliteMode}
                                 displayMode={displayMode}
+                                chatCircle={chatCircle}
                             />
                         )}
                         <Scrollbars autoHide>
@@ -1243,6 +1248,7 @@ const App = () => {
                                             setContentWidth={setContentWidth}
                                             onConnect={onConnect}
                                             isConnecting={isConnecting}
+                                            setChatCircle={setChatCircle}
                                         />
                                     }
                                 />
@@ -1256,7 +1262,14 @@ const App = () => {
 
                     {/* Map panel */}
                     {displayMode === "map" && (
-                        <Box id="mapRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
+                        <Flex
+                            id="mapRegion"
+                            width="100%"
+                            top={isMobile ? "114px" : "0px"}
+                            height={isMobile ? "calc(100% - 164px)" : "100%"}
+                            minHeight={isMobile ? "calc(100% - 164px)" : "100%"}
+                            position={isMobile ? "absolute" : "relative"}
+                        >
                             {!mapOnly && !isMobile && (
                                 <TopMenu
                                     circle={circle}
@@ -1266,6 +1279,7 @@ const App = () => {
                                     isSignedIn={isSignedIn}
                                     gsiScriptLoaded={gsiScriptLoaded}
                                     satelliteMode={satelliteMode}
+                                    chatCircle={chatCircle}
                                 />
                             )}
 
@@ -1277,13 +1291,14 @@ const App = () => {
                                     {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
                                 </ThreeboxMap>
                             )}
-                        </Box>
+                        </Flex>
                     )}
 
                     {/* Graph panel */}
                     {displayMode === "graph" && (
                         <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
-                            <Graph circle={circle} circles={circles} circleConnections={circleConnections} />
+                            <ForceGraph circle={circle} circles={circles} circleConnections={circleConnections} />
+                            {/* <FlowGraph circle={circle} circles={circles} circleConnections={circleConnections} /> */}
                         </Box>
                     )}
 

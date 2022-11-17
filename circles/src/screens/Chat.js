@@ -45,7 +45,7 @@ import EmojiPicker from "../components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 //#endregion
 
-export const Chat = ({ circle, setCircle, onConnect }) => {
+export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     const isMobile = useContext(IsMobileContext);
     const user = useContext(UserContext);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
@@ -67,6 +67,18 @@ export const Chat = ({ circle, setCircle, onConnect }) => {
         log("Chat.useEffect 1");
         setScrollToLastSmooth(false);
     }, []);
+
+    useEffect(() => {
+        setChatCircle(circle?.id);
+        if (circle?.id) {
+            // mark messages as read
+            axios.put(`/chat_notifications`, { circle_id: circle?.id });
+        }
+
+        return () => {
+            setChatCircle(null);
+        };
+    }, [circle?.id, setChatCircle]);
 
     useEffect(() => {
         log("Chat.useEffect 2");

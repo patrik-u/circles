@@ -119,7 +119,7 @@ const ThreeboxMap = ({ onMapClick, children, satelliteMode }, ref) => {
         color: "rgb(186, 210, 235)", // Lower atmosphere
         "high-color": "rgb(36, 92, 223)", // Upper atmosphere
         "horizon-blend": 0.02, // Atmosphere thickness (default 0.2 at low zooms)
-        "space-color": satelliteMode ? "rgb(24, 34, 51)" : "rgb(242, 247, 255)", // Background color
+        "space-color": satelliteMode ? "rgb(6, 9, 14)" : "rgb(242, 247, 255)", // Background color
         "star-intensity": satelliteMode ? 0.2 : 0.0, // Background star brightness (default 0.35 at low zoooms )
     };
 
