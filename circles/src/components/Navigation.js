@@ -48,6 +48,7 @@ import { CircleItemSmall } from "../screens/Circle";
 import Scrollbars from "react-custom-scrollbars-2";
 import { fromFsDate, log } from "./Helpers";
 import { defaultEarthCircle } from "../store";
+import { NotificationsBell } from "./Messages";
 //#endregion
 
 export const routes = {
@@ -413,8 +414,15 @@ export const openCircle = (navigate, user, circleId, circle, setCircle, inSelect
         setCircle(null);
     }
 
-    // TODO check if circle has chat module activated as well
     navigate(circleDefaultRoute(user, circleId));
+};
+
+export const openCircleSection = (navigate, user, circleId, circle, setCircle, section) => {
+    if (circle?.id !== circleId) {
+        setCircle(null);
+    }
+
+    navigate(routes.circle(circleId)[section]);
 };
 
 export const parseCircleId = (path) => {
@@ -608,7 +616,6 @@ export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
                                 backgroundColor: "#ddd8db",
                             }}
                         ></Box>
-
                         <Button
                             colorScheme="blue"
                             borderRadius="25px"
@@ -704,7 +711,10 @@ export const CircleHeader = ({ circle, setCircle, onConnect, createNew, filterCo
                         <Box marginTop="4px" position="relative">
                             <CircleTags circle={circle} setCircle={setCircle} size="sm" />
                         </Box>
-                        {circle?.id !== "earth" && <ConnectButton circle={circle} onConnect={onConnect} position="absolute" top="0px" right="0px" size="md" />}
+                        <Flex position="absolute" top="0px" right="0px" flexDirection="row" align="center" height="24px">
+                            {circle?.id !== "earth" && <ConnectButton circle={circle} onConnect={onConnect} size="md" />}
+                            {circle?.id !== "earth" && <NotificationsBell circle={circle} />}
+                        </Flex>
                     </Flex>
                 </Flex>
             </Flex>

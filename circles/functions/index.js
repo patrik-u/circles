@@ -150,6 +150,12 @@ const getAdminConnections = async (id) => {
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
 
+const getMemberConnections = async (id) => {
+    let query = db.collection("connections").where("source.id", "==", id).where("type", "==", "connected_mutually_to");
+    let result = await query.get();
+    return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
+};
+
 const getConnections = async (id, match = "source") => {
     let connectionsRef = db.collection("connections");
     let snapshot = null;
@@ -452,7 +458,7 @@ const deleteConnectionByObject = async (connection, updateNotifications = true) 
     // CONNECT123 here we might want to update latest_connections as well
 };
 
-// sens notification to user about a new connection made
+// sends notification to user about a new connection made
 const sendConnectNotification = async (userId, source, target, type, connection_id) => {
     const notificationsRes = db.collection("notifications").doc();
     const date = new Date();
@@ -467,6 +473,51 @@ const sendConnectNotification = async (userId, source, target, type, connection_
         connection_id,
     };
     await notificationsRes.set(newNotification);
+};
+
+const getUserCircleSettings = async (userId, circleId) => {
+    let data = await getCircleData(userId);
+    return data?.circle_settings?.[circleId];
+};
+
+const sendMessageNotification = async (userId, circle, message) => {
+    // const newMessage = {
+    //     circle_id: circleId,
+    //     user,
+    //     sent_at: date,
+    //     message: message,
+    // };
+
+    // chat notification looks like this:
+    //"[circle] Tim: Hey blah blah..." (number of unread messages)
+
+    let notificationRef = null;
+    const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", userId).where("circle_id", "==", message.circle_id).get();
+    if (notificationsSnapshot.docs.length <= 0) {
+        notificationRef = db.collection("chat_notifications").doc();
+    } else {
+        notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
+    }
+
+    const date = new Date();
+    const newNotification = {
+        user_id: userId,
+        circle_id: message.circle_id,
+        circle: circle,
+        date: date,
+        unread_messages: admin.firestore.FieldValue.increment(1),
+        is_seen: false,
+        last_message: message,
+    };
+
+    let circleSettings = await getUserCircleSettings(userId, message.circle_id);
+    if (circleSettings?.notifications === "off") {
+        newNotification.unread_messages = 0;
+        newNotification.is_seen = true;
+        delete newNotification.date;
+    }
+
+    await notificationRef.set(newNotification, { merge: true });
 };
 
 // returns true if source is administrator of target
@@ -1261,7 +1312,6 @@ app.post("/chat_messages", auth, async (req, res) => {
     try {
         const date = new Date();
         var circleId = req.body.circle_id;
-        var roomId = req.body.room_id;
         var message = DOMPurify.sanitize(req.body.message);
         var replyToId = req.body.replyToId;
 
@@ -1279,7 +1329,6 @@ app.post("/chat_messages", auth, async (req, res) => {
             user,
             sent_at: date,
             message: message,
-            room_id: roomId,
         };
 
         if (replyToId) {
@@ -1298,39 +1347,40 @@ app.post("/chat_messages", auth, async (req, res) => {
         }
 
         const chatMessageRef = db.collection("chat_messages").doc();
+        await chatMessageRef.set(newMessage);
 
-        if (roomId === "public") {
-            // TODO check if user is member of circle
-            // if (circleId !== "earth") {
-            //     const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
-            //     const circleMembersData = circleMembersDocs.docs[0].data();
-            //     if (circleMembersData?.member_ids?.includes(authCallerId)) {
-            //         newMessage.from_member = true;
-            //     }
-            // }
+        // if (roomId === "public") {
+        //     // TODO check if user is member of circle
+        //     // if (circleId !== "earth") {
+        //     //     const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
+        //     //     const circleMembersData = circleMembersDocs.docs[0].data();
+        //     //     if (circleMembersData?.member_ids?.includes(authCallerId)) {
+        //     //         newMessage.from_member = true;
+        //     //     }
+        //     // }
 
-            // add message to public room
-            await chatMessageRef.set(newMessage);
-        } else if (roomId === "members") {
-            return res.json({ error: "Not implemented" });
-            // TODO implement sending chat to members
-            // message sent to members
-            // make sure user is member of circle
-            // const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
-            // const circleMembersData = circleMembersDocs.docs[0].data();
-            // if (!circleMembersData?.member_ids?.includes(authCallerId)) {
-            //     return res.status(403).json({ error: "unauthorized" });
-            // }
+        //     // add message to public room
+        //     await chatMessageRef.set(newMessage);
+        // } else if (roomId === "members") {
+        //     //return res.json({ error: "Not implemented" });
+        //     // TODO implement sending chat to members
+        //     // message sent to members
+        //     // make sure user is member of circle
+        //     // const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
+        //     // const circleMembersData = circleMembersDocs.docs[0].data();
+        //     // if (!circleMembersData?.member_ids?.includes(authCallerId)) {
+        //     //     return res.status(403).json({ error: "unauthorized" });
+        //     // }
 
-            // newMessage.circle_members_id = circleMembersDocs.docs[0].id;
-            // newMessage.from_member = true;
+        //     // newMessage.circle_members_id = circleMembersDocs.docs[0].id;
+        //     // newMessage.from_member = true;
 
-            // // add message to members room
-            // await chatMessageRef.set(newMessage);
-        } else {
-            // TODO make sure room exists and user is allowed to post in it
-            return res.json({ error: "Not implemented" });
-        }
+        //     // // add message to members room
+        //     await chatMessageRef.set(newMessage);
+        // } else {
+        //     // TODO make sure room exists and user is allowed to post in it
+        //     return res.json({ error: "Not implemented" });
+        // }
 
         // add update to circle that new chat message has been sent
         let updatedCircle = {
@@ -1347,6 +1397,17 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // check if message contains link and add preview image
         addPreviewImages(chatMessageRef, links);
+
+        // send notification to all users connected to circle
+        let memberConnections = await getMemberConnections(circleId);
+        let circle = await getCircle(circleId);
+        for (var memberConnection of memberConnections) {
+            if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
+                // ignore notifying sender and non-users
+                continue;
+            }
+            await sendMessageNotification(memberConnection.target.id, circle, newMessage);
+        }
 
         return res.json({ message: "Message sent" });
     } catch (error) {
@@ -1458,6 +1519,86 @@ const addPreviewImages = async (chatMessageRef, links) => {
 };
 
 // #endregion
+
+//#region chat messages
+
+// update chat messages (mark as read)
+app.put("/chat_notifications", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const notification_id = req.body.notification_id;
+    const circle_id = req.body.circle_id;
+
+    try {
+        // get all unread notifications for user
+        if (notification_id) {
+            // set specific chat notification as read
+            const docRef = db.collection("chat_notifications").doc(notification_id);
+            await docRef.update({ is_seen: true, unread_messages: 0 });
+        } else if (circle_id) {
+            // set specific chat notification as read
+            let notificationRef = null;
+            const notificationsSnapshot = await db
+                .collection("chat_notifications")
+                .where("user_id", "==", authCallerId)
+                .where("circle_id", "==", circle_id)
+                .get();
+            if (notificationsSnapshot.docs.length > 0) {
+                notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
+                await notificationRef.update({ is_seen: true, unread_messages: 0 });
+            }
+        } else {
+            // set all chat notifications to user as read
+            const notificationsDocs = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("is_seen", "==", false).get();
+            notificationsDocs.forEach(async (notificationDoc) => {
+                // set notification as read
+                const docRef = db.collection("chat_notifications").doc(notificationDoc.id);
+                await docRef.update({ is_seen: true });
+            });
+        }
+
+        return res.json({ message: "chat notifications updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating chat notifications:", error);
+        return res.json({ error: error });
+    }
+});
+
+// update chat notifications settings
+app.post("/chat_notification_settings", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const circleId = req.body.circleId;
+    const settings = req.body.settings;
+
+    console.log("circleId:" + circleId);
+    console.log("settings:" + settings);
+    if (!circleId || (settings !== "on" && settings !== "off")) {
+        return res.json({ error: "Invalid input" });
+    }
+
+    if (circleId === "earth") {
+        return res.json({}); // ignore earth
+    }
+
+    // update user notificatin settings for circle
+    const userDataRef = db.collection("circle_data").doc(authCallerId);
+
+    let circle_settings = {
+        [circleId]: {
+            notifications: settings,
+        },
+    };
+
+    await userDataRef.set(
+        {
+            circle_settings,
+        },
+        { merge: true }
+    );
+
+    return res.json({ message: "Ok" });
+});
+
+//#endregion
 
 //#region notifications
 

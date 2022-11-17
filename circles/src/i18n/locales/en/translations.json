@@ -1,4 +1,5 @@
 {
+    "Messages": "Messages",
     "Questions text [room]": "Please answer three prompts about the room to let people understand more what the room is about.",
     "[room] Send request to connect": "Send invite to join/connect",
     "[user] is now connected to the [room]": "has joined the room",

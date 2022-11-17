@@ -1178,6 +1178,7 @@ export const Circle = ({
     setContentWidth,
     onConnect,
     isConnecting,
+    setChatCircle,
 }) => {
     const user = useContext(UserContext);
     const { circleId } = useParams();
@@ -1440,7 +1441,10 @@ export const Circle = ({
                     />
                 }
             />
-            <Route path="/chat/*" element={<Chat circle={circle} setCircle={setCircle} onConnect={onConnect} setContentWidth={setContentWidth} />} />
+            <Route
+                path="/chat/*"
+                element={<Chat circle={circle} setCircle={setCircle} onConnect={onConnect} setContentWidth={setContentWidth} setChatCircle={setChatCircle} />}
+            />
             <Route
                 path="new"
                 element={
@@ -2013,25 +2017,36 @@ export const Circles = ({
 
     //#endregion
 
-    return displayMode === "map" ? (
-        <Flex
-            flexGrow="1"
-            flexDirection="row"
-            width="100%"
-            height="230px"
-            align="center"
-            position="absolute"
-            bottom="3px"
-            left="0px"
-            overflowX="auto"
-            overflowY="hidden"
-            zIndex="15"
-            paddingLeft="15px"
-        >
-            {circles?.map((item) => (
-                <CircleMapItem key={item.id} item={item} onClick={() => openCircle(navigate, user, item.id, circle, setCircle)} />
-            ))}
-        </Flex>
+    return displayMode === "map" && isMobile ? (
+        <>
+            <CircleHeader
+                circle={circle}
+                setCircle={setCircle}
+                createNew={() => navigate(routes.circle(circle.id).new)}
+                filterConnected={filterConnected}
+                setFilterConnected={setFilterConnected}
+                title={type}
+                onConnect={onConnect}
+            />
+            <Flex
+                flexGrow="1"
+                flexDirection="row"
+                width="100%"
+                height="230px"
+                align="center"
+                position="absolute"
+                bottom="3px"
+                left="0px"
+                overflowX="auto"
+                overflowY="hidden"
+                zIndex="15"
+                paddingLeft="15px"
+            >
+                {circles?.map((item) => (
+                    <CircleMapItem key={item.id} item={item} onClick={() => openCircle(navigate, user, item.id, circle, setCircle)} />
+                ))}
+            </Flex>
+        </>
     ) : (
         <>
             {!mapOnly && (

@@ -381,23 +381,6 @@ code {
     border-radius: 40px;
 }
 
-.notificationsBoxParent {
-    top: 83px;
-    right: 5px;
-    width: 400px;
-    border-radius: 20px;
-    border-width: 1px;
-    background-color: white;
-    border-color: #e2e8f0;
-    height: calc(100% - 88px);
-}
-
-.notificationsBox {
-    border-radius: 20px;
-    width: 100%;
-    height: 100%;
-}
-
 .pointHistoryBoxParent {
     top: 83px;
     right: 5px;
@@ -807,6 +790,23 @@ code {
 }
 
 .notificationsBox {
+    border-radius: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+.messagesBoxParent {
+    top: 83px;
+    right: 5px;
+    width: 400px;
+    border-radius: 20px;
+    border-width: 1px;
+    background-color: white;
+    border-color: #e2e8f0;
+    height: calc(100% - 88px);
+}
+
+.messagesBox {
     border-radius: 20px;
     width: 100%;
     height: 100%;
