@@ -359,6 +359,10 @@ export const isMutuallyConnected = (user, circle, includeRequests) => {
     );
 };
 
+export const isMember = (userConnections, circleId) => {
+    return userConnections?.some((x) => x.target.id === circleId && x.type.includes("connected_mutually_to"));
+};
+
 export const isConnected = (user, circle) => {
     return isConnectedId(user, circle?.id);
 };

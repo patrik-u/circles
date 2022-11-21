@@ -1,4 +1,9 @@
 {
+    "You need to join the [circle] to chat": "You need to join the circle to chat",
+    "You need to join the [event] to chat": "You need to attend the event to chat",
+    "You need to join the [tag] to chat": "You need to add the tag to chat",
+    "You need to join the [user] to chat": "You need to connect to the user to chat",
+    "You need to join the [room] to chat": "You need to join the room to chat",
     "Messages": "Messages",
     "Questions text [room]": "Please answer three prompts about the room to let people understand more what the room is about.",
     "[room] Send request to connect": "Send invite to join/connect",

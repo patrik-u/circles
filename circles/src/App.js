@@ -175,20 +175,22 @@ const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, set
                 </Flex>
             )}
 
-            <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
-                <Flex
-                    backgroundColor="#f4f4f4dd"
-                    _hover={{ backgroundColor: "#f5f5f5dd" }}
-                    borderRadius="50%"
-                    cursor="pointer"
-                    width="48px"
-                    height="48px"
-                    alignItems="center"
-                    justifyContent="center"
-                >
-                    <Icon width="28px" height="28px" color="black" as={BiNetworkChart} onClick={() => setDisplayMode("graph")} cursor="pointer" />
+            {config.environment !== "prod" && (
+                <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
+                    <Flex
+                        backgroundColor="#f4f4f4dd"
+                        _hover={{ backgroundColor: "#f5f5f5dd" }}
+                        borderRadius="50%"
+                        cursor="pointer"
+                        width="48px"
+                        height="48px"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Icon width="28px" height="28px" color="black" as={BiNetworkChart} onClick={() => setDisplayMode("graph")} cursor="pointer" />
+                    </Flex>
                 </Flex>
-            </Flex>
+            )}
         </VStack>
     );
 };

@@ -417,6 +417,12 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
             }
         }
     }
+
+    if (type === "connected_mutually_to") {
+        // add target circle to source circle's list of mutual connections
+        const circleDataRef = db.collection("circle_data").doc(source.id);
+        await circleDataRef.set({ mutual_connections: admin.firestore.FieldValue.arrayUnion(target.id) }, { merge: true });
+    }
 };
 
 // deletes connection between two circles
@@ -453,6 +459,12 @@ const deleteConnectionByObject = async (connection, updateNotifications = true) 
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
         });
+    }
+
+    if (connection.type === "connected_mutually_to") {
+        // remove target circle from source circle's list of mutual connections
+        const circleDataRef = db.collection("circle_data").doc(connection.source.id);
+        await circleDataRef.update({ mutual_connections: admin.firestore.FieldValue.arrayRemove(connection.target.id) });
     }
 
     // CONNECT123 here we might want to update latest_connections as well
@@ -673,6 +685,7 @@ app.post("/circles", auth, async (req, res) => {
             created_by: authCallerId,
             created_at: date,
             type: req.body.type,
+            chat_is_public: req.body.chatIsPublic === true,
         };
 
         let parent = null;
@@ -821,6 +834,10 @@ app.put("/circles/:id", auth, async (req, res) => {
             if (req.body.circleData?.time) {
                 circleData.time = req.body.circleData.time;
             }
+        }
+
+        if (req.body.circleData?.chatIsPublic !== undefined) {
+            circleData.chat_is_public = req.body.circleData?.chatIsPublic === true;
         }
 
         // verify user is admin of parent circle
@@ -1652,18 +1669,15 @@ app.post("/update", auth, async (req, res) => {
             });
         } else if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
-        } else if (commandArgs[0] === "connect_mutually") {
-            // go through every connection and if it's a "connected_to" then also add a "connected_mutually_to"
+        } else if (commandArgs[0] === "update_mutual_connections") {
+            // go through every connection and if it's a "connected_mutually_to" then and target to source's list of mutual connections
             let connections = await db.collection("connections").get();
             connections.forEach(async (doc) => {
                 let connection = doc.data();
-                if (connection.type === "connected_to") {
-                    await createConnection(connection.source, connection.target, "connected_mutually_to");
-                } else if (connection.type === "owner_of") {
-                    await createConnection(connection.source, connection.target, "connected_mutually_to");
-                    await createConnection(connection.source, connection.target, "connected_to");
-                } else if (connection.type === "owned_by") {
-                    await createConnection(connection.source, connection.target, "connected_mutually_to");
+                if (connection.type === "connected_mutually_to") {
+                    // add target circle to source circle's list of mutual connections
+                    const circleDataRef = db.collection("circle_data").doc(connection.source.id);
+                    await circleDataRef.set({ mutual_connections: admin.firestore.FieldValue.arrayUnion(connection.target.id) }, { merge: true });
                 }
             });
         } else if (commandArgs[0] === "test123") {
@@ -1757,7 +1771,12 @@ app.post("/update", auth, async (req, res) => {
 
 //#region exports
 
-exports.api = functions.region("europe-west1").https.onRequest(app);
+const runtimeOpts = {
+    timeoutSeconds: 540,
+    memory: "1GB",
+};
+
+exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);
 
 exports.preRender = functions.https.onRequest(async (request, response) => {
     // Error 404 is false by default

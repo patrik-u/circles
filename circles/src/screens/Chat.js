@@ -34,7 +34,7 @@ import axios from "axios";
 import { getDayAndMonth, datesAreOnSameDay, log } from "../components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
 import IsMobileContext from "../components/IsMobileContext";
-import { CircleHeader, CirclePicture, routes, isConnected, defaultContentWidth } from "../components/Navigation";
+import { CircleHeader, CirclePicture, routes, isConnected, defaultContentWidth, isMutuallyConnected, isMember } from "../components/Navigation";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { BsReplyFill } from "react-icons/bs";
@@ -60,6 +60,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     const scrollbarsRef = useRef();
     const toast = useToast();
     const navigate = useNavigate();
+    const [isAuthorized, setIsAuthorized] = useState(true);
     const [caretIndex, setCaretIndex] = useState(0);
     const textAreaRef = useRef();
 
@@ -70,6 +71,8 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
 
     useEffect(() => {
         setChatCircle(circle?.id);
+
+        if (!user?.id) return;
         if (circle?.id) {
             // mark messages as read
             axios.put(`/chat_notifications`, { circle_id: circle?.id });
@@ -78,7 +81,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
         return () => {
             setChatCircle(null);
         };
-    }, [circle?.id, setChatCircle]);
+    }, [user?.id, circle?.id, setChatCircle]);
 
     useEffect(() => {
         log("Chat.useEffect 2");
@@ -97,10 +100,11 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                     ...doc.data(),
                 };
             });
-            //console.log("getting chat messages: ", JSON.stringify(newChatMessages, null, 2));
             setUnfilteredChatMessages(newChatMessages.reverse());
             setIsLoadingMessages(false);
-            updateSeen(circleId);
+            if (user?.id) {
+                updateSeen(circleId);
+            }
             //chatMessagesUpdated(newChatMessages);
         });
 
@@ -109,7 +113,21 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                 unsubscribeGetChatMessages();
             }
         };
-    }, [circle?.id, user?.id]);
+    }, [circle?.id, user?.id, isAuthorized]);
+
+    useEffect(() => {
+        let circleId = circle?.id;
+        if (!circleId) {
+            return;
+        }
+        // check if user is authorized to view chat
+        if (!circle.chat_is_public && !isMember(user?.connections, circleId)) {
+            setIsAuthorized(false);
+            return;
+        } else {
+            setIsAuthorized(true);
+        }
+    }, [circle?.id, user?.id, user?.connections, setIsAuthorized, circle?.chat_is_public]);
 
     useEffect(() => {
         log("Chat.useEffect 3");
@@ -119,8 +137,6 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
         }
 
         let userId = user?.id;
-        if (!userId) return;
-
         let previousDate = null;
         let filteredChatMessages = [];
         let previousMessage = null;
@@ -178,7 +194,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
         if (!user?.id || !circleId) return;
         if (circleId === "earth") return;
 
-        log("Chat.seen");
+        log("Chat.seen", user?.id);
 
         updateSeen(circleId);
     }, [user?.id, circle?.id]);
@@ -199,6 +215,10 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     };
 
     const sendMessage = async () => {
+        if (!user?.id) {
+            return;
+        }
+
         // disable while sending
         setIsSending(true);
 
@@ -288,7 +308,6 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     };
 
     const onMessageBlur = () => {
-        console.log(textAreaRef.current.selectionEnd);
         setCaretIndex(textAreaRef.current.selectionEnd);
         //textAreaRef.current.setSelectionRange(cursorPosition, cursorPosition)}
     };
@@ -409,13 +428,13 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                 >
                     <Flex width={isMobile ? "100%" : "435px"} height="100%" overflow="hidden" flexDirection="column">
                         <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
-                            {!user && (
+                            {!isAuthorized && (
                                 <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px">
-                                    <Text>{i18n.t("Log in to chat")}</Text>
+                                    <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
                                 </Box>
                             )}
 
-                            {user && (
+                            {isAuthorized && (
                                 <>
                                     <Box flexGrow="1" overflow="hidden">
                                         <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
@@ -423,7 +442,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                                                 {chatMessages?.map((item) => (
                                                     <>
                                                         {item.type === "date" && (
-                                                            <Box key={item.id} alignSelf="center">
+                                                            <Box key={`${item.id}.date`} alignSelf="center">
                                                                 <Box backgroundColor="#848499" borderRadius="20px" marginTop="10px">
                                                                     <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
                                                                         {item.date}
@@ -493,7 +512,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                                                                                         item.isLast ? "10px" : "0px"
                                                                                     }`}
                                                                                     backgroundColor={!item.isSelf ? "#f5f5f5" : "#c6f3c0"}
-                                                                                    color={item.user.id !== user.id ? "black" : "black"}
+                                                                                    color={item.user.id !== user?.id ? "black" : "black"}
                                                                                     marginRight="auto"
                                                                                     overflow="hidden"
                                                                                     maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
@@ -724,15 +743,23 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                                             maxLength="650"
                                             rows="1"
                                             borderRadius="40px"
-                                            placeholder={i18n.t("Message...")}
+                                            placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}
                                             onBlur={onMessageBlur}
+                                            disabled={user?.id ? false : true}
                                         />
-                                        <Popover trigger="click" gutter="0">
-                                            <PopoverTrigger>
-                                                <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
-                                                    <HiOutlineEmojiHappy size="30px" color="#7880f8" />
+                                        <Popover trigger="click" gutter="0" enabled={false}>
+                                            {user && (
+                                                <PopoverTrigger>
+                                                    <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
+                                                        <HiOutlineEmojiHappy size="30px" color={user ? "#7880f8" : "#e6e6e6"} />
+                                                    </Box>
+                                                </PopoverTrigger>
+                                            )}
+                                            {!user && (
+                                                <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0">
+                                                    <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
                                                 </Box>
-                                            </PopoverTrigger>
+                                            )}
                                             <PopoverContent backgroundColor="transparent" borderColor="transparent" width="352px" height="435px">
                                                 <Box zIndex="100" width="352px" height="435px">
                                                     <PopoverArrow />
@@ -742,12 +769,12 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                                         </Popover>
                                         {isMobile && (
                                             <Box position="absolute" top="18px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
-                                                <IoMdSend size="26px" color="#7880f8" onClick={sendMessage} />
+                                                <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
                                             </Box>
                                         )}
                                     </Box>
 
-                                    {/* {roomId === "public" && (
+                                    {circle?.chat_is_public && (
                                         <Box alignSelf="center" position="absolute">
                                             <Box backgroundColor="#8580ff" borderRadius="20px" marginTop="10px">
                                                 <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
@@ -755,7 +782,7 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
                                                 </Text>
                                             </Box>
                                         </Box>
-                                    )} */}
+                                    )}
                                 </>
                             )}
                         </Flex>
