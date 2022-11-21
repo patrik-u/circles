@@ -194,6 +194,7 @@ export const CircleContentForm = ({
     language,
     description,
     content,
+    chatIsPublic,
     circleId,
     onCancel,
     onNext,
@@ -207,6 +208,7 @@ export const CircleContentForm = ({
     const createCircleInitialRef = useRef();
     const [richContent, setRichContent] = useState(content ?? "");
     const [richContentCharCount, setRichContentCharCount] = useState(0);
+    const [chatIsPublicSetting, setChatIsPublicSetting] = useState(chatIsPublic === true);
 
     const parentCircles = adminCircles(user)
         ?.map((x) => {
@@ -237,7 +239,7 @@ export const CircleContentForm = ({
 
     return (
         <Formik
-            initialValues={{ name: name ?? "", description: description ?? "", language: language }}
+            initialValues={{ name: name ?? "", description: description ?? "", language: language, chatIsPublic: chatIsPublic === true }}
             onSubmit={async (values, actions) => {
                 if (isUpdateForm) {
                     // update circle
@@ -245,7 +247,10 @@ export const CircleContentForm = ({
                         name: values.name,
                         description: values.description,
                         parentCircle: selectedParentCircle,
+                        chatIsPublic: chatIsPublicSetting,
                     };
+
+                    console.log("chatIsPublic: ", updatedCircleData.chatIsPublic);
 
                     if (!isGuideForm) {
                         updatedCircleData.content = richContent;
@@ -307,6 +312,7 @@ export const CircleContentForm = ({
                     language: values.language,
                     type: type,
                     parentCircle: selectedParentCircle,
+                    chatIsPublic: chatIsPublicSetting,
                 });
 
                 // console.log(
@@ -429,6 +435,16 @@ export const CircleContentForm = ({
                                 </Flex>
                             )}
 
+                            <Field name="chatIsPublic">
+                                {({ field, form }) => (
+                                    <FormControl isInvalid={form.errors.chatIsPublic && form.touched.chatIsPublic}>
+                                        <Checkbox isChecked={chatIsPublicSetting} id="chatIsPublic" onChange={(e) => setChatIsPublicSetting(e.target.checked)}>
+                                            {i18n.t(`Make chat public`)}
+                                        </Checkbox>
+                                    </FormControl>
+                                )}
+                            </Field>
+
                             {!isGuideForm && (
                                 <Flex flexDirection="row" width="100%">
                                     <Box flexGrow="1" flexShrink="0">
@@ -471,17 +487,51 @@ export const CircleContentForm = ({
     );
 };
 
-export const EventContentForm = ({ isUpdateForm, name, language, dateTime, date, time, content, circleId, onCancel, onNext, onUpdate }) => {
+export const EventContentForm = ({
+    isUpdateForm,
+    name,
+    language,
+    dateTime,
+    date,
+    time,
+    content,
+    circleId,
+    onCancel,
+    onNext,
+    onUpdate,
+    parentCircle,
+    chatIsPublic,
+}) => {
     const user = useContext(UserContext);
     const toast = useToast();
     const navigate = useNavigate();
     const createEventInitialRef = useRef();
     const [pickedDate, setPickedDate] = useState(dateTime ?? new Date());
     const [isAllDay, setIsAllDay] = useState(false);
+    const [chatIsPublicSetting, setChatIsPublicSetting] = useState(chatIsPublic === true);
+    const parentCircles = adminCircles(user)
+        ?.map((x) => {
+            return { ...x, value: x.id, label: x.name };
+        })
+        ?.concat(user ? [{ ...user.public, value: user.id, label: user.name }] : []);
+    const [selectedParentCircle, setSelectedParentCircle] = useState(
+        parentCircle && parentCircles.some((x) => x.id === parentCircle?.id) ? { ...parentCircle, value: parentCircle.id, label: parentCircle.name } : null
+    );
+    const handleChange = (e) => {
+        setSelectedParentCircle(e);
+    };
+    const { Option } = components;
+    const CircleOption = ({ ...props }) => {
+        return (
+            <Option {...props}>
+                <CircleListItem item={props.data} inSelect={true} />
+            </Option>
+        );
+    };
 
     return (
         <Formik
-            initialValues={{ name: name ?? "", time: time ?? "12:00", content: content ?? "", language: language }}
+            initialValues={{ name: name ?? "", time: time ?? "12:00", content: content ?? "", language: language, chatIsPublic: chatIsPublic === true }}
             onSubmit={async (values, actions) => {
                 if (isUpdateForm) {
                     // update circle
@@ -492,11 +542,11 @@ export const EventContentForm = ({ isUpdateForm, name, language, dateTime, date,
                         isAllDay: isAllDay,
                         content: values.content,
                         language: values.language,
+                        parentCircle: selectedParentCircle,
+                        chatIsPublic: chatIsPublicSetting,
                     };
 
                     //console.log("updating event data", updatedEventData);
-
-                    // TODO calculate dateTime
 
                     // update event data
                     let putEventResult = await axios.put(`/circles/${circleId}`, {
@@ -545,6 +595,8 @@ export const EventContentForm = ({ isUpdateForm, name, language, dateTime, date,
                     isAllDay: isAllDay,
                     language: values.language,
                     type: "event",
+                    parentCircle: selectedParentCircle,
+                    chatIsPublic: chatIsPublicSetting,
                 });
 
                 // console.log(
@@ -678,6 +730,30 @@ export const EventContentForm = ({ isUpdateForm, name, language, dateTime, date,
                                     </FormControl>
                                 )}
                             </Field>
+
+                            {parentCircles && (
+                                <Flex flexDirection="column" width="100%">
+                                    <Text textAlign="start">{i18n.t(`Parent circle`)}</Text>
+                                    <Select
+                                        options={parentCircles}
+                                        components={{ Option: CircleOption }}
+                                        value={selectedParentCircle}
+                                        onChange={handleChange}
+                                        textAlign="start"
+                                    />
+                                </Flex>
+                            )}
+
+                            <Field name="chatIsPublic">
+                                {({ field, form }) => (
+                                    <FormControl isInvalid={form.errors.chatIsPublic && form.touched.chatIsPublic}>
+                                        <Checkbox isChecked={chatIsPublicSetting} id="chatIsPublic" onChange={(e) => setChatIsPublicSetting(e.target.checked)}>
+                                            {i18n.t(`Make chat public`)}
+                                        </Checkbox>
+                                    </FormControl>
+                                )}
+                            </Field>
+
                             <Flex flexDirection="row" width="100%">
                                 <Box flexGrow="1" flexShrink="0" marginLeft="5px">
                                     <Field name="language">

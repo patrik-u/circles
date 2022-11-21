@@ -559,6 +559,7 @@ const CircleSettings = ({
                                                         content={circle.content}
                                                         type={circle.type}
                                                         parentCircle={circle.parent_circle}
+                                                        chatIsPublic={circle.chat_is_public}
                                                     />
                                                 )}
                                                 {circle.type === "event" && (
@@ -569,6 +570,8 @@ const CircleSettings = ({
                                                         name={circle.name}
                                                         description={circle.description}
                                                         content={circle.content}
+                                                        parentCircle={circle.parent_circle}
+                                                        chatIsPublic={circle.chat_is_public}
                                                     />
                                                 )}
                                             </Box>
@@ -864,6 +867,7 @@ export const CreateNewCircle = ({
                                         onUpdate={onCreateCircleUpdated}
                                         type={createdCircle.type}
                                         parentCircle={circle}
+                                        chatIsPublic={true}
                                     />
                                 )}
                                 {createdCircle?.type === "event" && (
@@ -873,6 +877,8 @@ export const CreateNewCircle = ({
                                         onCancel={onCreateCircleCloseClick}
                                         onNext={onCreateCircleNextStep}
                                         onUpdate={onCreateCircleUpdated}
+                                        parentCircle={circle}
+                                        chatIsPublic={true}
                                     />
                                 )}
                             </>

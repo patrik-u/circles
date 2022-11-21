@@ -1,4 +1,9 @@
 {
+    "You need to join the [circle] to chat": "Du behöver gå med i cirkeln för att chatta",
+    "You need to join the [event] to chat": "Du behöver delta i eventet för att chatta",
+    "You need to join the [tag] to chat": "Du behöver lägga till taggen för att chatta",
+    "You need to join the [user] to chat": "Du behöver lägga till användaren som kontakt för att chatta",
+    "You need to join the [room] to chat": "Du behöver gå med i rummet för att chatta",
     "Messages": "Meddelanden",
     "Questions text [room]": "Vänligen svara på tre uppmaningar om rummet så att folk förstår mer vad rummet handlar om.",
     "[room] Send request to connect": "Skicka inbjudan till att gå med/ansluta",
