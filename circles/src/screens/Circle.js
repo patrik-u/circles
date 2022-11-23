@@ -2124,7 +2124,7 @@ export const CircleMapMarker = ({ circle, navigate, embed }) => {
                     <CirclePicture circle={circle} size={30} />
                 </Box>
 
-                <Popover trigger="hover" gutter="0">
+                <Popover trigger="hover" gutter="0" isLazy>
                     <PopoverTrigger>
                         <Box position="absolute" width="48px" height="48px" top="0px" left="0px" />
                     </PopoverTrigger>

@@ -40,7 +40,7 @@ import { BsChatText } from "react-icons/bs";
 import { ImQrcode } from "react-icons/im";
 import { BiNetworkChart } from "react-icons/bi";
 import i18n from "i18n/Localization";
-import { toastInfo } from "./Helpers";
+import { toastInfo, getImageKitUrl } from "./Helpers";
 import { QRCodeCanvas } from "qrcode.react";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { RiMapPinFill, RiLinksLine } from "react-icons/ri";
@@ -737,6 +737,7 @@ export const CircleHeader = ({ circle, setCircle, onConnect, createNew, filterCo
 };
 
 export const CircleCover = ({ circle, ...props }) => {
+    const coverWidth = 435;
     const getDefaultCircleCover = () => {
         switch (circle.type) {
             default:
@@ -749,7 +750,16 @@ export const CircleCover = ({ circle, ...props }) => {
         }
     };
 
-    return <Image width="100%" height="100%" src={circle.cover ?? getDefaultCircleCover()} backgroundColor="white" objectFit="cover" {...props} />;
+    return (
+        <Image
+            width="100%"
+            height="100%"
+            src={getImageKitUrl(circle.cover, coverWidth) ?? getDefaultCircleCover()}
+            backgroundColor="white"
+            objectFit="cover"
+            {...props}
+        />
+    );
 };
 
 export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onClick, onParentClick, ...props }) => {
@@ -771,7 +781,10 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
         }
     };
 
-    const hasSectionUpdates = () => {};
+    const getCirclePicture = (picture) => {
+        if (!picture) return getDefaultCirclePicture();
+        return getImageKitUrl(picture);
+    };
 
     return hasPopover && !isMobile ? (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
@@ -780,7 +793,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     <Image
                         width={`${size}px`}
                         height={`${size}px`}
-                        src={circle.picture ?? getDefaultCirclePicture(circle)}
+                        src={getCirclePicture(circle?.picture)}
                         flexShrink="0"
                         flexGrow="0"
                         borderRadius="50%"
@@ -806,7 +819,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                 <Image
                     width={`${size}px`}
                     height={`${size}px`}
-                    src={circle.picture ?? getDefaultCirclePicture(circle)}
+                    src={getCirclePicture(circle?.picture)}
                     flexShrink="0"
                     flexGrow="0"
                     borderRadius="50%"
@@ -823,7 +836,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     height={`${size / 3}px`}
                     top="0px"
                     left="0px"
-                    src={circle.parent_circle.picture ?? getDefaultCirclePicture(circle.parent_circle)}
+                    src={getCirclePicture(circle?.parent_circle?.picture)}
                     flexShrink="0"
                     flexGrow="0"
                     borderRadius="50%"

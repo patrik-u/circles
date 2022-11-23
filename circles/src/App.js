@@ -50,7 +50,7 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCredential } from "firebase/auth";
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
-import { toastError, log } from "./components/Helpers";
+import { toastError, log, getImageKitUrl } from "./components/Helpers";
 import { FlowGraph, ForceGraph } from "./components/Graph";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Navigate, Route, useNavigate, useLocation, useSearchParams } from "react-router-dom";
@@ -199,13 +199,19 @@ const ProfileMenu = ({ onSignOutClick, circle, setCircle }) => {
     const user = useContext(UserContext);
     const navigate = useNavigate();
     const isMobile = useContext(IsMobileContext);
-    const circlePictureSize = isMobile ? "30px" : "60px";
+    const circlePictureSizeInt = isMobile ? 30 : 60;
+    const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
 
     return (
         <Menu closeOnBlur="true" onClose={profileMenuOnClose} onOpen={profileMenuOnOpen} isOpen={profileMenuIsOpen}>
             <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} minW={0}>
-                <Avatar size={"sm"} w={circlePictureSize} h={circlePictureSize} src={user?.picture ? user?.picture : default_user_picture} />
+                <Avatar
+                    size={"sm"}
+                    w={circlePictureSize}
+                    h={circlePictureSize}
+                    src={getImageKitUrl(user?.picture, circlePictureSizeInt, circlePictureSizeInt) ?? default_user_picture}
+                />
             </MenuButton>
             <MenuList alignItems={"center"} borderRadius="20" zIndex="60">
                 <br />
@@ -214,7 +220,7 @@ const ProfileMenu = ({ onSignOutClick, circle, setCircle }) => {
                         alignSelf="center"
                         cursor="pointer"
                         size={"2xl"}
-                        src={user?.picture ?? default_user_picture}
+                        src={getImageKitUrl(user?.picture, 128, 128) ?? default_user_picture}
                         onClick={() => {
                             profileMenuOnClose();
                             openCircle(navigate, user, user.id, circle, setCircle);
@@ -289,15 +295,13 @@ const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, g
                     <Flex flexGrow="1" flexDirection="row" justifyContent="flex-start" align="center">
                         {circle?.parent_circle ? (
                             <Image
-                                src={circle.parent_circle.picture}
+                                src={getImageKitUrl(circle.parent_circle.picture, isMobile ? 20 : 50, isMobile ? 20 : 50)}
                                 width={isMobile ? "20px" : "50px"}
                                 height={isMobile ? "20px" : "50px"}
-                                // marginRight={isMobile ? "5px" : "10px"}
                                 onClick={() => openCircle(navigate, user, circle.parent_circle.id, circle, setCircle)}
                                 cursor="pointer"
                                 position="absolute"
                                 top="7px"
-                                //top={isMobile ? "21px" : "7px"}
                                 left="10px"
                             />
                         ) : (

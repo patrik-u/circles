@@ -14,7 +14,7 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
 import { BsAwardFill } from "react-icons/bs";
-import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log } from "./Helpers";
+import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "./Helpers";
 import { routes, openCircle } from "./Navigation";
 import { GiTiedScroll } from "react-icons/gi";
 //#endregion
@@ -333,8 +333,8 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                 paddingTop="1px"
             >
                 <Box position="relative" width="64px" height="70px" minWidth="64px" minHeight="70px">
-                    {source.picture && <img className="notification-picture1" src={source.picture} alt="Logo" />}
-                    {target.picture && <Image className="notification-picture2" src={target.picture} alt="Logo" />}
+                    {source.picture && <img className="notification-picture1" src={getImageKitUrl(source.picture, 38, 38)} alt="Logo" />}
+                    {target.picture && <Image className="notification-picture2" src={getImageKitUrl(target.picture, 38, 38)} alt="Logo" />}
                     <Image as={IoPersonAdd} width="16px" height="16px" position="absolute" color="#5bcf7f" top="13px" left="42px" />
                 </Box>
 
