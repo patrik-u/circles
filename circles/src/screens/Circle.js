@@ -469,24 +469,16 @@ const CircleSettings = ({
         if (!circle) return [];
         switch (circle.type) {
             default:
+            case "link":
             case "room":
             case "circle":
-                return [
-                    { route: routes.circle(circle.id).settings.about, name: i18n.t("circleadmin_about") },
-                    { route: routes.circle(circle.id).settings.images, name: i18n.t("circleadmin_images") },
-                    { route: routes.circle(circle.id).settings.tags, name: i18n.t("Tags") },
-                    { route: routes.circle(circle.id).settings.base, name: i18n.t("circleadmin_base") },
-                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Links") },
-                    { route: routes.circle(circle.id).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle.id).settings.misc, name: i18n.t("Misc") },
-                ];
             case "event":
                 return [
                     { route: routes.circle(circle.id).settings.about, name: i18n.t("circleadmin_about") },
                     { route: routes.circle(circle.id).settings.images, name: i18n.t("circleadmin_images") },
                     { route: routes.circle(circle.id).settings.tags, name: i18n.t("Tags") },
                     { route: routes.circle(circle.id).settings.base, name: i18n.t("circleadmin_base") },
-                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Links") },
+                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Quick Links") },
                     { route: routes.circle(circle.id).settings.connections, name: i18n.t("Connection Requests") },
                     { route: routes.circle(circle.id).settings.misc, name: i18n.t("Misc") },
                 ];
@@ -498,7 +490,7 @@ const CircleSettings = ({
                     { route: routes.circle(circle.id).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle.id).settings.base, name: i18n.t("circleadmin_base") },
                     { route: routes.circle(circle.id).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Links") },
+                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Quick Links") },
                 ];
         }
     };

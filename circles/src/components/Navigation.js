@@ -29,7 +29,7 @@ import {
 import UserContext from "./UserContext";
 import { isMobile } from "react-device-detect";
 import { useNavigate, useLocation, matchPath } from "react-router-dom";
-import { AiFillHome } from "react-icons/ai";
+import { AiFillHome, AiOutlineGlobal } from "react-icons/ai";
 import { RiAdminLine, RiShareLine } from "react-icons/ri";
 import { MdSettings } from "react-icons/md";
 import { FaCalendarAlt } from "react-icons/fa";
@@ -60,6 +60,7 @@ export const routes = {
         rooms: `/circle/${id}/rooms`,
         circles: `/circle/${id}/circles`,
         events: `/circle/${id}/events`,
+        links: `/circle/${id}/links`,
         new: `/circle/${id}/new`,
         settings: {
             home: `/circle/${id}/settings`,
@@ -276,6 +277,14 @@ export const getNavigationItems = (circle, user) => {
         matchSubPaths: true,
         category: "rooms",
         image: require("../assets/images/room_icon.png"),
+    });
+    navigationItems.push({
+        route: routes.circle(id).links,
+        name: i18n.t("Links"),
+        icon: AiOutlineGlobal,
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "links",
     });
     navigationItems.push({ route: routes.circle(id).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
     navigationItems.push({
@@ -757,6 +766,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                 return require("../assets/images/default-user-picture.png");
             case "tag":
                 return require("../assets/images/default-tag-picture.png");
+            case "link":
+                return require("../assets/images/default-link-picture.png");
         }
     };
 
