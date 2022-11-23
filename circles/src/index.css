@@ -1,5 +1,3 @@
-@import "../node_modules/charter-webfont/charter.css";
-
 * {
     margin: 0;
     padding: 0;
@@ -101,23 +99,6 @@ code {
 }
 .embedHtmlContent li {
     margin-bottom: 17px;
-}
-
-.embedRiksdagenHtmlContent {
-    font-family: "Charter";
-    color: black;
-    font-size: 18px;
-    white-space: normal;
-}
-
-.embedRiksdagenHtmlContent h1 {
-    font-weight: bold;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.embedRiksdagenHtmlContent p {
-    margin-bottom: 18px;
 }
 
 .cardAspectRatio {

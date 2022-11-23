@@ -23,21 +23,10 @@ import {
     Avatar,
     Icon,
     Checkbox,
-    Table,
-    TableCaption,
-    Thead,
-    Tr,
-    Td,
-    Th,
-    Tfoot,
-    Tbody,
-    Heading,
-    LinkOverlay,
     MenuList,
     useToast,
     HStack,
     VStack,
-    LinkBox,
     useDisclosure,
 } from "@chakra-ui/react";
 import { getPreciseDistance } from "geolib";
@@ -51,11 +40,11 @@ import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCre
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
 import { toastError, log, getImageKitUrl } from "./components/Helpers";
-import { FlowGraph, ForceGraph } from "./components/Graph";
+import { ForceGraph } from "./components/Graph";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Navigate, Route, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Circle, CircleMarker, CirclesMapMarkers, CircleConnections, CircleMapEdges, CreateNewCircle } from "screens/Circle";
-import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, CircleQuestionsForm } from "./components/CircleSettingsForms";
+import { Circle, CircleMarker, CirclesMapMarkers, CircleConnections, CircleMapEdges } from "screens/Circle";
+import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleQuestionsForm } from "./components/CircleSettingsForms";
 import AppAdmin from "./screens/AppAdmin";
 import i18n from "i18n/Localization";
 import Notifications from "./components/Notifications";
@@ -63,7 +52,6 @@ import Messages from "./components/Messages";
 import { FaSatellite, FaMapMarkedAlt } from "react-icons/fa";
 import { IoAdd, IoList, IoMap } from "react-icons/io5";
 import { BiNetworkChart } from "react-icons/bi";
-import { Step, Steps, useSteps } from "chakra-ui-steps";
 import {
     LeftNavigator,
     BottomNavigator,
@@ -74,9 +62,7 @@ import {
     clusterConnections,
     parseCircleId,
     defaultContentWidth,
-    isConnected,
     BlueBar,
-    getConnectLabel,
 } from "./components/Navigation";
 import default_user_picture from "./assets/images/default-user-picture.png";
 import config from "./Config";
@@ -85,9 +71,7 @@ import useWindowDimensions from "./components/useWindowDimensions";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper";
 import { Marker } from "react-map-gl";
-import { BsArrowRight } from "react-icons/bs";
 import { RiLinksLine } from "react-icons/ri";
-import { AiOutlineDisconnect } from "react-icons/ai";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 //#endregion
 
@@ -1259,7 +1243,6 @@ const App = () => {
                                     }
                                 />
                                 <Route path="/appAdmin" element={<AppAdmin />} />
-                                <Route path="/graph" element={<></>} />
                                 <Route path="*" element={<Navigate to="/circle/earth" replace />} />
                             </Routes>
                         </Scrollbars>
@@ -1275,6 +1258,7 @@ const App = () => {
                             height={isMobile ? "calc(100% - 164px)" : "100%"}
                             minHeight={isMobile ? "calc(100% - 164px)" : "100%"}
                             position={isMobile ? "absolute" : "relative"}
+                            backgroundColor="#06090e"
                         >
                             {!mapOnly && !isMobile && (
                                 <TopMenu

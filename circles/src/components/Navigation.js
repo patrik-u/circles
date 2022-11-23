@@ -13,12 +13,7 @@ import {
     PopoverContent,
     PopoverTrigger,
     PopoverArrow,
-    Tabs,
-    Tab,
-    TabList,
     MenuButton,
-    ButtonGroup,
-    IconButton,
     Button,
     MenuList,
     MenuItem,
@@ -43,7 +38,7 @@ import i18n from "i18n/Localization";
 import { toastInfo, getImageKitUrl } from "./Helpers";
 import { QRCodeCanvas } from "qrcode.react";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
-import { RiMapPinFill, RiLinksLine } from "react-icons/ri";
+import { RiLinksLine } from "react-icons/ri";
 import { CircleItemSmall } from "../screens/Circle";
 import Scrollbars from "react-custom-scrollbars-2";
 import { fromFsDate, log } from "./Helpers";
@@ -278,14 +273,16 @@ export const getNavigationItems = (circle, user) => {
         category: "rooms",
         image: require("../assets/images/room_icon.png"),
     });
-    navigationItems.push({
-        route: routes.circle(id).links,
-        name: i18n.t("Links"),
-        icon: AiOutlineGlobal,
-        switchOffMap: true,
-        matchSubPaths: true,
-        category: "links",
-    });
+    if (user?.is_admin) {
+        navigationItems.push({
+            route: routes.circle(id).links,
+            name: i18n.t("Links"),
+            icon: AiOutlineGlobal,
+            switchOffMap: true,
+            matchSubPaths: true,
+            category: "links",
+        });
+    }
     navigationItems.push({ route: routes.circle(id).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
     navigationItems.push({
         route: routes.circle(id).settings.home,
@@ -736,8 +733,8 @@ export const CircleHeader = ({ circle, setCircle, onConnect, createNew, filterCo
     );
 };
 
-export const CircleCover = ({ circle, ...props }) => {
-    const coverWidth = 435;
+export const CircleCover = ({ circle, coverWidth, ...props }) => {
+    const circleCoverWidth = coverWidth ?? 435;
     const getDefaultCircleCover = () => {
         switch (circle.type) {
             default:
@@ -754,7 +751,7 @@ export const CircleCover = ({ circle, ...props }) => {
         <Image
             width="100%"
             height="100%"
-            src={getImageKitUrl(circle.cover, coverWidth) ?? getDefaultCircleCover()}
+            src={getImageKitUrl(circle.cover, circleCoverWidth) ?? getDefaultCircleCover()}
             backgroundColor="white"
             objectFit="cover"
             {...props}
@@ -783,7 +780,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
 
     const getCirclePicture = (picture) => {
         if (!picture) return getDefaultCirclePicture();
-        return getImageKitUrl(picture);
+        return getImageKitUrl(picture, size, size);
     };
 
     return hasPopover && !isMobile ? (

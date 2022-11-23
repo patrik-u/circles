@@ -20,15 +20,12 @@ import {
     Modal,
     ModalOverlay,
     ModalContent,
-    ModalHeader,
-    ModalFooter,
     ModalBody,
     ModalCloseButton,
     Text,
     Image,
     Icon,
     Checkbox,
-    Switch,
     Button,
     Select as ChakraSelect,
     RadioGroup,
@@ -41,25 +38,23 @@ import {
 import { CheckIcon } from "@chakra-ui/icons";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { FiFile } from "react-icons/fi";
-import { HiUser } from "react-icons/hi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeoPoint } from "firebase/firestore";
 import { storage } from "./Firebase";
-import { capFirstLetter, toastError, toastSuccess, singleLineEllipsisStyle, log } from "./Helpers";
+import { toastError, toastSuccess, singleLineEllipsisStyle, log } from "./Helpers";
 import { useNavigate } from "react-router-dom";
-import { routes, isConnected, CirclePicture, clusterConnections, adminCircles } from "./Navigation";
+import { routes, adminCircles } from "./Navigation";
 import { ConnectionNotification } from "./Notifications";
-import { CircleListItem, CircleConnectionsList, getDisconnectButtonText } from "../screens/Circle";
+import { CircleListItem } from "../screens/Circle";
 import UserContext from "./UserContext";
 import axios from "axios";
 import { i18n, LanguagePicker } from "i18n/Localization";
 import ReactQuill from "react-quill";
 import DatePicker from "react-datepicker";
 import { WithContext as ReactTags } from "react-tag-input";
-import { collection, doc, onSnapshot, query, where, orderBy } from "firebase/firestore";
-import { HiMail } from "react-icons/hi";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine, RiDeleteBinLine } from "react-icons/ri";
-import { AiFillDelete, AiFillEdit, AiOutlineEdit } from "react-icons/ai";
+import { AiOutlineEdit } from "react-icons/ai";
 import db from "./Firebase";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";

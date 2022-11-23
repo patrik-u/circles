@@ -1,27 +1,20 @@
 //#region imports and constants
-const { getLinkPreview, getPreviewFromContent } = require("link-preview-js");
+const { getLinkPreview } = require("link-preview-js");
 const functions = require("firebase-functions");
-//const { defineInt, defineString } = require("firebase-functions/params");
 const admin = require("firebase-admin");
-const fetch = require("node-fetch");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
-const { GoogleSpreadsheet } = require("google-spreadsheet");
 const fs = require("fs");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 const linkify = require("linkifyjs");
-const linkifyHtml = require("linkify-html");
-const crypto = require("crypto");
 
 admin.initializeApp();
 
 const express = require("express");
 const cors = require("cors");
 
-const { request } = require("express");
-const { firebaseConfig } = require("firebase-functions");
 const { user } = require("firebase-functions/v1/auth");
 
 const app = express();
@@ -29,9 +22,6 @@ const app = express();
 app.use(cors());
 
 const db = admin.firestore();
-
-const nodemailer = require("nodemailer");
-const postmarkTransport = require("nodemailer-postmark-transport");
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -43,14 +33,6 @@ const postmarkTransport = require("nodemailer-postmark-transport");
 // );
 
 // const Handlebars = require("handlebars");
-
-const path = require("path");
-const { I18n } = require("i18n");
-const i18n = new I18n({
-    defaultLocale: "en",
-    locales: ["en", "sv"],
-    directory: path.join(__dirname, "locales"),
-});
 
 //#endregion
 
@@ -96,35 +78,6 @@ const auth = async (req, res, next) => {
 };
 
 // authorize user and decode token if available but let unautherized users through
-const noAuth = async (req, res, next) => {
-    if ((!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) && !(req.cookies && req.cookies.__session)) {
-        next();
-        return;
-    }
-
-    let idToken;
-    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
-        // read the ID Token from the Authorization header.
-        idToken = req.headers.authorization.split("Bearer ")[1];
-    } else if (req.cookies) {
-        // read the ID Token from cookie.
-        idToken = req.cookies.__session;
-    } else {
-        // no cookie
-        next();
-        return;
-    }
-
-    try {
-        const decodedIdToken = await admin.auth().verifyIdToken(idToken);
-        req.user = decodedIdToken;
-        next();
-        return;
-    } catch (error) {
-        next();
-        return;
-    }
-};
 
 //#endregion
 
@@ -330,20 +283,6 @@ const getNewUserData = (id, email, date) => {
         email: email,
         created_at: date,
     };
-};
-
-const getCallerIp = (req) => {
-    let callerIp = null;
-    if (req.headers["fastly-client-ip"]) {
-        callerIp = req.headers["fastly-client-ip"];
-    } else if (req.headers["x-forwarded-for"]) {
-        callerIp = req.headers["x-forwarded-for"];
-    } else if (req.headers["x-appengine-user-ip"]) {
-        callerIp = req.headers["x-appengine-user-ip"];
-    } else if (req.socket.remoteAddress) {
-        callerIp = req.socket.remoteAddress;
-    }
-    return callerIp;
 };
 
 // creates connection between two circles
