@@ -23,6 +23,7 @@ import App from "./App";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 //#endregion
 
 //#region initializations
@@ -92,6 +93,8 @@ ReactDOM.render(
     </Router>,
     document.getElementById("root")
 );
+
+serviceWorkerRegistration.unregister();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -2,6 +2,27 @@ import i18n from "../i18n/Localization";
 import config from "../Config";
 import { GeoPoint } from "firebase/firestore";
 
+export const getImageKitUrl = (url, width, height) => {
+    if (!url) return null;
+
+    let imageKitEndpoint = "https://ik.imagekit.io/circles/";
+    let imageKitParams = "";
+    if (width || height) {
+        imageKitParams = "?tr=";
+        if (width) {
+            imageKitParams += "w-" + width;
+        }
+        if (height) {
+            if (width) {
+                imageKitParams += ",";
+            }
+            imageKitParams += "h-" + height;
+        }
+    }
+    const imageKitUrl = url.replace("https://firebasestorage.googleapis.com/", imageKitEndpoint) + imageKitParams;
+    return imageKitUrl;
+};
+
 export const getGeoPoint = (loc) => {
     if (!loc) return null;
     if (loc.latitude) {
