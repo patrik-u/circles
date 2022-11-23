@@ -1,28 +1,11 @@
 //#region imports
-import React, { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useContext, useRef, useCallback } from "react";
 import {
     Box,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
     Flex,
-    FormControl,
-    FormLabel,
     HStack,
     VStack,
     Spinner,
-    Table,
-    TableCaption,
-    Thead,
-    Tr,
-    Td,
-    Th,
-    Tfoot,
-    Tbody,
     Text,
     Image,
     Icon,
@@ -31,7 +14,6 @@ import {
     PopoverTrigger,
     PopoverContent,
     Button,
-    useDisclosure,
     PopoverArrow,
     useToast,
 } from "@chakra-ui/react";
@@ -44,8 +26,6 @@ import social_linkedin from "../assets/images/social_linkedin26x26.png";
 import social_medium from "../assets/images/social_medium26x26.png";
 import social_codo from "../assets/images/social_codo26x26.png";
 import social_link from "../assets/images/social_link26x26.png";
-import Select, { StylesConfig } from "react-select";
-import { Form, Formik, Field } from "formik";
 import {
     CircleTypeForm,
     CircleImagesForm,
@@ -79,7 +59,7 @@ import {
     toastSuccess,
     getLngLatArray,
 } from "../components/Helpers";
-import { collection, doc, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import IsMobileContext from "../components/IsMobileContext";
 import { Marker } from "react-map-gl";
 import { Routes, Route, useNavigate, useParams, useSearchParams, useLocation, matchPath } from "react-router-dom";
@@ -91,21 +71,17 @@ import {
     ShareButtonMenu,
     openCircle,
     circleDefaultRoute,
-    isConnected,
-    isConnectedId,
     isMutuallyConnected,
     isFollowing,
-    adminCircles,
     defaultContentWidth,
     CircleTags,
     ConnectButton,
     getConnectLabel,
 } from "../components/Navigation";
 import { Chat } from "./Chat";
-import { HiClock, HiCheckCircle, HiXCircle } from "react-icons/hi";
+import { HiClock } from "react-icons/hi";
 import { RiMapPinFill, RiLinksLine } from "react-icons/ri";
 import { GiRoundStar } from "react-icons/gi";
-import { BsArrowRight } from "react-icons/bs";
 import { AiOutlineDisconnect } from "react-icons/ai";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { getPreciseDistance } from "geolib";
@@ -1603,7 +1579,7 @@ export const CircleItemSmall = ({ item, onClick, focusItem, navigate, location, 
             {...props}
         >
             <Box width="140px" height="95px" flexShrink="0" flexGrow="0" backgroundColor="#b9b9b9" overflow="hidden" position="relative" borderRadius="13px">
-                <CircleCover circle={item} />
+                <CircleCover circle={item} coverWidth={140} />
 
                 <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" />
 
@@ -1951,7 +1927,7 @@ export const Circles = ({
                 flexShrink="0"
             >
                 <Box height="40%" backgroundColor="#b9b9b9" overflow="hidden">
-                    <CircleCover circle={item} />
+                    <CircleCover circle={item} coverWidth={157} />
                 </Box>
                 <Box height="44px" position="relative" top="-22px">
                     <CirclePicture circle={item} size={44} />

@@ -5,10 +5,33 @@ import { GeoPoint } from "firebase/firestore";
 export const getImageKitUrl = (url, width, height) => {
     if (!url) return null;
 
+    const firebaseStorageUrl = "https://firebasestorage.googleapis.com/";
+    let imageKitUrl = "";
     let imageKitEndpoint = "https://ik.imagekit.io/circles/";
+    if (url.startsWith("/")) {
+        switch (config.environment) {
+            default:
+            case "dev":
+                return url;
+            case "dev-prod":
+                return url;
+            case "staging":
+                imageKitEndpoint += "web-staging/";
+                break;
+            case "prod":
+                imageKitEndpoint += "web-prod/";
+                break;
+        }
+        imageKitUrl = imageKitEndpoint + url.slice(1);
+    } else if (url.startsWith(firebaseStorageUrl)) {
+        imageKitEndpoint += "storage/";
+        imageKitUrl = url.replace(firebaseStorageUrl, imageKitEndpoint);
+    }
+
     let imageKitParams = "";
     if (width || height) {
-        imageKitParams = "?tr=";
+        imageKitParams += url.includes("?") ? "&" : "?";
+        imageKitParams += "tr=";
         if (width) {
             imageKitParams += "w-" + width;
         }
@@ -19,7 +42,7 @@ export const getImageKitUrl = (url, width, height) => {
             imageKitParams += "h-" + height;
         }
     }
-    const imageKitUrl = url.replace("https://firebasestorage.googleapis.com/", imageKitEndpoint) + imageKitParams;
+    imageKitUrl += imageKitParams;
     return imageKitUrl;
 };
 

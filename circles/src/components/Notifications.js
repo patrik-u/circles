@@ -3,20 +3,17 @@ import React, { useState, useEffect, useContext, useRef } from "react";
 import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
 import UserContext from "./UserContext";
 import IsMobileContext from "./IsMobileContext";
-import db, { auth } from "./Firebase";
+import db from "./Firebase";
 import axios from "axios";
-import { isMobile as detectIsMobile } from "react-device-detect";
-import { collection, doc, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { Routes, Route, useNavigate, useHistory, useLocation, match, matchPath, useMatch, matchRoutes } from "react-router-dom";
+import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import i18n from "i18n/Localization";
 import { FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
-import { BsAwardFill } from "react-icons/bs";
 import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "./Helpers";
-import { routes, openCircle } from "./Navigation";
-import { GiTiedScroll } from "react-icons/gi";
+import { openCircle } from "./Navigation";
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {

@@ -1,24 +1,18 @@
 //#region imports
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
+import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
 import UserContext from "./UserContext";
 import IsMobileContext from "./IsMobileContext";
-import db, { auth } from "./Firebase";
+import db from "./Firebase";
 import axios from "axios";
-import { isMobile as detectIsMobile } from "react-device-detect";
-import { collection, doc, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { Routes, Route, useNavigate, useHistory, useLocation, match, matchPath, useMatch, matchRoutes } from "react-router-dom";
+import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import i18n from "i18n/Localization";
-import { FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
-import { IoPersonAdd } from "react-icons/io5";
-import { HiBell, HiBellSnooze, HiBellAlert, HiCheck, HiX } from "react-icons/hi";
-import { HiOutlineBell, HiOutlineBellSlash, HiOutlineBellSnooze, HiOutlineBellAlert } from "react-icons/hi2";
+import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiOutlineMessage } from "react-icons/ai";
-import { BsAwardFill } from "react-icons/bs";
-import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, singleLineEllipsisStyle } from "./Helpers";
-import { routes, openCircle, openCircleSection, CirclePicture } from "./Navigation";
-import { GiTiedScroll } from "react-icons/gi";
+import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "./Helpers";
+import { openCircleSection, CirclePicture } from "./Navigation";
 import { isConnected } from "./Navigation";
 //#endregion
 

@@ -1,10 +1,10 @@
 import { useState, useContext, useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import MapGL, { GeolocateControl, NavigationControl } from "react-map-gl";
+import { GeolocateControl, NavigationControl } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useThreebox } from "./ThreeboxProvider";
 import { Map, useMap } from "react-map-gl";
 import { getLatlng, log } from "./Helpers";
-import { Routes, Navigate, Route, useNavigate, useHistory, useLocation, useSearchParams, match, matchPath, useMatch, matchRoutes } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import IsMobileContext from "./IsMobileContext";
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
