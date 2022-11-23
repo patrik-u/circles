@@ -105,7 +105,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                     errors.type = i18n.t("Choose type of circle");
                 } else if (values.type === "tag" && !user?.is_admin) {
                     errors.type = "unauthorized";
-                } else if (values.type !== "tag" && values.type !== "circle" && values.type !== "event" && values.type !== "room") {
+                } else if (values.type !== "tag" && values.type !== "circle" && values.type !== "event" && values.type !== "room" && values.type !== "link") {
                     errors.type = i18n.t("Choose valid circle type");
                 }
                 return errors;
@@ -151,6 +151,18 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             </VStack>
                                                         </HStack>
                                                     </Radio>
+
+                                                    {user?.is_admin && (
+                                                        <Radio onChange={onChange} value="link">
+                                                            <HStack spacing="10px">
+                                                                <Image src={require("../assets/images/circle-link-option.png")} width="100px" height="100px" />
+                                                                <VStack align="start" spacing="0px">
+                                                                    <Text fontWeight="700">{i18n.t("Link")}</Text>
+                                                                    <Text textAlign="left">{i18n.t("Link description")}</Text>
+                                                                </VStack>
+                                                            </HStack>
+                                                        </Radio>
+                                                    )}
 
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="tag">

@@ -629,12 +629,12 @@ app.post("/circles", auth, async (req, res) => {
     if (!req.body.name || req.body.name.length > 50) {
         errors.name = "Name must be between 1 and 50 characters";
     }
-    if (req.body.type !== "circle" && req.body.type !== "event" && req.body.type !== "tag" && req.body.type !== "room") {
+    if (req.body.type !== "circle" && req.body.type !== "event" && req.body.type !== "tag" && req.body.type !== "room" && req.body.type !== "link") {
         errors.type = "Invalid circle type";
     }
 
     let description = req.body.description;
-    if (req.body.type === "circle" || req.body.type === "tag") {
+    if (req.body.type === "circle" || req.body.type === "tag" || req.body.type === "room" || req.body.type === "link") {
         if (req.body.description && req.body.description > 200) {
             errors.description = "Description needs to be between 0 and 200 characters";
         }
@@ -1046,8 +1046,13 @@ app.post("/circles/:id/connections", auth, async (req, res) => {
                 let targetCircleData = await getCircleData(targetId);
                 let targetCircle = await getCircle(targetId);
 
-                // TODO for now auto approve event and tag connections
-                if (targetCircleData?.auto_approve_connections || targetCircle?.type === "event" || targetCircle?.type === "tag") {
+                // TODO for now auto approve event, link and tag connections
+                if (
+                    targetCircleData?.auto_approve_connections ||
+                    targetCircle?.type === "event" ||
+                    targetCircle?.type === "tag" ||
+                    targetCircle?.type === "link"
+                ) {
                     await createConnection(sourceId, targetId, "connected_mutually_to", true, authCallerId);
                     await createConnection(targetId, sourceId, "connected_mutually_to");
                     await updateTags(sourceId, targetId, "add");
