@@ -26,26 +26,27 @@ import {
     PopoverArrow,
     useToast,
 } from "@chakra-ui/react";
-import useWindowDimensions from "../components/useWindowDimensions";
+import useWindowDimensions from "../../components/useWindowDimensions";
 import i18n from "i18n/Localization";
-import UserContext from "../components/UserContext";
-import db from "../components/Firebase";
+import UserContext from "../../components/UserContext";
+import db from "../../components/Firebase";
 import axios from "axios";
-import { getDayAndMonth, datesAreOnSameDay, log } from "../components/Helpers";
+import { getDayAndMonth, datesAreOnSameDay, log, isMember } from "../../components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
-import IsMobileContext from "../components/IsMobileContext";
-import { CircleHeader, CirclePicture, routes, isMember } from "../components/Navigation";
+import IsMobileContext from "../../components/IsMobileContext";
+import { CircleHeader, CirclePicture } from "../../components/CircleElements";
+import { routes } from "../../components/Navigation";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { BsReplyFill } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
 import { Scrollbars } from "react-custom-scrollbars-2";
-import EmojiPicker from "../components/EmojiPicker";
+import EmojiPicker from "../../components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 //#endregion
 
-export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
+export const CircleChat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     const isMobile = useContext(IsMobileContext);
     const user = useContext(UserContext);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
@@ -825,4 +826,4 @@ export const Chat = ({ circle, setCircle, onConnect, setChatCircle }) => {
     );
 };
 
-export default Chat;
+export default CircleChat;

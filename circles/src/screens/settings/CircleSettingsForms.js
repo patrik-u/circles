@@ -1,5 +1,5 @@
 //#region imports
-import { useContext, useRef, useState, forwardRef, useEffect, useMemo } from "react";
+import { useContext, useRef, useState, forwardRef, useEffect, useMemo, lazy } from "react";
 import { Form, Field, Formik } from "formik";
 import MultiSelect, { components } from "react-select";
 import Select from "react-select";
@@ -40,13 +40,12 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import { FiFile } from "react-icons/fi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeoPoint } from "firebase/firestore";
-import { storage } from "./Firebase";
-import { toastError, toastSuccess, singleLineEllipsisStyle, log } from "./Helpers";
+import { storage } from "../../components/Firebase";
+import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles } from "../../components/Helpers";
 import { useNavigate } from "react-router-dom";
-import { routes, adminCircles } from "./Navigation";
-import { ConnectionNotification } from "./Notifications";
-import { CircleListItem } from "../screens/Circle";
-import UserContext from "./UserContext";
+import { routes } from "../../components/Navigation";
+import { ConnectionNotification } from "../main/Notifications";
+import UserContext from "../../components/UserContext";
 import axios from "axios";
 import { i18n, LanguagePicker } from "i18n/Localization";
 import ReactQuill from "react-quill";
@@ -55,10 +54,14 @@ import { WithContext as ReactTags } from "react-tag-input";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine, RiDeleteBinLine } from "react-icons/ri";
 import { AiOutlineEdit } from "react-icons/ai";
-import db from "./Firebase";
+import db from "../../components/Firebase";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
 //#endregion
+
+//PWA123
+import CircleListItem from "../circle/CircleListItem";
+//const CircleListItem = lazy(() => import("../circle/CircleListItem"));
 
 export const DatePickerInput = forwardRef(({ value, onClick }, ref) => (
     <Box border="1px solid #e2e8f0" height="40px" borderRadius="0.375rem" onClick={onClick} ref={ref} align="center">
@@ -121,7 +124,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                 <Stack direction="column" divider={<StackDivider borderColor="gray.200" />}>
                                                     <Radio onChange={onChange} value="circle">
                                                         <HStack spacing="10px">
-                                                            <Image src={require("../assets/images/circle-default-option.png")} width="100px" height="100px" />
+                                                            <Image src="/circle-default-option.png" width="100px" height="100px" />
                                                             <VStack align="start" spacing="0px">
                                                                 <Text fontWeight="700">{i18n.t("Circle")}</Text>
                                                                 <Text textAlign="left">{i18n.t("Circle of people gathering around a common cause")}</Text>
@@ -130,7 +133,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                     </Radio>
                                                     <Radio onChange={onChange} value="event">
                                                         <HStack spacing="10px">
-                                                            <Image src={require("../assets/images/circle-event-option.png")} width="100px" height="100px" />
+                                                            <Image src="/circle-event-option.png" width="100px" height="100px" />
                                                             <VStack align="start" spacing="0px">
                                                                 <Text fontWeight="700">{i18n.t("Event")}</Text>
                                                                 <Text textAlign="left">{i18n.t("Event that takes place at a certain date")}</Text>
@@ -139,7 +142,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                     </Radio>
                                                     <Radio onChange={onChange} value="room">
                                                         <HStack spacing="10px">
-                                                            <Image src={require("../assets/images/circle-room-option.png")} width="100px" height="100px" />
+                                                            <Image src="/circle-room-option.png" width="100px" height="100px" />
                                                             <VStack align="start" spacing="0px">
                                                                 <Text fontWeight="700">{i18n.t("Room")}</Text>
                                                                 <Text textAlign="left">{i18n.t("Room description")}</Text>
@@ -150,7 +153,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="link">
                                                             <HStack spacing="10px">
-                                                                <Image src={require("../assets/images/circle-link-option.png")} width="100px" height="100px" />
+                                                                <Image src="/circle-link-option.png" width="100px" height="100px" />
                                                                 <VStack align="start" spacing="0px">
                                                                     <Text fontWeight="700">{i18n.t("Link")}</Text>
                                                                     <Text textAlign="left">{i18n.t("Link description")}</Text>
@@ -162,7 +165,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="tag">
                                                             <HStack spacing="10px">
-                                                                <Image src={require("../assets/images/circle-tag-option.png")} width="100px" height="100px" />
+                                                                <Image src="/circle-tag-option.png" width="100px" height="100px" />
                                                                 <VStack align="start" spacing="0px">
                                                                     <Text fontWeight="700">{i18n.t("Tag")}</Text>
                                                                     <Text textAlign="left">{i18n.t("Tag description")}</Text>

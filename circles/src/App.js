@@ -1,15 +1,10 @@
 /* global google */
 //#region imports
-import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import {
     Flex,
     Box,
     Text,
-    Menu,
-    Image,
-    MenuButton,
-    MenuDivider,
-    MenuItem,
     Modal,
     ModalOverlay,
     ModalContent,
@@ -17,16 +12,9 @@ import {
     ModalFooter,
     ModalBody,
     ModalCloseButton,
-    Spinner,
     Button,
-    Center,
-    Avatar,
-    Icon,
-    Checkbox,
-    MenuList,
     useToast,
     HStack,
-    VStack,
     useDisclosure,
 } from "@chakra-ui/react";
 import { getPreciseDistance } from "geolib";
@@ -39,662 +27,31 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCredential } from "firebase/auth";
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
-import { toastError, log, getImageKitUrl } from "./components/Helpers";
-import { ForceGraph } from "./components/Graph";
+import { toastError, log, clusterConnections } from "./components/Helpers";
+import { parseCircleId } from "./components/Navigation";
+import { CirclePicture } from "./components/CircleElements";
+import { defaultContentWidth } from "./components/Theme";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import { Routes, Navigate, Route, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { Circle, CircleMarker, CirclesMapMarkers, CircleConnections, CircleMapEdges } from "screens/Circle";
-import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleQuestionsForm } from "./components/CircleSettingsForms";
-import AppAdmin from "./screens/AppAdmin";
+import { Routes, Navigate, Route, useLocation, useSearchParams } from "react-router-dom";
 import i18n from "i18n/Localization";
-import Notifications from "./components/Notifications";
-import Messages from "./components/Messages";
-import { FaSatellite, FaMapMarkedAlt } from "react-icons/fa";
-import { IoAdd, IoList, IoMap } from "react-icons/io5";
-import { BiNetworkChart } from "react-icons/bi";
-import {
-    LeftNavigator,
-    BottomNavigator,
-    CirclePicture,
-    CircleCover,
-    routes,
-    openCircle,
-    clusterConnections,
-    parseCircleId,
-    defaultContentWidth,
-    BlueBar,
-} from "./components/Navigation";
-import default_user_picture from "./assets/images/default-user-picture.png";
 import config from "./Config";
-import { LoginRegisterMenu } from "./components/LoginForms";
-import useWindowDimensions from "./components/useWindowDimensions";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper";
-import { Marker } from "react-map-gl";
 import { RiLinksLine } from "react-icons/ri";
-import PrivacyPolicy from "./components/PrivacyPolicy";
-//#endregion
-
-//#region components
-
-const LocationPickerMarker = ({ position }) => {
-    // useEffect(() => {
-    //     console.log(JSON.stringify(position, null, 2));
-    // }, [position]);
-
-    return (
-        <>
-            {position[0] && position[1] && (
-                <Marker offset={[0, -24]} latitude={position[1]} longitude={position[0]} className="circle-marker">
-                    <Image src={require("./assets/images/marker2.png")} />
-                </Marker>
-            )}
-        </>
-    );
-};
-
-const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, setSatelliteMode, mapOnly, circle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const navigate = useNavigate();
-
-    return (
-        <VStack position="absolute" right="18px" bottom={isMobile ? "300px" : "30px"} zIndex="50">
-            {isMobile && !mapOnly && (
-                <>
-                    <Flex
-                        backgroundColor="#c242bbdd"
-                        _hover={{ backgroundColor: "#e94ce1dd" }}
-                        width="54px"
-                        height="54px"
-                        borderRadius="50%"
-                        cursor="pointer"
-                        alignItems="center"
-                        justifyContent="center"
-                        onClick={() => navigate(routes.circle(circle?.id ?? "earth").new)}
-                    >
-                        <Icon width="28px" height="28px" color="white" as={IoAdd} />
-                    </Flex>
-                    <Flex
-                        backgroundColor="#f4f4f4dd"
-                        _hover={{ backgroundColor: "#f5f5f5dd" }}
-                        width="48px"
-                        height="48px"
-                        borderRadius="50%"
-                        cursor="pointer"
-                        alignItems="center"
-                        justifyContent="center"
-                        onClick={() => setDisplayMode(displayMode === "map" ? "list" : "map")}
-                    >
-                        <Icon width="28px" height="28px" color="black" as={displayMode === "map" ? IoList : IoMap} cursor="pointer" />
-                    </Flex>
-                </>
-            )}
-
-            {(!isMobile || displayMode === "map" || displayMode === "graph") && (
-                <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
-                    <Flex
-                        backgroundColor="#f4f4f4dd"
-                        _hover={{ backgroundColor: "#f5f5f5dd" }}
-                        borderRadius="50%"
-                        cursor="pointer"
-                        width="48px"
-                        height="48px"
-                        alignItems="center"
-                        justifyContent="center"
-                    >
-                        <Icon
-                            width="28px"
-                            height="28px"
-                            color="black"
-                            as={satelliteMode ? FaMapMarkedAlt : FaSatellite}
-                            onClick={() => {
-                                if (displayMode === "map") {
-                                    setSatelliteMode(!satelliteMode);
-                                }
-                                setDisplayMode("map");
-                            }}
-                            cursor="pointer"
-                        />
-                    </Flex>
-                </Flex>
-            )}
-
-            {config.environment !== "prod" && (
-                <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
-                    <Flex
-                        backgroundColor="#f4f4f4dd"
-                        _hover={{ backgroundColor: "#f5f5f5dd" }}
-                        borderRadius="50%"
-                        cursor="pointer"
-                        width="48px"
-                        height="48px"
-                        alignItems="center"
-                        justifyContent="center"
-                    >
-                        <Icon width="28px" height="28px" color="black" as={BiNetworkChart} onClick={() => setDisplayMode("graph")} cursor="pointer" />
-                    </Flex>
-                </Flex>
-            )}
-        </VStack>
-    );
-};
-
-const ProfileMenu = ({ onSignOutClick, circle, setCircle }) => {
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
-    const isMobile = useContext(IsMobileContext);
-    const circlePictureSizeInt = isMobile ? 30 : 60;
-    const circlePictureSize = `${circlePictureSizeInt}px`;
-    const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
-
-    return (
-        <Menu closeOnBlur="true" onClose={profileMenuOnClose} onOpen={profileMenuOnOpen} isOpen={profileMenuIsOpen}>
-            <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} minW={0}>
-                <Avatar
-                    size={"sm"}
-                    w={circlePictureSize}
-                    h={circlePictureSize}
-                    src={getImageKitUrl(user?.picture, circlePictureSizeInt, circlePictureSizeInt) ?? default_user_picture}
-                />
-            </MenuButton>
-            <MenuList alignItems={"center"} borderRadius="20" zIndex="60">
-                <br />
-                <Center>
-                    <Avatar
-                        alignSelf="center"
-                        cursor="pointer"
-                        size={"2xl"}
-                        src={getImageKitUrl(user?.picture, 128, 128) ?? default_user_picture}
-                        onClick={() => {
-                            profileMenuOnClose();
-                            openCircle(navigate, user, user.id, circle, setCircle);
-                        }}
-                    />
-                </Center>
-                <br />
-                <Center
-                    cursor="pointer"
-                    onClick={() => {
-                        profileMenuOnClose();
-                        openCircle(navigate, user, user.id, circle, setCircle);
-                    }}
-                >
-                    <strong>{user.name}</strong>
-                </Center>
-                <br />
-                <MenuDivider />
-                <MenuItem onClick={() => navigate(routes.circle(user.id).home)}>{i18n.t("my profile")}</MenuItem>
-                <MenuItem onClick={() => navigate(routes.circle(user.id).settings.home)}>{i18n.t("my settings")}</MenuItem>
-                <MenuDivider />
-                <Center>
-                    <Button
-                        onClick={onSignOutClick}
-                        display="inline-flex"
-                        fontSize={"sm"}
-                        fontWeight={600}
-                        color={"#333"}
-                        href={"#"}
-                        variant="outline"
-                        borderRadius="full"
-                    >
-                        {i18n.t("log out")}
-                    </Button>
-                </Center>
-            </MenuList>
-        </Menu>
-    );
-};
-
-const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode, chatCircle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const { windowWidth } = useWindowDimensions();
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
-    const iconSize = isMobile ? "24px" : "30px";
-    const circlePictureSize = isMobile ? "30px" : "63px";
-    const isMapActive = displayMode === "map" || displayMode === "graph";
-
-    const onBack = () => {
-        navigate(routes.home);
-    };
-
-    return (
-        <Flex
-            className="fixedSize"
-            align="center"
-            flexBasis={isMobile ? "40px" : "90px"}
-            height={isMobile ? "40px" : "90px"}
-            maxHeight={isMobile ? "40px" : "90px"}
-            backgroundColor={isMobile ? "white" : "transparent"}
-            //style={{ background: isMobile ? "linear-gradient(to left top, #c463c0, #4883f8)" : "transparent" }}
-            position={isMobile ? "relative" : "absolute"}
-            top="0px"
-            right={isMobile ? "0px" : "50px"}
-            zIndex="1000"
-            width={isMobile ? "100%" : "calc(100% - 50px)"}
-            pointerEvents={isMobile && isMapActive ? "none" : "auto"}
-        >
-            {isMobile && circle && circle.id !== "earth" && (
-                <Box marginLeft="6px" pointerEvents="auto">
-                    <Flex flexGrow="1" flexDirection="row" justifyContent="flex-start" align="center">
-                        {circle?.parent_circle ? (
-                            <Image
-                                src={getImageKitUrl(circle.parent_circle.picture, isMobile ? 20 : 50, isMobile ? 20 : 50)}
-                                width={isMobile ? "20px" : "50px"}
-                                height={isMobile ? "20px" : "50px"}
-                                onClick={() => openCircle(navigate, user, circle.parent_circle.id, circle, setCircle)}
-                                cursor="pointer"
-                                position="absolute"
-                                top="7px"
-                                left="10px"
-                            />
-                        ) : (
-                            <Image
-                                src="/earth.png"
-                                width={isMobile ? "20px" : "50px"}
-                                height={isMobile ? "20px" : "50px"}
-                                // marginRight={isMobile ? "5px" : "10px"}
-                                onClick={() => navigate(routes.home)}
-                                cursor="pointer"
-                                position="absolute"
-                                top="7px"
-                                //top={isMobile ? "21px" : "7px"}
-                                left="10px"
-                            />
-                        )}
-                    </Flex>
-                </Box>
-            )}
-
-            <Box flex="1" />
-
-            <Box
-                align="center"
-                marginRight={isMobile ? "12px" : "25px"}
-                backgroundColor={isMobile ? (isMapActive ? "transparent" : "#ffffffee") : "transparent"}
-                borderRadius="10px"
-                paddingLeft="10px"
-                pointerEvents="auto"
-            >
-                {user && (
-                    <HStack spacing={isMobile ? "20px" : "50px"} align="center">
-                        {/* <Points satelliteMode={satelliteMode} /> */}
-
-                        <Messages satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} chatCircle={chatCircle} />
-
-                        <Notifications satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} />
-
-                        <ProfileMenu onSignOutClick={onSignOutClick} circle={circle} setCircle={setCircle} />
-                    </HStack>
-                )}
-
-                {isSigningIn && <Spinner color={satelliteMode && !isMobile ? "white" : "#333"} marginRight="10px" />}
-
-                <LoginRegisterMenu satelliteMode={satelliteMode} gsiScriptLoaded={gsiScriptLoaded} isSigningIn={isSigningIn} isSignedIn={isSignedIn} />
-            </Box>
-        </Flex>
-    );
-};
-
-const CircleCoverCaurosel = ({ isMobile, circle, embed, setIsEmbedLoading }) => {
-    const onNextFrame = (callback) => {
-        setTimeout(function () {
-            requestAnimationFrame(callback);
-        });
-    };
-
-    useEffect(() => {
-        if (!embed) {
-            setIsEmbedLoading(false);
-        }
-    }, [embed, setIsEmbedLoading]);
-
-    const slideChange = () => {
-        if (embed) {
-            setIsEmbedLoading(false);
-        }
-    };
-
-    return (
-        <>
-            {circle?.cover && (
-                <Box width="100%" height="100%" zIndex="50" position="absolute" top="0px" pointerEvents="none">
-                    <Swiper
-                        slidesPerView="auto"
-                        navigation={true}
-                        loop={true}
-                        modules={[Navigation, Pagination]}
-                        pagination={{
-                            clickable: true,
-                        }}
-                        onSlideChange={slideChange}
-                    >
-                        <SwiperSlide>
-                            <Box backgroundColor={circle.cover_background ?? "#f7f7f7"} width="100%" height="100%" pointerEvents="auto">
-                                <CircleCover circle={circle} objectFit="contain" backgroundColor={circle.cover_background ?? "#f7f7f7"} />
-                            </Box>
-                        </SwiperSlide>
-                        <SwiperSlide></SwiperSlide>
-                    </Swiper>
-                </Box>
-            )}
-        </>
-    );
-};
-
-const NewUserGuide = ({ onClose }) => {
-    const user = useContext(UserContext);
-    const isMobile = useContext(IsMobileContext);
-    const allSteps = useMemo(
-        () => ({
-            default: { id: "default", label: "Default" },
-            tnc: { id: "tnc", label: i18n.t("Terms and conditions") },
-            welcome: { id: "welcome", label: i18n.t("Welcome") },
-            about: { id: "about", label: i18n.t("About") },
-            images: { id: "images", label: i18n.t("Images") },
-            tags: { id: "tags", label: i18n.t("Tags") },
-            questions: { id: "questions", label: i18n.t("Questions") },
-            location: { id: "location", label: i18n.t("base") },
-            complete: { id: "complete", label: i18n.t("Congratulations") },
-        }),
-        []
-    );
-    const [agreedToTnc, setAgreedToTnc] = useState(false);
-    const [agreedToEmailUpdates, setAgreedToEmailUpdates] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-
-    const [steps, setSteps] = useState([]);
-    const [activeStep, setActiveStep] = useState(allSteps.default);
-    const [hasBeenInitialized, setHasBeenInitialized] = useState(false);
-    const toast = useToast();
-
-    useEffect(() => {
-        log("NewUserGuide.useEffect 1");
-        if (!user?.id || hasBeenInitialized) return;
-        setHasBeenInitialized(true);
-        let isProd = config.environment === "prod";
-        let ignoreCheck = false; //!isProd;
-        let profileSteps = [];
-        if (!user.agreed_to_tnc || ignoreCheck) {
-            // user hasn't agreed to terms and conditions
-            profileSteps.push(allSteps.tnc);
-        }
-        if (!user.completed_guide || ignoreCheck) {
-            profileSteps.push(allSteps.welcome);
-            if (!user.description || ignoreCheck) {
-                profileSteps.push(allSteps.about);
-            }
-            if ((!user.picture && !user.cover) || ignoreCheck) {
-                profileSteps.push(allSteps.images);
-            }
-            if (!user.tags || user.tags?.length <= 0 || ignoreCheck) {
-                profileSteps.push(allSteps.tags);
-            }
-            if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
-                profileSteps.push(allSteps.questions);
-            }
-            if (!user.base || ignoreCheck) {
-                //profileSteps.push(allSteps.location);
-            }
-        }
-        profileSteps.push(allSteps.complete);
-
-        if (profileSteps.length <= 0) {
-            onClose();
-        }
-
-        setSteps(profileSteps);
-        setActiveStep(profileSteps[0]);
-        // if profile has no picture or cover prompt them to choose
-    }, [
-        user?.id,
-        user?.agreed_to_tnc,
-        user?.completed_guide,
-        user?.description,
-        user?.picture,
-        user?.cover,
-        user?.tags,
-        user?.questions,
-        user?.base,
-        hasBeenInitialized,
-        allSteps,
-        onClose,
-    ]);
-
-    const next = () => {
-        let nextIndex = steps.indexOf(activeStep) + 1;
-        if (nextIndex >= steps.length) {
-            onClose();
-        } else {
-            setActiveStep(steps[nextIndex]);
-        }
-    };
-
-    const onAgreeToTncClick = () => {
-        if (!agreedToTnc) return;
-
-        setIsSaving(true);
-
-        // update user data
-        axios
-            .put(`/circles/${user.id}`, {
-                circlePrivateData: {
-                    agreed_to_tnc: agreedToTnc,
-                    agreed_to_email_updates: agreedToEmailUpdates,
-                },
-            })
-            .then((x) => {
-                let result = x.data;
-                if (result.error) {
-                    toastError(toast, JSON.stringify(result.error, null, 2));
-                    next();
-                } else {
-                    next();
-                }
-                setIsSaving(false);
-            })
-            .catch((error) => {
-                setIsSaving(false);
-            });
-    };
-
-    const complete = () => {
-        // confirm user has completed guide
-        axios
-            .put(`/circles/${user.id}`, {
-                circlePrivateData: {
-                    completed_guide: true,
-                },
-            })
-            .then((x) => {})
-            .catch((error) => {});
-        next();
-    };
-
-    const getActiveStepComponent = () => {
-        switch (activeStep.id) {
-            case allSteps.tnc.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <Text className="screenHeader" alignSelf="center">
-                                {i18n.t(`Terms  and conditions`)}
-                            </Text>
-                            <Box
-                                width="100%"
-                                height="300px"
-                                borderRadius="5px"
-                                border="1px solid"
-                                borderColor="var(--chakra-colors-gray-200)"
-                                backgroundColor="#f7f7f7"
-                            >
-                                <Scrollbars>
-                                    <PrivacyPolicy omitHeader={true} />
-                                </Scrollbars>
-                            </Box>
-                            <Checkbox isChecked={agreedToTnc} onChange={(e) => setAgreedToTnc(e.target.checked)}>
-                                I agree to the Terms and Conditions and Privacy Policy
-                            </Checkbox>
-                            <Checkbox isChecked={agreedToEmailUpdates} onChange={(e) => setAgreedToEmailUpdates(e.target.checked)}>
-                                I agree to be sent email updates from Circles (optional)
-                            </Checkbox>
-                        </VStack>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
-                            <Button
-                                marginTop="10px"
-                                width="150px"
-                                colorScheme="blue"
-                                borderRadius="25px"
-                                lineHeight="0"
-                                backgroundColor="#389bf8"
-                                color="white"
-                                isDisabled={!agreedToTnc || isSaving}
-                                onClick={onAgreeToTncClick}
-                                position="relative"
-                            >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Confirm`)}</Text>}
-                            </Button>
-                        </Flex>
-                    </Box>
-                );
-
-            case allSteps.welcome.id:
-                return (
-                    <Box>
-                        <Text className="screenHeader" alignSelf="center" textAlign="center">
-                            {i18n.t(`Welcome`)}
-                        </Text>
-                        <Text>Welcome to Circles, please take a few minutes to fill out your change maker profile. </Text>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
-                            <Button
-                                width="150px"
-                                colorScheme="blue"
-                                borderRadius="25px"
-                                lineHeight="0"
-                                backgroundColor="#389bf8"
-                                color="white"
-                                isDisabled={isSaving}
-                                onClick={next}
-                                position="relative"
-                            >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Continue`)}</Text>}
-                            </Button>
-                        </Flex>
-                    </Box>
-                );
-
-            case allSteps.about.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <CircleContentForm
-                                isUpdateForm={true}
-                                language={user.language}
-                                circleId={user.id}
-                                name={user.name}
-                                description={user.description}
-                                content={user.content}
-                                type="user"
-                                isGuideForm={true}
-                                onNext={next}
-                            />
-                        </VStack>
-                    </Box>
-                );
-
-            case allSteps.images.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <CircleImagesForm
-                                isUpdateForm={true}
-                                picture={user.picture}
-                                cover={user.cover}
-                                circleId={user.id}
-                                name={user.name}
-                                description={user.description}
-                                type="user"
-                                isGuideForm={true}
-                                onNext={next}
-                            />
-                        </VStack>
-                    </Box>
-                );
-
-            case allSteps.tags.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <CircleTagsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
-                        </VStack>
-                    </Box>
-                );
-
-            case allSteps.questions.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <CircleQuestionsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
-                        </VStack>
-                    </Box>
-                );
-
-            case allSteps.complete.id:
-                return (
-                    <Box>
-                        <Text className="screenHeader" alignSelf="center" textAlign="center">
-                            {i18n.t(`Congratulations`)}
-                        </Text>
-                        <Text>Thank you for completing your change maker profile. You can change your settings at any time in your user settings.</Text>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
-                            <Button
-                                width="150px"
-                                colorScheme="blue"
-                                borderRadius="25px"
-                                lineHeight="0"
-                                backgroundColor="#389bf8"
-                                color="white"
-                                isDisabled={isSaving}
-                                onClick={complete}
-                                position="relative"
-                            >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Let's get started`)}</Text>}
-                            </Button>
-                        </Flex>
-                    </Box>
-                );
-            default:
-                break;
-        }
-    };
-
-    return (
-        <ModalContent borderRadius="25px">
-            {activeStep.id !== "tnc" && <ModalCloseButton />}
-            <ModalBody>
-                <Box marginTop="10px">{getActiveStepComponent()}</Box>
-                <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
-                    <HStack align="center">
-                        {steps.map((x, i) => (
-                            <Box
-                                key={x.id}
-                                width="10px"
-                                height="10px"
-                                borderRadius="50%"
-                                backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
-                            ></Box>
-                        ))}
-                    </HStack>
-                </Flex>
-            </ModalBody>
-        </ModalContent>
-    );
-};
-
+import TopMenu from "./screens/main/TopMenu";
+import FloatingActionButtons from "./screens/main/FloatingActionButtons";
+import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "./screens/main/MapMarkers";
+import Circle from "./screens/circle/Circle";
+import BlueBar from "./screens/main/BlueBar";
+import LeftNavigator from "./screens/main/LeftNavigator";
+import BottomNavigator from "./screens/main/BottomNavigator";
 //#endregion
 
 const App = () => {
     //#region fields
+    const CircleConnections = lazy(() => import("./screens/circle/CircleConnections"));
+    const NewUserGuide = lazy(() => import("./screens/main/NewUserGuide"));
+    const GraphView = lazy(() => import("./screens/main/GraphView"));
+    const AppAdmin = lazy(() => import("./screens/admin/AppAdmin"));
+
     const [userPublic, setUserPublic] = useState(null);
     const [userData, setUserData] = useState(null);
     const [userConnections, setUserConnections] = useState([]);
@@ -736,15 +93,13 @@ const App = () => {
     const [locationPickerPosition, setLocationPickerPosition] = useState();
     const { isOpen: mustLogInIsOpen, onOpen: mustLogInOnOpen, onClose: mustLogInOnClose } = useDisclosure();
     const mustLogInInitialRef = useRef();
-    const addItemInitialRef = useRef();
     const location = useLocation();
     const [satelliteMode, setSatelliteMode] = useState(true);
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const embed = searchParams.get("embed") === "true";
     const mapOnly = searchParams.get("mapOnly") === "true";
-    const hideCard = searchParams.get("hideCard") === "true";
     const selectedCircleId = parseCircleId(location.pathname);
-    const [isEmbedLoading, setIsEmbedLoading] = useState(embed);
+    const [isEmbedLoading] = useState(embed);
 
     const connectInitialRef = useRef(null);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -819,16 +174,6 @@ const App = () => {
     // detects if desktop resizes to switch to mobile
     const onWindowResize = () => {
         setIsMobile(window.innerWidth <= 768);
-    };
-
-    const onSignedOut = () => {
-        if (uid !== null) {
-            setUid((previousUid) => null);
-        }
-        setUserPublic((previousUser) => null);
-        setUserData((previousUser) => null);
-        setIsSignedIn(false);
-        setIsSigningIn(false);
     };
 
     const onSignOut = () => {
@@ -1098,7 +443,7 @@ const App = () => {
                     setIsSigningIn(false);
                     setHasSignedOut(false);
 
-                    let isProd = config.environment === "prod";
+                    //let isProd = config.environment === "prod";
                     let alwaysShowGuide = false; //!isProd;
 
                     // show new profile guide
@@ -1192,9 +537,17 @@ const App = () => {
                     background={embed ? "transparent" : "white"}
                 >
                     {/* Blue bar (pinned users and circles) */}
-                    {!isMobile && <BlueBar selectedCircleId={selectedCircleId} isSigningIn={isSigningIn} circle={circle} setCircle={setCircle} />}
+                    {!isMobile && (
+                        // <Suspense fallback={<Box width="80px" minWidth="80px" height="100%" backgroundColor="#3f4779" />}>
+                        <BlueBar selectedCircleId={selectedCircleId} isSigningIn={isSigningIn} circle={circle} setCircle={setCircle} />
+                        // </Suspense>
+                    )}
 
-                    {!isMobile && !mapOnly && <LeftNavigator circle={circle} setCircle={setCircle} isSigningIn={isSigningIn} />}
+                    {!isMobile && !mapOnly && (
+                        // <Suspense fallback={<Box width="84px" minWidth="84px" maxWidth="84px" backgroundColor="#f2f2f2" />}>
+                        <LeftNavigator circle={circle} setCircle={setCircle} isSigningIn={isSigningIn} />
+                        // </Suspense>
+                    )}
 
                     {/* Content panel */}
                     <Flex flexDirection="column" width={contentWidth} maxWidth={contentWidth} minWidth={contentWidth}>
@@ -1242,7 +595,14 @@ const App = () => {
                                         />
                                     }
                                 />
-                                <Route path="/appAdmin" element={<AppAdmin />} />
+                                <Route
+                                    path="/appAdmin"
+                                    element={
+                                        <Suspense fallback={<Box />}>
+                                            <AppAdmin />
+                                        </Suspense>
+                                    }
+                                />
                                 <Route path="*" element={<Navigate to="/circle/earth" replace />} />
                             </Routes>
                         </Scrollbars>
@@ -1286,9 +646,10 @@ const App = () => {
 
                     {/* Graph panel */}
                     {displayMode === "graph" && (
-                        <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"}>
-                            <ForceGraph circle={circle} circles={circles} circleConnections={circleConnections} />
-                            {/* <FlowGraph circle={circle} circles={circles} circleConnections={circleConnections} /> */}
+                        <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"} backgroundColor="black">
+                            <Suspense fallback={<div></div>}>
+                                <GraphView circle={circle} circles={circles} circleConnections={circleConnections} />
+                            </Suspense>
                         </Box>
                     )}
 
@@ -1321,14 +682,18 @@ const App = () => {
                             </ModalHeader>
                             <ModalCloseButton />
                             <ModalBody marginBottom="20px">
-                                <CircleConnections
-                                    source={connectSource}
-                                    target={connectTarget}
-                                    option={connectOption}
-                                    isConnecting={isConnecting}
-                                    setIsConnecting={setIsConnecting}
-                                    onClose={connectOnClose}
-                                />
+                                {connectIsOpen && (
+                                    <Suspense fallback={<Box></Box>}>
+                                        <CircleConnections
+                                            source={connectSource}
+                                            target={connectTarget}
+                                            option={connectOption}
+                                            isConnecting={isConnecting}
+                                            setIsConnecting={setIsConnecting}
+                                            onClose={connectOnClose}
+                                        />
+                                    </Suspense>
+                                )}
                             </ModalBody>
                         </ModalContent>
                     </Modal>
@@ -1336,7 +701,11 @@ const App = () => {
                     {/* Change maker profile guide */}
                     <Modal isOpen={newProfileIsOpen} onClose={newProfileOnClose} size="xl" isLazy closeOnOverlayClick={false}>
                         <ModalOverlay />
-                        <NewUserGuide onClose={newProfileOnClose} />
+                        {newProfileIsOpen && (
+                            <Suspense fallback={<Box />}>
+                                <NewUserGuide onClose={newProfileOnClose} />
+                            </Suspense>
+                        )}
                     </Modal>
 
                     {/* Modal popup - Must be logged in */}

@@ -1,6 +1,6 @@
 //#region imports
-import React from "react";
-import ReactDOM from "react-dom";
+import React, { lazy } from "react";
+import { createRoot } from "react-dom/client";
 import reportWebVitals from "./reportWebVitals";
 import { MapProvider } from "react-map-gl";
 import { ThreeboxProvider } from "./components/ThreeboxProvider";
@@ -11,18 +11,11 @@ import { StepsStyleConfig as Steps } from "chakra-ui-steps";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PrivacyPolicy from "./components/PrivacyPolicy";
 import config from "./Config";
 import axios from "axios";
-import "@fontsource/inria-serif/400.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
-import "@fontsource/montserrat/400.css";
-import "@fontsource/montserrat/700.css";
 import App from "./App";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 //#endregion
 
@@ -69,14 +62,17 @@ if (config.environment === "prod") {
         // Set tracesSampleRate to 1.0 to capture 100%
         // of transactions for performance monitoring.
         // We recommend adjusting this value in production
-        tracesSampleRate: 1.0,
+        tracesSampleRate: 0.2,
     });
 }
 
 axios.defaults.baseURL = config.apiUrl;
 //#endregion
 
-ReactDOM.render(
+const PrivacyPolicy = lazy(() => import("./screens/main/PrivacyPolicy"));
+
+const root = createRoot(document.getElementById("root"));
+root.render(
     <Router>
         <MapProvider>
             <ThreeboxProvider>
@@ -90,8 +86,7 @@ ReactDOM.render(
                 </ChakraProvider>
             </ThreeboxProvider>
         </MapProvider>
-    </Router>,
-    document.getElementById("root")
+    </Router>
 );
 
 serviceWorkerRegistration.unregister();
