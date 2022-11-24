@@ -1,9 +1,9 @@
 //#region imports
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
-import UserContext from "./UserContext";
-import IsMobileContext from "./IsMobileContext";
-import db from "./Firebase";
+import UserContext from "../../components/UserContext";
+import IsMobileContext from "../../components/IsMobileContext";
+import db from "../../components/Firebase";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +11,9 @@ import i18n from "i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiOutlineMessage } from "react-icons/ai";
-import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "./Helpers";
-import { openCircleSection, CirclePicture } from "./Navigation";
-import { isConnected } from "./Navigation";
+import { timeSince, fromFsDate, log, singleLineEllipsisStyle, isConnected } from "../../components/Helpers";
+import { openCircleSection } from "../../components/Navigation";
+import { CirclePicture } from "../../components/CircleElements";
 //#endregion
 
 export const NotificationsBell = ({ circle }) => {
@@ -249,7 +249,7 @@ const Messages = ({ satelliteMode, circle, setCircle, chatCircle }) => {
     }, [user?.id, chatCircle]);
 
     return (
-        user && (
+        user?.id && (
             <>
                 <Box position="relative" height={iconSize}>
                     <Icon
@@ -287,46 +287,48 @@ const Messages = ({ satelliteMode, circle, setCircle, chatCircle }) => {
                     )}
                 </Box>
 
-                <Box
-                    className="messagesBoxParent"
-                    ref={messagesBoxRef}
-                    zIndex="55"
-                    position="absolute"
-                    display={messagesIsOpen ? "flex" : "none"}
-                    borderRadius={{ base: "20px", md: "20px" }}
-                    overflow="hidden"
-                    top={{ base: "43", md: "83px" }}
-                    right={{ base: "0px", md: "5px" }}
-                    width={{ base: "100%", md: "400px" }}
-                    height="calc(100vh - 88px)"
-                >
-                    <Scrollbars autoHide>
-                        <Fade in={messagesIsOpen} height="100%" width="100%">
-                            <Box className="messagesBox" height="100%" width="100%">
-                                <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
-                                    {/* {messages.length <= 0 && ( */}
-                                    <Text fontWeight="500" fontSize="20px" marginBottom="10px">
-                                        {i18n.t("Messages")}
-                                    </Text>
-                                    {/* )} */}
+                {messagesIsOpen && (
+                    <Box
+                        className="messagesBoxParent"
+                        ref={messagesBoxRef}
+                        zIndex="55"
+                        position="absolute"
+                        display={messagesIsOpen ? "flex" : "none"}
+                        borderRadius={{ base: "20px", md: "20px" }}
+                        overflow="hidden"
+                        top={{ base: "43", md: "83px" }}
+                        right={{ base: "0px", md: "5px" }}
+                        width={{ base: "100%", md: "400px" }}
+                        height="calc(100vh - 88px)"
+                    >
+                        <Scrollbars autoHide>
+                            <Fade in={messagesIsOpen} height="100%" width="100%">
+                                <Box className="messagesBox" height="100%" width="100%">
+                                    <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
+                                        {/* {messages.length <= 0 && ( */}
+                                        <Text fontWeight="500" fontSize="20px" marginBottom="10px">
+                                            {i18n.t("Messages")}
+                                        </Text>
+                                        {/* )} */}
 
-                                    {messages.length <= 0 && <Text>{i18n.t("no messages")}</Text>}
+                                        {messages.length <= 0 && <Text>{i18n.t("no messages")}</Text>}
 
-                                    {messages.map((message) => (
-                                        <MessageNotification
-                                            key={message.id}
-                                            notification={message}
-                                            onClick={() => {
-                                                messagesOnClose();
-                                                openCircleSection(navigate, user, message.circle_id, circle, setCircle, "chat");
-                                            }}
-                                        />
-                                    ))}
-                                </Flex>
-                            </Box>
-                        </Fade>
-                    </Scrollbars>
-                </Box>
+                                        {messages.map((message) => (
+                                            <MessageNotification
+                                                key={message.id}
+                                                notification={message}
+                                                onClick={() => {
+                                                    messagesOnClose();
+                                                    openCircleSection(navigate, user, message.circle_id, circle, setCircle, "chat");
+                                                }}
+                                            />
+                                        ))}
+                                    </Flex>
+                                </Box>
+                            </Fade>
+                        </Scrollbars>
+                    </Box>
+                )}
             </>
         )
     );

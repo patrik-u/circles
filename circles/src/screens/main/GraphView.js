@@ -1,18 +1,12 @@
 // #region imports
-import React, { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
-import ReactFlow, { MiniMap, Controls, Background, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
-import { Box, Text, Image, Icon, Link, Popover, PopoverTrigger, PopoverContent, Button, useDisclosure, PopoverArrow, useToast } from "@chakra-ui/react";
-import i18n from "i18n/Localization";
-import UserContext from "../components/UserContext";
-import { CircleListItem } from "../screens/Circle";
-import { CirclePicture } from "../components/Navigation";
-import db from "../components/Firebase";
-import axios from "axios";
-import { log, fromFsDate, getDateWithoutTime, getLngLatArray } from "../components/Helpers";
-import { collection, doc, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
+import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
+import { Box } from "@chakra-ui/react";
+import UserContext from "../../components/UserContext";
+import { CirclePicture } from "../../components/CircleElements";
 import "reactflow/dist/style.css";
 import { ForceGraph3D } from "react-force-graph";
-import * as THREE from "three";
+import CircleListItem from "../circle/CircleListItem";
 // #endregion
 
 // #region React Flow
@@ -97,10 +91,11 @@ export const FlowGraph = ({ circle, circles, circleConnections }) => {
         </Box>
     );
 };
+
 // #endregion
 
 // #region Force Graph
-export const ForceGraph = ({ circle, circles, circleConnections }) => {
+export const GraphView = ({ circle, circles, circleConnections }) => {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
     const genRandomTree = (N = 1000) => {
@@ -183,4 +178,4 @@ export const ForceGraph = ({ circle, circles, circleConnections }) => {
     );
 };
 
-export default FlowGraph;
+export default GraphView;

@@ -1,9 +1,9 @@
 //#region imports
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
-import UserContext from "./UserContext";
-import IsMobileContext from "./IsMobileContext";
-import db from "./Firebase";
+import UserContext from "../../components/UserContext";
+import IsMobileContext from "../../components/IsMobileContext";
+import db from "../../components/Firebase";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -12,8 +12,8 @@ import { FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
-import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "./Helpers";
-import { openCircle } from "./Navigation";
+import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "../../components/Helpers";
+import { openCircle } from "../../components/Navigation";
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {
@@ -427,7 +427,7 @@ const Notifications = ({ satelliteMode, circle, setCircle }) => {
     };
 
     return (
-        user && (
+        user?.id && (
             <>
                 <Box position="relative" height={iconSize}>
                     <Icon
@@ -465,39 +465,41 @@ const Notifications = ({ satelliteMode, circle, setCircle }) => {
                     )}
                 </Box>
 
-                <Box
-                    className="notificationsBoxParent"
-                    ref={notificationsBoxRef}
-                    zIndex="55"
-                    position="absolute"
-                    display={notificationsIsOpen ? "flex" : "none"}
-                    borderRadius={{ base: "20px", md: "20px" }}
-                    overflow="hidden"
-                    top={{ base: "43", md: "83px" }}
-                    right={{ base: "0px", md: "5px" }}
-                    width={{ base: "100%", md: "400px" }}
-                    height="calc(100vh - 88px)"
-                >
-                    <Scrollbars autoHide>
-                        <Fade in={notificationsIsOpen} height="100%" width="100%">
-                            <Box className="notificationsBox" height="100%" width="100%">
-                                <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
-                                    {/* {notifications.length <= 0 && ( */}
-                                    <Text fontWeight="500" fontSize="20px" marginBottom="10px">
-                                        {i18n.t("notifications")}
-                                    </Text>
-                                    {/* )} */}
+                {notificationsIsOpen && (
+                    <Box
+                        className="notificationsBoxParent"
+                        ref={notificationsBoxRef}
+                        zIndex="55"
+                        position="absolute"
+                        display={notificationsIsOpen ? "flex" : "none"}
+                        borderRadius={{ base: "20px", md: "20px" }}
+                        overflow="hidden"
+                        top={{ base: "43", md: "83px" }}
+                        right={{ base: "0px", md: "5px" }}
+                        width={{ base: "100%", md: "400px" }}
+                        height="calc(100vh - 88px)"
+                    >
+                        <Scrollbars autoHide>
+                            <Fade in={notificationsIsOpen} height="100%" width="100%">
+                                <Box className="notificationsBox" height="100%" width="100%">
+                                    <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
+                                        {/* {notifications.length <= 0 && ( */}
+                                        <Text fontWeight="500" fontSize="20px" marginBottom="10px">
+                                            {i18n.t("notifications")}
+                                        </Text>
+                                        {/* )} */}
 
-                                    {notifications.length <= 0 && <Text>{i18n.t("no notifications")}</Text>}
+                                        {notifications.length <= 0 && <Text>{i18n.t("no notifications")}</Text>}
 
-                                    {notifications.map((notification) => (
-                                        <Notification key={notification.id} notification={notification} />
-                                    ))}
-                                </Flex>
-                            </Box>
-                        </Fade>
-                    </Scrollbars>
-                </Box>
+                                        {notifications.map((notification) => (
+                                            <Notification key={notification.id} notification={notification} />
+                                        ))}
+                                    </Flex>
+                                </Box>
+                            </Fade>
+                        </Scrollbars>
+                    </Box>
+                )}
             </>
         )
     );
