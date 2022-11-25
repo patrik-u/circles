@@ -1,5 +1,5 @@
 //#region imports
-import React, { useContext, lazy } from "react";
+import React, { useContext, lazy, Suspense } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
 import UserContext from "../../components/UserContext";
 import { lat, lng, mapNavigateTo, getLngLatArray, getImageKitUrl } from "../../components/Helpers";
@@ -60,12 +60,13 @@ export const CircleMapEdges = ({ circle, circles }) => {
                     "line-cap": "round",
                 }}
                 paint={{
+                    //"line-color": "rgba(91, 115, 255, 1)",
+                    "line-color": "rgba(255, 255, 255, 1)",
                     //"line-color": "rgba(63, 71, 121, 1)",
                     //"line-color": "rgba(97, 97, 97, 1)",
-                    "line-color": "rgba(91, 115, 255, 1)",
                     //"line-color": "rgba(116, 89, 41, 1)",
                     //"line-color": "rgba(35, 68, 255, 1)",
-                    "line-width": 2,
+                    "line-width": 1,
                 }}
             />
         </Source>
@@ -73,18 +74,18 @@ export const CircleMapEdges = ({ circle, circles }) => {
 };
 
 export const CircleMarker = ({ circle }) => {
-    const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const embed = searchParams.get("embed") === "true";
 
-    return circle && <CircleMapMarker circle={circle} navigate={navigate} embed={embed} />;
+    return circle && <CircleMapMarker circle={circle} embed={embed} />;
 };
 
 // PWA123
 const CirclePreview = lazy(() => import("../circle/CirclePreview"));
 
-export const CircleMapMarker = ({ circle, navigate, embed }) => {
+export const CircleMapMarker = ({ circle, embed }) => {
     const user = useContext(UserContext);
+    const navigate = useNavigate();
     const getMarkerBackground = () => {
         switch (circle?.type) {
             default:
@@ -129,7 +130,9 @@ export const CircleMapMarker = ({ circle, navigate, embed }) => {
                     <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
                         <Box zIndex="160">
                             <PopoverArrow />
-                            <CirclePreview key={circle.id} item={circle} />
+                            <Suspense fallback={<Box />}>
+                                <CirclePreview key={circle.id} item={circle} />
+                            </Suspense>
                         </Box>
                     </PopoverContent>
                 </Popover>
@@ -139,7 +142,6 @@ export const CircleMapMarker = ({ circle, navigate, embed }) => {
 };
 
 export const CirclesMapMarkers = ({ circles }) => {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const embed = searchParams.get("embed") === "true";
 
@@ -148,7 +150,7 @@ export const CirclesMapMarkers = ({ circles }) => {
             {circles
                 ?.filter((item) => item.base)
                 .map((item) => (
-                    <CircleMapMarker key={item.id} circle={item} navigate={navigate} embed={embed} />
+                    <CircleMapMarker key={item.id} circle={item} embed={embed} />
                 ))}
         </>
     );

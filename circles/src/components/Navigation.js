@@ -32,8 +32,8 @@ export const routes = {
             connections: `/circle/${id}/settings/connections`,
             misc: `/circle/${id}/settings/misc`,
         },
+        admin: `/circle/${id}/admin`,
     }),
-    appAdmin: "/appAdmin",
     graph: "/graph",
 };
 
@@ -96,7 +96,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
     });
 
     if (isAdmin) {
-        navigationItems.push({ route: routes.appAdmin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
+        navigationItems.push({ route: routes.circle(id).admin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
     }
 
     return navigationItems;

@@ -61,9 +61,9 @@ const configs = {
     },
 };
 
-//const config = configs.dev; // DEV (staging backend)
+const config = configs.dev; // DEV (staging backend)
 //const config = configs.devprod; // DEV (prod backend)
-const config = configs.staging; // STAGING (for deploy to staging)
+//const config = configs.staging; // STAGING (for deploy to staging)
 //const config = configs.prod; // PRODUCTION (for deploy to prod)
 
 export default config;

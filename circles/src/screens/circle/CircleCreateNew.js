@@ -70,6 +70,8 @@ export const CircleCreateNew = ({
         setIsInitialized(() => true);
         if (isMobile) {
             setDisplayMode("list");
+        } else if (displayMode === "search") {
+            setDisplayMode("map");
         }
         createCircleReset();
         setCreatedCircle(null);

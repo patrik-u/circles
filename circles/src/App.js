@@ -23,34 +23,33 @@ import UserContext from "./components/UserContext";
 import IsMobileContext from "./components/IsMobileContext";
 import db, { auth } from "./components/Firebase";
 import * as Sentry from "@sentry/react";
-import { Scrollbars } from "react-custom-scrollbars-2";
 import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCredential } from "firebase/auth";
 import axios from "axios";
 import { isMobile as detectIsMobile } from "react-device-detect";
 import { toastError, log, clusterConnections } from "./components/Helpers";
 import { parseCircleId } from "./components/Navigation";
 import { CirclePicture } from "./components/CircleElements";
-import { defaultContentWidth } from "./components/Theme";
+import { defaultContentWidth } from "./components/Constants";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Navigate, Route, useLocation, useSearchParams } from "react-router-dom";
 import i18n from "i18n/Localization";
 import config from "./Config";
 import { RiLinksLine } from "react-icons/ri";
-import TopMenu from "./screens/main/TopMenu";
+
 import FloatingActionButtons from "./screens/main/FloatingActionButtons";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "./screens/main/MapMarkers";
-import Circle from "./screens/circle/Circle";
 import BlueBar from "./screens/main/BlueBar";
-import LeftNavigator from "./screens/main/LeftNavigator";
-import BottomNavigator from "./screens/main/BottomNavigator";
+import CircleSearch from "./screens/main/Home";
+import TopMenu from "./screens/main/TopMenu";
+import Circle from "./screens/circle/Circle";
 //#endregion
 
 const App = () => {
     //#region fields
+    //const Circle = lazy(() => import("./screens/circle/Circle"));
     const CircleConnections = lazy(() => import("./screens/circle/CircleConnections"));
     const NewUserGuide = lazy(() => import("./screens/main/NewUserGuide"));
     const GraphView = lazy(() => import("./screens/main/GraphView"));
-    const AppAdmin = lazy(() => import("./screens/admin/AppAdmin"));
 
     const [userPublic, setUserPublic] = useState(null);
     const [userData, setUserData] = useState(null);
@@ -81,7 +80,7 @@ const App = () => {
     const [hasSignedOut, setHasSignedOut] = useState(false);
     const [gsiScriptLoaded, setGsiScriptLoaded] = useState(false);
     const [isMobile, setIsMobile] = useState(detectIsMobile);
-    const [displayMode, setDisplayMode] = useState(isMobile ? "list" : "map");
+    const [displayMode, setDisplayMode] = useState(isMobile ? "list" : "search");
     const [uid, setUid] = useState(null);
     const [circle, setCircle] = useState(null);
     const [circles, setCircles] = useState(null);
@@ -224,8 +223,10 @@ const App = () => {
 
     //#endregion
 
+    log("App is rerendered");
+
     //#region useEffects
-    // initialize firebase sign in
+    //initialize firebase sign in
     useEffect(() => {
         log("useEffect 6", 0);
         const unsubscribeOnAuthStateChanged = onAuthStateChanged(auth, async (inUser) => {
@@ -516,10 +517,6 @@ const App = () => {
 
     const [contentWidth, setContentWidth] = useState(isMobile ? "100%" : defaultContentWidth);
 
-    // useEffect(() => {
-    //     console.log("circle=" + JSON.stringify(circle, null, 2));
-    // }, [circle]);
-
     //#endregion
 
     return (
@@ -536,22 +533,57 @@ const App = () => {
                     overflow="hidden"
                     background={embed ? "transparent" : "white"}
                 >
-                    {/* Blue bar (pinned users and circles) */}
-                    {!isMobile && (
-                        // <Suspense fallback={<Box width="80px" minWidth="80px" height="100%" backgroundColor="#3f4779" />}>
-                        <BlueBar selectedCircleId={selectedCircleId} isSigningIn={isSigningIn} circle={circle} setCircle={setCircle} />
-                        // </Suspense>
-                    )}
-
-                    {!isMobile && !mapOnly && (
-                        // <Suspense fallback={<Box width="84px" minWidth="84px" maxWidth="84px" backgroundColor="#f2f2f2" />}>
-                        <LeftNavigator circle={circle} setCircle={setCircle} isSigningIn={isSigningIn} />
-                        // </Suspense>
-                    )}
-
                     {/* Content panel */}
-                    <Flex flexDirection="column" width={contentWidth} maxWidth={contentWidth} minWidth={contentWidth}>
-                        {!mapOnly && isMobile && (
+                    <Suspense fallback={<Box />}>
+                        <Routes>
+                            <Route
+                                path="/circle/:circleId/*"
+                                element={
+                                    <Circle
+                                        circle={circle}
+                                        setCircle={setCircle}
+                                        circles={circles}
+                                        setCircles={setCircles}
+                                        circleConnections={circleConnections}
+                                        setCircleConnections={setCircleConnections}
+                                        displayMode={displayMode}
+                                        setDisplayMode={setDisplayMode}
+                                        isSignedIn={isSignedIn}
+                                        isSigningIn={isSigningIn}
+                                        mustLogInOnOpen={mustLogInOnOpen}
+                                        userLocation={userLocation}
+                                        locationPickerPosition={locationPickerPosition}
+                                        setLocationPickerActive={setLocationPickerActive}
+                                        setLocationPickerPosition={setLocationPickerPosition}
+                                        focusItem={focusItem}
+                                        filterConnected={filterConnected}
+                                        setFilterConnected={setFilterConnected}
+                                        setContentWidth={setContentWidth}
+                                        contentWidth={contentWidth}
+                                        onConnect={onConnect}
+                                        isConnecting={isConnecting}
+                                        setChatCircle={setChatCircle}
+                                        onSignOut={onSignOut}
+                                        gsiScriptLoaded={gsiScriptLoaded}
+                                        satelliteMode={satelliteMode}
+                                        chatCircle={chatCircle}
+                                    />
+                                }
+                            />
+                        </Routes>
+                    </Suspense>
+
+                    {/* Map/search/graph panel */}
+                    <Flex
+                        id="mapRegion"
+                        width="100%"
+                        top={isMobile ? "114px" : "0px"}
+                        height={isMobile ? "calc(100% - 164px)" : "100%"}
+                        minHeight={isMobile ? "calc(100% - 164px)" : "100%"}
+                        position={isMobile ? "absolute" : "relative"}
+                        backgroundColor="#06090e"
+                    >
+                        {!mapOnly && !isMobile && (
                             <TopMenu
                                 circle={circle}
                                 setCircle={setCircle}
@@ -560,98 +592,38 @@ const App = () => {
                                 isSignedIn={isSignedIn}
                                 gsiScriptLoaded={gsiScriptLoaded}
                                 satelliteMode={satelliteMode}
-                                displayMode={displayMode}
                                 chatCircle={chatCircle}
+                                displayMode={displayMode}
                             />
                         )}
-                        <Scrollbars autoHide>
-                            <Routes>
-                                <Route
-                                    path="/circle/:circleId/*"
-                                    element={
-                                        <Circle
-                                            circle={circle}
-                                            setCircle={setCircle}
-                                            circles={circles}
-                                            setCircles={setCircles}
-                                            circleConnections={circleConnections}
-                                            setCircleConnections={setCircleConnections}
-                                            displayMode={displayMode}
-                                            setDisplayMode={setDisplayMode}
-                                            isSignedIn={isSignedIn}
-                                            isSigningIn={isSigningIn}
-                                            mustLogInOnOpen={mustLogInOnOpen}
-                                            userLocation={userLocation}
-                                            locationPickerPosition={locationPickerPosition}
-                                            setLocationPickerActive={setLocationPickerActive}
-                                            setLocationPickerPosition={setLocationPickerPosition}
-                                            focusItem={focusItem}
-                                            filterConnected={filterConnected}
-                                            setFilterConnected={setFilterConnected}
-                                            setContentWidth={setContentWidth}
-                                            onConnect={onConnect}
-                                            isConnecting={isConnecting}
-                                            setChatCircle={setChatCircle}
-                                        />
-                                    }
-                                />
-                                <Route
-                                    path="/appAdmin"
-                                    element={
-                                        <Suspense fallback={<Box />}>
-                                            <AppAdmin />
-                                        </Suspense>
-                                    }
-                                />
-                                <Route path="*" element={<Navigate to="/circle/earth" replace />} />
-                            </Routes>
-                        </Scrollbars>
-                        {isMobile && !mapOnly && <BottomNavigator circle={circle} />}
+
+                        {displayMode === "search" && <CircleSearch circle={circle} setCircle={setCircle} />}
+
+                        {displayMode === "map" && (
+                            <ThreeboxMap ref={mapRef} onMapClick={onMapClick} satelliteMode={satelliteMode}>
+                                {circle && circles?.length > 0 && <CircleMapEdges circle={circle} circles={circles} />}
+                                {circle && <CircleMarker circle={circle} />}
+                                {circles?.length > 0 && <CirclesMapMarkers circles={circles} />}
+                                {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
+                            </ThreeboxMap>
+                        )}
+
+                        {/* Graph panel */}
+                        {displayMode === "graph" && (
+                            <Box
+                                id="graphRegion"
+                                width="100%"
+                                height="100%"
+                                minHeight="100%"
+                                position={isMobile ? "absolute" : "relative"}
+                                backgroundColor="black"
+                            >
+                                <Suspense fallback={<div></div>}>
+                                    <GraphView circle={circle} circles={circles} circleConnections={circleConnections} />
+                                </Suspense>
+                            </Box>
+                        )}
                     </Flex>
-
-                    {/* Map panel */}
-                    {displayMode === "map" && (
-                        <Flex
-                            id="mapRegion"
-                            width="100%"
-                            top={isMobile ? "114px" : "0px"}
-                            height={isMobile ? "calc(100% - 164px)" : "100%"}
-                            minHeight={isMobile ? "calc(100% - 164px)" : "100%"}
-                            position={isMobile ? "absolute" : "relative"}
-                            backgroundColor="#06090e"
-                        >
-                            {!mapOnly && !isMobile && (
-                                <TopMenu
-                                    circle={circle}
-                                    setCircle={setCircle}
-                                    onSignOutClick={onSignOut}
-                                    isSigningIn={isSigningIn}
-                                    isSignedIn={isSignedIn}
-                                    gsiScriptLoaded={gsiScriptLoaded}
-                                    satelliteMode={satelliteMode}
-                                    chatCircle={chatCircle}
-                                />
-                            )}
-
-                            {!isEmbedLoading && (
-                                <ThreeboxMap ref={mapRef} onMapClick={onMapClick} satelliteMode={satelliteMode}>
-                                    {circle && circles?.length > 0 && <CircleMapEdges circle={circle} circles={circles} />}
-                                    {circle && <CircleMarker circle={circle} />}
-                                    {circles?.length > 0 && <CirclesMapMarkers circles={circles} />}
-                                    {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
-                                </ThreeboxMap>
-                            )}
-                        </Flex>
-                    )}
-
-                    {/* Graph panel */}
-                    {displayMode === "graph" && (
-                        <Box id="graphRegion" width="100%" height="100%" minHeight="100%" position={isMobile ? "absolute" : "relative"} backgroundColor="black">
-                            <Suspense fallback={<div></div>}>
-                                <GraphView circle={circle} circles={circles} circleConnections={circleConnections} />
-                            </Suspense>
-                        </Box>
-                    )}
 
                     {/* Floating action buttons */}
                     <FloatingActionButtons

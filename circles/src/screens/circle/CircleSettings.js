@@ -19,7 +19,7 @@ import IsMobileContext from "../../components/IsMobileContext";
 import { Routes, Route, useNavigate, useLocation, matchPath } from "react-router-dom";
 import { CircleHeader } from "../../components/CircleElements";
 import { routes } from "../../components/Navigation";
-import { defaultContentWidth } from "../../components/Theme";
+import { defaultContentWidth } from "../../components/Constants";
 import { Scrollbars } from "react-custom-scrollbars-2";
 //#endregion
 

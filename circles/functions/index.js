@@ -1184,20 +1184,13 @@ app.get("/signin", auth, async (req, res) => {
             const newUserData = getNewUserData(authCallerId, req.user.email, date);
             const userDataRef = db.collection("circle_data").doc(authCallerId);
             await userDataRef.set(newUserData);
-
-            // create connection to earth circle
-            const earth = await getCircle("earth");
-            await createConnection(user, earth, "connected_to", false);
             user.isNew = true;
         } else {
             user = { ...doc.data(), id: authCallerId };
         }
 
         let userData = await getCircleData(authCallerId);
-        let connections = await getConnections(authCallerId);
-        let connectionsToUser = await getConnections(authCallerId, "target");
-        let userRet = { public: user, data: userData, connections, connectionsToUser };
-
+        let userRet = { user: user, userData: userData };
         return res.json(userRet);
     } catch (error) {
         functions.logger.error("Error signing in:", error);
