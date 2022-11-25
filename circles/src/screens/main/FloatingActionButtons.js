@@ -8,6 +8,7 @@ import { IoAdd, IoList, IoMap } from "react-icons/io5";
 import { BiNetworkChart } from "react-icons/bi";
 import { routes } from "../../components/Navigation";
 import config from "../../Config";
+import { HiOutlineSearch } from "react-icons/hi";
 //#endregion
 
 const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, setSatelliteMode, mapOnly, circle }) => {
@@ -16,7 +17,7 @@ const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, set
 
     return (
         <VStack position="absolute" right="18px" bottom={isMobile ? "300px" : "30px"} zIndex="50">
-            {isMobile && !mapOnly && (
+            {isMobile && (
                 <>
                     <Flex
                         backgroundColor="#c242bbdd"
@@ -45,6 +46,32 @@ const FloatingActionButtons = ({ displayMode, setDisplayMode, satelliteMode, set
                         <Icon width="28px" height="28px" color="black" as={displayMode === "map" ? IoList : IoMap} cursor="pointer" />
                     </Flex>
                 </>
+            )}
+
+            {displayMode !== "search" && (
+                <Flex cursor="pointer" alignItems="center" justifyContent="center" flexDirection="column">
+                    <Flex
+                        backgroundColor="#f4f4f4dd"
+                        _hover={{ backgroundColor: "#f5f5f5dd" }}
+                        borderRadius="50%"
+                        cursor="pointer"
+                        width="48px"
+                        height="48px"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Icon
+                            width="28px"
+                            height="28px"
+                            color="black"
+                            as={HiOutlineSearch}
+                            onClick={() => {
+                                setDisplayMode("search");
+                            }}
+                            cursor="pointer"
+                        />
+                    </Flex>
+                </Flex>
             )}
 
             {(!isMobile || displayMode === "map" || displayMode === "graph") && (

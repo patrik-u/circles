@@ -5,7 +5,7 @@ import axios from "axios";
 import { log } from "../../components/Helpers";
 //#endregion
 
-const AppAdmin = () => {
+const CircleAdmin = () => {
     const toast = useToast();
     const [isPosting, setIsPosting] = useState(false);
     const [command, setCommand] = useState("");
@@ -77,4 +77,4 @@ const AppAdmin = () => {
     );
 };
 
-export default AppAdmin;
+export default CircleAdmin;

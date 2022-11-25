@@ -135,10 +135,6 @@ const CircleHome = ({
 
     useEffect(() => {
         log("CircleHome.useEffect 1", 0);
-        if (!mapOnly && isMobile) {
-            setDisplayMode("list");
-        }
-
         let startDate = getDateWithoutTime(); // today
         setCircles(
             circleConnections
@@ -152,7 +148,7 @@ const CircleHome = ({
                     }
                 })
         );
-    }, [setDisplayMode, isMobile, mapOnly, setCircles, circleConnections]);
+    }, [isMobile, mapOnly, setCircles, circleConnections]);
 
     const CircleQuestion = ({ question }) => {
         return (

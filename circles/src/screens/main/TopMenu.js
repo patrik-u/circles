@@ -28,7 +28,7 @@ export const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSign
             backgroundColor={isMobile ? "white" : "transparent"}
             position={isMobile ? "relative" : "absolute"}
             top="0px"
-            right={isMobile ? "0px" : "50px"}
+            right={isMobile ? "0px" : displayMode === "map" ? "50px" : "0px"}
             zIndex="1000"
             width={isMobile ? "100%" : "calc(100% - 50px)"}
             pointerEvents={isMobile && isMapActive ? "none" : "auto"}
@@ -75,19 +75,18 @@ export const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSign
                 paddingLeft="10px"
                 pointerEvents="auto"
             >
-                {user && (
-                    <HStack spacing={isMobile ? "20px" : "50px"} align="center">
-                        {/* <Points satelliteMode={satelliteMode} /> */}
+                <HStack spacing={isMobile ? "20px" : "50px"} align="center">
+                    {/* <Points satelliteMode={satelliteMode} /> */}
+                    {user && (
+                        <>
+                            <Messages satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} chatCircle={chatCircle} />
 
-                        <Messages satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} chatCircle={chatCircle} />
+                            <Notifications satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} />
+                        </>
+                    )}
 
-                        <Notifications satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} />
-
-                        <ProfileMenu onSignOutClick={onSignOutClick} circle={circle} setCircle={setCircle} />
-                    </HStack>
-                )}
-
-                {isSigningIn && <Spinner color={satelliteMode && !isMobile ? "white" : "#333"} marginRight="10px" />}
+                    <ProfileMenu onSignOutClick={onSignOutClick} circle={circle} setCircle={setCircle} />
+                </HStack>
 
                 <LoginRegisterMenu satelliteMode={satelliteMode} gsiScriptLoaded={gsiScriptLoaded} isSigningIn={isSigningIn} isSignedIn={isSignedIn} />
             </Box>

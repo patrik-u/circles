@@ -15,7 +15,7 @@ import config from "./Config";
 import axios from "axios";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
-import App from "./App";
+import App2 from "./App2";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 //#endregion
 
@@ -77,12 +77,12 @@ root.render(
         <MapProvider>
             <ThreeboxProvider>
                 <ChakraProvider theme={theme}>
-                    <React.StrictMode>
-                        <Routes>
-                            <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-                            <Route path="/*" element={<App />} />
-                        </Routes>
-                    </React.StrictMode>
+                    {/* <React.StrictMode> */}
+                    <Routes>
+                        <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+                        <Route path="/*" element={<App2 />} />
+                    </Routes>
+                    {/* </React.StrictMode> */}
                 </ChakraProvider>
             </ThreeboxProvider>
         </MapProvider>
