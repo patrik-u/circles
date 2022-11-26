@@ -16,6 +16,7 @@ import axios from "axios";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
 import App2 from "./App2";
+//import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 //#endregion
 
@@ -74,18 +75,14 @@ const PrivacyPolicy = lazy(() => import("./screens/main/PrivacyPolicy"));
 const root = createRoot(document.getElementById("root"));
 root.render(
     <Router>
-        <MapProvider>
-            <ThreeboxProvider>
-                <ChakraProvider theme={theme}>
-                    {/* <React.StrictMode> */}
-                    <Routes>
-                        <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-                        <Route path="/*" element={<App2 />} />
-                    </Routes>
-                    {/* </React.StrictMode> */}
-                </ChakraProvider>
-            </ThreeboxProvider>
-        </MapProvider>
+        <ChakraProvider theme={theme}>
+            {/* <React.StrictMode> */}
+            <Routes>
+                <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+                <Route path="/*" element={<App2 />} />
+            </Routes>
+            {/* </React.StrictMode> */}
+        </ChakraProvider>
     </Router>
 );
 

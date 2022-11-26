@@ -1,47 +1,30 @@
 //#region imports
-import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import {
-    Flex,
-    Box,
-    Text,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    Button,
-    useToast,
-    HStack,
-    useDisclosure,
-} from "@chakra-ui/react";
-import { getPreciseDistance } from "geolib";
-import ThreeboxMap from "./ThreeboxMap";
-import UserContext from "./UserContext";
-import IsMobileContext from "./IsMobileContext";
+import { useEffect, useState } from "react";
+import { useToast } from "@chakra-ui/react";
 import db, { auth } from "./Firebase";
 import * as Sentry from "@sentry/react";
-import { GoogleAuthProvider, onAuthStateChanged, onIdTokenChanged, signInWithCredential } from "firebase/auth";
+import { onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
-import { isMobile as detectIsMobile } from "react-device-detect";
-import { toastError, log, clusterConnections } from "./Helpers";
-import { defaultContentWidth } from "./Constants";
+import { toastError, log } from "./Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import { Routes, Navigate, Route, useLocation, useSearchParams } from "react-router-dom";
 import i18n from "../i18n/Localization";
-import config from "../Config";
-import { atom, atomWithStorage, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { signInStatusValues } from "./Constants";
 import { uidAtom, userAtom, userDataAtom, signInStatusAtom } from "./Atoms";
+import GoogleOneTapLogin from "react-google-one-tap-login";
+import config from "Config";
+import useScript from "./useScript";
 //#endregion
 
+// handles user account log in to firebase and circles
 const AccountManager = () => {
     const [uid, setUid] = useAtom(uidAtom);
-    const [, setSignInStatus] = useAtom(signInStatusAtom);
+    const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);
     const [, setUserData] = useAtom(userDataAtom);
+    const [googleOneTapStatus, setGoogleOneTapStatus] = useState("idle");
     const toast = useToast();
+    const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
 
     // //#region useEffects
     //initialize firebase sign in
@@ -167,7 +150,6 @@ const AccountManager = () => {
                     }
                 });
 
-                log("subscribing to user connections", 0);
                 setSignInStatus(signInStatusValues.signedIn);
             })
             .catch((error) => {
@@ -187,30 +169,41 @@ const AccountManager = () => {
         };
     }, [setSignInStatus, setUid, setUser, setUserData, toast, uid]);
 
-    // // initialize google one tap
-    // useEffect(() => {
-    //     // TODO only do this if regular sign-in failed
-    //     log("useEffect 5", 0);
-    //     if (isSignedIn || isSigningIn || hasSignedOut || embed) return;
+    useEffect(() => {
+        if (googleOneTapStatus === "idle" && signInStatus === signInStatusValues.signedOut) {
+            return;
+        }
 
-    //     const el = document.createElement("script");
-    //     el.setAttribute("src", "https://accounts.google.com/gsi/client");
-    //     el.async = true;
-    //     el.onload = () => initializeGSI();
-    //     el.id = "google-client-script";
-    //     document.querySelector("body").appendChild(el);
+        log("Starting Google One Tap");
 
-    //     return () => {
-    //         window.google?.accounts.id.cancel();
-    //         document.getElementById("google-client-script")?.remove();
-    //     };
-    // }, [isSigningIn, isSignedIn, hasSignedOut, embed]);
+        // initialize google one tap
+        setGoogleOneTapStatus("run");
+    }, [signInStatus, googleOneTapStatus]);
 
-    // const [contentWidth, setContentWidth] = useState(isMobile ? "100%" : defaultContentWidth);
+    const onGoogleSignIn = async (response) => {
+        // console.log(JSON.stringify(response, null, 2));
+        let credential = GoogleAuthProvider.credential(response.credential);
+        await signInWithCredential(auth, credential);
+        setGoogleOneTapStatus("done");
+    };
 
-    // //#endregion
+    log("AccountManager.rendered");
 
-    return null;
+    return (
+        <>
+            {googleOneTapStatus === "run" && (
+                <GoogleOneTapLogin
+                    googleAccountConfigs={{
+                        client_id: config.googleId,
+                        cancel_on_tap_outside: false,
+                        auto_select: true,
+                        context: "signin",
+                        callback: onGoogleSignIn,
+                    }}
+                />
+            )}
+        </>
+    );
 };
 
 export default AccountManager;

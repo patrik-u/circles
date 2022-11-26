@@ -133,7 +133,13 @@ const App = () => {
     const onSignedInWithGoogle = async (response) => {
         try {
             // authenticate user with google token
+            log("google token:");
+            log(JSON.stringify(response));
             let credential = GoogleAuthProvider.credential(response.credential);
+
+            log("credential:");
+            log(JSON.stringify(credential));
+
             await signInWithCredential(auth, credential);
         } catch (error) {
             console.error("sign in with google failed", error);
