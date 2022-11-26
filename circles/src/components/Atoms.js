@@ -1,5 +1,9 @@
 import { atom, atomWithStorage, useAtom } from "jotai";
 import { signInStatusValues } from "./Constants";
+import { isMobile as detectIsMobile } from "react-device-detect";
+
+// misc
+export const isMobileAtom = atom(detectIsMobile);
 
 // user account atoms
 export const uidAtom = atom(null);

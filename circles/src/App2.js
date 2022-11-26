@@ -1,6 +1,6 @@
 /* global google */
 //#region imports
-import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, useCallback } from "react";
 import {
     Flex,
     Box,
@@ -43,75 +43,17 @@ import CircleSearch from "./screens/main/Home";
 import TopMenu from "./screens/main/TopMenu";
 import Circle from "./screens/circle/Circle";
 
+import { atom, atomWithStorage, useAtom } from "jotai";
+import { isMobileAtom } from "./components/Atoms";
 import Home from "./screens/main/Home";
 import AccountManager from "./components/AccountManager";
 //#endregion
 
 const App2 = () => {
-    // //#region fields
-    // //const Circle = lazy(() => import("./screens/circle/Circle"));
-    // const CircleConnections = lazy(() => import("./screens/circle/CircleConnections"));
-    // const NewUserGuide = lazy(() => import("./screens/main/NewUserGuide"));
-    // const GraphView = lazy(() => import("./screens/main/GraphView"));
-
-    // const [userPublic, setUserPublic] = useState(null);
-    // const [userData, setUserData] = useState(null);
-    // const [userConnections, setUserConnections] = useState([]);
-    // const [connectionsToUser, setConnectionsToUser] = useState([]);
-    // const [chatCircle, setChatCircle] = useState(null);
-    // const user = useMemo(() => {
-    //     if (userPublic) {
-    //         // merge user connections of the same type
-    //         let connections = clusterConnections(userConnections);
-    //         let clusteredConnectionsToUser = clusterConnections(connectionsToUser, true);
-    //         return {
-    //             ...userData,
-    //             ...userPublic,
-    //             connections: connections ?? [],
-    //             connectionsToUser: clusteredConnectionsToUser ?? [],
-    //             public: userPublic,
-    //             data: userData,
-    //         };
-    //     } else {
-    //         return null;
-    //     }
-    // }, [userPublic, userData, userConnections, connectionsToUser]);
-
-    // const [filterConnected, setFilterConnected] = useState(false);
-    // const [isSignedIn, setIsSignedIn] = useState(false);
-    // const [isSigningIn, setIsSigningIn] = useState(true);
-    // const [hasSignedOut, setHasSignedOut] = useState(false);
-    // const [gsiScriptLoaded, setGsiScriptLoaded] = useState(false);
-    // const [isMobile, setIsMobile] = useState(detectIsMobile);
-    // const [displayMode, setDisplayMode] = useState(isMobile ? "list" : "search");
-    // const [uid, setUid] = useState(null);
-    // const [circle, setCircle] = useState(null);
-    // const [circles, setCircles] = useState(null);
-    // const [circleConnections, setCircleConnections] = useState(null);
-    // const [userLocation, setUserLocation] = useState({ latitude: undefined, longitude: undefined });
-    // const mapRef = useRef(null);
-    // const toast = useToast();
-    // const [locationPickerActive, setLocationPickerActive] = useState(false);
-    // const [locationPickerPosition, setLocationPickerPosition] = useState();
-    // const { isOpen: mustLogInIsOpen, onOpen: mustLogInOnOpen, onClose: mustLogInOnClose } = useDisclosure();
-    // const mustLogInInitialRef = useRef();
-    // const location = useLocation();
-    // const [satelliteMode, setSatelliteMode] = useState(true);
-    // const [searchParams] = useSearchParams();
-    // const embed = searchParams.get("embed") === "true";
-    // const mapOnly = searchParams.get("mapOnly") === "true";
-    // const selectedCircleId = parseCircleId(location.pathname);
-    // const [isEmbedLoading] = useState(embed);
-
-    // const connectInitialRef = useRef(null);
-    // const [isConnecting, setIsConnecting] = useState(false);
-    // const { isOpen: connectIsOpen, onOpen: connectOnOpen, onClose: connectOnClose } = useDisclosure();
-    // const [connectSource, setConnectSource] = useState();
-    // const [connectTarget, setConnectTarget] = useState();
-    // const [connectOption, setConnectOption] = useState("follow");
-    // const { isOpen: newProfileIsOpen, onOpen: newProfileOnOpen, onClose: newProfileOnClose } = useDisclosure();
-
-    // //#endregion
+    //#region fields
+    const [isMobile, setIsMobile] = useAtom(isMobileAtom);
+    const Circle = lazy(() => import("./screens/circle/Circle2"));
+    //#endregion
 
     // //#region methods
 
@@ -228,299 +170,22 @@ const App2 = () => {
 
     log("App is rerendered");
 
-    // //#region useEffects
-    // //initialize firebase sign in
-    // useEffect(() => {
-    //     log("useEffect 6", 0);
-    //     const unsubscribeOnAuthStateChanged = onAuthStateChanged(auth, async (inUser) => {
-    //         // event called when user is authenticated or when user is no longer authenticated
-    //         if (inUser) {
-    //             log("user authenticated in firebase", 0);
+    // detects if desktop resizes to switch to mobile
+    const onWindowResize = useCallback(
+        (params) => {
+            setIsMobile(window.innerWidth <= 768);
+        },
+        [setIsMobile]
+    );
 
-    //             Sentry.addBreadcrumb({
-    //                 category: "auth",
-    //                 message: "User authenticated in firebase",
-    //                 level: Sentry.Severity.Info,
-    //             });
+    useEffect(() => {
+        log("App2.useEffect 1");
+        window.addEventListener("resize", onWindowResize);
 
-    //             // set user data
-    //             let uid = inUser.uid;
-    //             let idToken = await inUser.getIdToken();
-    //             axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
-
-    //             log("setting uid " + uid, 0);
-    //             setUid(uid);
-    //         } else {
-    //             // happens if the user has lost connection or isn't signed in yet
-    //             log("user not authenticated in firebase", 0);
-
-    //             Sentry.addBreadcrumb({
-    //                 category: "auth",
-    //                 message: "User not authenticated in firebase",
-    //                 level: Sentry.Severity.Info,
-    //             });
-
-    //             log("setting uid " + null, 0);
-    //             setUid(null);
-    //             setIsSigningIn(false);
-    //         }
-    //     });
-
-    //     const unsubscribeOnIdTokenChanged = onIdTokenChanged(auth, async (inUser) => {
-    //         if (inUser) {
-    //             // token is refreshed
-    //             let idToken = await inUser.getIdToken();
-    //             axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
-    //         }
-    //     });
-
-    //     if (!detectIsMobile) {
-    //         window.addEventListener("resize", onWindowResize);
-    //     }
-
-    //     return () => {
-    //         // @ts-ignore
-    //         window.google?.accounts.id.cancel();
-    //         document.getElementById("google-client-script")?.remove();
-    //         if (!detectIsMobile) {
-    //             window.removeEventListener("resize", onWindowResize);
-    //         }
-    //         if (unsubscribeOnAuthStateChanged) {
-    //             unsubscribeOnAuthStateChanged();
-    //         }
-    //         if (unsubscribeOnIdTokenChanged) {
-    //             unsubscribeOnIdTokenChanged();
-    //         }
-    //     };
-    // }, []);
-
-    // useEffect(() => {
-    //     log("useEffect 7", 0);
-    //     let watchPositionId = null;
-    //     if (!isSigningIn) {
-    //         // request permission to get geolocation
-    //         if (!embed && navigator.geolocation) {
-    //             if (navigator.permissions && navigator.permissions.query) {
-    //                 navigator.permissions.query({ name: "geolocation" }).then(function (result) {
-    //                     log(`Query geolocation result: ${result.state}`, 0);
-    //                     if (result.state === "granted") {
-    //                         // do a fast call and a more high precision later
-    //                         navigator.geolocation.getCurrentPosition(getUserLocationSuccess, getUserLocationError, {
-    //                             enableHighAccuracy: false,
-    //                             timeout: 2000,
-    //                             maximumAge: Infinity,
-    //                         });
-
-    //                         watchPositionId = navigator.geolocation.watchPosition(getUserLocationSuccess);
-    //                     } else if (result.state === "prompt") {
-    //                         navigator.geolocation.getCurrentPosition(getUserLocationSuccess, getUserLocationError, {
-    //                             enableHighAccuracy: true,
-    //                             timeout: 60000,
-    //                             maximumAge: 0,
-    //                         });
-
-    //                         watchPositionId = navigator.geolocation.watchPosition(getUserLocationSuccess);
-    //                         //console.log(result.state);
-    //                     } else if (result.state === "denied") {
-    //                         // TODO show instructions to enable location
-    //                     }
-    //                     result.onchange = function () {
-    //                         log(`Query geolocation change: ${result.state}`, 0);
-    //                     };
-    //                 });
-    //             } else {
-    //                 // iOS safari
-    //                 // do a fast call and a more high precision later
-    //                 navigator.geolocation.getCurrentPosition(getUserLocationSuccess, getUserLocationError, {
-    //                     enableHighAccuracy: false,
-    //                     timeout: 2000,
-    //                     maximumAge: Infinity,
-    //                 });
-
-    //                 watchPositionId = navigator.geolocation.watchPosition(getUserLocationSuccess);
-    //             }
-    //         } else {
-    //             log("geo location not available", 0);
-    //         }
-    //     }
-
-    //     return () => {
-    //         if (watchPositionId) {
-    //             navigator.geolocation.clearWatch(watchPositionId);
-    //         }
-    //     };
-    // }, [isSigningIn, embed]);
-
-    // // initialize sign in
-    // useEffect(() => {
-    //     log("useEffect 8", 0);
-    //     let unsubscribeGetUserConnections = null;
-    //     let unsubscribeGetUserData = null;
-    //     let unsubscribeGetUser = null;
-    //     let firstGetUser = true;
-    //     let firstGetUserData = true;
-    //     let firstGetUserConnections = true;
-
-    //     if (uid) {
-    //         axios
-    //             .get(`/signin`)
-    //             .then((getUserResult) => {
-    //                 let userData = getUserResult.data;
-    //                 if (userData.error) {
-    //                     if (uid !== null) {
-    //                         setUid((previousUid) => null);
-    //                     }
-    //                     setUserPublic((previousUser) => null);
-    //                     setUserData((previousUser) => null);
-    //                     setIsSignedIn(false);
-    //                     setIsSigningIn(false);
-    //                     toastError(toast, i18n.t("error1"));
-    //                     Sentry.captureException(userData.error);
-    //                     return;
-    //                 }
-
-    //                 setUserPublic((previousUser) => ({ ...userData.public, id: uid }));
-    //                 setUserData((previousUser) => userData.data);
-    //                 setUserConnections((previousUser) => userData.connections);
-    //                 setConnectionsToUser((previousUser) => userData.connectionsToUser);
-
-    //                 // subscribe to user public data
-    //                 unsubscribeGetUser = onSnapshot(doc(db, "circles", uid), (doc) => {
-    //                     var updatedUser = doc.data();
-
-    //                     // ignore setting user data first time as we've already done so
-    //                     if (firstGetUser) {
-    //                         firstGetUser = false;
-    //                         return;
-    //                     }
-
-    //                     //console.log("getting updated user data: ", JSON.stringify(updatedUserPublic, null, 2));
-    //                     setUserPublic((currentUser) => ({
-    //                         ...updatedUser,
-    //                         id: doc.id,
-    //                     }));
-    //                 });
-
-    //                 // subscribe to user data
-    //                 var q = query(collection(db, "circle_data"), where("circle_id", "==", uid));
-    //                 unsubscribeGetUserData = onSnapshot(q, (snap) => {
-    //                     const updatedUserData = snap.docs.map((doc) => doc.data())[0];
-
-    //                     // ignore setting user detail data first time as we've already done so
-    //                     if (firstGetUserData) {
-    //                         firstGetUserData = false;
-    //                         return;
-    //                     }
-
-    //                     //console.log("getting updated user details: ", JSON.stringify(updatedUserDetails, null, 2));
-    //                     if (snap.docs[0] != null) {
-    //                         setUserData((currentUser) => updatedUserData);
-    //                     }
-    //                 });
-
-    //                 log("subscribing to user connections", 0);
-
-    //                 // subscribe to user connections
-    //                 var q2 = query(collection(db, "connections"), where("circle_ids", "array-contains", uid));
-    //                 unsubscribeGetUserConnections = onSnapshot(q2, (snap) => {
-    //                     // ignore setting user connection data first time as we've already done so
-    //                     if (firstGetUserConnections) {
-    //                         firstGetUserConnections = false;
-    //                         return;
-    //                     }
-
-    //                     const connections = snap.docs?.map((doc) => doc.data()) ?? [];
-    //                     const updatedUserConnections = connections.filter((x) => x.source.id === uid);
-    //                     const updatedConnectionsToUser = connections.filter((x) => x.target.id === uid);
-
-    //                     //console.log("getting updated user details: ", JSON.stringify(updatedUserDetails, null, 2));
-    //                     if (updatedUserConnections) {
-    //                         log("updating user connections", 0);
-    //                         setUserConnections((currentUser) => updatedUserConnections);
-    //                     }
-    //                     if (updatedConnectionsToUser) {
-    //                         setConnectionsToUser((currentUser) => updatedConnectionsToUser);
-    //                     }
-    //                 });
-
-    //                 setIsSignedIn(true);
-    //                 setIsSigningIn(false);
-    //                 setHasSignedOut(false);
-
-    //                 //let isProd = config.environment === "prod";
-    //                 let alwaysShowGuide = false; //!isProd;
-
-    //                 // show new profile guide
-    //                 if (!userData?.data?.agreed_to_tnc || !userData?.data?.completed_guide || alwaysShowGuide) {
-    //                     newProfileOnOpen();
-    //                 }
-    //             })
-    //             .catch((error) => {
-    //                 toastError(toast, i18n.t("error1"));
-    //                 if (uid !== null) {
-    //                     setUid((previousUid) => null);
-    //                 }
-    //                 setUserPublic((previousUser) => null);
-    //                 setUserData((previousUser) => null);
-    //                 setIsSignedIn(false);
-    //                 setIsSigningIn(false);
-    //                 Sentry.captureException(error);
-    //             });
-    //     } else {
-    //         //onSignedOut(); // causes loop
-    //     }
-
-    //     return () => {
-    //         if (unsubscribeGetUser) {
-    //             unsubscribeGetUser();
-    //         }
-    //         if (unsubscribeGetUserData) {
-    //             unsubscribeGetUserData();
-    //         }
-    //         if (unsubscribeGetUserConnections) {
-    //             unsubscribeGetUserConnections();
-    //         }
-    //     };
-    // }, [uid, toast, newProfileOnOpen]);
-
-    // // initialize Sentry crash reporting
-    // useEffect(() => {
-    //     log("useEffect 9", 0);
-    //     Sentry.setUser(user?.id ? { id: user.id, username: user.name, email: user.email } : null);
-    // }, [user?.id, user?.name, user?.email]);
-
-    // useEffect(() => {
-    //     log("useEffect 11", 0);
-    //     Sentry.addBreadcrumb({
-    //         category: "navigation",
-    //         message: `Switching to page ${location.pathname}`,
-    //         level: Sentry.Severity.Info,
-    //     });
-    //     // CONNECT123 we can track circle history here
-    // }, [location]);
-
-    // // initialize google one tap
-    // useEffect(() => {
-    //     // TODO only do this if regular sign-in failed
-    //     log("useEffect 5", 0);
-    //     if (isSignedIn || isSigningIn || hasSignedOut || embed) return;
-
-    //     const el = document.createElement("script");
-    //     el.setAttribute("src", "https://accounts.google.com/gsi/client");
-    //     el.async = true;
-    //     el.onload = () => initializeGSI();
-    //     el.id = "google-client-script";
-    //     document.querySelector("body").appendChild(el);
-
-    //     return () => {
-    //         window.google?.accounts.id.cancel();
-    //         document.getElementById("google-client-script")?.remove();
-    //     };
-    // }, [isSigningIn, isSignedIn, hasSignedOut, embed]);
-
-    // const [contentWidth, setContentWidth] = useState(isMobile ? "100%" : defaultContentWidth);
-
-    // //#endregion
+        return () => {
+            window.removeEventListener("resize", onWindowResize);
+        };
+    }, [isMobile, setIsMobile, onWindowResize]);
 
     return (
         <Flex width="100vw" height="100vh" flexDirection="column">
@@ -528,6 +193,7 @@ const App2 = () => {
             <Suspense fallback={<Box></Box>}>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/circle/:circleId/*" element={<Circle />} />
                 </Routes>
             </Suspense>
         </Flex>

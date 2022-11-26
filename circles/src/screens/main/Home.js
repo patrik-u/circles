@@ -1,24 +1,28 @@
 // #region imports
 import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
-import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text } from "@chakra-ui/react";
-import UserContext from "../../components/UserContext";
+import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button } from "@chakra-ui/react";
 import { CirclePicture } from "../../components/CircleElements";
-import { getImageKitUrl } from "../../components/Helpers";
-import { openCircle } from "../../components/Navigation";
+import { getImageKitUrl, log, singleLineEllipsisStyle } from "../../components/Helpers";
+import { openCirclePWA } from "../../components/Navigation";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
-import IsMobileContext from "../../components/IsMobileContext";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom } from "../../components/Atoms";
+import { auth } from "../../components/Firebase";
+import { signOut } from "firebase/auth";
 // #endregion
 
-export const Home = ({ circle, setCircle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const user = useContext(UserContext);
+export const Home = () => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
     const navigate = useNavigate();
+
     const [latestCircles, setLatestCircles] = useState([]);
 
     useEffect(() => {
-        if (!user?.connections) {
+        if (!userData?.latestCircles) {
             // read from local storage
             let latestCirclesStr = window.localStorage.getItem("latestCircles");
             if (latestCirclesStr) {
@@ -27,14 +31,16 @@ export const Home = ({ circle, setCircle }) => {
             return;
         }
 
+        log(JSON.stringify(userData, null, 2));
+
         // read from user.connections
-        let userCircles = user?.connections
+        let userCircles = userData?.latestCircles
             ?.filter((x) => x.target.type === "circle")
             ?.slice(0, 10)
             ?.map((x) => x.target);
         setLatestCircles(userCircles);
         window.localStorage.setItem("latestCircles", JSON.stringify(userCircles));
-    }, [user?.connections]);
+    }, [userData]);
 
     return (
         <Flex backgroundColor="#ffffff" width="100%" height="100%" alignItems="center" justifyContent="center">
@@ -60,8 +66,8 @@ export const Home = ({ circle, setCircle }) => {
                     </InputGroup>
                 </Flex>
 
-                <Flex marginBottom="200px" height="212px" alignItems="center" justifyContent="center">
-                    <SimpleGrid columns={5} spacing={10} maxWidth="500px" marginLeft="15px" marginRight="15px">
+                <Flex marginBottom="200px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
+                    <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">
                         {latestCircles?.map((item) => (
                             <Box
                                 key={item.id}
@@ -78,19 +84,22 @@ export const Home = ({ circle, setCircle }) => {
                                 }}
                                 opacity="0.9"
                                 filter="grayscale(0.05)"
+                                onClick={() => openCirclePWA(navigate, item.id)}
                             >
-                                <CirclePicture
-                                    size={48}
-                                    circle={item}
-                                    onClick={() => openCircle(navigate, user, item.id, circle, setCircle)}
-                                    onParentClick={() => openCircle(navigate, user, item.parent_circle?.id, circle, setCircle)}
-                                />
-                                <Text fontSize="12px" marginTop="5px">
+                                <CirclePicture size={48} circle={item} onParentClick={() => openCirclePWA(navigate, item.parent_circle?.id)} />
+                                <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px">
                                     {item.name}
                                 </Text>
                             </Box>
                         ))}
                     </SimpleGrid>
+                    <Button
+                        onClick={() => {
+                            signOut(auth);
+                        }}
+                    >
+                        Sign out
+                    </Button>
                 </Flex>
             </Flex>
         </Flex>
