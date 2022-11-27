@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import db, { auth } from "./Firebase";
 import * as Sentry from "@sentry/react";
-import { onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
+import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
 import { toastError, log } from "./Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
@@ -15,8 +15,14 @@ import config from "Config";
 import useScript from "./useScript";
 //#endregion
 
+// signs out user
+export const userSignOut = (setUser) => {
+    signOut(auth);
+    setUser(null);
+};
+
 // handles user account log in to circles using firebase auth and google one tap
-const AccountManager = () => {
+export const AccountManager = () => {
     const [uid, setUid] = useAtom(uidAtom);
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);

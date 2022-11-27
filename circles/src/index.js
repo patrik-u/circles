@@ -76,12 +76,12 @@ const root = createRoot(document.getElementById("root"));
 root.render(
     <Router>
         <ChakraProvider theme={theme}>
-            {/* <React.StrictMode> */}
-            <Routes>
-                <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-                <Route path="/*" element={<App />} />
-            </Routes>
-            {/* </React.StrictMode> */}
+            <React.StrictMode>
+                <Routes>
+                    <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+                    <Route path="/*" element={<App />} />
+                </Routes>
+            </React.StrictMode>
         </ChakraProvider>
     </Router>
 );

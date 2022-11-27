@@ -11,3 +11,6 @@ export const uidAtom = atom(null);
 export const userAtom = atomWithStorage(null);
 export const userDataAtom = atom(null);
 export const signInStatusAtom = atom(signInStatusValues.signingIn);
+
+// circle atoms
+export const showNetworkLogoAtom = atom(false);
