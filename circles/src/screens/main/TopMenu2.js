@@ -9,12 +9,13 @@ import ProfileMenu from "./ProfileMenu2";
 import { routes, openCircle } from "../../components/Navigation";
 import { LoginRegisterMenu } from "../../components/LoginForms";
 import { atom, atomWithStorage, useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom } from "../../components/Atoms";
+import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "../../components/Atoms";
 //#endregion
 
 export const TopMenu = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
+    const [showNetworkLogo] = useAtom(showNetworkLogoAtom);
     const navigate = useNavigate();
 
     return (
@@ -28,9 +29,11 @@ export const TopMenu = () => {
             width="100%"
         >
             {/* TODO show network circle */}
-            <Box width="157px" height="68px" marginLeft={isMobile ? "12px" : "25px"}>
-                <Image src={getImageKitUrl("/circles-small.png", 157, 68)} width="157px" height="68px" />
-            </Box>
+            {showNetworkLogo && (
+                <Box width="157px" height="68px" marginLeft={isMobile ? "12px" : "25px"}>
+                    <Image src={getImageKitUrl("/circles-small.png", 157, 68)} width="157px" height="68px" />
+                </Box>
+            )}
 
             {/* {isMobile && circle && circle.id !== "earth" && (
                 <Box marginLeft="6px" pointerEvents="auto">
@@ -74,7 +77,9 @@ export const TopMenu = () => {
                         </>
                     )}
 
-                    <ProfileMenu />
+                    <Box>
+                        <ProfileMenu />
+                    </Box>
                     <LoginRegisterMenu />
                 </HStack>
             </Box>

@@ -1,6 +1,6 @@
 //#region imports
 import React, { useContext, useState } from "react";
-import { Menu, MenuButton, MenuDivider, MenuItem, Button, Center, Avatar, MenuList, useDisclosure } from "@chakra-ui/react";
+import { Menu, MenuButton, MenuDivider, MenuItem, Button, Center, Avatar, MenuList, useDisclosure, Image } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "../../components/Helpers";
 import { useNavigate } from "react-router-dom";
 import i18n from "i18n/Localization";
@@ -11,39 +11,33 @@ import { isMobileAtom, signInStatusAtom, userAtom } from "../../components/Atoms
 import { defaultUserPicture, signInStatusValues } from "../../components/Constants";
 import { auth } from "../../components/Firebase";
 import { signOut } from "firebase/auth";
+import { userSignOut } from "components/AccountManager";
 //#endregion
 
 export const ProfileMenu = () => {
     const navigate = useNavigate();
     const [isMobile] = useAtom(isMobileAtom);
-    const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
-    const [user] = useAtom(userAtom);
+    const [signInStatus] = useAtom(signInStatusAtom);
+    const [user, setUser] = useAtom(userAtom);
     const circlePictureSizeInt = isMobile ? 30 : 48;
     const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
     const displayProfile = signInStatus.signedIn || (signInStatus.signingIn && user?.picture);
 
-    // PWA123 for some reason avatar image flashes defaultUserPicture when signing in
-    // useEffect(() => {
-    //     log("picture: " + user?.picture);
-    // }, [user?.picture]);
-
     const onSignOutClick = () => {
         profileMenuOnClose();
-
-        // sign out of firebase
-        signOut(auth);
+        userSignOut(setUser);
     };
 
     return (
         displayProfile && (
             <Menu closeOnBlur="true" onClose={profileMenuOnClose} onOpen={profileMenuOnOpen} isOpen={profileMenuIsOpen}>
                 <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} minW={0}>
-                    <Avatar
-                        size={"sm"}
-                        w={circlePictureSize}
-                        h={circlePictureSize}
+                    <Image
                         src={getImageKitUrl(user?.picture ?? defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
+                        width={circlePictureSize}
+                        height={circlePictureSize}
+                        borderRadius="50%"
                     />
                 </MenuButton>
                 <MenuList alignItems={"center"} borderRadius="20" zIndex="60">
