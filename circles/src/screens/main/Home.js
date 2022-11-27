@@ -93,13 +93,14 @@ export const Home = () => {
                             </Box>
                         ))}
                     </SimpleGrid>
-                    <Button
+                    {/* PWA123 cleanup */}
+                    {/* <Button
                         onClick={() => {
                             signOut(auth);
                         }}
                     >
                         Sign out
-                    </Button>
+                    </Button> */}
                 </Flex>
             </Flex>
         </Flex>

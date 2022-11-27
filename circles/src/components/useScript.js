@@ -63,3 +63,5 @@ export const useScript = (src) => {
 
     return status;
 };
+
+export default useScript;

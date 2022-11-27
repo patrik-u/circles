@@ -166,6 +166,7 @@ export const parseCircleId = (path) => {
 };
 
 export const openCirclePWA = (navigate, circleId, section) => {
+    if (!circleId) return;
     let path = routes.circle(circleId);
     navigate(section ? path[section] : path.home);
 };
