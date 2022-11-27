@@ -37,7 +37,7 @@ import TopMenu from "../main/TopMenu";
 // import CircleCreateNew from "./CircleCreateNew";
 //#endregion
 
-export const Circle2 = () => {
+export const Circle = () => {
     const { circleId } = useParams();
     // const user = useContext(UserContext);
     // const { circleId } = useParams();
@@ -162,7 +162,6 @@ export const Circle2 = () => {
 
     return (
         <Flex flexDirection="column">
-            <Box height="90px">Top menu</Box>
             <Box height="460px" backgroundColor="#9490b9">
                 Image
             </Box>
@@ -384,4 +383,4 @@ export const Circle2 = () => {
     // ) : null;
 };
 
-export default Circle2;
+export default Circle;

@@ -11,20 +11,20 @@ import i18n from "../i18n/Localization";
 import { useAtom } from "jotai";
 import { signInStatusValues } from "./Constants";
 import { uidAtom, userAtom, userDataAtom, signInStatusAtom } from "./Atoms";
-import GoogleOneTapLogin from "react-google-one-tap-login";
 import config from "Config";
 import useScript from "./useScript";
 //#endregion
 
-// handles user account log in to firebase and circles
+// handles user account log in to circles using firebase auth and google one tap
 const AccountManager = () => {
     const [uid, setUid] = useAtom(uidAtom);
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);
     const [, setUserData] = useAtom(userDataAtom);
-    const [googleOneTapStatus, setGoogleOneTapStatus] = useState("idle");
     const toast = useToast();
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
+    const googleOneTapScriptFlag = "__googleOneTapScript__";
+    const [googleOneTapDone, setGoogleOneTapDone] = useState(false);
 
     // //#region useEffects
     //initialize firebase sign in
@@ -59,7 +59,7 @@ const AccountManager = () => {
                 });
 
                 setUid(null);
-                setSignInStatus(signInStatusValues.signedOut);
+                setSignInStatus(signInStatusValues.firebaseSignedOut);
             }
         });
 
@@ -93,7 +93,7 @@ const AccountManager = () => {
             setUid((x) => null);
             setUser((x) => null);
             setUserData((x) => null);
-            setSignInStatus(signInStatusValues.signInFailed);
+            setSignInStatus(signInStatusValues.circlesSignInFailed);
             toastError(toast, i18n.t("error1"));
             Sentry.captureException(error);
         };
@@ -169,41 +169,60 @@ const AccountManager = () => {
         };
     }, [setSignInStatus, setUid, setUser, setUserData, toast, uid]);
 
+    // attempt sign in using google one tap
     useEffect(() => {
-        if (googleOneTapStatus === "idle" && signInStatus === signInStatusValues.signedOut) {
+        if (signInStatus.signedIn) {
+            setGoogleOneTapDone(true);
             return;
         }
 
-        log("Starting Google One Tap");
+        // have firebase auth failed?
+        if (googleOneTapDone || signInStatus !== signInStatusValues.firebaseSignedOut) {
+            // no
+            return;
+        }
 
-        // initialize google one tap
-        setGoogleOneTapStatus("run");
-    }, [signInStatus, googleOneTapStatus]);
+        // have we already loaded the google one tap script?
+        if (!window?.[googleOneTapScriptFlag] && window.google && googleOneTapScript === "ready") {
+            log("starting Google One Tap");
+            window.google.accounts.id.initialize({
+                client_id: config.googleId,
+                cancel_on_tap_outside: false,
+                callback: onGoogleSignIn,
+                auto_select: true,
+                context: "signin",
+            });
+            window[googleOneTapScriptFlag] = true;
+        }
+        if (window?.[googleOneTapScriptFlag] && googleOneTapScript === "ready") {
+            window.google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // user cancels google one tap sign in
+                    setSignInStatus(signInStatusValues.userSignedOut);
+                } else if (notification.isDismissedMoment()) {
+                    // google successfully retrieves a credential, or a user wants to stop the credential retrieval flow
+                } else {
+                }
+            });
+
+            setGoogleOneTapDone(true);
+            return () => {
+                window.google.accounts.id.cancel();
+            };
+        }
+
+        setGoogleOneTapDone(true);
+    }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
 
     const onGoogleSignIn = async (response) => {
         // console.log(JSON.stringify(response, null, 2));
         let credential = GoogleAuthProvider.credential(response.credential);
         await signInWithCredential(auth, credential);
-        setGoogleOneTapStatus("done");
     };
 
     log("AccountManager.rendered");
 
-    return (
-        <>
-            {googleOneTapStatus === "run" && (
-                <GoogleOneTapLogin
-                    googleAccountConfigs={{
-                        client_id: config.googleId,
-                        cancel_on_tap_outside: false,
-                        auto_select: true,
-                        context: "signin",
-                        callback: onGoogleSignIn,
-                    }}
-                />
-            )}
-        </>
-    );
+    return null;
 };
 
 export default AccountManager;

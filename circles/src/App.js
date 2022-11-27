@@ -229,7 +229,7 @@ const App = () => {
 
     //#endregion
 
-    log("App is rerendered");
+    log("App.rendered");
 
     //#region useEffects
     //initialize firebase sign in

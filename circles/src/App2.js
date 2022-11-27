@@ -40,16 +40,16 @@ import FloatingActionButtons from "./screens/main/FloatingActionButtons";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "./screens/main/MapMarkers";
 import BlueBar from "./screens/main/BlueBar";
 import CircleSearch from "./screens/main/Home";
-import TopMenu from "./screens/main/TopMenu";
 import Circle from "./screens/circle/Circle";
 
 import { atom, atomWithStorage, useAtom } from "jotai";
 import { isMobileAtom } from "./components/Atoms";
 import Home from "./screens/main/Home";
 import AccountManager from "./components/AccountManager";
+import TopMenu from "./screens/main/TopMenu2";
 //#endregion
 
-const App2 = () => {
+const App = () => {
     //#region fields
     const [isMobile, setIsMobile] = useAtom(isMobileAtom);
     const Circle = lazy(() => import("./screens/circle/Circle2"));
@@ -73,60 +73,6 @@ const App2 = () => {
 
     //     // show popup to connect
     //     connectOnOpen();
-    // };
-
-    // const onSignedInWithGoogle = async (response) => {
-    //     try {
-    //         // authenticate user with google token
-    //         let credential = GoogleAuthProvider.credential(response.credential);
-    //         await signInWithCredential(auth, credential);
-    //     } catch (error) {
-    //         console.error("sign in with google failed", error);
-    //         return;
-    //     }
-    // };
-
-    // // initializes google sign in
-    // const initializeGSI = () => {
-    //     if (!window.google || gsiScriptLoaded) {
-    //         return;
-    //     }
-
-    //     google.accounts.id.initialize({
-    //         client_id: config.googleId,
-    //         cancel_on_tap_outside: false,
-    //         callback: onSignedInWithGoogle,
-    //         auto_select: true,
-    //         context: "signin",
-    //     });
-    //     google.accounts.id.prompt((notification) => {
-    //         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-    //             // try next provider
-    //             setIsSigningIn(false);
-    //         } else if (notification.isDismissedMoment()) {
-    //             // google successfully retrieves credentials or want to skip the retrieval flow
-    //             //console.log(notification.getDismissedReason())
-    //             //setIsSigningIn(true);
-    //         } else {
-    //             //setIsSigningIn(true);
-    //         }
-    //     });
-
-    //     setGsiScriptLoaded(true);
-    // };
-
-    // // detects if desktop resizes to switch to mobile
-    // const onWindowResize = () => {
-    //     setIsMobile(window.innerWidth <= 768);
-    // };
-
-    // const onSignOut = () => {
-    //     auth.signOut();
-    //     setHasSignedOut(true);
-    //     setIsSignedIn(false);
-    //     setUid(null);
-    //     setUserPublic(null);
-    //     setUserData(null);
     // };
 
     // const onMapClick = (e) => {
@@ -190,6 +136,7 @@ const App2 = () => {
     return (
         <Flex width="100vw" height="100vh" flexDirection="column">
             <AccountManager />
+            <TopMenu />
             <Suspense fallback={<Box></Box>}>
                 <Routes>
                     <Route path="/" element={<Home />} />
@@ -377,4 +324,4 @@ const App2 = () => {
     );
 };
 
-export default App2;
+export default App;

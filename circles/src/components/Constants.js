@@ -1,8 +1,10 @@
 export const defaultContentWidth = "435px";
 export const signInStatusValues = {
-    signedIn: { signedIn: true, status: "signedInSuccess" },
-    signedOut: { signedIn: false, status: "signedOut" },
-    userSignedOut: { signedIn: false, status: "userSignedOut" },
-    signingIn: { signedIn: false, status: "signingIn" },
-    signInFailed: { signedIn: false, status: "signInFailed" },
+    signedIn: { signedIn: true, fbAuth: true, signingIn: false },
+    firebaseSignedOut: { signedIn: false, fbAuth: false, signingIn: false },
+    userSignedOut: { signedIn: false, fbAuth: false, signingIn: false },
+    signingIn: { signedIn: false, signingIn: true },
+    userSigningOut: { signedIn: false, signingIn: false },
+    circlesSignInFailed: { signedIn: false, fbAuth: true, signingIn: false },
 };
+export const defaultUserPicture = "/default-user-picture.png";
