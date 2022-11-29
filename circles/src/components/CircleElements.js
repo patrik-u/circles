@@ -1,23 +1,189 @@
 //#region imports
 import React, { useContext } from "react";
 import { Flex, Box, VStack, Text, Image, Icon, HStack, Popover, PopoverContent, PopoverTrigger, PopoverArrow, Button, Spinner, Portal } from "@chakra-ui/react";
-import UserContext from "./UserContext";
-import { isMobile } from "react-device-detect";
-import { useNavigate } from "react-router-dom";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
-import { getImageKitUrl, isConnected, hasUpdates } from "./Helpers";
-import { routes, openCircle } from "./Navigation";
-import { CirclePreview } from "../screens/circle/CirclePreview";
+import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle } from "components/Helpers";
+import { routes, openCircle } from "components/Navigation";
+import { CirclePreview } from "screens/circle/CirclePreview";
 import { RiLinksLine } from "react-icons/ri";
 import Scrollbars from "react-custom-scrollbars-2";
-import { defaultEarthCircle } from "../store";
-import { NotificationsBell } from "../screens/main/Messages";
+import { NotificationsBell } from "screens/main/Messages";
+import { atom, atomWithStorage, useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 //#endregion
 
-export const CircleTags = ({ circle, setCircle, inSelect, showAll = false, size = "md" }) => {
-    const navigate = useNavigate();
-    const user = useContext(UserContext);
+export const CircleCover = ({ type, cover, ...props }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const height = isMobile ? 250 : 464;
+    const getDefaultCircleCover = () => {
+        switch (type) {
+            default:
+            case "circle":
+                return "/default-circle-cover.png";
+            case "event":
+                return "/default-event-cover.png";
+            case "user":
+                return "/default-user-cover.png";
+        }
+    };
+
+    return (
+        <Image
+            width="100%"
+            height={`${height}px`}
+            src={getImageKitUrl(cover, null, height) ?? getDefaultCircleCover()}
+            backgroundColor="white"
+            objectFit="cover"
+            {...props}
+        />
+    );
+};
+
+export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onClick, onParentClick, ...props }) => {
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+
+    const getDefaultCirclePicture = () => {
+        switch (circle.type) {
+            case "event":
+                return "/default-event-picture.png";
+            default:
+            case "circle":
+                return "/default-circle-picture.png";
+            case "user":
+                return "/default-user-picture.png";
+            case "tag":
+                return "/default-tag-picture.png";
+            case "link":
+                return "/default-link-picture.png";
+        }
+    };
+
+    const getCirclePicture = (picture) => {
+        if (!picture) return getDefaultCirclePicture();
+        return getImageKitUrl(picture, size, size);
+    };
+
+    return hasPopover && !isMobile ? (
+        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
+            <Popover isLazy trigger="hover" gutter="0">
+                <PopoverTrigger>
+                    <Image
+                        width={`${size}px`}
+                        height={`${size}px`}
+                        src={getCirclePicture(circle?.picture)}
+                        flexShrink="0"
+                        flexGrow="0"
+                        borderRadius="50%"
+                        objectFit="cover"
+                        onClick={onClick}
+                        cursor={onClick ? "pointer" : "inherit"}
+                        {...props}
+                    />
+                </PopoverTrigger>
+                <Portal>
+                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
+                        <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
+                            <PopoverArrow />
+                            <CirclePreview item={circle} />
+                        </Box>
+                    </PopoverContent>
+                </Portal>
+            </Popover>
+        </Box>
+    ) : (
+        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
+            {circle && (
+                <Image
+                    width={`${size}px`}
+                    height={`${size}px`}
+                    src={getCirclePicture(circle?.picture)}
+                    flexShrink="0"
+                    flexGrow="0"
+                    borderRadius="50%"
+                    objectFit="cover"
+                    onClick={onClick}
+                    cursor={onClick ? "pointer" : "inherit"}
+                    {...props}
+                />
+            )}
+            {circle?.id !== "earth" && circle?.parent_circle && (
+                <Image
+                    position="absolute"
+                    width={`${size / 3}px`}
+                    height={`${size / 3}px`}
+                    top="0px"
+                    left="0px"
+                    src={getCirclePicture(circle?.parent_circle?.picture)}
+                    flexShrink="0"
+                    flexGrow="0"
+                    borderRadius="50%"
+                    objectFit="cover"
+                    onClick={onParentClick}
+                    {...props}
+                />
+            )}
+
+            {hasUpdates(userData, circle, "any") && (
+                <Box
+                    width={`${size / 7}px`}
+                    height={`${size / 7}px`}
+                    backgroundColor="#ff6499"
+                    borderRadius="50%"
+                    position="absolute"
+                    bottom="0px"
+                    right="0px"
+                ></Box>
+            )}
+        </Box>
+    );
+};
+
+export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, setFilterConnected, title }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
+    const getNameFontSize = (name) => {
+        if (!isMobile || !name) return "28px";
+
+        if (name.length <= 16) return "24px";
+        if (name.length <= 17) return "23px";
+        if (name.length <= 18) return "22px";
+        if (name.length <= 19) return "20px";
+        if (name.length <= 20) return "19px";
+        return "19px";
+    };
+
+    return (
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "70px" : "100px"}>
+            <Flex flexDirection="row" width="100%" align="center">
+                <Flex align="left" flexDirection="column" width="100%" position="relative">
+                    <Text style={twoLineEllipsisStyle} fontSize={getNameFontSize(circle?.name)} fontWeight="bold">
+                        {circle?.name}
+                    </Text>
+                    <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
+
+                    {/* {circle?.name} Longer Name Network */}
+
+                    {/* <Box marginTop="4px" position="relative">
+                            <CircleTags circle={circle} size={isMobile ? "sm" : "md"} />
+                        </Box>
+                        <Flex position="absolute" top="5px" right="5px" flexDirection="row" align="center" height="24px">
+                            {circle?.id !== "earth" && <ConnectButton circle={circle} onConnect={onConnect} size={isMobile ? "md" : "lg"} />}
+                            {circle?.id !== "earth" && <NotificationsBell circle={circle} />}
+                        </Flex> */}
+                </Flex>
+            </Flex>
+        </Flex>
+    );
+};
+
+export const CircleTags = ({ circle, inSelect, showAll = false, size = "md", wrap = "nowrap" }) => {
+    const navigate = useNavigateNoUpdates();
+    const [user] = useAtom(userAtom);
+
     const isOverlap = (causeId) => {
         return user?.tags?.some((x) => x.id === causeId);
     };
@@ -71,18 +237,18 @@ export const CircleTags = ({ circle, setCircle, inSelect, showAll = false, size 
 
     return (
         circle?.tags?.length > 0 && (
-            <Flex flexWrap="wrap">
+            <Flex flexWrap={wrap}>
                 {circle.tags?.slice(0, showAll ? 10000 : 3)?.map((tag) => (
                     <Box
                         key={tag.id}
                         fontSize={getFontSize()}
-                        padding={smallSize ? "2px 6px 2px 6px" : "2px 10px 2px 10px"}
+                        padding={smallSize ? "2px 6px 2px 6px" : "2px 13px 2px 10px"}
                         margin={smallSize ? "0px 4px 0px 0px" : "0px 4px 4px 2px"}
                         cursor={tag.is_custom ? "auto" : "pointer"}
                         background={tagColor(tag)}
                         _hover={{ backgroundColor: hoverColor(tag) }}
                         color="white"
-                        height={smallSize ? "auto" : "22px"}
+                        height="auto"
                         borderRadius="20px"
                         onClick={
                             tag.is_custom
@@ -93,11 +259,11 @@ export const CircleTags = ({ circle, setCircle, inSelect, showAll = false, size 
                                       if (inSelect) return;
 
                                       event.stopPropagation();
-                                      openCircle(navigate, user, tag.id, circle, setCircle);
+                                      openCircle(navigate, tag.id);
                                   }
                         }
                     >
-                        <Text>{tag.text}</Text>
+                        <Text style={singleLineEllipsisStyle}>{tag.text}</Text>
                     </Box>
                 ))}
             </Flex>
@@ -137,7 +303,7 @@ export const getConnectLabel = (circleType, connectType) => {
 };
 
 export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
-    const user = useContext(UserContext);
+    const [user] = useAtom(userAtom);
     const smallSize = size === "sm" || size === "tiny";
     const height = smallSize ? "19px" : "22px";
 
@@ -254,303 +420,5 @@ export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
                 )}
             </Box>
         )
-    );
-};
-
-export const CircleHeader = ({ circle, setCircle, onConnect, createNew, filterConnected, setFilterConnected, title, width = "435px" }) => {
-    const user = useContext(UserContext);
-    const headerHeight = 74;
-
-    return (
-        <>
-            <Flex
-                flex="initial"
-                order="0"
-                backgroundColor="#ffffffee"
-                align="left"
-                flexDirection="column"
-                position="Fixed"
-                width={isMobile ? "100%" : width}
-                height={`${headerHeight}px`}
-                zIndex="1"
-            >
-                <Flex
-                    flexDirection="row"
-                    height="74px"
-                    width={isMobile ? "100%" : width}
-                    align="center"
-                    paddingTop="10px"
-                    paddingLeft="10px"
-                    paddingBottom="10px"
-                >
-                    <Flex marginLeft="10px" align="left" flexDirection="column" width="100%" marginRight="20px" position="relative">
-                        <HStack>
-                            <Text fontWeight="700" fontSize="20px" textAlign="left" lineHeight="22px">
-                                {circle?.name}
-                                <span style={{ fontWeight: 700 }}> | {i18n.t(`title [${title}]`)}</span>
-                            </Text>
-                        </HStack>
-
-                        <Box marginTop="4px" position="relative">
-                            <CircleTags circle={circle} setCircle={setCircle} size="sm" />
-                        </Box>
-                        <Flex position="absolute" top="0px" right="0px" flexDirection="row" align="center" height="24px">
-                            {circle?.id !== "earth" && <ConnectButton circle={circle} onConnect={onConnect} size="md" />}
-                            {circle?.id !== "earth" && <NotificationsBell circle={circle} />}
-                        </Flex>
-                    </Flex>
-                </Flex>
-            </Flex>
-            <Box height={`${headerHeight}px`} />
-        </>
-    );
-};
-
-export const CircleCover = ({ circle, coverWidth, ...props }) => {
-    const circleCoverWidth = coverWidth ?? 435;
-    const getDefaultCircleCover = () => {
-        switch (circle.type) {
-            default:
-            case "circle":
-                return require("../assets/images/default-circle-cover.png");
-            case "event":
-                return require("../assets/images/default-event-cover.png");
-            case "user":
-                return require("../assets/images/default-user-cover.png");
-        }
-    };
-
-    return (
-        <Image
-            width="100%"
-            height="100%"
-            src={getImageKitUrl(circle.cover, circleCoverWidth) ?? getDefaultCircleCover()}
-            backgroundColor="white"
-            objectFit="cover"
-            {...props}
-        />
-    );
-};
-
-export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onClick, onParentClick, ...props }) => {
-    const user = useContext(UserContext);
-
-    const getDefaultCirclePicture = () => {
-        switch (circle.type) {
-            case "event":
-                return require("../assets/images/default-event-picture.png");
-            default:
-            case "circle":
-                return require("../assets/images/default-circle-picture.png");
-            case "user":
-                return require("../assets/images/default-user-picture.png");
-            case "tag":
-                return require("../assets/images/default-tag-picture.png");
-            case "link":
-                return require("../assets/images/default-link-picture.png");
-        }
-    };
-
-    const getCirclePicture = (picture) => {
-        if (!picture) return getDefaultCirclePicture();
-        return getImageKitUrl(picture, size, size);
-    };
-
-    return hasPopover && !isMobile ? (
-        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            <Popover isLazy trigger="hover" gutter="0">
-                <PopoverTrigger>
-                    <Image
-                        width={`${size}px`}
-                        height={`${size}px`}
-                        src={getCirclePicture(circle?.picture)}
-                        flexShrink="0"
-                        flexGrow="0"
-                        borderRadius="50%"
-                        objectFit="cover"
-                        onClick={onClick}
-                        cursor={onClick ? "pointer" : "inherit"}
-                        {...props}
-                    />
-                </PopoverTrigger>
-                <Portal>
-                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
-                        <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
-                            <PopoverArrow />
-                            <CirclePreview item={circle} />
-                        </Box>
-                    </PopoverContent>
-                </Portal>
-            </Popover>
-        </Box>
-    ) : (
-        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            {circle && (
-                <Image
-                    width={`${size}px`}
-                    height={`${size}px`}
-                    src={getCirclePicture(circle?.picture)}
-                    flexShrink="0"
-                    flexGrow="0"
-                    borderRadius="50%"
-                    objectFit="cover"
-                    onClick={onClick}
-                    cursor={onClick ? "pointer" : "inherit"}
-                    {...props}
-                />
-            )}
-            {circle?.id !== "earth" && circle?.parent_circle && (
-                <Image
-                    position="absolute"
-                    width={`${size / 3}px`}
-                    height={`${size / 3}px`}
-                    top="0px"
-                    left="0px"
-                    src={getCirclePicture(circle?.parent_circle?.picture)}
-                    flexShrink="0"
-                    flexGrow="0"
-                    borderRadius="50%"
-                    objectFit="cover"
-                    onClick={onParentClick}
-                    {...props}
-                />
-            )}
-
-            {hasUpdates(user, circle, "any") && (
-                <Box
-                    width={`${size / 7}px`}
-                    height={`${size / 7}px`}
-                    backgroundColor="#ff6499"
-                    borderRadius="50%"
-                    position="absolute"
-                    bottom="0px"
-                    right="0px"
-                ></Box>
-            )}
-        </Box>
-    );
-};
-
-export const BlueBar = ({ selectedCircleId, isSigningIn, circle, setCircle }) => {
-    const user = useContext(UserContext);
-    const leftBarWidth = "80px"; //"92px"; // "72px";
-    const leftBarCircleSize = 56;
-    const navigate = useNavigate();
-    const addSize = "48px";
-
-    return (
-        <Flex
-            width={leftBarWidth}
-            minWidth={leftBarWidth}
-            //backgroundColor="#53459b"
-            backgroundColor="#3f4779"
-            height="100%"
-        >
-            <Box height="calc(100% - 100px)" width={leftBarWidth}>
-                <Scrollbars autoHide>
-                    <VStack marginTop="13px" spacing="14px">
-                        {user && (
-                            <Box
-                                align="center"
-                                borderRadius="50px"
-                                role="group"
-                                cursor="pointer"
-                                spacing="12px"
-                                padding="3px"
-                                _hover={{
-                                    //bg: "white",
-                                    filter: "none",
-                                    opacity: "1",
-                                }}
-                                opacity="0.5"
-                                filter="grayscale(1)"
-                            >
-                                <CirclePicture size={leftBarCircleSize} circle={user} onClick={() => openCircle(navigate, user, user.id, circle, setCircle)} />
-                            </Box>
-                        )}
-
-                        <Box
-                            align="center"
-                            borderRadius="50px"
-                            role="group"
-                            cursor="pointer"
-                            spacing="12px"
-                            padding="3px"
-                            _hover={{
-                                //bg: "white",
-                                filter: "none",
-                                opacity: "1",
-                            }}
-                            opacity="0.5"
-                            filter="grayscale(1)"
-                        >
-                            <CirclePicture
-                                size={leftBarCircleSize}
-                                circle={defaultEarthCircle}
-                                onClick={() => openCircle(navigate, user, "earth", circle, setCircle)}
-                            />
-                        </Box>
-
-                        {isSigningIn && <Spinner color="#333" />}
-
-                        {user?.connections
-                            ?.filter((x) => x.target.type === "circle" && x.target.id !== "earth")
-                            .map((item) => (
-                                <Box
-                                    key={item.target.id}
-                                    align="center"
-                                    borderRadius="50px"
-                                    role="group"
-                                    cursor="pointer"
-                                    spacing="12px"
-                                    padding="3px"
-                                    _hover={{
-                                        //bg: "white",
-                                        filter: "none",
-                                        opacity: "1",
-                                    }}
-                                    opacity="0.5"
-                                    filter="grayscale(1)"
-                                >
-                                    <CirclePicture
-                                        size={leftBarCircleSize}
-                                        circle={item.target}
-                                        onClick={() => openCircle(navigate, user, item.target.id, circle, setCircle)}
-                                        onParentClick={() => openCircle(navigate, user, item.target.parent_circle?.id, circle, setCircle)}
-                                    />
-                                </Box>
-                            ))}
-                    </VStack>
-                </Scrollbars>
-            </Box>
-
-            {/* Fade out effect */}
-            <Box
-                backgroundImage="linear-gradient(to bottom, transparent, #3f4779);"
-                width={leftBarWidth}
-                height="50px"
-                position="absolute"
-                bottom="100px"
-            ></Box>
-            <Box width={leftBarWidth} height="100px" position="absolute" bottom="0px" backgroundColor="#3f4779"></Box>
-
-            <Flex width={leftBarWidth} minWidth={leftBarWidth} position="absolute" alignItems="center" justifyContent="center" bottom="30px">
-                <Flex
-                    //backgroundColor="#c242bbdd"
-                    backgroundColor="#6e4590"
-                    _hover={{ backgroundColor: "#e94ce1dd" }}
-                    width={addSize}
-                    height={addSize}
-                    borderRadius="50%"
-                    cursor="pointer"
-                    alignItems="center"
-                    justifyContent="center"
-                    marginTop="10px"
-                    onClick={() => navigate(routes.circle(circle?.id ?? "earth").new)}
-                >
-                    <Icon width="28px" height="28px" color="white" as={IoAdd} />
-                </Flex>
-            </Flex>
-        </Flex>
     );
 };

@@ -1,22 +1,22 @@
 //#region imports
 import React, { useContext } from "react";
 import { Flex, Box, Image, Spinner, HStack } from "@chakra-ui/react";
-import { getImageKitUrl, log } from "../../components/Helpers";
+import UserContext from "../../components/UserContext";
+import IsMobileContext from "../../components/IsMobileContext";
+import { getImageKitUrl } from "../../components/old_Helpers";
 import { useNavigate } from "react-router-dom";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
-import ProfileMenu from "./ProfileMenu2";
+import ProfileMenu from "./old_ProfileMenu";
 import { routes, openCircle } from "../../components/Navigation";
-import { LoginRegisterMenu } from "../../components/LoginForms";
-import { atom, atomWithStorage, useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "../../components/Atoms";
+import { LoginRegisterMenu } from "../settings/LoginForms";
 //#endregion
 
-export const TopMenu = () => {
-    const [isMobile] = useAtom(isMobileAtom);
-    const [signInStatus] = useAtom(signInStatusAtom);
-    const [showNetworkLogo] = useAtom(showNetworkLogoAtom);
+export const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode, chatCircle }) => {
+    const isMobile = useContext(IsMobileContext);
+    const user = useContext(UserContext);
     const navigate = useNavigate();
+    const isMapActive = displayMode === "map" || displayMode === "graph";
 
     return (
         <Flex
@@ -26,16 +26,14 @@ export const TopMenu = () => {
             height={isMobile ? "40px" : "90px"}
             maxHeight={isMobile ? "40px" : "90px"}
             backgroundColor={isMobile ? "white" : "transparent"}
-            width="100%"
+            position={isMobile ? "relative" : "absolute"}
+            top="0px"
+            right={isMobile ? "0px" : displayMode === "map" ? "50px" : "0px"}
+            zIndex="1000"
+            width={isMobile ? "100%" : "calc(100% - 50px)"}
+            pointerEvents={isMobile && isMapActive ? "none" : "auto"}
         >
-            {/* TODO show network circle */}
-            {showNetworkLogo && (
-                <Box width="157px" height="68px" marginLeft={isMobile ? "12px" : "25px"}>
-                    <Image src={getImageKitUrl("/circles-small.png", 157, 68)} width="157px" height="68px" />
-                </Box>
-            )}
-
-            {/* {isMobile && circle && circle.id !== "earth" && (
+            {isMobile && circle && circle.id !== "earth" && (
                 <Box marginLeft="6px" pointerEvents="auto">
                     <Flex flexGrow="1" flexDirection="row" justifyContent="flex-start" align="center">
                         {circle?.parent_circle ? (
@@ -54,34 +52,43 @@ export const TopMenu = () => {
                                 src="/earth.png"
                                 width={isMobile ? "20px" : "50px"}
                                 height={isMobile ? "20px" : "50px"}
+                                // marginRight={isMobile ? "5px" : "10px"}
                                 onClick={() => navigate(routes.home)}
                                 cursor="pointer"
                                 position="absolute"
                                 top="7px"
+                                //top={isMobile ? "21px" : "7px"}
                                 left="10px"
                             />
                         )}
                     </Flex>
                 </Box>
-            )} */}
+            )}
 
             <Box flex="1" />
 
-            <Box align="center" marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">
+            <Box
+                align="center"
+                marginRight={isMobile ? "12px" : "25px"}
+                backgroundColor={isMobile ? (isMapActive ? "transparent" : "#ffffffee") : "transparent"}
+                borderRadius="10px"
+                paddingLeft="10px"
+                pointerEvents="auto"
+            >
                 <HStack spacing={isMobile ? "20px" : "50px"} align="center">
                     {/* <Points satelliteMode={satelliteMode} /> */}
-                    {signInStatus.signedIn && (
+                    {user && (
                         <>
-                            <Messages />
-                            <Notifications />
+                            <Messages satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} chatCircle={chatCircle} />
+
+                            <Notifications satelliteMode={satelliteMode} circle={circle} setCircle={setCircle} />
                         </>
                     )}
 
-                    <Box>
-                        <ProfileMenu />
-                    </Box>
-                    <LoginRegisterMenu />
+                    <ProfileMenu onSignOutClick={onSignOutClick} circle={circle} setCircle={setCircle} />
                 </HStack>
+
+                <LoginRegisterMenu satelliteMode={satelliteMode} gsiScriptLoaded={gsiScriptLoaded} isSigningIn={isSigningIn} isSignedIn={isSignedIn} />
             </Box>
         </Flex>
     );

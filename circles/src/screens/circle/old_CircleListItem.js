@@ -1,7 +1,7 @@
 //#region imports
 import React from "react";
 import { Box, Flex, HStack, VStack, Text, Icon } from "@chakra-ui/react";
-import { getDistanceString, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, isPastEvent, getEventTime } from "../../components/Helpers";
+import { getDistanceString, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, isPastEvent, getEventTime } from "../../components/old_Helpers";
 import { CirclePicture, CircleTags, ConnectButton } from "../../components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";

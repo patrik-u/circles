@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { Flex, Box, Text } from "@chakra-ui/react";
 import UserContext from "../../components/UserContext";
 import { useNavigate, useLocation, matchPath } from "react-router-dom";
-import { hasUpdates } from "../../components/Helpers";
+import { hasUpdates } from "../../components/old_Helpers";
 import { getNavigationItems, shouldShowNavItem } from "../../components/Navigation";
 import { CirclePicture } from "../../components/CircleElements";
 //#endregion

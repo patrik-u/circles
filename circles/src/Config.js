@@ -12,7 +12,7 @@ const configs = {
             measurementId: "G-T9FZSFRD99",
         },
         googleId: "174159362871-juqvepnc0ej66ggdmfpbrt2483jtbkjj.apps.googleusercontent.com",
-        logLevel: 0,
+        logLevel: -1,
     },
     staging: {
         environment: "staging",

@@ -6,7 +6,7 @@ import UserContext from "../../components/UserContext";
 import { CirclePicture } from "../../components/CircleElements";
 import "reactflow/dist/style.css";
 import { ForceGraph3D } from "react-force-graph";
-import CircleListItem from "../circle/CircleListItem";
+import CircleListItem from "../circle/old_CircleListItem";
 // #endregion
 
 // #region React Flow

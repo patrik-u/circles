@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Flex, VStack, Button, useToast, HStack, Input, Textarea } from "@chakra-ui/react";
 import axios from "axios";
-import { log } from "../../components/Helpers";
+import { log } from "../../components/old_Helpers";
 //#endregion
 
 const CircleAdmin = () => {

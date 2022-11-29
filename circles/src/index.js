@@ -2,12 +2,9 @@
 import React, { lazy } from "react";
 import { createRoot } from "react-dom/client";
 import reportWebVitals from "./reportWebVitals";
-import { MapProvider } from "react-map-gl";
-import { ThreeboxProvider } from "./components/ThreeboxProvider";
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./index.css";
-import { StepsStyleConfig as Steps } from "chakra-ui-steps";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -15,16 +12,14 @@ import config from "./Config";
 import axios from "axios";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
-import App from "./App2";
+import App from "./App";
 //import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+import RouterUtils from "components/RouterUtils";
 //#endregion
 
 //#region initializations
 const theme = extendTheme({
-    components: {
-        Steps,
-    },
     fonts: {
         heading: "Roboto",
         body: "Roboto",
@@ -75,14 +70,16 @@ const PrivacyPolicy = lazy(() => import("./screens/main/PrivacyPolicy"));
 const root = createRoot(document.getElementById("root"));
 root.render(
     <Router>
-        <ChakraProvider theme={theme}>
-            <React.StrictMode>
-                <Routes>
-                    <Route path="/privacypolicy" element={<PrivacyPolicy />} />
-                    <Route path="/*" element={<App />} />
-                </Routes>
-            </React.StrictMode>
-        </ChakraProvider>
+        <RouterUtils>
+            <ChakraProvider theme={theme}>
+                <React.StrictMode>
+                    <Routes>
+                        <Route path="/privacypolicy" element={<PrivacyPolicy />} />
+                        <Route path="/*" element={<App />} />
+                    </Routes>
+                </React.StrictMode>
+            </ChakraProvider>
+        </RouterUtils>
     </Router>
 );
 

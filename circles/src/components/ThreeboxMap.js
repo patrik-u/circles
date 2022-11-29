@@ -3,7 +3,7 @@ import { GeolocateControl, NavigationControl } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useThreebox } from "./ThreeboxProvider";
 import { Map, useMap } from "react-map-gl";
-import { getLatlng, log } from "./Helpers";
+import { getLatlng, log } from "./old_Helpers";
 import { useSearchParams } from "react-router-dom";
 import IsMobileContext from "./IsMobileContext";
 

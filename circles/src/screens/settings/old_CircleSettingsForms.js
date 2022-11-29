@@ -41,8 +41,8 @@ import { FiFile } from "react-icons/fi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeoPoint } from "firebase/firestore";
 import { storage } from "../../components/Firebase";
-import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles } from "../../components/Helpers";
-import { useNavigate } from "react-router-dom";
+import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles } from "../../components/old_Helpers";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "../../components/Navigation";
 import { ConnectionNotification } from "../main/Notifications";
 import UserContext from "../../components/UserContext";
@@ -60,7 +60,7 @@ import "react-quill/dist/quill.snow.css";
 //#endregion
 
 //PWA123
-import CircleListItem from "../circle/CircleListItem";
+import CircleListItem from "../circle/old_CircleListItem";
 //const CircleListItem = lazy(() => import("../circle/CircleListItem"));
 
 export const DatePickerInput = forwardRef(({ value, onClick }, ref) => (
@@ -514,7 +514,7 @@ export const EventContentForm = ({
 }) => {
     const user = useContext(UserContext);
     const toast = useToast();
-    const navigate = useNavigate();
+    const navigate = useNavigateNoUpdates();
     const createEventInitialRef = useRef();
     const [pickedDate, setPickedDate] = useState(dateTime ?? new Date());
     const [isAllDay, setIsAllDay] = useState(false);
@@ -2057,7 +2057,7 @@ export const CircleSocialMediaForm = ({ circle }) => {
 
 export const CircleDeleteForm = ({ circle }) => {
     const toast = useToast();
-    const navigate = useNavigate();
+    const navigate = useNavigateNoUpdates();
     const deleteCircleInitialRef = useRef();
 
     return (

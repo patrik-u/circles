@@ -1,10 +1,10 @@
 //#region imports
 import React, { useState, useEffect, useContext } from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { CircleTypeForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, CircleContentForm, EventContentForm } from "../settings/CircleSettingsForms";
+import { CircleTypeForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, CircleContentForm, EventContentForm } from "../settings/old_CircleSettingsForms";
 import i18n from "i18n/Localization";
 import UserContext from "../../components/UserContext";
-import { log } from "../../components/Helpers";
+import { log } from "../../components/old_Helpers";
 import IsMobileContext from "../../components/IsMobileContext";
 import { useNavigate } from "react-router-dom";
 import { routes, openCircle } from "../../components/Navigation";

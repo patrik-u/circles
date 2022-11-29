@@ -11,16 +11,17 @@ import {
     CircleDeleteForm,
     CircleConnectionsSettings,
     CircleQuestionsForm,
-} from "../settings/CircleSettingsForms";
+} from "../settings/old_CircleSettingsForms";
 import i18n from "i18n/Localization";
 import UserContext from "../../components/UserContext";
-import { log } from "../../components/Helpers";
+import { log } from "../../components/old_Helpers";
 import IsMobileContext from "../../components/IsMobileContext";
 import { Routes, Route, useNavigate, useLocation, matchPath } from "react-router-dom";
 import { CircleHeader } from "../../components/CircleElements";
 import { routes } from "../../components/Navigation";
 import { defaultContentWidth } from "../../components/Constants";
 import { Scrollbars } from "react-custom-scrollbars-2";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
 const CircleSettings = ({
@@ -35,8 +36,8 @@ const CircleSettings = ({
     setContentWidth,
     onConnect,
 }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
+    const navigate = useNavigateNoUpdates();
+    const location = useLocationNoUpdates();
     const isMobile = useContext(IsMobileContext);
     const user = useContext(UserContext);
     const toast = useToast();

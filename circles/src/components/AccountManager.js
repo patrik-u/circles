@@ -1,18 +1,18 @@
 //#region imports
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import db, { auth } from "./Firebase";
+import db, { auth } from "components/Firebase";
 import * as Sentry from "@sentry/react";
 import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
-import { toastError, log } from "./Helpers";
+import { toastError, log } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import i18n from "../i18n/Localization";
+import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
-import { signInStatusValues } from "./Constants";
-import { uidAtom, userAtom, userDataAtom, signInStatusAtom } from "./Atoms";
+import { signInStatusValues } from "components/Constants";
+import { uidAtom, userAtom, userDataAtom, signInStatusAtom } from "components/Atoms";
 import config from "Config";
-import useScript from "./useScript";
+import useScript from "components/useScript";
 //#endregion
 
 // signs out user
@@ -23,6 +23,8 @@ export const userSignOut = (setUser) => {
 
 // handles user account log in to circles using firebase auth and google one tap
 export const AccountManager = () => {
+    log("AccountManager.render", -1);
+
     const [uid, setUid] = useAtom(uidAtom);
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);
@@ -54,6 +56,7 @@ export const AccountManager = () => {
 
                 log("setting uid " + uid, 0);
                 setUid(uid);
+                setSignInStatus(signInStatusValues.signingIn);
             } else {
                 // happens if the user has lost connection or isn't signed in yet
                 log("user not authenticated in firebase", 0);
@@ -188,6 +191,8 @@ export const AccountManager = () => {
             return;
         }
 
+        setSignInStatus(signInStatusValues.signingIn);
+
         // have we already loaded the google one tap script?
         if (!window?.[googleOneTapScriptFlag] && window.google && googleOneTapScript === "ready") {
             log("starting Google One Tap");
@@ -225,8 +230,6 @@ export const AccountManager = () => {
         let credential = GoogleAuthProvider.credential(response.credential);
         await signInWithCredential(auth, credential);
     };
-
-    log("AccountManager.rendered");
 
     return null;
 };

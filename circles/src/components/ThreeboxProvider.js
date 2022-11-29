@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo } from "react";
 // @ts-ignore
 import { Threebox } from "threebox-plugin";
 import { useMap } from "react-map-gl";
-import { log } from "./Helpers";
+import { log } from "./old_Helpers";
 
 /** Generate the context */
 const ThreeboxContext = createContext(null);

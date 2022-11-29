@@ -1,29 +1,30 @@
 //#region imports
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
-import UserContext from "../../components/UserContext";
-import IsMobileContext from "../../components/IsMobileContext";
-import db from "../../components/Firebase";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 import i18n from "i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiOutlineMessage } from "react-icons/ai";
-import { timeSince, fromFsDate, log, singleLineEllipsisStyle, isConnected } from "../../components/Helpers";
-import { openCircleSection } from "../../components/Navigation";
-import { CirclePicture } from "../../components/CircleElements";
+import { timeSince, fromFsDate, log, singleLineEllipsisStyle, isConnected } from "components/Helpers";
+import { openCircle } from "components/Navigation";
+import { CirclePicture } from "components/CircleElements";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, circleAtom, chatCircleAtom } from "components/Atoms";
+import db, { auth } from "components/Firebase";
+import { signOut } from "firebase/auth";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
 
-export const NotificationsBell = ({ circle }) => {
-    const user = useContext(UserContext);
+//PWA123 complete
+
+export const NotificationsBell = () => {
+    const [circle] = useAtom(circleAtom);
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
     const iconSize = { base: "18px", md: "20px" };
     const [notificationSetting, setNotificationSetting] = useState(user?.circle_settings?.[circle.id]?.notifications);
-
-    useEffect(() => {
-        log("notificationSetting:" + notificationSetting);
-    }, []);
 
     const toggleNotifications = () => {
         if (!circle?.id) {
@@ -46,8 +47,8 @@ export const NotificationsBell = ({ circle }) => {
     };
 
     return (
-        user &&
-        isConnected(user, circle) && (
+        user?.id &&
+        isConnected(userData, circle) && (
             <>
                 <Box position="relative" height={iconSize} marginLeft="5px">
                     <Icon
@@ -61,53 +62,13 @@ export const NotificationsBell = ({ circle }) => {
                         cursor="pointer"
                     />
                 </Box>
-
-                {/* <Box
-                    className="messagesBoxParent"
-                    ref={messagesBoxRef}
-                    zIndex="55"
-                    position="absolute"
-                    display={messagesIsOpen ? "flex" : "none"}
-                    borderRadius={{ base: "20px", md: "20px" }}
-                    overflow="hidden"
-                    top={{ base: "43", md: "83px" }}
-                    right={{ base: "0px", md: "5px" }}
-                    width={{ base: "100%", md: "400px" }}
-                    height="calc(100vh - 88px)"
-                >
-                    <Scrollbars autoHide>
-                        <Fade in={messagesIsOpen} height="100%" width="100%">
-                            <Box className="messagesBox" height="100%" width="100%">
-                                <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
-                                    
-                                    <Text fontWeight="500" fontSize="20px" marginBottom="10px">
-                                        {i18n.t("Messages")}
-                                    </Text>                                    
-
-                                    {messages.length <= 0 && <Text>{i18n.t("no messages")}</Text>}
-
-                                    {messages.map((message) => (
-                                        <MessageNotification
-                                            key={message.id}
-                                            notification={message}
-                                            onClick={() => {
-                                                messagesOnClose();
-                                                openCircleSection(navigate, user, message.circle_id, circle, setCircle, "chat");
-                                            }}
-                                        />
-                                    ))}
-                                </Flex>
-                            </Box>
-                        </Fade>
-                    </Scrollbars>
-                </Box> */}
             </>
         )
     );
 };
 
 export const MessageNotification = ({ notification, onClick }) => {
-    const user = useContext(UserContext);
+    const [user] = useAtom(userAtom);
 
     return (
         user && (
@@ -179,10 +140,11 @@ export const MessageNotification = ({ notification, onClick }) => {
     );
 };
 
-const Messages = ({ satelliteMode, circle, setCircle, chatCircle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
+const Messages = () => {
+    const [chatCircle] = useAtom(chatCircleAtom);
+    const [user] = useAtom(userAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+    const navigate = useNavigateNoUpdates();
     const [messages, setMessages] = useState([]);
     const { isOpen: messagesIsOpen, onOpen: messagesOnOpen, onClose: messagesOnClose } = useDisclosure();
     const iconSize = { base: "24px", md: "30px" };
@@ -255,7 +217,7 @@ const Messages = ({ satelliteMode, circle, setCircle, chatCircle }) => {
                     <Icon
                         width={iconSize}
                         height={iconSize}
-                        color={isMobile ? "#333" : satelliteMode ? "white" : "#53459b"}
+                        color={"#333"}
                         _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
                         _active={{ transform: "scale(0.98)" }}
                         as={AiOutlineMessage}
@@ -319,7 +281,7 @@ const Messages = ({ satelliteMode, circle, setCircle, chatCircle }) => {
                                                 notification={message}
                                                 onClick={() => {
                                                     messagesOnClose();
-                                                    openCircleSection(navigate, user, message.circle_id, circle, setCircle, "chat");
+                                                    openCircle(navigate, message.circle_id, "chat");
                                                 }}
                                             />
                                         ))}
