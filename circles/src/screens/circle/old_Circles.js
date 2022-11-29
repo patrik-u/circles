@@ -4,14 +4,14 @@ import { Box, Flex, VStack, Text, Icon } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
 import UserContext from "../../components/UserContext";
 import axios from "axios";
-import { getLatlng, getDistanceString, log, fromFsDate, getDateWithoutTime } from "../../components/Helpers";
+import { getLatlng, getDistanceString, log, fromFsDate, getDateWithoutTime } from "../../components/old_Helpers";
 import IsMobileContext from "../../components/IsMobileContext";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { routes, openCircle } from "../../components/Navigation";
 import { CircleHeader, CirclePicture, CircleCover } from "../../components/CircleElements";
 import { RiMapPinFill } from "react-icons/ri";
 import { getPreciseDistance } from "geolib";
-import CircleListItem from "./CircleListItem";
+import CircleListItem from "./old_CircleListItem";
 //#endregion
 
 export const Circles = ({

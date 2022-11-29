@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { log } from "./Helpers";
+import { log } from "./old_Helpers";
 import data from "@emoji-mart/data";
 import { NimblePicker, Picker, PickerProps } from "emoji-mart";
 

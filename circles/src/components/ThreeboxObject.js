@@ -3,7 +3,7 @@ import { useThreebox } from "./ThreeboxProvider";
 // important!
 import { THREE } from "threebox-plugin";
 import { useMap } from "react-map-gl";
-import { log } from "./Helpers";
+import { log } from "./old_Helpers";
 
 export const Flag = {
     obj: "/flag.gltf",

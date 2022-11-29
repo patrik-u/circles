@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { log } from "./Helpers";
+import { log } from "./old_Helpers";
 
 function getWindowDimensions() {
     const { innerWidth: windowWidth, innerHeight: windowHeight } = window;

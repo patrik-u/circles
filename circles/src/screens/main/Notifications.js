@@ -1,24 +1,25 @@
 //#region imports
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
-import UserContext from "../../components/UserContext";
-import IsMobileContext from "../../components/IsMobileContext";
-import db from "../../components/Firebase";
+import db from "components/Firebase";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 import i18n from "i18n/Localization";
 import { FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
-import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "../../components/Helpers";
-import { openCircle } from "../../components/Navigation";
+import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "components/Helpers";
+import { openCircle } from "components/Navigation";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, circleAtom, chatCircleAtom } from "components/Atoms";
+import { auth } from "components/Firebase";
+import { signOut } from "firebase/auth";
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
+    const [user] = useAtom(userAtom);
 
     const ApproveDenyButtons = () => {
         const [isUpdating, setIsUpdating] = useState(false);
@@ -346,10 +347,11 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
     );
 };
 
-const Notifications = ({ satelliteMode, circle, setCircle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
+const Notifications = () => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const [circle] = useAtom(circleAtom);
+    const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
     const iconSize = { base: "24px", md: "30px" };
@@ -417,7 +419,7 @@ const Notifications = ({ satelliteMode, circle, setCircle }) => {
                         requestUpdatedAt={notification.request_updated_at}
                         onClick={() => {
                             notificationsOnClose();
-                            openCircle(navigate, user, notification.source.id, circle, setCircle);
+                            openCircle(navigate, notification.source.id);
                         }}
                     />
                 );
@@ -433,7 +435,7 @@ const Notifications = ({ satelliteMode, circle, setCircle }) => {
                     <Icon
                         width={iconSize}
                         height={iconSize}
-                        color={isMobile ? "#333" : satelliteMode ? "white" : "#53459b"}
+                        color={"#333"}
                         _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
                         _active={{ transform: "scale(0.98)" }}
                         as={FaRegBell}

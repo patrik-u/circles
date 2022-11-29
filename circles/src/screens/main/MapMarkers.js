@@ -1,17 +1,14 @@
 //#region imports
 import React, { useContext, lazy, Suspense } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import UserContext from "../../components/UserContext";
-import { lat, lng, mapNavigateTo, getLngLatArray, getImageKitUrl } from "../../components/Helpers";
+import { lat, lng, mapNavigateTo, getLngLatArray, getImageKitUrl } from "components/Helpers";
 import { Marker } from "react-map-gl";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { circleDefaultRoute } from "../../components/Navigation";
-import { CirclePicture } from "../../components/CircleElements";
+import { circleDefaultRoute } from "components/Navigation";
+import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
-
-// PWA123
-//import CirclePreview from "../circle/CirclePreview";
-
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, circleIdAtom } from "components/Atoms";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
 export const LocationPickerMarker = ({ position }) => {
@@ -74,18 +71,14 @@ export const CircleMapEdges = ({ circle, circles }) => {
 };
 
 export const CircleMarker = ({ circle }) => {
-    const [searchParams] = useSearchParams();
-    const embed = searchParams.get("embed") === "true";
-
-    return circle && <CircleMapMarker circle={circle} embed={embed} />;
+    return circle && <CircleMapMarker circle={circle} />;
 };
 
-// PWA123
-const CirclePreview = lazy(() => import("../circle/CirclePreview"));
+const CirclePreview = lazy(() => import("screens/circle/CirclePreview"));
 
-export const CircleMapMarker = ({ circle, embed }) => {
-    const user = useContext(UserContext);
-    const navigate = useNavigate();
+export const CircleMapMarker = ({ circle }) => {
+    const [user] = useAtom(userAtom);
+    const navigate = useNavigateNoUpdates();
     const getMarkerBackground = () => {
         switch (circle?.type) {
             default:
@@ -106,7 +99,7 @@ export const CircleMapMarker = ({ circle, embed }) => {
                 latitude={lat(circle.base)}
                 longitude={lng(circle.base)}
                 className="circle-marker"
-                onClick={() => mapNavigateTo(navigate, circleDefaultRoute(user, circle.id), embed)}
+                onClick={() => mapNavigateTo(navigate, circleDefaultRoute(user, circle.id))}
             >
                 <Image src={getImageKitUrl(getMarkerBackground())} width="48px" height="48px" />
                 <Box
@@ -142,15 +135,12 @@ export const CircleMapMarker = ({ circle, embed }) => {
 };
 
 export const CirclesMapMarkers = ({ circles }) => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const embed = searchParams.get("embed") === "true";
-
     return (
         <>
             {circles
                 ?.filter((item) => item.base)
                 .map((item) => (
-                    <CircleMapMarker key={item.id} circle={item} embed={embed} />
+                    <CircleMapMarker key={item.id} circle={item} />
                 ))}
         </>
     );

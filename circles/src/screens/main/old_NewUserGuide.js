@@ -5,7 +5,7 @@ import UserContext from "../../components/UserContext";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
 import { toastError, log } from "../../components/Helpers";
-import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleQuestionsForm } from "../settings/CircleSettingsForms";
+import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleQuestionsForm } from "../settings/old_CircleSettingsForms";
 import i18n from "i18n/Localization";
 import config from "../../Config";
 import PrivacyPolicy from "./PrivacyPolicy";

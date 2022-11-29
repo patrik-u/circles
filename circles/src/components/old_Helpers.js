@@ -2,33 +2,7 @@ import i18n from "../i18n/Localization";
 import config from "../Config";
 import { GeoPoint } from "firebase/firestore";
 
-export const isConnected = (userData, circle) => {
-    if (!circle || !userData) return false;
-    return userData.mutual_connections?.includes(circle.id);
-};
-
-export const hasUpdates = (userData, circle, category) => {
-    // show update indicator if user is connected to circle and user data indicates user hasn't seen latest updates
-    if (!userData || !circle || !category) return false;
-    if (circle.id === "earth") return false;
-    if (!isConnected(userData, circle)) return false;
-
-    let updatedAt = fromFsDate(circle.updates?.[category]);
-    let seenAt = fromFsDate(userData.seen?.[circle.id]?.[category]);
-
-    if (updatedAt && !seenAt) {
-        return true;
-    }
-
-    return updatedAt > seenAt;
-};
-
-export const log = (message, logLevel = 0) => {
-    // logLevel 0 = everything, 1 = important, 2 = production
-    if (logLevel >= config.logLevel) {
-        console.log(message);
-    }
-};
+export const defaultContentWidth = "435px";
 
 export const isPastEvent = (inEvent) => {
     let eventDate = fromFsDate(inEvent.starts_at);
@@ -206,14 +180,6 @@ export const singleLineEllipsisStyle = {
     overflow: "hidden",
 };
 
-export const twoLineEllipsisStyle = {
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    display: "-webkit-box",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-};
-
 export const timeSince = (date, timeUntil) => {
     if (typeof date !== "object") {
         date = new Date(date);
@@ -339,134 +305,157 @@ export const toastSuccess = (toast, title, description) => {
     });
 };
 
-export const isAdmin = (circle, userData) => {
-    if (!circle || !userData) return false;
-    return userData.admin_of?.includes(circle.id);
+export const log = (message, logLevel = 0) => {
+    // logLevel 0 = everything, 1 = important, 2 = production
+    if (logLevel >= config.logLevel) {
+        console.log(message);
+    }
 };
 
-// //  takes connections to same source or target and clusters them
-// export const clusterConnections = (connections, clusterSource) => {
-//     // merge user connections of the same type
-//     let filteredConnections = [];
-//     let connections_clone = connections;
-//     try {
-//         if (typeof structuredClone === "function") {
-//             connections_clone = structuredClone(connections);
-//         }
-//     } catch {
-//         connections_clone = connections;
-//     }
+export const isAdmin = (circle, user) => {
+    if (circle?.id === user?.id) return true;
+    return user?.connections?.some((x) => x.target.id === circle.id && (x.type?.includes("owner_of") || x.type?.includes("admin_of")));
+};
 
-//     if (Array.isArray(connections)) {
-//         let seen = {};
-//         filteredConnections = connections_clone?.filter((entry) => {
-//             var previous;
-//             var clusterId = clusterSource ? entry.source.id : entry.target.id;
+//  takes connections to same source or target and clusters them
+export const clusterConnections = (connections, clusterSource) => {
+    // merge user connections of the same type
+    let filteredConnections = [];
+    let connections_clone = connections;
+    try {
+        if (typeof structuredClone === "function") {
+            connections_clone = structuredClone(connections);
+        }
+    } catch {
+        connections_clone = connections;
+    }
 
-//             // have we seen this label before?
-//             if (seen.hasOwnProperty(clusterId)) {
-//                 // yes, grab it and add this data to it
-//                 previous = seen[clusterId];
-//                 previous.type.push(entry.type);
+    if (Array.isArray(connections)) {
+        let seen = {};
+        filteredConnections = connections_clone?.filter((entry) => {
+            var previous;
+            var clusterId = clusterSource ? entry.source.id : entry.target.id;
 
-//                 // don't keep this entry, we've merged it into the previous one
-//                 return false;
-//             }
+            // have we seen this label before?
+            if (seen.hasOwnProperty(clusterId)) {
+                // yes, grab it and add this data to it
+                previous = seen[clusterId];
+                previous.type.push(entry.type);
 
-//             // entry.type probably isn't an array; make it one for consistency
-//             if (!Array.isArray(entry.type)) {
-//                 entry.type = [entry.type];
-//             }
+                // don't keep this entry, we've merged it into the previous one
+                return false;
+            }
 
-//             // remember that we've seen it
-//             seen[clusterId] = entry;
-//             return true;
-//         });
-//     }
-//     return filteredConnections;
-// };
+            // entry.type probably isn't an array; make it one for consistency
+            if (!Array.isArray(entry.type)) {
+                entry.type = [entry.type];
+            }
 
-// export const adminCircles = (user) => {
-//     let circles = user?.connections?.filter((x) => x.type?.includes("owner_of") || x.type?.includes("admin_of"));
-//     return circles?.map((x) => x.target) ?? [];
-// };
+            // remember that we've seen it
+            seen[clusterId] = entry;
+            return true;
+        });
+    }
+    return filteredConnections;
+};
 
-// export const isFollowing = (user, circle) => {
-//     if (!circle || !user) return false;
-//     return user?.connections?.some((x) => x.target.id === circle.id && x.type.includes("connected_to"));
-// };
+export const adminCircles = (user) => {
+    let circles = user?.connections?.filter((x) => x.type?.includes("owner_of") || x.type?.includes("admin_of"));
+    return circles?.map((x) => x.target) ?? [];
+};
 
-// export const isMutuallyConnected = (user, circle, includeRequests) => {
-//     if (!circle || !user) return false;
-//     return user?.connections?.some(
-//         (x) => x.target.id === circle.id && (x.type.includes("connected_mutually_to") || (includeRequests && x.type.includes("connected_mutually_to_request")))
-//     );
-// };
+export const isFollowing = (user, circle) => {
+    if (!circle || !user) return false;
+    return user?.connections?.some((x) => x.target.id === circle.id && x.type.includes("connected_to"));
+};
 
-// export const isMember = (userConnections, circleId) => {
-//     return userConnections?.some((x) => x.target.id === circleId && x.type.includes("connected_mutually_to"));
-// };
+export const isMutuallyConnected = (user, circle, includeRequests) => {
+    if (!circle || !user) return false;
+    return user?.connections?.some(
+        (x) => x.target.id === circle.id && (x.type.includes("connected_mutually_to") || (includeRequests && x.type.includes("connected_mutually_to_request")))
+    );
+};
 
-// export const getConnectLabel = (circleType, connectType) => {
-//     switch (connectType) {
-//         case "owner_of":
-//             return i18n.t("Owner");
-//         case "admin_of":
-//             return i18n.t("Admin");
-//         case "moderator_of":
-//             return i18n.t("Moderator");
-//         case "connected_mutually_to":
-//             switch (circleType) {
-//                 default:
-//                 case "circle":
-//                     return i18n.t("Member");
-//                 case "user":
-//                     return i18n.t("Contact");
-//                 case "event":
-//                     return i18n.t("Attendee");
-//                 case "tag":
-//                     return i18n.t("Supporter");
-//             }
-//         case "connected_mutually_to_request":
-//             return i18n.t(`Request [${circleType}]`);
-//         case "connected_to":
-//             return i18n.t("Follower");
-//         case "creator_of":
-//             return i18n.t("Creator");
-//         default:
-//             return i18n.t("Connected");
-//     }
-// };
+export const isMember = (userConnections, circleId) => {
+    return userConnections?.some((x) => x.target.id === circleId && x.type.includes("connected_mutually_to"));
+};
 
-// export const getConnectionLabel = (user, item) => {
-//     let connection = user?.connectionsToUser?.find((x) => x.source.id === item.id);
-//     if (!connection) return null;
-//     if (connection.type.includes("owned_by")) {
-//         return i18n.t("Owned by you");
-//     } else if (connection.type.includes("admin_by")) {
-//         return i18n.t("Administered by you");
-//     } else if (connection.type.includes("moderated_by")) {
-//         return i18n.t("Moderated by you");
-//     } else if (connection.type.includes("created_by")) {
-//         return i18n.t("Created by you");
-//     } else if (connection.type.includes("connected_to")) {
-//         return i18n.t("Follows you");
-//     } else if (connection.type.includes("connected_mutually_to")) {
-//         return i18n.t("Connected to you");
-//     } else {
-//         return null;
-//     }
-// };
+export const getConnectLabel = (circleType, connectType) => {
+    switch (connectType) {
+        case "owner_of":
+            return i18n.t("Owner");
+        case "admin_of":
+            return i18n.t("Admin");
+        case "moderator_of":
+            return i18n.t("Moderator");
+        case "connected_mutually_to":
+            switch (circleType) {
+                default:
+                case "circle":
+                    return i18n.t("Member");
+                case "user":
+                    return i18n.t("Contact");
+                case "event":
+                    return i18n.t("Attendee");
+                case "tag":
+                    return i18n.t("Supporter");
+            }
+        case "connected_mutually_to_request":
+            return i18n.t(`Request [${circleType}]`);
+        case "connected_to":
+            return i18n.t("Follower");
+        case "creator_of":
+            return i18n.t("Creator");
+        default:
+            return i18n.t("Connected");
+    }
+};
 
-// export const isConnected = (user, circle) => {
-//     return isConnectedId(user, circle?.id);
-// };
+export const getConnectionLabel = (user, item) => {
+    let connection = user?.connectionsToUser?.find((x) => x.source.id === item.id);
+    if (!connection) return null;
+    if (connection.type.includes("owned_by")) {
+        return i18n.t("Owned by you");
+    } else if (connection.type.includes("admin_by")) {
+        return i18n.t("Administered by you");
+    } else if (connection.type.includes("moderated_by")) {
+        return i18n.t("Moderated by you");
+    } else if (connection.type.includes("created_by")) {
+        return i18n.t("Created by you");
+    } else if (connection.type.includes("connected_to")) {
+        return i18n.t("Follows you");
+    } else if (connection.type.includes("connected_mutually_to")) {
+        return i18n.t("Connected to you");
+    } else {
+        return null;
+    }
+};
 
-// export const isConnectedId = (user, circleId) => {
-//     if (!circleId || !user) return false;
-//     return user?.connections?.some((x) => x.target.id === circleId);
-// };
+export const isConnected = (user, circle) => {
+    return isConnectedId(user, circle?.id);
+};
 
-// export const isConnectedToUser = (user, item) => {
-//     return user?.connectionsToUser?.some((x) => x.source.id === item.id);
-// };
+export const isConnectedId = (user, circleId) => {
+    if (!circleId || !user) return false;
+    return user?.connections?.some((x) => x.target.id === circleId);
+};
+
+export const isConnectedToUser = (user, item) => {
+    return user?.connectionsToUser?.some((x) => x.source.id === item.id);
+};
+
+export const hasUpdates = (user, circle, category) => {
+    // show update indicator if user is connected to circle and user data indicates user hasn't seen latest updates
+    if (!user || !circle || !category) return false;
+    if (circle.id === "earth") return false;
+    if (!isConnected(user, circle)) return false;
+
+    let updatedAt = fromFsDate(circle.updates?.[category]);
+    let seenAt = fromFsDate(user.seen?.[circle.id]?.[category]);
+
+    if (updatedAt && !seenAt) {
+        return true;
+    }
+
+    return updatedAt > seenAt;
+};

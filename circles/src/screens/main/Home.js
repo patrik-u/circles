@@ -2,26 +2,33 @@
 import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
 import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button } from "@chakra-ui/react";
-import { CirclePicture } from "../../components/CircleElements";
-import { getImageKitUrl, log, singleLineEllipsisStyle } from "../../components/Helpers";
-import { openCirclePWA } from "../../components/Navigation";
-import { useNavigate } from "react-router-dom";
+import { CirclePicture } from "components/CircleElements";
+import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers";
+import { openCircle } from "components/Navigation";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom } from "../../components/Atoms";
-import { auth } from "../../components/Firebase";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom } from "components/Atoms";
+import { auth } from "components/Firebase";
 import { signOut } from "firebase/auth";
 // #endregion
 
 export const Home = () => {
+    log("Home.render", -1);
+
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const navigate = useNavigate();
+    const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
+    const navigate = useNavigateNoUpdates();
 
     const [latestCircles, setLatestCircles] = useState([]);
 
     useEffect(() => {
+        // PWA123 redirect to earth for now
+        openCircle(navigate, "AaBi2McObpTHeCz0akCP");
+        return;
+
         if (!userData?.latestCircles) {
             // read from local storage
             let latestCirclesStr = window.localStorage.getItem("latestCircles");
@@ -41,6 +48,10 @@ export const Home = () => {
         setLatestCircles(userCircles);
         window.localStorage.setItem("latestCircles", JSON.stringify(userCircles));
     }, [userData]);
+
+    useEffect(() => {
+        setShowNetworkLogo(false);
+    });
 
     return (
         <Flex backgroundColor="#ffffff" width="100%" height="100%" alignItems="center" justifyContent="center">
@@ -84,23 +95,15 @@ export const Home = () => {
                                 }}
                                 opacity="0.9"
                                 filter="grayscale(0.05)"
-                                onClick={() => openCirclePWA(navigate, item.id)}
+                                onClick={() => openCircle(navigate, item.id)}
                             >
-                                <CirclePicture size={48} circle={item} onParentClick={() => openCirclePWA(navigate, item.parent_circle?.id)} />
+                                <CirclePicture size={48} circle={item} onParentClick={() => openCircle(navigate, item.parent_circle?.id)} />
                                 <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px">
                                     {item.name}
                                 </Text>
                             </Box>
                         ))}
                     </SimpleGrid>
-                    {/* PWA123 cleanup */}
-                    {/* <Button
-                        onClick={() => {
-                            signOut(auth);
-                        }}
-                    >
-                        Sign out
-                    </Button> */}
                 </Flex>
             </Flex>
         </Flex>

@@ -2,21 +2,20 @@
 import React, { useEffect, useContext, useRef, useState } from "react";
 import { Box, Menu, MenuButton, MenuItem, MenuList, Flex, HStack, VStack, Text, Image, Icon, Link, Button, useToast } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
-import UserContext from "../../components/UserContext";
-import { log, fromFsDate, getDateWithoutTime, getDateAndTimeLong, getDateLong, toastInfo, isMutuallyConnected, isFollowing } from "../../components/Helpers";
-import IsMobileContext from "../../components/IsMobileContext";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { CircleHeader, CircleCover } from "../../components/CircleElements";
+import { log, fromFsDate, getDateWithoutTime, getDateAndTimeLong, getDateLong, toastInfo, isConnected, isFollowing } from "components/Helpers";
 import { RiLinksLine, RiShareLine } from "react-icons/ri";
 import { GiRoundStar } from "react-icons/gi";
 import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { QRCodeCanvas } from "qrcode.react";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
 const ShareButtonMenu = ({ children, referrer }) => {
-    const location = useLocation();
+    const location = useLocationNoUpdates();
     const [absoluteLocation, setAbsoluteLocation] = useState();
     const [absoluteQrLocation, setAbsoluteQrLocation] = useState();
     const toast = useToast();
@@ -106,54 +105,24 @@ const ShareButtonMenu = ({ children, referrer }) => {
     );
 };
 
-const CircleHome = ({
-    circle,
-    setCircle,
-    circles,
-    setCircles,
-    circleConnections,
-    displayMode,
-    events,
-    subcircles,
-    setDisplayMode,
-    isSignedIn,
-    isSigningIn,
-    mustLogInOnOpen,
-    focusItem,
-    userLocation,
-    onConnect,
-    isConnecting,
-}) => {
-    const user = useContext(UserContext);
-    const isMobile = useContext(IsMobileContext);
-    const userIsConnected = circle?.id === user?.id || isMutuallyConnected(user, circle, true);
-    const userIsFollower = circle?.id === user?.id || isFollowing(user, circle);
-    const location = useLocation();
-    const pointsRef = useRef(null);
-    const [searchParams, setSearchParams] = useSearchParams();
-    const mapOnly = searchParams.get("mapOnly") === "true";
+const CircleHome = () => {
+    log("CircleHome.render", -1);
 
-    useEffect(() => {
-        log("CircleHome.useEffect 1", 0);
-        let startDate = getDateWithoutTime(); // today
-        setCircles(
-            circleConnections
-                ?.map((x) => x.display_circle)
-                .filter((x) => {
-                    // remove old events
-                    if (x.type === "event") {
-                        return fromFsDate(x.starts_at) > startDate;
-                    } else {
-                        return true;
-                    }
-                })
-        );
-    }, [isMobile, mapOnly, setCircles, circleConnections]);
+    const [isMobile] = useAtom(isMobileAtom);
+    const [circle] = useAtom(circleAtom);
+    const location = useLocationNoUpdates();
 
     const CircleQuestion = ({ question }) => {
         return (
-            <Box position="relative" borderRadius="15px" padding="0" align="start" marginLeft="22px" marginRight="22px" marginTop="20px">
-                {/* <Image position="absolute" opacity="0.05" width="40px" top="-10px" left="0px" src={require("../assets/images/quotes.png")} /> */}
+            <Box
+                position="relative"
+                borderRadius="15px"
+                padding="0"
+                align="start"
+                marginTop="20px"
+                marginLeft={isMobile ? "15px" : "0px"}
+                marginRight={isMobile ? "15px" : "0px"}
+            >
                 <Text fontSize="18px" fontWeight="700" marginLeft="0px" marginBottom="5px">
                     {question.label}
                 </Text>
@@ -164,188 +133,92 @@ const CircleHome = ({
 
     return (
         <>
-            {circle && !mapOnly && (
-                <Box flexGrow="1" width="100%" height="100%" align="center" position="relative" top="0px" left="0px" flexDirection="column">
-                    <CircleHeader circle={circle} setCircle={setCircle} title="home" onConnect={onConnect} />
-                    <Flex width="100%" flexDirection="column" flexWrap="nowrap" justifyContent="left">
-                        <Box flex="initial" order="0" maxWidth="none" minWidth="none" marginBottom="20px">
+            {circle && (
+                <Box marginBottom="60px">
+                    <VStack spacing="0px">
+                        <VStack align="center" className="circle-overview-content" spacing="16px" position="relative" top="0px">
                             <VStack spacing="0px">
-                                {(!userIsConnected || !userIsFollower) && circle.id !== "earth" && (
-                                    <>
-                                        <Flex
-                                            flexDirection="column"
-                                            align="center"
-                                            justifyContent="center"
-                                            height="50px"
-                                            position="fixed"
-                                            backgroundColor="#ffffffee"
-                                            width={isMobile ? "100%" : "435px"}
-                                            flexGrow="1"
-                                            zIndex="10"
-                                        >
-                                            <HStack align="center" height="40px">
-                                                {!userIsConnected && (
-                                                    <Button
-                                                        width="150px"
-                                                        colorScheme="blue"
-                                                        borderRadius="25px"
-                                                        lineHeight="0"
-                                                        backgroundColor="#389bf8"
-                                                        color="white"
-                                                        isDisabled={isConnecting}
-                                                        onClick={() => onConnect(user, circle, "connect")}
-                                                        position="relative"
-                                                    >
-                                                        <HStack marginRight="13px">
-                                                            <RiLinksLine size="18px" />
-                                                            <Text>{i18n.t(`Default connect [${circle.type}]`)}</Text>
-                                                        </HStack>
-                                                    </Button>
-                                                )}
-                                                {!userIsFollower && (
-                                                    <Button
-                                                        width="150px"
-                                                        colorScheme="blue"
-                                                        borderRadius="25px"
-                                                        lineHeight="0"
-                                                        backgroundColor="#389bf8"
-                                                        color="white"
-                                                        isDisabled={isConnecting}
-                                                        onClick={() => onConnect(user, circle, "follow")}
-                                                        position="relative"
-                                                    >
-                                                        <HStack marginRight="13px">
-                                                            <RiLinksLine size="18px" />
-                                                            <Text>{i18n.t("Follow")}</Text>
-                                                        </HStack>
-                                                    </Button>
-                                                )}
-                                            </HStack>
-                                        </Flex>
-                                        <Box height="50px" />
-                                    </>
-                                )}
-
-                                <Box height="200px" width="100%" maxWidth="700px" backgroundColor="#b9b9b9" position="relative">
-                                    <CircleCover circle={circle} />
-                                    <ShareButtonMenu referrer={user} />
-                                </Box>
-                                <VStack align="center" className="circle-overview-content" spacing="16px" position="relative" top="0px">
-                                    <VStack spacing="0px">
-                                        {circle.type === "event" && (
-                                            <Text fontSize="18px" fontWeight="700" color="#cf1a1a" href={location.pathname} marginTop="0px">
-                                                {circle.is_all_day ? getDateLong(circle.starts_at) : getDateAndTimeLong(circle.starts_at)}
-                                            </Text>
-                                        )}
-                                        {/* TODO show all circle tags somewhere */}
-                                        {/* <CircleTags circle={circle} setCircle={setCircle} size="md" /> */}
-                                    </VStack>
-                                    {circle.social_media && (
-                                        <HStack spacing="10px" alignSelf="start" paddingLeft="20px">
-                                            {circle.social_media.facebook && (
-                                                <Link href={circle.social_media.facebook} target="_blank">
-                                                    <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.twitter && (
-                                                <Link href={circle.social_media.twitter} target="_blank">
-                                                    <Image src={"/social_twitter26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.instagram && (
-                                                <Link href={circle.social_media.instagram} target="_blank">
-                                                    <Image src={"/social_instagram26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.youtube && (
-                                                <Link href={circle.social_media.youtube} target="_blank">
-                                                    <Image src={"/social_youtube26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.tiktok && (
-                                                <Link href={circle.social_media.tiktok} target="_blank">
-                                                    <Image src={"/social_tiktok26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.linkedin && (
-                                                <Link href={circle.social_media.linkedin} target="_blank">
-                                                    <Image src={"/social_linkedin26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.medium && (
-                                                <Link href={circle.social_media.medium} target="_blank">
-                                                    <Image src={"/social_medium26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.link1 && (
-                                                <Link href={circle.social_media.link1} target="_blank">
-                                                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.link2 && (
-                                                <Link href={circle.social_media.link2} target="_blank">
-                                                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            {circle.social_media.link3 && (
-                                                <Link href={circle.social_media.link3} target="_blank">
-                                                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                                </Link>
-                                            )}
-                                            <Link href={location.pathname} target="_blank">
-                                                <Image src={"/social_codo26x26.png"} className="social-media-icon" />
-                                            </Link>
-                                        </HStack>
-                                    )}
-                                    {/* <LatestConnections item={circle} circleId={circle.id} hasPopover={true} size={36} remainingFontSize="14px" /> */}
-                                    <Box>
-                                        <Text marginLeft="40px" marginRight="40px">
-                                            {circle.description}
-                                        </Text>
-                                    </Box>
-                                </VStack>
-                            </VStack>
-
-                            {circle.content && (
-                                <Box marginLeft="22px" marginRight="22px" marginTop="20px" align="left">
-                                    <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: circle.content }} />
-                                </Box>
-                            )}
-
-                            {circle.questions && (
-                                <>
-                                    {circle.questions.question0 && <CircleQuestion question={circle.questions.question0} />}
-                                    {circle.questions.question1 && <CircleQuestion question={circle.questions.question1} />}
-                                    {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
-                                </>
-                            )}
-                        </Box>
-
-                        <Box flex="initial" order="0" align="center" maxWidth="none" display="none">
-                            <Box
-                                ref={pointsRef}
-                                align="left"
-                                padding="10px"
-                                paddingBottom="80px"
-                                backgroundColor="#F4F4F4"
-                                borderColor="#aaa"
-                                borderWidth="1px 0px 0px 0px"
-                            >
-                                <HStack>
-                                    <Icon
-                                        width="36px"
-                                        height="36px"
-                                        color="#ffb545"
-                                        //color="#ba9452"
-                                        as={GiRoundStar}
-                                    />
-                                    <Text className="pointsText" color="#333" fontSize="36px" fontWeight="700">
-                                        {circle?.points?.toLocaleString() ?? "0"}
+                                {circle.type === "event" && (
+                                    <Text fontSize="18px" fontWeight="700" color="#cf1a1a" href={location.pathname} marginTop="0px">
+                                        {circle.is_all_day ? getDateLong(circle.starts_at) : getDateAndTimeLong(circle.starts_at)}
                                     </Text>
+                                )}
+                                {/* TODO show all circle tags somewhere */}
+                                {/* <CircleTags circle={circle} setCircle={setCircle} size="md" /> */}
+                            </VStack>
+                            {circle.social_media && (
+                                <HStack spacing="10px" alignSelf="start" paddingLeft="20px">
+                                    {circle.social_media.facebook && (
+                                        <Link href={circle.social_media.facebook} target="_blank">
+                                            <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.twitter && (
+                                        <Link href={circle.social_media.twitter} target="_blank">
+                                            <Image src={"/social_twitter26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.instagram && (
+                                        <Link href={circle.social_media.instagram} target="_blank">
+                                            <Image src={"/social_instagram26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.youtube && (
+                                        <Link href={circle.social_media.youtube} target="_blank">
+                                            <Image src={"/social_youtube26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.tiktok && (
+                                        <Link href={circle.social_media.tiktok} target="_blank">
+                                            <Image src={"/social_tiktok26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.linkedin && (
+                                        <Link href={circle.social_media.linkedin} target="_blank">
+                                            <Image src={"/social_linkedin26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.medium && (
+                                        <Link href={circle.social_media.medium} target="_blank">
+                                            <Image src={"/social_medium26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.link1 && (
+                                        <Link href={circle.social_media.link1} target="_blank">
+                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.link2 && (
+                                        <Link href={circle.social_media.link2} target="_blank">
+                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    {circle.social_media.link3 && (
+                                        <Link href={circle.social_media.link3} target="_blank">
+                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                                        </Link>
+                                    )}
+                                    <Link href={location.pathname} target="_blank">
+                                        <Image src={"/social_codo26x26.png"} className="social-media-icon" />
+                                    </Link>
                                 </HStack>
-                            </Box>
+                            )}
+                        </VStack>
+                    </VStack>
+
+                    {circle.content && (
+                        <Box align="left" marginLeft={isMobile ? "15px" : "0px"} marginRight={isMobile ? "15px" : "0px"} marginTop="10px">
+                            <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: circle.content }} />
                         </Box>
-                    </Flex>
+                    )}
+
+                    {circle.questions && (
+                        <>
+                            {circle.questions.question0 && <CircleQuestion question={circle.questions.question0} />}
+                            {circle.questions.question1 && <CircleQuestion question={circle.questions.question1} />}
+                            {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
+                        </>
+                    )}
                 </Box>
             )}
         </>

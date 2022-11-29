@@ -5,7 +5,7 @@ import i18n from "i18n/Localization";
 import UserContext from "../../components/UserContext";
 import db from "../../components/Firebase";
 import axios from "axios";
-import { log, getDateAndTimeLong, toastError, toastSuccess, getConnectLabel } from "../../components/Helpers";
+import { log, getDateAndTimeLong, toastError, toastSuccess, getConnectLabel } from "../../components/old_Helpers";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine } from "react-icons/ri";
 import { AiOutlineDisconnect } from "react-icons/ai";
