@@ -112,7 +112,7 @@ export const shouldShowNavItem = (navItem, circle, userData) => {
     if (circle == null) return true;
     if (navItem.requireAdmin && !isAdmin(circle, userData)) {
         return false;
-    } else if (navItem.requireConnection && !isConnected(userData, circle)) {
+    } else if (navItem.requireConnection && !isConnected(userData, circle?.id)) {
         return false;
     }
     return true;

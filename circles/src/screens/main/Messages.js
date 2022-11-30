@@ -48,7 +48,7 @@ export const NotificationsBell = () => {
 
     return (
         user?.id &&
-        isConnected(userData, circle) && (
+        isConnected(userData, circle?.id) && (
             <>
                 <Box position="relative" height={iconSize} marginLeft="5px">
                     <Icon

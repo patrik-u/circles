@@ -26,10 +26,11 @@ import { Routes, Route, useParams } from "react-router-dom";
 import { CircleHeader, CircleCover } from "components/CircleElements";
 import LeftMenu from "screens/main/LeftMenu";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, circleIdAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 //#endregion
 
 const CircleHome = lazy(() => import("./CircleHome"));
+const CircleChat = lazy(() => import("./CircleChat"));
 
 export const Circle = () => {
     log("Circle.render", -1);
@@ -145,6 +146,7 @@ export const Circle = () => {
 
                     <Routes>
                         <Route path="/" element={<CircleHome />} />
+                        <Route path="/chat" element={<CircleChat />} />
                     </Routes>
                 </Box>
                 {!isMobile && (

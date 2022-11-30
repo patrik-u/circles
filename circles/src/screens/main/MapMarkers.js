@@ -7,7 +7,7 @@ import { circleDefaultRoute } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, circleIdAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 

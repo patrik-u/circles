@@ -6,7 +6,7 @@ import { CirclePicture, CircleCover } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, circleIdAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 //#endregion
 
 export const CirclePreview = ({ item, onClick, focusItem, navigate, location, ...props }) => {
@@ -35,7 +35,7 @@ export const CirclePreview = ({ item, onClick, focusItem, navigate, location, ..
             {...props}
         >
             <Box width="140px" height="95px" flexShrink="0" flexGrow="0" backgroundColor="#b9b9b9" overflow="hidden" position="relative" borderRadius="13px">
-                <CircleCover circle={item} coverWidth={140} />
+                <CircleCover type={item?.type} cover={item?.cover} coverWidth={140} coverHeight={95} />
 
                 <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" />
 

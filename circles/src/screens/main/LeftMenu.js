@@ -35,6 +35,9 @@ export const LeftMenu = ({ ...props }) => {
         return name.length > 8 ? "14px" : "15px";
     };
 
+    const matchedColor = "#1e2228";
+    const notMatchedColor = matchedColor; //"#4a4a4a"
+
     return (
         <Flex
             className="sticky"
@@ -58,7 +61,7 @@ export const LeftMenu = ({ ...props }) => {
                             borderRadius="100px"
                             role="group"
                             cursor="pointer"
-                            color={isMatch[i] ? "#1e2228" : "#4a4a4a"}
+                            color={isMatch[i] ? matchedColor : notMatchedColor}
                             bg={isMatch[i] ? "#e9e9e9" : "transparent"}
                             _hover={{
                                 bg: "#e1e0e9",
@@ -85,7 +88,7 @@ export const LeftMenu = ({ ...props }) => {
                                         as={navItem.icon}
                                     />
                                 )}
-                                {navItem.image && <Image src={navItem.image} color={isMatch[i] ? "#1e2228" : "#4a4a4a"} />}
+                                {navItem.image && <Image src={navItem.image} color={isMatch[i] ? matchedColor : notMatchedColor} />}
                                 {!isMatch[i] && hasUpdates(userData, circle, navItem.category) && (
                                     <Box
                                         width={isExpanded ? "8.5px" : "8.5px"}
