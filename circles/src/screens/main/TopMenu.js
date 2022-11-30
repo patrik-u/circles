@@ -41,7 +41,7 @@ export const TopMenu = () => {
                 maxHeight={height}
                 width="100%"
                 position="fixed"
-                zIndex="1"
+                zIndex="4"
                 backgroundColor="white"
             >
                 {/* TODO show network circle */}

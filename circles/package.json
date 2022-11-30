@@ -63,6 +63,7 @@
     "scripts": {
         "start": "react-scripts start",
         "build": "react-scripts build && copy build\\index.html functions\\hosting\\index.html && del build\\index.html",
+        "build-serve": "react-scripts build && copy build\\index.html functions\\hosting\\index.html",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },

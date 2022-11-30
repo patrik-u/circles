@@ -3,7 +3,7 @@ import React, { useContext, lazy, Suspense } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
 import { lat, lng, mapNavigateTo, getLngLatArray, getImageKitUrl } from "components/Helpers";
 import { Marker } from "react-map-gl";
-import { circleDefaultRoute } from "components/Navigation";
+import { openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
@@ -16,7 +16,7 @@ export const LocationPickerMarker = ({ position }) => {
         <>
             {position[0] && position[1] && (
                 <Marker offset={[0, -24]} latitude={position[1]} longitude={position[0]} className="circle-marker">
-                    <Image src="/marker2.png" width="48px" height="48px" />
+                    <Image src={getImageKitUrl("/marker2.png", 48, 48)} width="48px" height="48px" />
                 </Marker>
             )}
         </>
@@ -99,9 +99,9 @@ export const CircleMapMarker = ({ circle }) => {
                 latitude={lat(circle.base)}
                 longitude={lng(circle.base)}
                 className="circle-marker"
-                onClick={() => mapNavigateTo(navigate, circleDefaultRoute(user, circle.id))}
+                onClick={() => openCircle(navigate, circle.id)}
             >
-                <Image src={getImageKitUrl(getMarkerBackground())} width="48px" height="48px" />
+                <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" />
                 <Box
                     top="3px"
                     left="9px"

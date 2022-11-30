@@ -217,16 +217,14 @@ const ThreeboxMap = ({ onMapClick, children, satelliteMode }, ref) => {
             projection="globe"
             fog={fog}
         >
-            {!embed && (
-                <GeolocateControl
-                    style={geolocateControlStyle}
-                    position={isMobile ? "top-left" : "top-right"}
-                    positionOptions={{ enableHighAccuracy: true }}
-                    top="20px"
-                    trackUserLocation={true}
-                    auto
-                />
-            )}
+            <GeolocateControl
+                style={geolocateControlStyle}
+                position={isMobile ? "top-left" : "top-right"}
+                positionOptions={{ enableHighAccuracy: true }}
+                top="20px"
+                trackUserLocation={true}
+                auto
+            />
 
             <NavigationControl />
 

@@ -127,6 +127,8 @@ export const CircleChat = () => {
         if (!circleId) {
             return;
         }
+        log("userData:" + JSON.stringify(userData, null, 2));
+        log(`chat debug, isAuthorized: ${isConnected(userData, circle?.id)}`);
         // check if user is authorized to view chat
         if (!circle.chat_is_public && !isConnected(userData, circle?.id)) {
             setIsAuthorized(false);
@@ -134,7 +136,7 @@ export const CircleChat = () => {
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, user?.id, user?.connections, setIsAuthorized, circle?.chat_is_public, userData]);
+    }, [circle?.id, setIsAuthorized, circle?.chat_is_public, userData]);
 
     useEffect(() => {
         log("Chat.useEffect 3");
@@ -420,7 +422,7 @@ export const CircleChat = () => {
 
     // top bar + cover image + header
     const chatHeight = isMobile ? windowHeight - (40 + 250 + 93) : 900;
-    const selfMessageBg = "#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
+    const selfMessageBg = "#c3f5bf"; //"#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
     const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
     const chatBackgroundColor = "#f9f9f9";
 
