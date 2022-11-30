@@ -2,7 +2,7 @@
 import React, { useState, useContext } from "react";
 import { Flex, Box, VStack, Text, Image, Icon } from "@chakra-ui/react";
 import { useLocation, matchPath } from "react-router-dom";
-import { hasUpdates } from "components/Helpers";
+import { hasUpdates, getImageKitUrl } from "components/Helpers";
 import { openCircle, getNavigationItems, shouldShowNavItem } from "components/Navigation";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
@@ -88,7 +88,7 @@ export const LeftMenu = ({ ...props }) => {
                                         as={navItem.icon}
                                     />
                                 )}
-                                {navItem.image && <Image src={navItem.image} color={isMatch[i] ? matchedColor : notMatchedColor} />}
+                                {navItem.image && <Image src={getImageKitUrl(navItem.image)} color={isMatch[i] ? matchedColor : notMatchedColor} />}
                                 {!isMatch[i] && hasUpdates(userData, circle, navItem.category) && (
                                     <Box
                                         width={isExpanded ? "8.5px" : "8.5px"}

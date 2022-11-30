@@ -157,14 +157,6 @@ export const fromFsDate = (date) => {
     }
 };
 
-export const mapNavigateTo = (navigate, path, embed) => {
-    if (embed) {
-        window.open(path, "_blank");
-    } else {
-        navigate(path);
-    }
-};
-
 export const datesAreOnSameDay = (first, second) => {
     if (first === null || second === null) return false;
     let firstDate = fromFsDate(first);

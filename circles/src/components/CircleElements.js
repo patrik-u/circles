@@ -8,15 +8,53 @@ import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLi
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "screens/circle/CirclePreview";
 import { RiLinksLine } from "react-icons/ri";
+import { GrGallery } from "react-icons/gr";
+import { FaMapMarkedAlt } from "react-icons/fa";
+import { IoMap } from "react-icons/io5";
 import Scrollbars from "react-custom-scrollbars-2";
 import { NotificationsBell } from "screens/main/Messages";
 import { atom, atomWithStorage, useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import { displayModes } from "components/Constants";
 //#endregion
 
-export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) => {
+export const DisplayModeButtons = ({ ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
-    const height = coverHeight ? coverHeight : isMobile ? 250 : 464;
+    const [displayMode, setDisplayMode] = useAtom(displayModeAtom);
+    const iconCircleSize = isMobile ? "38px" : "48px";
+    const iconSize = isMobile ? "22px" : "28px";
+
+    return (
+        <VStack
+            position="absolute"
+            right={isMobile ? (displayMode === displayModes.map ? "40px" : "10px") : "12px"}
+            bottom={isMobile ? "10px" : displayMode === displayModes.map ? "26px" : "12px"}
+            {...props}
+        >
+            <Flex
+                backgroundColor="#f4f4f4dd"
+                _hover={{ backgroundColor: "#1fff50dd" }}
+                width={iconCircleSize}
+                height={iconCircleSize}
+                borderRadius="50%"
+                cursor="pointer"
+                alignItems="center"
+                justifyContent="center"
+                onClick={() => setDisplayMode(displayMode === displayModes.default ? displayModes.map : displayModes.default)}
+            >
+                <Icon
+                    width={iconSize}
+                    height={iconSize}
+                    color="black"
+                    as={displayMode === displayModes.default ? FaMapMarkedAlt : GrGallery}
+                    cursor="pointer"
+                />
+            </Flex>
+        </VStack>
+    );
+};
+
+export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) => {
     const getDefaultCircleCover = () => {
         switch (type) {
             default:
@@ -32,8 +70,8 @@ export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) 
     return (
         <Image
             width={coverWidth ? `${coverWidth}px` : "100%"}
-            height={`${height}px`}
-            src={getImageKitUrl(cover, coverWidth, coverHeight) ?? getDefaultCircleCover()}
+            height={`${coverHeight}px`}
+            src={getImageKitUrl(cover ?? getDefaultCircleCover(), coverWidth, coverHeight)}
             backgroundColor="white"
             objectFit="cover"
             {...props}
@@ -311,37 +349,40 @@ export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
     const height = smallSize ? "19px" : "22px";
 
     const getConnectionStatus = () => {
-        let connection = user?.connections?.find((x) => x.target.id === circle.id);
-        if (!connection) {
-            return i18n.t("Follower");
-        }
-        if (connection.type.includes("owner_of")) {
-            return i18n.t("Owner");
-        } else if (connection.type.includes("admin_of")) {
-            return i18n.t("Admin");
-        } else if (connection.type.includes("moderator_of")) {
-            return i18n.t("Moderator");
-        } else if (connection.type.includes("connected_mutually_to")) {
-            switch (connection?.target?.type) {
-                default:
-                case "circle":
-                    return i18n.t("Member");
-                case "user":
-                    return i18n.t("Contact");
-                case "event":
-                    return i18n.t("Attendee");
-                case "tag":
-                    return i18n.t("Supporter");
-            }
-        } else if (connection.type.includes("connected_to")) {
-            return i18n.t("Follower");
-        } else if (connection.type.includes("creator_of")) {
-            return i18n.t("Creator");
-        } else if (connection.type.includes("connected_mutually_to_request")) {
-            return i18n.t("Connecting");
-        } else {
-            return i18n.t("Connected");
-        }
+        return i18n.t("Connected");
+
+        // PWA123 we don't have user connections
+        // let connection = user?.connections?.find((x) => x.target.id === circle.id);
+        // if (!connection) {
+        //     return i18n.t("Follower");
+        // }
+        // if (connection.type.includes("owner_of")) {
+        //     return i18n.t("Owner");
+        // } else if (connection.type.includes("admin_of")) {
+        //     return i18n.t("Admin");
+        // } else if (connection.type.includes("moderator_of")) {
+        //     return i18n.t("Moderator");
+        // } else if (connection.type.includes("connected_mutually_to")) {
+        //     switch (connection?.target?.type) {
+        //         default:
+        //         case "circle":
+        //             return i18n.t("Member");
+        //         case "user":
+        //             return i18n.t("Contact");
+        //         case "event":
+        //             return i18n.t("Attendee");
+        //         case "tag":
+        //             return i18n.t("Supporter");
+        //     }
+        // } else if (connection.type.includes("connected_to")) {
+        //     return i18n.t("Follower");
+        // } else if (connection.type.includes("creator_of")) {
+        //     return i18n.t("Creator");
+        // } else if (connection.type.includes("connected_mutually_to_request")) {
+        //     return i18n.t("Connecting");
+        // } else {
+        //     return i18n.t("Connected");
+        // }
     };
 
     return (

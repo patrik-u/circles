@@ -23,14 +23,27 @@ import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsis
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
-import { CircleHeader, CircleCover } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons } from "components/CircleElements";
 import LeftMenu from "screens/main/LeftMenu";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    showNetworkLogoAtom,
+    signInStatusAtom,
+    circleAtom,
+    circlesAtom,
+    circleConnectionsAtom,
+} from "components/Atoms";
+import { displayModes } from "components/Constants";
 //#endregion
 
 const CircleHome = lazy(() => import("./CircleHome"));
 const CircleChat = lazy(() => import("./CircleChat"));
+const CircleMap = lazy(() => import("./CircleMap"));
+const Circles = lazy(() => import("./Circles"));
 
 export const Circle = () => {
     log("Circle.render", -1);
@@ -40,6 +53,10 @@ export const Circle = () => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
     const [circle, setCircle] = useAtom(circleAtom);
+    const [displayMode] = useAtom(displayModeAtom);
+    const [circles, setCircles] = useAtom(circlesAtom);
+    const [circleConnections, setCircleConnections] = useAtom(circleConnectionsAtom);
+    const [user] = useAtom(userAtom);
 
     useEffect(() => {
         setShowNetworkLogo(true);
@@ -49,8 +66,6 @@ export const Circle = () => {
         if (!circleId) return;
 
         let unsubscribeGetCircle = null;
-
-        // TODO axios call to get Circle
 
         // subscribe to circle
         unsubscribeGetCircle = onSnapshot(doc(db, "circles", circleId), (doc) => {
@@ -69,6 +84,81 @@ export const Circle = () => {
             }
         };
     }, [circleId, setCircle]);
+
+    useEffect(() => {
+        if (!circleId) return;
+
+        // show all connections on the map
+        // subscribe to connected circles
+        let q = query(collection(db, "connections"), where("circle_ids", "array-contains", circleId));
+        let unsubscribeGetCircles = onSnapshot(q, (snap) => {
+            let circleConnections = snap.docs.map((doc) => doc.data());
+            // merge circle connections of the same type
+            let connections = [];
+            if (Array.isArray(circleConnections)) {
+                let seen = {};
+                connections = circleConnections?.filter((entry) => {
+                    var previous;
+                    // wether to use source or target depends
+                    let parentCircleIsSource = entry.source.id === circleId;
+                    let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
+                    // have we seen this label before?
+                    if (seen.hasOwnProperty(mergeId)) {
+                        // yes, grab it and add this data to it
+                        previous = seen[mergeId];
+                        previous.type.push(entry.type);
+                        // don't keep this entry, we've merged it into the previous one
+                        return false;
+                    }
+                    // entry.type probably isn't an array; make it one for consistency
+                    if (!Array.isArray(entry.type)) {
+                        entry.type = [entry.type];
+                    }
+                    entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
+                    // remember that we've seen it
+                    seen[mergeId] = entry;
+                    return true;
+                });
+            }
+            setCircleConnections(connections);
+            let startDate = getDateWithoutTime(); // today
+            setCircles(
+                connections
+                    ?.map((x) => x.display_circle)
+                    .filter((x) => {
+                        // remove old events
+                        if (x.type === "event") {
+                            return fromFsDate(x.starts_at) > startDate;
+                        } else {
+                            return true;
+                        }
+                    })
+            );
+        });
+
+        return () => {
+            if (unsubscribeGetCircles) {
+                unsubscribeGetCircles();
+            }
+        };
+    }, [circleId, setCircles, setCircleConnections]);
+
+    useEffect(() => {
+        log("Circle.useEffect 2", 0);
+        if (!user?.id || !circleId) return;
+        if (circleId === "earth") return;
+
+        log("Circle.seen");
+
+        // mark circle as seen
+        axios
+            .post(`/seen`, {
+                category: "any",
+                circleId: circleId,
+            })
+            .then((x) => {})
+            .catch((error) => {});
+    }, [user?.id, circleId]);
 
     const circlePictureSize = isMobile ? 120 : 160;
 
@@ -120,17 +210,19 @@ export const Circle = () => {
     };
 
     const debugBg = false;
+    const coverHeight = isMobile ? 250 : 464;
 
     return (
         <Flex flexDirection="column">
             {/* Cover image */}
-            <CircleCover type={circle?.type} cover={circle?.cover} />
-            <Box position="relative">
-                <Box marginLeft={`${circlePictureSize + 10}px`}></Box>
+            <Box width="100%" height={`${coverHeight}px`} position="relative">
+                {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} coverHeight={coverHeight} />}
+                {displayMode === displayModes.map && <CircleMap height={coverHeight} />}
+                <DisplayModeButtons />
             </Box>
 
             {/* Main Content */}
-            <Flex width="100%" flexDirection={isMobile ? "column" : "row"} flexWrap={isMobile ? "nowrap" : "wrap"} justifyContent="center">
+            <Flex width="100%" flexDirection={isMobile ? "column" : "row"} flexWrap={isMobile ? "nowrap" : "wrap"} justifyContent="center" zIndex="2">
                 <Box
                     flex={isMobile ? "initial" : "2"}
                     order={isMobile ? "0" : "2"}
@@ -147,6 +239,11 @@ export const Circle = () => {
                     <Routes>
                         <Route path="/" element={<CircleHome />} />
                         <Route path="/chat" element={<CircleChat />} />
+                        <Route path="/circles" element={<Circles type="circle" />} />
+                        <Route path="/events" element={<Circles type="event" />} />
+                        <Route path="/rooms" element={<Circles type="room" />} />
+                        <Route path="/users" element={<Circles type="user" />} />
+                        <Route path="/links" element={<Circles type="link" />} />
                     </Routes>
                 </Box>
                 {!isMobile && (

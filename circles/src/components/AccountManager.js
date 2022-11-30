@@ -114,6 +114,7 @@ export const AccountManager = () => {
         let firstGetUserData = true;
 
         // sign in to circles
+        log("signing in to circles");
         axios
             .get(`/signin`)
             .then((signInResult) => {
@@ -124,6 +125,7 @@ export const AccountManager = () => {
                 }
                 setUser(data.user);
                 setUserData(data.userData);
+                log("signed into circles, subscribing to user data");
 
                 // subscribe to user public data
                 unsubscribeGetUser = onSnapshot(doc(db, "circles", uid), (doc) => {
@@ -191,11 +193,10 @@ export const AccountManager = () => {
             return;
         }
 
-        setSignInStatus(signInStatusValues.signingIn);
-
         // have we already loaded the google one tap script?
         if (!window?.[googleOneTapScriptFlag] && window.google && googleOneTapScript === "ready") {
-            log("starting Google One Tap");
+            log("initializing Google One Tap", 1);
+            setSignInStatus(signInStatusValues.signingIn);
             window.google.accounts.id.initialize({
                 client_id: config.googleId,
                 cancel_on_tap_outside: false,
@@ -206,6 +207,8 @@ export const AccountManager = () => {
             window[googleOneTapScriptFlag] = true;
         }
         if (window?.[googleOneTapScriptFlag] && googleOneTapScript === "ready") {
+            log("starting Google One Tap", 1);
+            setSignInStatus(signInStatusValues.signingIn);
             window.google.accounts.id.prompt((notification) => {
                 if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
                     // user cancels google one tap sign in
@@ -221,8 +224,6 @@ export const AccountManager = () => {
                 window.google.accounts.id.cancel();
             };
         }
-
-        setGoogleOneTapDone(true);
     }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
 
     const onGoogleSignIn = async (response) => {

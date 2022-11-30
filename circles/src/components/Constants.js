@@ -7,4 +7,5 @@ export const signInStatusValues = {
     userSigningOut: { signedIn: false, signingIn: false },
     circlesSignInFailed: { signedIn: false, fbAuth: true, signingIn: false },
 };
+export const displayModes = { default: "default", map: "map" };
 export const defaultUserPicture = "/default-user-picture.png";

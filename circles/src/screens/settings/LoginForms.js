@@ -73,6 +73,8 @@ export const LoginRegisterMenu = () => {
 
     const displayLoginRegisterMenu = !signInStatus.signedIn && !signInStatus.signingIn;
 
+    log(`LoginRegisterMenu signedIn: ${signInStatus.signedIn}, signingIn: ${signInStatus.signingIn}`, 0);
+
     const [signInButton, setSignInButton] = useState(null);
     const [signInButton2, setSignInButton2] = useState(null);
     const setSignInButtonRef = (element) => {
