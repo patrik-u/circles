@@ -14,9 +14,9 @@ import { atom, atomWithStorage, useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 //#endregion
 
-export const CircleCover = ({ type, cover, ...props }) => {
+export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
-    const height = isMobile ? 250 : 464;
+    const height = coverHeight ? coverHeight : isMobile ? 250 : 464;
     const getDefaultCircleCover = () => {
         switch (type) {
             default:
@@ -31,9 +31,9 @@ export const CircleCover = ({ type, cover, ...props }) => {
 
     return (
         <Image
-            width="100%"
+            width={coverWidth ? `${coverWidth}px` : "100%"}
             height={`${height}px`}
-            src={getImageKitUrl(cover, null, height) ?? getDefaultCircleCover()}
+            src={getImageKitUrl(cover, coverWidth, coverHeight) ?? getDefaultCircleCover()}
             backgroundColor="white"
             objectFit="cover"
             {...props}
@@ -63,8 +63,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
     };
 
     const getCirclePicture = (picture) => {
-        if (!picture) return getDefaultCirclePicture();
-        return getImageKitUrl(picture, size, size);
+        return getImageKitUrl(picture ?? getDefaultCirclePicture(), size, size);
     };
 
     return hasPopover && !isMobile ? (
@@ -81,6 +80,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                         objectFit="cover"
                         onClick={onClick}
                         cursor={onClick ? "pointer" : "inherit"}
+                        fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                         {...props}
                     />
                 </PopoverTrigger>
@@ -107,6 +107,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     objectFit="cover"
                     onClick={onClick}
                     cursor={onClick ? "pointer" : "inherit"}
+                    fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                     {...props}
                 />
             )}
@@ -123,6 +124,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     borderRadius="50%"
                     objectFit="cover"
                     onClick={onParentClick}
+                    fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                     {...props}
                 />
             )}
@@ -146,7 +148,7 @@ export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, se
     const [isMobile] = useAtom(isMobileAtom);
 
     const getNameFontSize = (name) => {
-        if (!isMobile || !name) return "28px";
+        if (!isMobile || !name) return "32px";
 
         if (name.length <= 16) return "24px";
         if (name.length <= 17) return "23px";
@@ -157,10 +159,10 @@ export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, se
     };
 
     return (
-        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "70px" : "100px"}>
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "90px" : "120px"}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex align="left" flexDirection="column" width="100%" position="relative">
-                    <Text style={twoLineEllipsisStyle} fontSize={getNameFontSize(circle?.name)} fontWeight="bold">
+                    <Text style={twoLineEllipsisStyle} fontSize={getNameFontSize(circle?.name)} fontWeight="bold" marginTop={isMobile ? "0px" : "5px"}>
                         {circle?.name}
                     </Text>
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
@@ -304,6 +306,7 @@ export const getConnectLabel = (circleType, connectType) => {
 
 export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
     const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
     const smallSize = size === "sm" || size === "tiny";
     const height = smallSize ? "19px" : "22px";
 
@@ -344,7 +347,7 @@ export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
     return (
         circle?.id !== user?.id && (
             <Box {...props}>
-                {isConnected(user, circle) ? (
+                {isConnected(userData, circle?.id) ? (
                     <Flex flexDirection="row" position="relative">
                         <Box
                             backgroundImage="linear-gradient(to right, transparent, #ffffff);"

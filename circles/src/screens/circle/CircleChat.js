@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
 import {
     Box,
     Textarea,
@@ -30,7 +30,7 @@ import useWindowDimensions from "components/useWindowDimensions";
 import i18n from "i18n/Localization";
 import db from "components/Firebase";
 import axios from "axios";
-import { getDayAndMonth, datesAreOnSameDay, log, isMember } from "components/Helpers";
+import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getImageKitUrl } from "components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
 import { CircleHeader, CirclePicture } from "components/CircleElements";
 import { routes } from "../../components/Navigation";
@@ -42,11 +42,17 @@ import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, chatCircleAtom } from "components/Atoms";
 //#endregion
 
-export const CircleChat = ({ circle }) => {
-    const isMobile = useContext(IsMobileContext);
-    const user = useContext(UserContext);
+export const CircleChat = () => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const [circle] = useAtom(circleAtom);
+
+    const [chatCircle, setChatCircle] = useAtom(chatCircleAtom);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
     const [chatMessages, setChatMessages] = useState([]);
     const [message, setMessage] = useState("");
@@ -62,10 +68,12 @@ export const CircleChat = ({ circle }) => {
     const [isAuthorized, setIsAuthorized] = useState(true);
     const [caretIndex, setCaretIndex] = useState(0);
     const textAreaRef = useRef();
+    const { windowWidth, windowHeight } = useWindowDimensions();
 
     useEffect(() => {
         log("Chat.useEffect 1");
         setScrollToLastSmooth(false);
+        window.scrollTo(0, document.body.scrollHeight);
     }, []);
 
     useEffect(() => {
@@ -120,13 +128,13 @@ export const CircleChat = ({ circle }) => {
             return;
         }
         // check if user is authorized to view chat
-        if (!circle.chat_is_public && !isMember(user?.connections, circleId)) {
+        if (!circle.chat_is_public && !isConnected(userData, circle?.id)) {
             setIsAuthorized(false);
             return;
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, user?.id, user?.connections, setIsAuthorized, circle?.chat_is_public]);
+    }, [circle?.id, user?.id, user?.connections, setIsAuthorized, circle?.chat_is_public, userData]);
 
     useEffect(() => {
         log("Chat.useEffect 3");
@@ -410,22 +418,30 @@ export const CircleChat = ({ circle }) => {
         setMessageToReply(null);
     };
 
-    const { windowWidth } = useWindowDimensions();
+    // top bar + cover image + header
+    const chatHeight = isMobile ? windowHeight - (40 + 250 + 93) : 900;
+    const selfMessageBg = "#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
+    const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
+    const chatBackgroundColor = "#f9f9f9";
 
     return (
         circle && (
             <>
-                <CircleHeader circle={circle} setCircle={setCircle} onConnect={onConnect} title="chat" />
                 <Flex
                     flexGrow="1"
                     width="100%"
-                    height={isMobile ? "calc(100% - 74px)" : "calc(100% - 74px)"}
+                    height={`${chatHeight}px`}
+                    maxHeight={isMobile ? "none" : `${windowHeight - 300}px`}
                     position="relative"
                     left="0px"
                     flexDirection={isMobile ? "column" : "row"}
                     top="0px"
+                    borderRadius={isMobile ? "0px" : "5px"}
+                    overflow="hidden"
+                    backgroundColor={chatBackgroundColor}
                 >
-                    <Flex width={isMobile ? "100%" : "435px"} height="100%" overflow="hidden" flexDirection="column">
+                    {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
+                    <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                         <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
                             {!isAuthorized && (
                                 <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px">
@@ -437,7 +453,7 @@ export const CircleChat = ({ circle }) => {
                                 <>
                                     <Box flexGrow="1" overflow="hidden">
                                         <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
-                                            <VStack align="left" spacing="0px" marginTop="30px" marginLeft="8px" marginRight="8px">
+                                            <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
                                                 {chatMessages?.map((item) => (
                                                     <>
                                                         {item.type === "date" && (
@@ -510,7 +526,7 @@ export const CircleChat = ({ circle }) => {
                                                                                     borderRadius={`${item.isFirst ? "10px" : "0px"} 10px 10px ${
                                                                                         item.isLast ? "10px" : "0px"
                                                                                     }`}
-                                                                                    backgroundColor={!item.isSelf ? "#f5f5f5" : "#c6f3c0"}
+                                                                                    backgroundColor={!item.isSelf ? otherMessageBg : selfMessageBg}
                                                                                     color={item.user.id !== user?.id ? "black" : "black"}
                                                                                     marginRight="auto"
                                                                                     overflow="hidden"
@@ -656,7 +672,7 @@ export const CircleChat = ({ circle }) => {
                                                 {!chatMessages?.length && !isLoadingMessages && <Text marginLeft="12px">{i18n.t("No messages")}</Text>}
                                                 {isLoadingMessages && <Spinner marginLeft="12px" />}
                                             </VStack>
-                                            {chatMessages.length > 0 && <Box ref={scrollLastRef} />}
+                                            {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
                                         </Scrollbars>
                                     </Box>
 
@@ -725,10 +741,11 @@ export const CircleChat = ({ circle }) => {
                                         boxSizing="border-box"
                                         height="60px"
                                         paddingTop="10px"
-                                        marginLeft="10px"
-                                        marginRight="10px"
+                                        paddingLeft="10px"
+                                        paddingRight="10px"
                                         marginTop="auto"
                                         position="relative"
+                                        backgroundColor="#ffffffcc"
                                     >
                                         <Textarea
                                             ref={textAreaRef}

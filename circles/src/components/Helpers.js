@@ -2,16 +2,16 @@ import i18n from "../i18n/Localization";
 import config from "../Config";
 import { GeoPoint } from "firebase/firestore";
 
-export const isConnected = (userData, circle) => {
-    if (!circle || !userData) return false;
-    return userData.mutual_connections?.includes(circle.id);
+export const isConnected = (userData, circleId) => {
+    if (!circleId || !userData) return false;
+    return userData.mutual_connections?.includes(circleId);
 };
 
 export const hasUpdates = (userData, circle, category) => {
     // show update indicator if user is connected to circle and user data indicates user hasn't seen latest updates
     if (!userData || !circle || !category) return false;
     if (circle.id === "earth") return false;
-    if (!isConnected(userData, circle)) return false;
+    if (!isConnected(userData, circle?.id)) return false;
 
     let updatedAt = fromFsDate(circle.updates?.[category]);
     let seenAt = fromFsDate(userData.seen?.[circle.id]?.[category]);

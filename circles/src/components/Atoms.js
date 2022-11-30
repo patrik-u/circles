@@ -16,4 +16,3 @@ export const signInStatusAtom = atom(signInStatusValues.signingIn);
 export const circleAtom = atom(null);
 export const showNetworkLogoAtom = atom(false);
 export const chatCircleAtom = atom(null);
-export const circleIdAtom = atom(null);
