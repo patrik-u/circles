@@ -96,7 +96,7 @@ export const MessageNotification = ({ notification, onClick }) => {
                 paddingTop="1px"
             >
                 <Box margin="10px" minWidth="50px" minHeight="50px" position="relative">
-                    <CirclePicture circle={notification.circle} size={50} />
+                    <CirclePicture circle={notification.circle} size={50} disableClick={true} />
 
                     {notification.unread_messages > 0 && (
                         <Box

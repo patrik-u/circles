@@ -2,6 +2,27 @@ import i18n from "../i18n/Localization";
 import config from "../Config";
 import { GeoPoint } from "firebase/firestore";
 
+export const getDefaultCirclePicture = (type) => {
+    switch (type) {
+        case "event":
+            return "/default-event-picture.png";
+        default:
+        case "circle":
+            return "/default-circle-picture.png";
+        case "user":
+            return "/default-user-picture.png";
+        case "tag":
+            return "/default-tag-picture.png";
+        case "link":
+            return "/default-link-picture.png";
+    }
+};
+
+export const getCircleTypes = (sourceType, targetType) => {
+    const types = [sourceType, targetType];
+    return types.sort().join("_");
+};
+
 export const isConnected = (userData, circleId) => {
     if (!circleId || !userData) return false;
     return userData.mutual_connections?.includes(circleId);

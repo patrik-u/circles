@@ -10,7 +10,7 @@ import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
 import { signInStatusValues } from "components/Constants";
-import { uidAtom, userAtom, userDataAtom, signInStatusAtom } from "components/Atoms";
+import { uidAtom, userAtom, userDataAtom, signInStatusAtom, userConnectionsAtom } from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
 //#endregion
@@ -29,6 +29,7 @@ export const AccountManager = () => {
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);
     const [, setUserData] = useAtom(userDataAtom);
+    const [, userConnections] = useAtom(userConnectionsAtom);
     const toast = useToast();
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";

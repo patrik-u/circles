@@ -37,7 +37,7 @@ export const CirclePreview = ({ item, onClick, focusItem, navigate, location, ..
             <Box width="140px" height="95px" flexShrink="0" flexGrow="0" backgroundColor="#b9b9b9" overflow="hidden" position="relative" borderRadius="13px">
                 <CircleCover type={item?.type} cover={item?.cover} coverWidth={140} coverHeight={95} />
 
-                <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" />
+                <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" disableClick={true} />
 
                 <VStack position="absolute" top="5px" left="5px" align="left" spacing="2px">
                     {item.type === "event" && (

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Box, Flex, VStack, Text, Icon } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
 import axios from "axios";
-import { getLatlng, getDistanceString, log, fromFsDate, getDateWithoutTime } from "components/Helpers";
+import { getLatlng, getDistanceString, log, fromFsDate, getDateWithoutTime, getCircleTypes } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { RiMapPinFill } from "react-icons/ri";
@@ -35,11 +35,6 @@ export const Circles = ({ type }) => {
     const navigate = useNavigateNoUpdates();
     const [unfilteredCircles, setUnfilteredCircles] = useState([]);
     const [userLocation] = useAtom(userLocationAtom);
-
-    const getCircleTypes = (sourceType, targetType) => {
-        const types = [sourceType, targetType];
-        return types.sort().join("_");
-    };
 
     useEffect(() => {
         log("Circles.useEffect 1", 0);

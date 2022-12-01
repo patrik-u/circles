@@ -10,7 +10,7 @@ import { FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
-import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl } from "components/Helpers";
+import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl, getDefaultCirclePicture } from "components/Helpers";
 import { openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, circleAtom, chatCircleAtom } from "components/Atoms";
@@ -331,8 +331,22 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                 paddingTop="1px"
             >
                 <Box position="relative" width="64px" height="70px" minWidth="64px" minHeight="70px">
-                    {source.picture && <img className="notification-picture1" src={getImageKitUrl(source.picture, 38, 38)} alt="Logo" />}
-                    {target.picture && <Image className="notification-picture2" src={getImageKitUrl(target.picture, 38, 38)} alt="Logo" />}
+                    {source.picture && (
+                        <Image
+                            className="notification-picture1"
+                            src={getImageKitUrl(source.picture, 38, 38)}
+                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(source.type), 38, 38)}
+                            alt="Logo"
+                        />
+                    )}
+                    {target.picture && (
+                        <Image
+                            className="notification-picture2"
+                            src={getImageKitUrl(target.picture, 38, 38)}
+                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(target.type), 38, 38)}
+                            alt="Logo"
+                        />
+                    )}
                     <Image as={IoPersonAdd} width="16px" height="16px" position="absolute" color="#5bcf7f" top="13px" left="42px" />
                 </Box>
 

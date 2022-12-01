@@ -127,8 +127,6 @@ export const CircleChat = () => {
         if (!circleId) {
             return;
         }
-        log("userData:" + JSON.stringify(userData, null, 2));
-        log(`chat debug, isAuthorized: ${isConnected(userData, circle?.id)}`);
         // check if user is authorized to view chat
         if (!circle.chat_is_public && !isConnected(userData, circle?.id)) {
             setIsAuthorized(false);
@@ -483,12 +481,7 @@ export const CircleChat = () => {
                                                                 >
                                                                     {item.isLast ? (
                                                                         <Box align="top" width="33px" height="37.5px" flexShrink="0">
-                                                                            <CirclePicture
-                                                                                circle={item.user}
-                                                                                size={33}
-                                                                                hasPopover={true}
-                                                                                onClick={() => navigate(routes.circle(item.user.id).home)}
-                                                                            />
+                                                                            <CirclePicture circle={item.user} size={33} hasPopover={true} />
                                                                         </Box>
                                                                     ) : (
                                                                         <Box className="circle-chat-picture" flexShrink="0" />
