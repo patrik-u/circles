@@ -6,6 +6,7 @@ import { isMobile as detectIsMobile } from "react-device-detect";
 // misc
 export const isMobileAtom = atom(detectIsMobile);
 export const displayModeAtom = atom(displayModes.default);
+export const searchResultsShownAtom = atom(false);
 
 // user account atoms
 export const uidAtom = atom(null);

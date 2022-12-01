@@ -198,13 +198,13 @@ export const getDayAndMonth = (date = new Date()) => {
 };
 
 export const getDateAndTimeLong = (date) => {
-    return `${fromFsDate(date)?.toLocaleDateString(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
+    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
         date
-    )?.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" })}`;
+    )?.toLocaleTimeString?.(i18n.language, { hour: "2-digit", minute: "2-digit" })}`;
 };
 
 export const getDateLong = (date) => {
-    return fromFsDate(date)?.toLocaleDateString(i18n.language, { month: "long", day: "numeric" });
+    return fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" });
 };
 
 export const capFirstLetter = (string) => {

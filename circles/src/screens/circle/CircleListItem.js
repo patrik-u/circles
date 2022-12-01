@@ -10,6 +10,7 @@ import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUti
 
 export const CircleListItem = ({ item, onClick, onConnect, inSelect, ...props }) => {
     const location = useLocationNoUpdates();
+    if (!item) return null;
 
     return (
         <Flex
