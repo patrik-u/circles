@@ -146,63 +146,6 @@ const CircleHome = () => {
                                 {/* TODO show all circle tags somewhere */}
                                 {/* <CircleTags circle={circle} setCircle={setCircle} size="md" /> */}
                             </VStack>
-                            {circle.social_media && (
-                                <HStack spacing="10px" alignSelf="start" paddingLeft="20px">
-                                    {circle.social_media.facebook && (
-                                        <Link href={circle.social_media.facebook} target="_blank">
-                                            <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.twitter && (
-                                        <Link href={circle.social_media.twitter} target="_blank">
-                                            <Image src={"/social_twitter26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.instagram && (
-                                        <Link href={circle.social_media.instagram} target="_blank">
-                                            <Image src={"/social_instagram26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.youtube && (
-                                        <Link href={circle.social_media.youtube} target="_blank">
-                                            <Image src={"/social_youtube26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.tiktok && (
-                                        <Link href={circle.social_media.tiktok} target="_blank">
-                                            <Image src={"/social_tiktok26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.linkedin && (
-                                        <Link href={circle.social_media.linkedin} target="_blank">
-                                            <Image src={"/social_linkedin26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.medium && (
-                                        <Link href={circle.social_media.medium} target="_blank">
-                                            <Image src={"/social_medium26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.link1 && (
-                                        <Link href={circle.social_media.link1} target="_blank">
-                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.link2 && (
-                                        <Link href={circle.social_media.link2} target="_blank">
-                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    {circle.social_media.link3 && (
-                                        <Link href={circle.social_media.link3} target="_blank">
-                                            <Image src={"/social_link26x26.png"} className="social-media-icon" />
-                                        </Link>
-                                    )}
-                                    <Link href={location.pathname} target="_blank">
-                                        <Image src={"/social_codo26x26.png"} className="social-media-icon" />
-                                    </Link>
-                                </HStack>
-                            )}
                         </VStack>
                     </VStack>
 

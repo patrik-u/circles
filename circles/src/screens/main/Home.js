@@ -26,8 +26,8 @@ export const Home = () => {
 
     useEffect(() => {
         // PWA123 redirect to earth for now
-        openCircle(navigate, "AaBi2McObpTHeCz0akCP");
-        return;
+        // openCircle(navigate, "AaBi2McObpTHeCz0akCP");
+        // return;
 
         if (!userData?.latestCircles) {
             // read from local storage
@@ -95,10 +95,9 @@ export const Home = () => {
                                 }}
                                 opacity="0.9"
                                 filter="grayscale(0.05)"
-                                onClick={() => openCircle(navigate, item.id)}
                             >
-                                <CirclePicture size={48} circle={item} onParentClick={() => openCircle(navigate, item.parent_circle?.id)} />
-                                <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px">
+                                <CirclePicture size={48} circle={item} />
+                                <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px" onClick={() => openCircle(navigate, item.id)}>
                                     {item.name}
                                 </Text>
                             </Box>

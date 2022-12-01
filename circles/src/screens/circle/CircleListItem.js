@@ -39,7 +39,7 @@ export const CircleListItem = ({ item, onClick, onConnect, inSelect, ...props })
             {...props}
         >
             <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
-                <CirclePicture circle={item} size={60} />
+                <CirclePicture circle={item} size={60} disableClick={true} />
             </Box>
 
             <VStack

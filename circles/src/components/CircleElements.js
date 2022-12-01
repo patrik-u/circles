@@ -1,10 +1,26 @@
 //#region imports
 import React, { useContext } from "react";
-import { Flex, Box, VStack, Text, Image, Icon, HStack, Popover, PopoverContent, PopoverTrigger, PopoverArrow, Button, Spinner, Portal } from "@chakra-ui/react";
+import {
+    Flex,
+    Box,
+    VStack,
+    Text,
+    Image,
+    Icon,
+    HStack,
+    Popover,
+    Link,
+    PopoverContent,
+    PopoverTrigger,
+    PopoverArrow,
+    Button,
+    Spinner,
+    Portal,
+} from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
-import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle } from "components/Helpers";
+import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle, getCircleTypes } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "screens/circle/CirclePreview";
 import { RiLinksLine } from "react-icons/ri";
@@ -14,9 +30,167 @@ import { IoMap } from "react-icons/io5";
 import Scrollbars from "react-custom-scrollbars-2";
 import { NotificationsBell } from "screens/main/Messages";
 import { atom, atomWithStorage, useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    showNetworkLogoAtom,
+    signInStatusAtom,
+    circleAtom,
+    circleConnectionsAtom,
+} from "components/Atoms";
 import { displayModes } from "components/Constants";
 //#endregion
+
+export const CirclePanel = ({ children, title }) => {
+    return (
+        <Box align="left" marginLeft={{ base: "22px", md: "22px" }} marginBottom={{ base: "50px", md: "0px" }}>
+            <Text className="contentSubHeader">{title}</Text>
+            {children}
+        </Box>
+    );
+};
+
+export const CircleTagsPanel = () => {
+    const [circle] = useAtom(circleAtom);
+    if (!circle?.tags || circle?.tags?.length <= 0) return null;
+
+    return (
+        <CirclePanel title={i18n.t("Tags")}>
+            <CircleTags circle={circle} showAll={true} wrap="wrap" />
+        </CirclePanel>
+    );
+};
+
+export const QuickLinks = ({ circle }) => {
+    const location = useLocationNoUpdates();
+
+    if (!circle?.social_media) return null;
+
+    return (
+        <HStack spacing="10px" alignSelf="start">
+            {circle.social_media.facebook && (
+                <Link href={circle.social_media.facebook} target="_blank">
+                    <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.twitter && (
+                <Link href={circle.social_media.twitter} target="_blank">
+                    <Image src={"/social_twitter26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.instagram && (
+                <Link href={circle.social_media.instagram} target="_blank">
+                    <Image src={"/social_instagram26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.youtube && (
+                <Link href={circle.social_media.youtube} target="_blank">
+                    <Image src={"/social_youtube26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.tiktok && (
+                <Link href={circle.social_media.tiktok} target="_blank">
+                    <Image src={"/social_tiktok26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.linkedin && (
+                <Link href={circle.social_media.linkedin} target="_blank">
+                    <Image src={"/social_linkedin26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.medium && (
+                <Link href={circle.social_media.medium} target="_blank">
+                    <Image src={"/social_medium26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.link1 && (
+                <Link href={circle.social_media.link1} target="_blank">
+                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.link2 && (
+                <Link href={circle.social_media.link2} target="_blank">
+                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            {circle.social_media.link3 && (
+                <Link href={circle.social_media.link3} target="_blank">
+                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                </Link>
+            )}
+            <Link href={location.pathname} target="_blank">
+                <Image src={"/social_codo26x26.png"} className="social-media-icon" />
+            </Link>
+        </HStack>
+    );
+};
+
+export const QuickLinksPanel = () => {
+    const [circle] = useAtom(circleAtom);
+    if (!circle?.social_media) return null;
+
+    return (
+        <CirclePanel title={i18n.t("Quick Links")}>
+            <QuickLinks circle={circle} />
+        </CirclePanel>
+    );
+};
+
+export const CircleMembersPanel = () => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [circle] = useAtom(circleAtom);
+    const [circleConnections] = useAtom(circleConnectionsAtom);
+    if (!circle?.id) return null;
+
+    const circleTypes = getCircleTypes(circle.type, "user");
+    const members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle.picture).map((x) => x.display_circle);
+
+    const size = 44;
+    const sizePx = size + "px";
+    const spacing = 6;
+    const spacingPx = spacing + "px";
+
+    return (
+        <CirclePanel title={i18n.t(`Members [${circle?.type}]`)}>
+            <Flex flexWrap="wrap">
+                {members.map((member) => (
+                    <Box key={member.id} width={sizePx} height={sizePx} marginRight={spacingPx} marginBottom={spacingPx}>
+                        <CirclePicture circle={member} hasPopover={true} size={size} />
+                    </Box>
+                ))}
+            </Flex>
+        </CirclePanel>
+    );
+};
+
+export const CircleRightPanel = ({ section }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [circle] = useAtom(circleAtom);
+
+    switch (section) {
+        case "home":
+            return (
+                <>
+                    {circle?.type === "user" && <QuickLinksPanel />}
+                    <CircleTagsPanel />
+                    <CircleMembersPanel />
+                </>
+            );
+
+        default:
+        case "chat":
+        case "circles":
+            return isMobile ? null : (
+                <>
+                    {circle?.type === "user" && <QuickLinksPanel />}
+                    <CircleTagsPanel />
+                    <CircleMembersPanel />
+                </>
+            );
+    }
+};
 
 export const DisplayModeButtons = ({ ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
@@ -79,8 +253,8 @@ export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) 
     );
 };
 
-export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onClick, onParentClick, ...props }) => {
-    const [user] = useAtom(userAtom);
+export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disableClick, ...props }) => {
+    const navigate = useNavigateNoUpdates();
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
 
@@ -104,6 +278,16 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
         return getImageKitUrl(picture ?? getDefaultCirclePicture(), size, size);
     };
 
+    const onClick = () => {
+        if (disableClick) return;
+        openCircle(navigate, circle?.id);
+    };
+
+    const onParentClick = () => {
+        if (disableClick) return;
+        openCircle(navigate, circle?.parent_circle?.id);
+    };
+
     return hasPopover && !isMobile ? (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
             <Popover isLazy trigger="hover" gutter="0">
@@ -117,7 +301,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                         borderRadius="50%"
                         objectFit="cover"
                         onClick={onClick}
-                        cursor={onClick ? "pointer" : "inherit"}
+                        cursor={!disableClick ? "pointer" : "inherit"}
                         fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                         {...props}
                     />
@@ -144,7 +328,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     borderRadius="50%"
                     objectFit="cover"
                     onClick={onClick}
-                    cursor={onClick ? "pointer" : "inherit"}
+                    cursor={!disableClick ? "pointer" : "inherit"}
                     fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                     {...props}
                 />
@@ -162,6 +346,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, onCl
                     borderRadius="50%"
                     objectFit="cover"
                     onClick={onParentClick}
+                    cursor={!disableClick ? "pointer" : "inherit"}
                     fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                     {...props}
                 />
@@ -197,12 +382,18 @@ export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, se
     };
 
     return (
-        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "90px" : "120px"}>
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "120px" : "140px"}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex align="left" flexDirection="column" width="100%" position="relative">
                     <Text style={twoLineEllipsisStyle} fontSize={getNameFontSize(circle?.name)} fontWeight="bold" marginTop={isMobile ? "0px" : "5px"}>
                         {circle?.name}
                     </Text>
+                    <Box width="fit-content" borderRadius="20px" backgroundColor="gray.100" paddingLeft="10px" paddingRight="10px" marginBottom="10px">
+                        <Text fontSize="14px" fontWeight="500">
+                            {circle?.type}
+                        </Text>
+                    </Box>
+
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
 
                     {/* {circle?.name} Longer Name Network */}

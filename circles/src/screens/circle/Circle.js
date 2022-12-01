@@ -19,11 +19,11 @@ import {
 } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
-import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle } from "components/Helpers";
+import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle, getDefaultCirclePicture } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
-import { CircleHeader, CircleCover, DisplayModeButtons } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel } from "components/CircleElements";
 import LeftMenu from "screens/main/LeftMenu";
 import { useAtom } from "jotai";
 import {
@@ -168,22 +168,6 @@ export const Circle = () => {
         const sizeWithoutBorder = size - borderWidth * 2;
         const sizeWithoutBorderPx = `${sizeWithoutBorder}px`;
 
-        const getDefaultCirclePicture = () => {
-            switch (type) {
-                case "event":
-                    return "/default-event-picture.png";
-                default:
-                case "circle":
-                    return "/default-circle-picture.png";
-                case "user":
-                    return "/default-user-picture.png";
-                case "tag":
-                    return "/default-tag-picture.png";
-                case "link":
-                    return "/default-link-picture.png";
-            }
-        };
-
         return (
             <Flex
                 backgroundColor="white"
@@ -199,7 +183,8 @@ export const Circle = () => {
                 {...props}
             >
                 <Image
-                    src={getImageKitUrl(circle?.picture ?? getDefaultCirclePicture(), sizeWithoutBorder, sizeWithoutBorder)}
+                    src={getImageKitUrl(circle?.picture ?? getDefaultCirclePicture(circle?.type), sizeWithoutBorder, sizeWithoutBorder)}
+                    fallbackSrc={getImageKitUrl(getDefaultCirclePicture(circle?.type), sizeWithoutBorder, sizeWithoutBorder)}
                     borderRadius="50%"
                     width={sizeWithoutBorderPx}
                     height={sizeWithoutBorderPx}
@@ -236,6 +221,7 @@ export const Circle = () => {
                         <CircleHeader circle={circle} />
                     </Box>
 
+                    {/* Section content */}
                     <Routes>
                         <Route path="/" element={<CircleHome />} />
                         <Route path="/chat" element={<CircleChat />} />
@@ -246,24 +232,35 @@ export const Circle = () => {
                         <Route path="/links" element={<Circles type="link" />} />
                     </Routes>
                 </Box>
+                {/* Left panel */}
                 {!isMobile && (
                     <Box
                         flex={isMobile ? "initial" : "1"}
                         order={isMobile ? "0" : "1"}
                         align="right"
                         backgroundColor={debugBg ? "orange" : "transparent"}
-                        maxWidth={isMobile ? "none" : "250px"}
+                        maxWidth={isMobile ? "none" : "270px"}
                     >
                         <LeftMenu marginRight="40px" marginLeft="10px" paddingTop="140px" paddingBottom="60px" />
                     </Box>
                 )}
+                {/* Right panel */}
                 <Box
                     flex={isMobile ? "initial" : "1"}
                     order={isMobile ? "0" : "3"}
                     backgroundColor={debugBg ? "orange" : "transparent"}
-                    maxWidth={isMobile ? "none" : "250px"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
                 >
-                    <Text fontWeight="500" align="center"></Text>
+                    <Routes>
+                        <Route path="/" element={<CircleRightPanel section="home" />} />
+                        <Route path="/chat" element={<CircleRightPanel section="chat" />} />
+                        <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
+                        <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
+                        <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
+                        <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
+                        <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
+                    </Routes>
                 </Box>
             </Flex>
         </Flex>

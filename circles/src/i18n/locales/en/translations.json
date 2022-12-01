@@ -1,4 +1,10 @@
 {
+    "Members [circle]": "Members",
+    "Members [event]": "Attendees",
+    "Members [link]": "Connections",
+    "Members [room]": "Participants",
+    "Members [user]": "Connections",
+    "Members [tag]": "Connections",
     "You need to join the [circle] to chat": "You need to join the circle to chat",
     "You need to join the [event] to chat": "You need to attend the event to chat",
     "You need to join the [tag] to chat": "You need to add the tag to chat",

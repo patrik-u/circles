@@ -1,4 +1,10 @@
 {
+    "Members [circle]": "Medlemmar",
+    "Members [event]": "Deltagare",
+    "Members [link]": "Kontakter",
+    "Members [room]": "Deltagare",
+    "Members [user]": "Kontakter",
+    "Members [tag]": "Kontakter",
     "You need to join the [circle] to chat": "Du behöver gå med i cirkeln för att chatta",
     "You need to join the [event] to chat": "Du behöver delta i eventet för att chatta",
     "You need to join the [tag] to chat": "Du behöver lägga till taggen för att chatta",

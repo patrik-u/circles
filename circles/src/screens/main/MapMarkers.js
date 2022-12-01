@@ -113,7 +113,7 @@ export const CircleMapMarker = ({ circle }) => {
                     backgroundColor="white"
                     position="absolute"
                 >
-                    <CirclePicture circle={circle} size={30} />
+                    <CirclePicture circle={circle} size={30} disableClick={true} />
                 </Box>
 
                 <Popover trigger="hover" gutter="0" isLazy>
