@@ -28,12 +28,18 @@ const SearchHit = ({ hit }) => {
     return <CircleListItem item={hit} onClick={() => openCircle(navigate, hit.objectID)} />;
 };
 
-const CirclesSearchBox = (props) => {
+export const CirclesSearchBox = (props) => {
     const { refine } = useSearchBox();
     const [isMobile] = useAtom(isMobileAtom);
-    const [searchResultsShown, setSearchResultsShown] = useAtom(searchResultsShownAtom);
+    const [, setSearchResultsShown] = useAtom(searchResultsShownAtom);
+    const [query, setQuery] = useState("");
+
+    useEffect(() => {
+        setSearchResultsShown(query.length > 0);
+    }, [query, setSearchResultsShown]);
 
     const handleChange = (e) => {
+        setQuery(e.target.value);
         refine(e.target.value);
     };
 
@@ -53,37 +59,8 @@ const CirclesSearchBox = (props) => {
                 _placeholder={{ fontSize: isMobile ? "16px" : "22px", height: "50px", textAlign: "center", paddingRight: "32px" }}
             />
         </InputGroup>
-
-        // <InputGroup>
-        //     <InputLeftElement pointerEvents="none" children={<HiOutlineSearch />} />
-        //     <Input
-        //         type="text"
-        //         placeholder="Search circles"
-        //         onChange={handleChange}
-        //         onFocus={() => setSearchResultsShown(true)}
-        //         onBlur={() => setSearchResultsShown(false)}
-        //     />
-        // </InputGroup>
     );
 };
-
-// const useAutocomplete = (props) => {
-//     return useConnector(connectAutocomplete, props);
-// }
-
-// const AutoComplete = (props) => {
-//     const { hits, currentRefinement, refine } = useAutocomplete(props);
-
-//     return (
-//         <Box>
-//             <SearchBox refine={refine} />
-//             <Hits hitComponent={SearchHit} />
-//         </Box>
-//     );
-
-// }
-
-//const SearchResults = connectStateResults(({ searchState }) => (searchState && searchState.query ? <Hits hitComponent={SearchHit} /> : null));
 
 const EmptyQueryBoundary = ({ children, fallback }) => {
     const { indexUiState } = useInstantSearch();
@@ -157,46 +134,41 @@ export const Home = () => {
                         <CirclesSearchBox />
 
                         {/* <SearchBox width="100%" height="50px" /> */}
-                        <EmptyQueryBoundary
-                            fallback={
-                                <Flex marginBottom="200px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
-                                    <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">
-                                        {latestCircles?.map((item) => (
-                                            <Box
-                                                key={item.id}
-                                                align="center"
-                                                borderRadius="50px"
-                                                role="group"
-                                                cursor="pointer"
-                                                spacing="12px"
-                                                padding="3px"
-                                                _hover={{
-                                                    //bg: "white",
-                                                    filter: "none",
-                                                    opacity: "1",
-                                                }}
-                                                opacity="0.9"
-                                                filter="grayscale(0.05)"
-                                            >
-                                                <CirclePicture size={48} circle={item} />
-                                                <Text
-                                                    style={singleLineEllipsisStyle}
-                                                    fontSize="12px"
-                                                    marginTop="5px"
-                                                    onClick={() => openCircle(navigate, item.id)}
-                                                >
-                                                    {item.name}
-                                                </Text>
-                                            </Box>
-                                        ))}
-                                    </SimpleGrid>
-                                </Flex>
-                            }
-                        >
+                        <EmptyQueryBoundary fallback={null}>
                             {/* <RefinementList attribute="type" /> */}
                             <Hits hitComponent={SearchHit} />
                         </EmptyQueryBoundary>
                     </InstantSearch>
+
+                    {!searchResultsShown && (
+                        <Flex marginBottom="200px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
+                            <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">
+                                {latestCircles?.map((item) => (
+                                    <Box
+                                        key={item.id}
+                                        align="center"
+                                        borderRadius="50px"
+                                        role="group"
+                                        cursor="pointer"
+                                        spacing="12px"
+                                        padding="3px"
+                                        _hover={{
+                                            //bg: "white",
+                                            filter: "none",
+                                            opacity: "1",
+                                        }}
+                                        opacity="0.9"
+                                        filter="grayscale(0.05)"
+                                    >
+                                        <CirclePicture size={48} circle={item} />
+                                        <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px" onClick={() => openCircle(navigate, item.id)}>
+                                            {item.name}
+                                        </Text>
+                                    </Box>
+                                ))}
+                            </SimpleGrid>
+                        </Flex>
+                    )}
                 </Flex>
             </Flex>
         </Flex>
