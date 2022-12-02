@@ -147,6 +147,8 @@ export const CircleMembersPanel = () => {
     const circleTypes = getCircleTypes(circle.type, "user");
     const members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle.picture).map((x) => x.display_circle);
 
+    if (members.length <= 0) return null;
+
     const size = 44;
     const sizePx = size + "px";
     const spacing = 6;

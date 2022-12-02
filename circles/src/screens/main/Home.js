@@ -23,7 +23,9 @@ import { InstantSearch, SearchBox, Hits, RefinementList, useInstantSearch, useSe
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
 
 const SearchHit = ({ hit }) => {
-    return <CircleListItem item={hit} />;
+    const navigate = useNavigateNoUpdates();
+
+    return <CircleListItem item={hit} onClick={() => openCircle(navigate, hit.objectID)} />;
 };
 
 const CirclesSearchBox = (props) => {
