@@ -156,7 +156,7 @@ export const LoginRegisterMenu = () => {
 
     return (
         displayLoginRegisterMenu && (
-            <Box marginTop={isMobile ? "15px" : "0px"}>
+            <Box marginTop="0px">
                 <HStack>
                     <Button onClick={onSignInClick} rounded={"full"} height={isMobile ? "30px" : "40px"}>
                         {i18n.t("Log in")}

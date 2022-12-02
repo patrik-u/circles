@@ -1,5 +1,5 @@
 //#region imports
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Flex, Box, Image, Spinner, HStack } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
 import Notifications from "./Notifications";
@@ -10,7 +10,7 @@ import { LoginRegisterMenu } from "components/LoginForms";
 import { atom, atomWithStorage, useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
-import { CircleSearchBox } from "components/CircleSearch";
+import { CircleSearchBox, MobileSearchBox } from "components/CircleSearch";
 import { Routes, Route, useParams } from "react-router-dom";
 //#endregion
 
@@ -61,15 +61,27 @@ export const TopMenu = () => {
                 )}
 
                 <Box flex="1" />
-                <Routes>
-                    <Route path="/" element={null} />
-                    <Route path="*" element={<CircleSearchBox hidePlaceholder={true} popover={true} maxWidth="450px" />} />
-                </Routes>
-                <Box flex="1" />
+                {!isMobile && (
+                    <>
+                        <Routes>
+                            <Route path="/" element={null} />
+                            <Route
+                                path="*"
+                                element={<CircleSearchBox size={isMobile ? "sm" : "md"} hidePlaceholder={true} popover={true} maxWidth="450px" />}
+                            />
+                        </Routes>
+                        <Box flex="1" />
+                    </>
+                )}
 
+                {isMobile && (
+                    <Routes>
+                        <Route path="/" element={null} />
+                        <Route path="*" element={<MobileSearchBox marginRight="12px" />} />
+                    </Routes>
+                )}
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">
                     <HStack spacing={isMobile ? "20px" : "50px"} align="center" height={height}>
-                        {/* <Points satelliteMode={satelliteMode} /> */}
                         {signInStatus.signedIn && (
                             <>
                                 <Messages />
@@ -77,9 +89,11 @@ export const TopMenu = () => {
                             </>
                         )}
 
-                        <Box width={isMobile ? "30px" : "48px"} height={isMobile ? "30px" : "48px"}>
-                            <ProfileMenu />
-                        </Box>
+                        {(signInStatus.signedIn || signInStatus.signingIn) && (
+                            <Box width={isMobile ? "30px" : "48px"} height={isMobile ? "30px" : "48px"}>
+                                <ProfileMenu />
+                            </Box>
+                        )}
                         <LoginRegisterMenu />
                     </HStack>
                 </Box>

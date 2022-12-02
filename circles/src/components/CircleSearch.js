@@ -1,7 +1,7 @@
 // #region imports
 import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
-import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button, InputRightElement } from "@chakra-ui/react";
+import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button, InputRightElement, Icon } from "@chakra-ui/react";
 import { CirclePicture } from "components/CircleElements";
 import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers";
 import { openCircle } from "components/Navigation";
@@ -38,9 +38,16 @@ const SearchHit = ({ hit, onClick }) => {
 
 const SearchHits = ({ onClick, ...props }) => {
     const { hits } = useHits(props);
+    const [isMobile] = useAtom(isMobileAtom);
 
     return (
-        <Flex flexDirection="column">
+        <Flex flexDirection="column" {...props}>
+            {hits.length <= 0 && (
+                <Box backgroundColor="white" height="40px" minWidth={isMobile ? "none" : "450px"}>
+                    <Text marginLeft="10px">No results</Text>
+                </Box>
+            )}
+
             {hits.map((x) => (
                 <SearchHit key={x.objectID} hit={x} onClick={onClick} />
             ))}
@@ -48,27 +55,43 @@ const SearchHits = ({ onClick, ...props }) => {
     );
 };
 
-export const SearchBox = ({ hidePlaceholder, query, setQuery, children, ...props }) => {
+export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, query, setQuery, setSearchIsOpen, children, ...props }) => {
     const { refine } = useSearchBox();
     const [isMobile] = useAtom(isMobileAtom);
     const [, setSearchResultsShown] = useAtom(searchResultsShownAtom);
+    const isSmall = size === "sm";
 
     useEffect(() => {
         refine(query);
         setSearchResultsShown(query.length > 0);
     }, [query, setSearchResultsShown, refine]);
 
+    useEffect(() => {}, []);
+
     const handleChange = (e) => {
         setQuery(e.target.value);
     };
 
+    const closeClick = () => {
+        setQuery("");
+        if (setSearchIsOpen) {
+            setSearchIsOpen(false);
+        }
+    };
+
     return (
         <InputGroup {...props}>
-            <InputLeftElement color="gray.300" pointerEvents="none" children={<HiOutlineSearch size={28} />} height="50px" marginLeft="20px" />
+            <InputLeftElement
+                color="gray.300"
+                pointerEvents="none"
+                children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
+                height={isSmall ? "30px" : "50px"}
+                marginLeft={isSmall ? "10px" : "20px"}
+            />
             <Input
-                paddingLeft="65px"
+                paddingLeft={isSmall ? "30px" : "65px"}
                 borderRadius="50px"
-                height="50px"
+                height={isSmall ? "30px" : "50px"}
                 width="100%"
                 marginLeft="15px"
                 marginRight="15px"
@@ -76,15 +99,21 @@ export const SearchBox = ({ hidePlaceholder, query, setQuery, children, ...props
                 onChange={handleChange}
                 focusBorderColor="pink.400"
                 placeholder={hidePlaceholder ? "" : i18n.t("Type search terms or enter URL")}
-                _placeholder={{ fontSize: isMobile ? "16px" : "22px", height: "50px", textAlign: "center", paddingRight: "32px" }}
+                _placeholder={{
+                    fontSize: isSmall ? "10px" : isMobile ? "16px" : "22px",
+                    height: isSmall ? "30px" : "50px",
+                    textAlign: "center",
+                    paddingRight: "32px",
+                }}
+                autoFocus={autofocus}
             />
-            {query && (
+            {(query || (isMobile && size === "sm")) && (
                 <InputRightElement
                     color="gray.300"
-                    children={<MdOutlineClose size={28} />}
-                    height="50px"
-                    marginRight="20px"
-                    onClick={() => setQuery("")}
+                    children={<MdOutlineClose size={isSmall ? 20 : 28} />}
+                    height={isSmall ? "30px" : "50px"}
+                    marginRight={isSmall ? "10px" : "20px"}
+                    onClick={closeClick}
                     cursor="pointer"
                 />
             )}
@@ -102,19 +131,77 @@ const EmptyQueryBoundary = ({ children, fallback }) => {
     return children;
 };
 
-export const CircleSearchBox = ({ children, popover, hidePlaceholder, fallback = null, ...props }) => {
+export const MobileSearchBox = (props) => {
+    const [searchIsOpen, setSearchIsOpen] = useState(false);
+    const iconSize = "24px";
+    const openSearch = () => {
+        if (searchIsOpen) {
+            setSearchIsOpen(false);
+        } else {
+            setSearchIsOpen(true);
+        }
+    };
+    const onHitClick = () => {
+        setSearchIsOpen(false);
+    };
+
+    return (
+        <>
+            <Box position="relative" height={iconSize} {...props}>
+                <Icon
+                    width={iconSize}
+                    height={iconSize}
+                    color={"#333"}
+                    _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                    _active={{ transform: "scale(0.98)" }}
+                    as={HiOutlineSearch}
+                    onClick={openSearch}
+                    cursor="pointer"
+                />
+            </Box>
+            {searchIsOpen && (
+                <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px" backgroundColor="white">
+                    <CircleSearchBox
+                        size="sm"
+                        hidePlaceholder={true}
+                        popover={true}
+                        maxWidth="450px"
+                        setSearchIsOpen={setSearchIsOpen}
+                        onHitClick={onHitClick}
+                        autofocus={true}
+                    />
+                </Box>
+            )}
+        </>
+    );
+};
+
+export const CircleSearchBox = ({
+    children,
+    size = "md",
+    popover,
+    hidePlaceholder,
+    searchActive,
+    onHitClick,
+    setSearchActive,
+    autofocus = false,
+    fallback = null,
+    ...props
+}) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [query, setQuery] = useState("");
-    const onHitClick = () => {
+    const hitClick = () => {
         setQuery("");
+        if (onHitClick) {
+            onHitClick();
+        }
     };
 
     return (
         <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
-            <SearchBox hidePlaceholder={hidePlaceholder} query={query} setQuery={setQuery} {...props}>
+            <SearchBox size={size} autofocus={autofocus} hidePlaceholder={hidePlaceholder} query={query} setQuery={setQuery} {...props}>
                 {popover && !isMobile && (
                     <EmptyQueryBoundary fallback={fallback}>
-                        {/* <RefinementList attribute="type" /> */}
                         <Flex
                             position="absolute"
                             top="55px"
@@ -128,7 +215,7 @@ export const CircleSearchBox = ({ children, popover, hidePlaceholder, fallback =
                             backgroundColor="white"
                         >
                             <Box width="450px" maxWidth="450px" minWidth="450px">
-                                <SearchHits onClick={onHitClick} />
+                                <SearchHits onClick={hitClick} />
                             </Box>
                         </Flex>
                     </EmptyQueryBoundary>
@@ -138,7 +225,6 @@ export const CircleSearchBox = ({ children, popover, hidePlaceholder, fallback =
             {popover && isMobile && (
                 <EmptyQueryBoundary fallback={fallback}>
                     <Box position="absolute" width="100%" top="40px" left="0px" height="calc(100vh - 40px)" overflowY="scroll">
-                        {/* <RefinementList attribute="type" /> */}
                         <SearchHits onClick={onHitClick} />
                     </Box>
                 </EmptyQueryBoundary>
@@ -146,8 +232,7 @@ export const CircleSearchBox = ({ children, popover, hidePlaceholder, fallback =
 
             {!popover && (
                 <EmptyQueryBoundary fallback={fallback}>
-                    {/* <RefinementList attribute="type" /> */}
-                    <SearchHits />
+                    <SearchHits marginTop="10px" />
                 </EmptyQueryBoundary>
             )}
 
