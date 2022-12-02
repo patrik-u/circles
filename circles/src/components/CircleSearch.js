@@ -86,10 +86,10 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
                 pointerEvents="none"
                 children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
                 height={isSmall ? "30px" : "50px"}
-                marginLeft={isSmall ? "10px" : "20px"}
+                marginLeft={isSmall ? "12px" : "20px"}
             />
             <Input
-                paddingLeft={isSmall ? "30px" : "65px"}
+                paddingLeft={isSmall ? "35px" : "65px"}
                 borderRadius="50px"
                 height={isSmall ? "30px" : "50px"}
                 width="100%"
@@ -112,7 +112,7 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
                     color="gray.300"
                     children={<MdOutlineClose size={isSmall ? 20 : 28} />}
                     height={isSmall ? "30px" : "50px"}
-                    marginRight={isSmall ? "10px" : "20px"}
+                    marginRight={isSmall ? "12px" : "20px"}
                     onClick={closeClick}
                     cursor="pointer"
                 />
