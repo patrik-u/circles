@@ -23,7 +23,6 @@ import { log, getLatlng, fromFsDate, getDateWithoutTime, getImageKitUrl, singleL
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 import { CircleHeader, CircleCover, DisplayModeButtons } from "components/CircleElements";
-import LeftMenu from "screens/main/LeftMenu";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -40,7 +39,7 @@ import {
 import { displayModes } from "components/Constants";
 import { Map, useMap } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
-import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "screens/main/MapMarkers";
+import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "components/MapMarkers";
 //#endregion
 
 export const CircleMap = ({ height, onMapClick, children }, ref) => {

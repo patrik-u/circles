@@ -1,4 +1,4 @@
-import i18n from "../../i18n/Localization";
+import i18n from "i18n/Localization";
 import { Text, Box, Flex } from "@chakra-ui/react";
 
 const PrivacyPolicy = () => {

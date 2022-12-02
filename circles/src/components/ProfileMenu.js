@@ -60,6 +60,7 @@ export const ProfileMenu = () => {
                         width={circlePictureSize}
                         height={circlePictureSize}
                         borderRadius="50%"
+                        fallbackSrc={getImageKitUrl(defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
                     />
                 </MenuButton>
                 <MenuList alignItems={"center"} borderRadius="20" zIndex="60">

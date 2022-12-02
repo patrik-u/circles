@@ -24,7 +24,7 @@ import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
 import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel } from "components/CircleElements";
-import LeftMenu from "screens/main/LeftMenu";
+import LeftMenu from "components/LeftMenu";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -40,10 +40,10 @@ import {
 import { displayModes } from "components/Constants";
 //#endregion
 
-const CircleHome = lazy(() => import("./CircleHome"));
-const CircleChat = lazy(() => import("./CircleChat"));
-const CircleMap = lazy(() => import("./CircleMap"));
-const Circles = lazy(() => import("./Circles"));
+const CircleHome = lazy(() => import("components/CircleHome"));
+const CircleChat = lazy(() => import("components/CircleChat"));
+const CircleMap = lazy(() => import("components/CircleMap"));
+const Circles = lazy(() => import("components/Circles"));
 
 export const Circle = () => {
     log("Circle.render", -1);

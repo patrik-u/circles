@@ -1,16 +1,16 @@
 //#region imports
 import React, { useEffect, lazy, Suspense, useCallback } from "react";
 import { Flex, Box } from "@chakra-ui/react";
-import { log } from "./components/Helpers";
+import { log } from "components/Helpers";
 import { Routes, Route } from "react-router-dom";
 import { useAtom } from "jotai";
-import { isMobileAtom } from "./components/Atoms";
-import Home from "./screens/main/Home";
-import AccountManager from "./components/AccountManager";
-import TopMenu from "./screens/main/TopMenu";
+import { isMobileAtom } from "components/Atoms";
+import Home from "components/Home";
+import AccountManager from "components/AccountManager";
+import TopMenu from "components/TopMenu";
 //#endregion
 
-const Circle = lazy(() => import("./screens/circle/Circle"));
+const Circle = lazy(() => import("components/Circle"));
 
 const App = () => {
     log("App.render", -1);

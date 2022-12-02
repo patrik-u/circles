@@ -32,7 +32,7 @@ import {
     Fade,
 } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
-import db, { auth } from "../../components/Firebase";
+import db, { auth } from "./Firebase";
 import {
     GoogleAuthProvider,
     onAuthStateChanged,
@@ -46,13 +46,13 @@ import { isMobile as detectIsMobile } from "react-device-detect";
 import { collection, doc, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { Routes, Route, useNavigate, useHistory, useLocation, match, matchPath, useMatch, matchRoutes } from "react-router-dom";
 import i18n from "i18n/Localization";
-import { toastError, toastSuccess, validateEmail, validatePassword, log } from "../../components/Helpers";
+import { toastError, toastSuccess, validateEmail, validatePassword, log } from "./Helpers";
 import { Form, Field, Formik } from "formik";
 import { BiHide, BiShow } from "react-icons/bi";
 
 import { atom, atomWithStorage, useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom, userAtom } from "../../components/Atoms";
-import useScript from "../../components/useScript";
+import { isMobileAtom, signInStatusAtom, userAtom } from "./Atoms";
+import useScript from "./useScript";
 //#endregion
 
 //PWA123 complete

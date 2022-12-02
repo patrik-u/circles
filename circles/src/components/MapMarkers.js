@@ -74,7 +74,7 @@ export const CircleMarker = ({ circle }) => {
     return circle && <CircleMapMarker circle={circle} />;
 };
 
-const CirclePreview = lazy(() => import("screens/circle/CirclePreview"));
+const CirclePreview = lazy(() => import("components/CirclePreview"));
 
 export const CircleMapMarker = ({ circle }) => {
     const [user] = useAtom(userAtom);

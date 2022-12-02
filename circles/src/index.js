@@ -65,7 +65,7 @@ if (config.environment === "prod") {
 axios.defaults.baseURL = config.apiUrl;
 //#endregion
 
-const PrivacyPolicy = lazy(() => import("./screens/main/PrivacyPolicy"));
+const PrivacyPolicy = lazy(() => import("components/PrivacyPolicy"));
 
 const root = createRoot(document.getElementById("root"));
 root.render(

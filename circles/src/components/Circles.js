@@ -8,7 +8,7 @@ import { routes, openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { RiMapPinFill } from "react-icons/ri";
 import { getPreciseDistance } from "geolib";
-import CircleListItem from "./CircleListItem";
+import CircleListItem from "components/CircleListItem";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
 import {
