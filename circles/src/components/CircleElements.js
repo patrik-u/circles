@@ -22,13 +22,12 @@ import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
 import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle, getCircleTypes } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
-import { CirclePreview } from "screens/circle/CirclePreview";
+import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine } from "react-icons/ri";
 import { GrGallery } from "react-icons/gr";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import { IoMap } from "react-icons/io5";
 import Scrollbars from "react-custom-scrollbars-2";
-import { NotificationsBell } from "screens/main/Messages";
 import { atom, atomWithStorage, useAtom } from "jotai";
 import {
     isMobileAtom,

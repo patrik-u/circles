@@ -9,7 +9,7 @@ import Notifications from "./Notifications";
 import Messages from "./Messages";
 import ProfileMenu from "./old_ProfileMenu";
 import { routes, openCircle } from "../../components/Navigation";
-import { LoginRegisterMenu } from "../settings/LoginForms";
+import { LoginRegisterMenu } from "../../components/LoginForms";
 //#endregion
 
 export const TopMenu = ({ circle, setCircle, onSignOutClick, isSigningIn, isSignedIn, gsiScriptLoaded, satelliteMode, displayMode, chatCircle }) => {

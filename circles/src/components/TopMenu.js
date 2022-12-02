@@ -6,10 +6,12 @@ import Notifications from "./Notifications";
 import Messages from "./Messages";
 import ProfileMenu from "./ProfileMenu";
 import { routes, openCircle } from "components/Navigation";
-import { LoginRegisterMenu } from "screens/settings/LoginForms";
+import { LoginRegisterMenu } from "components/LoginForms";
 import { atom, atomWithStorage, useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
+import { CircleSearchBox } from "components/CircleSearch";
+import { Routes, Route, useParams } from "react-router-dom";
 //#endregion
 
 //PWA123 complete
@@ -46,41 +48,23 @@ export const TopMenu = () => {
             >
                 {/* TODO show network circle */}
                 {showNetworkLogo && (
-                    <Box width={logoWidthPx} height={logoHeightPx} marginLeft={isMobile ? "12px" : "25px"} onClick={onNetworkLogoClick} cursor="pointer">
+                    <Box
+                        className="fixedSize"
+                        width={logoWidthPx}
+                        height={logoHeightPx}
+                        marginLeft={isMobile ? "12px" : "25px"}
+                        onClick={onNetworkLogoClick}
+                        cursor="pointer"
+                    >
                         <Image src={getImageKitUrl("/circles-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
                     </Box>
                 )}
 
-                {/* {isMobile && circle && circle.id !== "earth" && (
-                <Box marginLeft="6px" pointerEvents="auto">
-                    <Flex flexGrow="1" flexDirection="row" justifyContent="flex-start" align="center">
-                        {circle?.parent_circle ? (
-                            <Image
-                                src={getImageKitUrl(circle.parent_circle.picture, isMobile ? 20 : 50, isMobile ? 20 : 50)}
-                                width={isMobile ? "20px" : "50px"}
-                                height={isMobile ? "20px" : "50px"}
-                                onClick={() => openCircle(navigate, user, circle.parent_circle.id, circle, setCircle)}
-                                cursor="pointer"
-                                position="absolute"
-                                top="7px"
-                                left="10px"
-                            />
-                        ) : (
-                            <Image
-                                src="/earth.png"
-                                width={isMobile ? "20px" : "50px"}
-                                height={isMobile ? "20px" : "50px"}
-                                onClick={() => navigate(routes.home)}
-                                cursor="pointer"
-                                position="absolute"
-                                top="7px"
-                                left="10px"
-                            />
-                        )}
-                    </Flex>
-                </Box>
-            )} */}
-
+                <Box flex="1" />
+                <Routes>
+                    <Route path="/" element={null} />
+                    <Route path="*" element={<CircleSearchBox hidePlaceholder={true} popover={true} maxWidth="450px" />} />
+                </Routes>
                 <Box flex="1" />
 
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">

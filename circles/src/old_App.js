@@ -39,7 +39,7 @@ import { RiLinksLine } from "react-icons/ri";
 import FloatingActionButtons from "./screens/main/old_FloatingActionButtons";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "./screens/main/MapMarkers";
 import BlueBar from "./screens/main/old_BlueBar";
-import CircleSearch from "./screens/main/Home";
+import CircleSearch from "./components/Home";
 import TopMenu from "./screens/main/old_TopMenu";
 import Circle from "./screens/circle/old_Circle";
 //#endregion

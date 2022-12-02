@@ -12,64 +12,11 @@ import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResult
 import { auth } from "components/Firebase";
 import { signOut } from "firebase/auth";
 import config from "Config";
-import CircleListItem from "screens/circle/CircleListItem";
-
+import CircleListItem from "components/CircleListItem";
+import CircleSearchBox from "components/CircleSearch";
 import algoliasearch from "algoliasearch/lite";
 import { InstantSearch, SearchBox, Hits, RefinementList, useInstantSearch, useSearchBox } from "react-instantsearch-hooks-web";
-//import connectAutocomplete from "instantsearch.js/es/connectors/autocomplete/connectAutocomplete";
-
 // #endregion
-
-const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
-
-const SearchHit = ({ hit }) => {
-    const navigate = useNavigateNoUpdates();
-
-    return <CircleListItem item={hit} onClick={() => openCircle(navigate, hit.objectID)} />;
-};
-
-export const CirclesSearchBox = (props) => {
-    const { refine } = useSearchBox();
-    const [isMobile] = useAtom(isMobileAtom);
-    const [, setSearchResultsShown] = useAtom(searchResultsShownAtom);
-    const [query, setQuery] = useState("");
-
-    useEffect(() => {
-        setSearchResultsShown(query.length > 0);
-    }, [query, setSearchResultsShown]);
-
-    const handleChange = (e) => {
-        setQuery(e.target.value);
-        refine(e.target.value);
-    };
-
-    return (
-        <InputGroup marginTop="35px" marginBottom="35px">
-            <InputLeftElement color="gray.300" pointerEvents="none" children={<HiOutlineSearch size={28} />} height="50px" marginLeft="20px" />
-            <Input
-                paddingLeft="65px"
-                borderRadius="50px"
-                height="50px"
-                width="100%"
-                marginLeft="15px"
-                marginRight="15px"
-                onChange={handleChange}
-                focusBorderColor="pink.400"
-                placeholder="Type search terms or enter URL"
-                _placeholder={{ fontSize: isMobile ? "16px" : "22px", height: "50px", textAlign: "center", paddingRight: "32px" }}
-            />
-        </InputGroup>
-    );
-};
-
-const EmptyQueryBoundary = ({ children, fallback }) => {
-    const { indexUiState } = useInstantSearch();
-
-    if (!indexUiState.query) {
-        return fallback;
-    }
-    return children;
-};
 
 export const Home = () => {
     log("Home.render", -1);
@@ -116,32 +63,10 @@ export const Home = () => {
                 </Box>
 
                 <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">
-                    {/* <InputGroup marginTop="35px">
-                        <InputLeftElement color="gray.300" pointerEvents="none" children={<HiOutlineSearch size={28} />} height="50px" marginLeft="20px" />
-                        <Input
-                            paddingLeft="65px"
-                            borderRadius="50px"
-                            height="50px"
-                            width="100%"
-                            marginLeft="15px"
-                            marginRight="15px"
-                            focusBorderColor="pink.400"
-                            placeholder="Type search terms or enter URL"
-                            _placeholder={{ fontSize: isMobile ? "16px" : "22px", height: "50px", textAlign: "center", paddingRight: "32px" }}
-                        />
-                    </InputGroup> */}
-                    <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
-                        <CirclesSearchBox />
-
-                        {/* <SearchBox width="100%" height="50px" /> */}
-                        <EmptyQueryBoundary fallback={null}>
-                            {/* <RefinementList attribute="type" /> */}
-                            <Hits hitComponent={SearchHit} />
-                        </EmptyQueryBoundary>
-                    </InstantSearch>
+                    <CircleSearchBox marginTop="35px" marginBottom="0px" />
 
                     {!searchResultsShown && (
-                        <Flex marginBottom="200px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
+                        <Flex marginBottom="200px" marginTop="35px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
                             <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">
                                 {latestCircles?.map((item) => (
                                     <Box

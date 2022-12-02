@@ -33,7 +33,7 @@ import axios from "axios";
 import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getImageKitUrl } from "components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
 import { CircleHeader, CirclePicture } from "components/CircleElements";
-import { routes } from "../../components/Navigation";
+import { routes } from "components/Navigation";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { BsReplyFill } from "react-icons/bs";
