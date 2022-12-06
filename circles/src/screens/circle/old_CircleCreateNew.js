@@ -1,7 +1,7 @@
 //#region imports
 import React, { useState, useEffect, useContext } from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { CircleTypeForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, CircleContentForm, EventContentForm } from "../settings/old_CircleSettingsForms";
+import { CircleTypeForm, CircleImagesForm, CircleTagsForm, CircleBaseForm, CircleContentForm, EventContentForm } from "../../components/CircleSettingsForms";
 import i18n from "i18n/Localization";
 import UserContext from "../../components/UserContext";
 import { log } from "../../components/old_Helpers";

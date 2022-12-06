@@ -22,76 +22,30 @@ import {
     circlesAtom,
     circleConnectionsAtom,
     userLocationAtom,
+    circlesFilterAtom,
+    filteredCirclesAtom,
 } from "components/Atoms";
 //#endregion
 
 export const Circles = ({ type }) => {
-    const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
-    const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
-    const [circleConnections] = useAtom(circleConnectionsAtom);
-    const [circles, setCircles] = useAtom(circlesAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
+    const [filteredCircles] = useAtom(filteredCirclesAtom);
     const navigate = useNavigateNoUpdates();
-    const [unfilteredCircles, setUnfilteredCircles] = useState([]);
-    const [userLocation] = useAtom(userLocationAtom);
 
     useEffect(() => {
-        log("Circles.useEffect 1", 0);
-        if (!circle?.type || !circleConnections) {
-            setUnfilteredCircles([]);
-            return;
-        }
+        if (circlesFilter.types?.length === 1 && circlesFilter.types.includes(type)) return;
 
-        // filter connections
-        const circleTypes = getCircleTypes(circle.type, type);
-        setUnfilteredCircles(circleConnections.filter((x) => x.circle_types === circleTypes).map((x) => x.display_circle));
-    }, [circleConnections, circle?.id, type, circle?.type]);
-
-    useEffect(() => {
-        log("Circles.useEffect 2", 0);
-        let listCircles = unfilteredCircles; //!filterConnected ? unfilteredCircles : unfilteredCircles.filter((x) => user?.connections?.some((y) => y.target.id === x.id));
-
-        if (type === "event") {
-            // filter all past events
-            let startDate = getDateWithoutTime(); // today
-            listCircles = listCircles.filter((x) => fromFsDate(x.starts_at) > startDate);
-        }
-
-        if (!userLocation) {
-            setCircles(listCircles);
-            return;
-        }
-
-        let newFilteredCircles = [];
-        if (userLocation.latitude && userLocation.longitude) {
-            for (var circle of listCircles.filter((x) => x.base)) {
-                var circleLocation = getLatlng(circle.base);
-                var preciseDistance = getPreciseDistance(userLocation, circleLocation);
-                newFilteredCircles.push({ ...circle, distance: preciseDistance });
-            }
-
-            newFilteredCircles.sort((a, b) => a.distance - b.distance);
-            for (var circlesWithNoBase of listCircles.filter((x) => !x.base)) {
-                newFilteredCircles.push(circlesWithNoBase);
-            }
-        } else {
-            newFilteredCircles = listCircles;
-        }
-
-        if (type === "event") {
-            // TODO if event we just sort by date and ignore proximity for now
-            newFilteredCircles.sort((a, b) => fromFsDate(a.starts_at) - fromFsDate(b.starts_at));
-        }
-
-        setCircles(newFilteredCircles);
-    }, [unfilteredCircles, userLocation, setCircles, user?.connections, type]);
+        let newFilter = { ...circlesFilter };
+        newFilter.types = [type];
+        setCirclesFilter(newFilter);
+    }, [circlesFilter, setCirclesFilter, type]);
 
     useEffect(() => {
         log("Circles.useEffect 3", 0);
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
-        if (circleId === "earth") return;
 
         log("Circles.seen");
 
@@ -108,13 +62,13 @@ export const Circles = ({ type }) => {
     return (
         <Box flexGrow="1" width="100%" height="100%" align="center" position="relative" top="0px" left="0px">
             <Flex width="100%" flexDirection="column" flexWrap="nowrap">
-                {circles?.length > 0 && <Box height="1px" backgroundColor="#ebebeb" />}
+                {filteredCircles?.length > 0 && <Box height="1px" backgroundColor="#ebebeb" />}
 
-                {circles?.map((item) => (
+                {filteredCircles?.map((item) => (
                     <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item.id)} />
                 ))}
 
-                {circles?.length <= 0 && (
+                {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                         {i18n.t(`No ${type}s`)}
                     </Text>

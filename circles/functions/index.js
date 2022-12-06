@@ -98,13 +98,13 @@ const getCircleData = async (circleId) => {
 };
 
 const getAdminConnections = async (id) => {
-    let query = db.collection("connections").where("source.id", "==", id).where("type", "in", ["owned_by", "admin_by"]);
+    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains-any", ["owned_by", "admin_by"]);
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
 
 const getMemberConnections = async (id) => {
-    let query = db.collection("connections").where("source.id", "==", id).where("type", "==", "connected_mutually_to");
+    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains", "connected_mutually_to");
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
@@ -139,8 +139,20 @@ const getAllConnections = async (sourceId, targetId, type = null) => {
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
 
-const getConnection = async (sourceId, targetId, type) => {
-    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId).where("type", "==", type);
+const getConnection = async (sourceId, targetId) => {
+    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId);
+    let connectionsSnapshot = await connectionsRef.get();
+    if (connectionsSnapshot.docs.length <= 0) return null;
+    const connectionDocId = connectionsSnapshot.docs[0].id;
+    return { id: connectionDocId, ...connectionsSnapshot.docs[0].data() };
+};
+
+const getConnectionWithType = async (sourceId, targetId, type) => {
+    let connectionsRef = db
+        .collection("connections")
+        .where("source.id", "==", sourceId)
+        .where("target.id", "==", targetId)
+        .where("types", "array-contains", type);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -299,39 +311,46 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
     if (!source || !target || source.id === target.id) return;
 
     // verify connection doesn't already exist
-    let connection = await getConnection(source.id, target.id, type);
-    if (connection) return;
+    let connection = await getConnection(source.id, target.id);
+    let connectionRef = null;
+    if (connection) {
+        if (connection.types.includes(type)) return;
 
-    const connectionRef = db.collection("connections").doc();
-    await connectionRef.set({ source, target, type, circle_ids: [source.id, target.id], circle_types: getCircleTypes(source, target), created_at });
-
-    // update target circle connection count
-    let updatedCircle = {
-        connections: admin.firestore.FieldValue.increment(1),
-    };
-
-    if (
-        source.id === "earth" ||
-        target.id === "earth" ||
-        source.type === "tag" ||
-        target.type === "tag" ||
-        type === "connected_mutually_to_request" ||
-        type === "connected_to" ||
-        !propagateChanges
-    ) {
-        // for performance reasons we don't propagate changes if:
-        // earth circle is connected
-        // tags are connected
-        // on connection requests or follow
-        // when new circle is created (propagateChanges is false)
-        const circleRef = db.collection("circles").doc(target.id);
-        await circleRef.update(updatedCircle);
+        // add type to existing connection
+        connectionRef = db.collection("connections").doc(connection.id);
+        await connectionRef.set({ types: admin.firestore.FieldValue.arrayUnion(type), [type + "_data"]: { created_at } }, { merge: true });
     } else {
-        // update circle and propagate changes
-        updatedCircle.updates = {};
-        updatedCircle.updates[`${source.type}s`] = created_at;
-        updatedCircle.updates.any = created_at;
-        await updateCircle(target.id, updatedCircle);
+        // create new connection
+        connectionRef = db.collection("connections").doc();
+        await connectionRef.set({
+            source,
+            target,
+            types: [type],
+            circle_ids: [source.id, target.id],
+            circle_types: getCircleTypes(source, target),
+            [type + "_data"]: { created_at },
+        });
+
+        // update target circle connection count
+        let updatedCircle = {
+            connections: admin.firestore.FieldValue.increment(1),
+        };
+
+        if (source.type === "tag" || target.type === "tag" || type === "connected_mutually_to_request" || type === "connected_to" || !propagateChanges) {
+            // for performance reasons we don't propagate changes if:
+            // earth circle is connected
+            // tags are connected
+            // on connection requests or follow
+            // when new circle is created (propagateChanges is false)
+            const circleRef = db.collection("circles").doc(target.id);
+            await circleRef.update(updatedCircle);
+        } else {
+            // update circle and propagate changes
+            updatedCircle.updates = {};
+            updatedCircle.updates[`${source.type}s`] = created_at;
+            updatedCircle.updates.any = created_at;
+            await updateCircle(target.id, updatedCircle);
+        }
     }
 
     // CONNECT123 here we might want to update latest_connections as well
@@ -357,15 +376,13 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
         }
     }
 
-    if (type === "connected_mutually_to") {
-        // add target circle to source circle's list of mutual connections
-        const circleDataRef = db.collection("circle_data").doc(source.id);
-        await circleDataRef.set({ mutual_connections: admin.firestore.FieldValue.arrayUnion(target.id) }, { merge: true });
-    }
+    // add target circle to source circle's list of connections
+    const circleDataRef = db.collection("circle_data").doc(source.id);
+    await circleDataRef.set({ [type]: admin.firestore.FieldValue.arrayUnion(target.id) }, { merge: true });
 };
 
 // deletes connection between two circles
-const deleteConnection = async (source, target, type) => {
+const deleteConnection = async (source, target, type, updateNotifications = true) => {
     if (typeof source === "string") {
         source = await getCircle(source);
     }
@@ -374,23 +391,26 @@ const deleteConnection = async (source, target, type) => {
     }
 
     // see if connection exists
-    let connection = await getConnection(source.id, target.id, type);
-    if (!connection) return;
-    await deleteConnectionByObject(connection);
-};
+    let connection = await getConnection(source.id, target.id);
+    if (!connection || !connection.types.includes(type)) return;
 
-const deleteConnectionByObject = async (connection, updateNotifications = true) => {
-    const connectionRef = db.collection("connections").doc(connection.id);
-    await connectionRef.delete();
-
-    // update target circle connection count
-    const circleRef = db.collection("circles").doc(connection.target.id);
-    await circleRef.update({
-        connections: admin.firestore.FieldValue.increment(-1),
-    });
+    let lastConnection = connection.types.length === 1;
+    if (lastConnection) {
+        await deleteConnectionByObject(connection);
+    } else {
+        // delete type from connection
+        const connectionRef = db.collection("connections").doc(connection.id);
+        await connectionRef.set(
+            {
+                types: admin.firestore.FieldValue.arrayRemove(type),
+                [type]: admin.firestore.FieldValue.delete(),
+            },
+            { merge: true }
+        );
+    }
 
     // update any notifications around the request
-    if (connection.type === "connected_mutually_to_request" && updateNotifications) {
+    if (type === "connected_mutually_to_request" && updateNotifications) {
         let date = new Date();
         // update notifications
         const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connection.id).get();
@@ -400,13 +420,22 @@ const deleteConnectionByObject = async (connection, updateNotifications = true) 
         });
     }
 
-    if (connection.type === "connected_mutually_to") {
-        // remove target circle from source circle's list of mutual connections
-        const circleDataRef = db.collection("circle_data").doc(connection.source.id);
-        await circleDataRef.update({ mutual_connections: admin.firestore.FieldValue.arrayRemove(connection.target.id) });
-    }
+    // remove target circle from source circle's list of connections
+    const circleDataRef = db.collection("circle_data").doc(connection.source.id);
+    await circleDataRef.update({ [type]: admin.firestore.FieldValue.arrayRemove(connection.target.id) });
 
     // CONNECT123 here we might want to update latest_connections as well
+};
+
+const deleteConnectionByObject = async (connection) => {
+    const connectionRef = db.collection("connections").doc(connection.id);
+    await connectionRef.delete();
+
+    // update target circle connection count
+    const circleRef = db.collection("circles").doc(connection.target.id);
+    await circleRef.update({
+        connections: admin.firestore.FieldValue.increment(-1),
+    });
 };
 
 // sends notification to user about a new connection made
@@ -474,14 +503,21 @@ const sendMessageNotification = async (userId, circle, message) => {
 // returns true if source is administrator of target
 const isAdminOf = async (sourceId, targetId) => {
     if (sourceId === targetId) return true;
-    let ownedBy = await getConnection(targetId, sourceId, "owned_by");
-    let adminBy = await getConnection(targetId, sourceId, "admin_by");
-    return ownedBy || adminBy;
+    let connection = await getConnection(targetId, sourceId);
+    return connection && (connection.types.includes("admin_by") || connection.types.includes("owned_by"));
+};
+
+// returns true if source is member of target
+const isMemberOf = async (sourceId, targetId) => {
+    if (sourceId === targetId) return true;
+    let connection = await getConnectionWithType(targetId, sourceId, "connected_mutually_to");
+    return !connection === false;
 };
 
 // returns true if source is owner of target
 const isOwnerOf = async (sourceId, targetId) => {
-    let ownedBy = await getConnection(targetId, sourceId, "owned_by");
+    if (sourceId === targetId) return true;
+    let ownedBy = await getConnectionWithType(targetId, sourceId, "owned_by");
     return ownedBy;
 };
 
@@ -658,20 +694,16 @@ app.post("/circles", auth, async (req, res) => {
 
         // add connections to circle
         let circle = await getCircle(circleRes.id);
-        let earth = await getCircle("earth");
         await createConnection(user, circle, "owner_of", false, null, false);
         await createConnection(circle, user, "owned_by", false, null, false);
         await createConnection(user, circle, "creator_of", false, null, false);
         await createConnection(circle, user, "created_by", false, null, false);
         await createConnection(user, circle, "connected_to", false, null, false);
-        await createConnection(circle, earth, "connected_to", false, null, false);
 
         if (circle.type !== "tag") {
             await createConnection(user, circle, "connected_mutually_to", false, null, false);
             await createConnection(circle, user, "connected_mutually_to", false, null, false);
         }
-        await createConnection(circle, earth, "connected_mutually_to", false, null, false);
-        await createConnection(earth, circle, "connected_mutually_to", false, null, false);
 
         if (parent) {
             await createConnection(parent, circle, "parent_of", false, null, false);
@@ -964,7 +996,7 @@ app.post("/circles/:id/connections", auth, async (req, res) => {
             await createConnection(sourceId, targetId, "connected_to", true, authCallerId);
         } else if (type === "connected_mutually_to") {
             // see if there is a mutual connection request from target to user
-            let connection = await getConnection(targetId, sourceId, "connected_mutually_to_request");
+            let connection = await getConnectionWithType(targetId, sourceId, "connected_mutually_to_request");
             if (connection) {
                 await createConnection(sourceId, targetId, "connected_mutually_to", true, authCallerId);
                 await createConnection(targetId, sourceId, "connected_mutually_to", alwaysNotify);
@@ -1003,7 +1035,7 @@ app.post("/circles/:id/connections", auth, async (req, res) => {
                 }
             }
         } else if (type === "admin_by") {
-            let connection = await getConnection(sourceId, targetId, "admin_by");
+            let connection = await getConnectionWithType(sourceId, targetId, "admin_by");
             if (connection) {
                 // user already admin
                 return res.json({ auto_approved: true });
@@ -1075,11 +1107,12 @@ app.delete("/circles/:id/connections", auth, async (req, res) => {
 app.post("/connections/:id/approve", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
     const connectionId = req.params.id;
+    const connectionType = req.body.connectionType;
     const date = new Date();
 
     try {
         let connection = await getConnectionById(connectionId);
-        if (!connection || (connection.type !== "connected_mutually_to_request" && connection.type !== "admin_by_request")) {
+        if (!connection || !connection.types.includes(connectionType)) {
             return res.json({ error: "connection-request-not-found" });
         }
 
@@ -1090,20 +1123,24 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("connection_id", "==", connectionId)
+            .where("connection_type", "==", connectionType)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "approved", request_updated_at: date });
         });
 
         // remove request
-        await deleteConnectionByObject(connection, false);
+        await deleteConnection(connection.source, connection.target, connectionType, false);
 
         // create mutual connection between source and target
         await createConnection(connection.source.id, connection.target.id, "connected_mutually_to");
         await createConnection(connection.target.id, connection.source.id, "connected_mutually_to", true, authCallerId);
 
-        if (connection.type === "admin_by_request") {
+        if (connectionType === "admin_by_request") {
             await createConnection(connection.source.id, connection.target.id, "admin_by");
             await createConnection(connection.target.id, connection.source.id, "admin_of", true, authCallerId);
         }
@@ -1118,11 +1155,12 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
 app.post("/connections/:id/deny", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
     const connectionId = req.params.id;
+    const connectionType = req.body.connectionType;
     const date = new Date();
 
     try {
         let connection = await getConnectionById(connectionId);
-        if (!connection || (connection.type !== "connected_mutually_to_request" && connection.type !== "admin_by_request")) {
+        if (!connection || !connection.types.includes(connectionType)) {
             return res.json({ error: "connection-request-not-found" });
         }
 
@@ -1133,14 +1171,18 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("connection_id", "==", connectionId)
+            .where("connection_type", "==", connectionType)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
         });
 
         // remove request
-        await deleteConnectionByObject(connection);
+        await deleteConnection(connection.source, connection.target, connectionType);
 
         return res.json({ message: "Connection request denied" });
     } catch (err) {
@@ -1239,10 +1281,6 @@ app.post("/seen", auth, async (req, res) => {
         return res.json({ error: "Invalid input" });
     }
 
-    if (circleId === "earth") {
-        return res.json({}); // ignore earth
-    }
-
     await setUserSeen(authCallerId, circleId, category);
 
     return res.json({ message: "Ok" });
@@ -1268,6 +1306,7 @@ app.post("/chat_messages", auth, async (req, res) => {
         var circleId = req.body.circle_id;
         var message = DOMPurify.sanitize(req.body.message);
         var replyToId = req.body.replyToId;
+        const authCallerId = req.user.user_id;
 
         // validate request
         let errors = validateChatMessageRequest(message);
@@ -1275,9 +1314,16 @@ app.post("/chat_messages", auth, async (req, res) => {
             return res.json(errors);
         }
 
-        const authCallerId = req.user.user_id;
-        const user = await getCircle(authCallerId);
+        // verify user is allowed to post chat messages
+        let circle = await getCircle(circleId);
+        if (!circle.chat_is_public) {
+            let isAuthorized = await isMemberOf(authCallerId, circleId);
+            if (!isAuthorized) {
+                return res.status(403).json({ error: "unauthorized" });
+            }
+        }
 
+        const user = await getCircle(authCallerId);
         const newMessage = {
             circle_id: circleId,
             user,
@@ -1354,7 +1400,6 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // send notification to all users connected to circle
         let memberConnections = await getMemberConnections(circleId);
-        let circle = await getCircle(circleId);
         for (var memberConnection of memberConnections) {
             if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
                 // ignore notifying sender and non-users
@@ -1529,10 +1574,6 @@ app.post("/chat_notification_settings", auth, async (req, res) => {
         return res.json({ error: "Invalid input" });
     }
 
-    if (circleId === "earth") {
-        return res.json({}); // ignore earth
-    }
-
     // update user notificatin settings for circle
     const userDataRef = db.collection("circle_data").doc(authCallerId);
 
@@ -1595,28 +1636,180 @@ app.post("/update", auth, async (req, res) => {
         const commandArgs = command?.split(" ") ?? [];
 
         // go through all connections and add circle_types array
-        if (commandArgs[0] === "circle_types") {
-            let connections = await db.collection("connections").get();
-            connections.forEach(async (doc) => {
-                let connection = doc.data();
-                let connectionRef = db.collection("connections").doc(doc.id);
-                connectionRef.update({
-                    circle_types: getCircleTypes(connection.source, connection.target),
-                });
-            });
-        } else if (commandArgs[0] === "delete_circle") {
+        if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
-        } else if (commandArgs[0] === "update_mutual_connections") {
-            // go through every connection and if it's a "connected_mutually_to" then and target to source's list of mutual connections
+        } else if (commandArgs[0] === "update_circle_connections") {
+            // this temporary command only needs to be run once
+            // go through every connection and add it to source's list of connections
             let connections = await db.collection("connections").get();
             connections.forEach(async (doc) => {
                 let connection = doc.data();
-                if (connection.type === "connected_mutually_to") {
-                    // add target circle to source circle's list of mutual connections
-                    const circleDataRef = db.collection("circle_data").doc(connection.source.id);
-                    await circleDataRef.set({ mutual_connections: admin.firestore.FieldValue.arrayUnion(connection.target.id) }, { merge: true });
+
+                const circleDataRef = db.collection("circle_data").doc(connection.source.id);
+                let circleData = {
+                    mutual_connections: admin.firestore.FieldValue.delete(),
+                };
+                for (const type of connection.types) {
+                    circleData[type] = admin.firestore.FieldValue.arrayUnion(connection.target.id);
+                }
+
+                await circleDataRef.set(circleData, { merge: true });
+            });
+        } else if (commandArgs[0] === "update_circle_connections2") {
+            let circle = await db.collection("circles").get();
+            circle.forEach(async (doc) => {
+                const circleDataRef = db.collection("circle_data").doc(doc.id);
+                let circleData = {
+                    mutual_connections: admin.firestore.FieldValue.delete(),
+                };
+                //connected_mutually_to: admin.firestore.FieldValue.arrayRemove(doc.id),
+                await circleDataRef.set(circleData, { merge: true });
+            });
+        } else if (commandArgs[0] === "backup_connections") {
+            // this temporary command only needs to be run once
+            let connections = await db.collection("connections").get();
+            connections.forEach(async (doc) => {
+                let connection = doc.data();
+                await db.collection("backup_connections").doc(doc.id).set(connection);
+            });
+        } else if (commandArgs[0] === "consolidate_connections") {
+            // this temporary command only needs to be run once
+            let connections = await db.collection("connections").get();
+
+            let connectionsTouched = {};
+            let connectionsToDelete = [];
+            connections.forEach(async (doc) => {
+                let connection = { id: doc.id, ...doc.data() };
+
+                // if connection is to earth then skip it
+                if (connection.source.id === "earth" || connection.target.id === "earth") {
+                    connectionsToDelete.push(connection.id);
+                } else {
+                    // see if connection has been touched already
+                    let masterConnectionKey = connection.source.id + connection.target.id;
+                    if (connectionsTouched[masterConnectionKey]) {
+                        // update master connection
+                        let masterConnectionId = connectionsTouched[masterConnectionKey]?.id;
+                        const masterConnectionRef = db.collection("connections").doc(masterConnectionId);
+                        await masterConnectionRef.update({
+                            type: admin.firestore.FieldValue.delete(),
+                            created_at: admin.firestore.FieldValue.delete(),
+                            types: admin.firestore.FieldValue.arrayUnion(connection.type),
+                            [connection.type + "_data"]: { created_at: connection.created_at },
+                        });
+
+                        // add connection to list of connections to delete
+                        connectionsToDelete.push(connection.id);
+                    } else {
+                        connectionsTouched[masterConnectionKey] = connection;
+                        if (!connection.types && connection.type) {
+                            // not yet consolidated
+                            const masterConnectionRef = db.collection("connections").doc(connection.id);
+                            await masterConnectionRef.update({
+                                type: admin.firestore.FieldValue.delete(),
+                                created_at: admin.firestore.FieldValue.delete(),
+                                types: admin.firestore.FieldValue.arrayUnion(connection.type),
+                                [connection.type + "_data"]: { created_at: connection.created_at },
+                            });
+                        }
+                    }
                 }
             });
+
+            // delete connections
+            for (const connectionToDelete of connectionsToDelete) {
+                const connectionToDeleteRef = db.collection("connections").doc(connectionToDelete);
+                await connectionToDeleteRef.delete();
+            }
+
+            return res.json({ connectionsTouched: Object.keys(connectionsTouched).length, connectionsDeleted: connectionsToDelete.length });
+        } else if (commandArgs[0] === "repair_connections") {
+            // this temporary command only needs to be run once
+            let connections = await db.collection("connections").get();
+
+            let connectionsRepaired = [];
+            connections.forEach(async (doc) => {
+                let connection = { id: doc.id, ...doc.data() };
+
+                let anyRepaired = false;
+                let types = connection.types ?? [];
+                let newTypes = [];
+                if (connection.connected_mutually_to_data && !connection.types.includes("connected_mutually_to")) {
+                    types.push("connected_mutually_to");
+                    newTypes.push("connected_mutually_to");
+                    anyRepaired = true;
+                }
+                if (connection.connected_to_data && !connection.types.includes("connected_to")) {
+                    types.push("connected_to");
+                    newTypes.push("connected_to");
+                    anyRepaired = true;
+                }
+                if (connection.creator_of_data && !connection.types.includes("creator_of")) {
+                    types.push("creator_of");
+                    newTypes.push("creator_of");
+                    anyRepaired = true;
+                }
+                if (connection.created_by_data && !connection.types.includes("created_by")) {
+                    types.push("created_by");
+                    newTypes.push("created_by");
+                    anyRepaired = true;
+                }
+                if (connection.owned_by_data && !connection.types.includes("owned_by")) {
+                    types.push("owned_by");
+                    newTypes.push("owned_by");
+                    anyRepaired = true;
+                }
+                if (connection.owner_of_data && !connection.types.includes("owner_of")) {
+                    types.push("owner_of");
+                    newTypes.push("owner_of");
+                    anyRepaired = true;
+                }
+                if (connection.admin_of_data && !connection.types.includes("admin_of")) {
+                    types.push("admin_of");
+                    newTypes.push("admin_of");
+                    anyRepaired = true;
+                }
+                if (connection.admin_by_data && !connection.types.includes("admin_by")) {
+                    types.push("admin_by");
+                    newTypes.push("admin_by");
+                    anyRepaired = true;
+                }
+                if (connection.moderator_of_data && !connection.types.includes("moderator_of")) {
+                    types.push("moderator_of");
+                    newTypes.push("moderator_of");
+                    anyRepaired = true;
+                }
+                if (connection.moderated_by_data && !connection.types.includes("moderated_by")) {
+                    types.push("moderated_by");
+                    newTypes.push("moderated_by");
+                    anyRepaired = true;
+                }
+                if (connection.moderated_by_data && !connection.types.includes("moderated_by")) {
+                    types.push("moderated_by");
+                    newTypes.push("moderated_by");
+                    anyRepaired = true;
+                }
+                if (connection.connected_mutually_to_request_data && !connection.types.includes("connected_mutually_to_request")) {
+                    types.push("connected_mutually_to_request");
+                    newTypes.push("connected_mutually_to_request");
+                    anyRepaired = true;
+                }
+                if (connection.admin_by_request_data && !connection.types.includes("admin_by_request")) {
+                    types.push("admin_by_request");
+                    newTypes.push("admin_by_request");
+                    anyRepaired = true;
+                }
+
+                if (anyRepaired) {
+                    connectionsRepaired.push({ id: connection.id, types: newTypes });
+                    const connectionRef = db.collection("connections").doc(connection.id);
+                    await connectionRef.update({
+                        types: types,
+                    });
+                }
+            });
+
+            return res.json({ connectionsRepaired: connectionsRepaired });
         } else if (commandArgs[0] === "test123") {
             // go through every circle_data and see if any of them lack corresponding circle
             let circleData = await db.collection("circle_data").get();

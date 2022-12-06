@@ -2,7 +2,8 @@
 import React, { useEffect, useContext, useRef, useState } from "react";
 import { Box, Menu, MenuButton, MenuItem, MenuList, Flex, HStack, VStack, Text, Image, Icon, Link, Button, useToast } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
-import { log, fromFsDate, getDateWithoutTime, getDateAndTimeLong, getDateLong, toastInfo, isConnected, isFollowing } from "components/Helpers";
+import { log, fromFsDate, getDateWithoutTime, getDateAndTimeLong, getDateLong, toastInfo, isConnected, isFollowing, getLatlng } from "components/Helpers";
+import { getPreciseDistance } from "geolib";
 import { RiLinksLine, RiShareLine } from "react-icons/ri";
 import { GiRoundStar } from "react-icons/gi";
 import { IoIosLink } from "react-icons/io";
@@ -10,7 +11,18 @@ import { ImQrcode } from "react-icons/im";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    showNetworkLogoAtom,
+    signInStatusAtom,
+    circleAtom,
+    circleConnectionsAtom,
+    userLocationAtom,
+    filteredCirclesAtom,
+    circlesFilterAtom,
+} from "components/Atoms";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
@@ -110,7 +122,57 @@ const CircleHome = () => {
 
     const [isMobile] = useAtom(isMobileAtom);
     const [circle] = useAtom(circleAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const location = useLocationNoUpdates();
+
+    useEffect(() => {
+        if (!circlesFilter.types) return;
+        let { types: _, ...newFilter } = circlesFilter;
+        setCirclesFilter(newFilter);
+    }, [circlesFilter, setCirclesFilter]);
+
+    // useEffect(() => {
+    //     log("CircleHome.useEffect 1", 0);
+    //     if (!circle?.type || !circleConnections) {
+    //         setUnfilteredCircles([]);
+    //         return;
+    //     }
+
+    //     // filter connections
+    //     setUnfilteredCircles(circleConnections.map((x) => x.display_circle));
+    // }, [circleConnections, circle?.id, circle?.type]);
+
+    // useEffect(() => {
+    //     log("CircleHome.useEffect 2", 0);
+    //     let listCircles = unfilteredCircles; //!filterConnected ? unfilteredCircles : unfilteredCircles.filter((x) => user?.connections?.some((y) => y.target.id === x.id));
+
+    //     // filter all past events
+    //     let startDate = getDateWithoutTime(); // today
+    //     listCircles = listCircles.filter((x) => x.type !== "event" || fromFsDate(x.starts_at) > startDate);
+
+    //     if (!userLocation) {
+    //         setCircles(listCircles);
+    //         return;
+    //     }
+
+    //     let newFilteredCircles = [];
+    //     if (userLocation.latitude && userLocation.longitude) {
+    //         for (var circle of listCircles.filter((x) => x.base)) {
+    //             var circleLocation = getLatlng(circle.base);
+    //             var preciseDistance = getPreciseDistance(userLocation, circleLocation);
+    //             newFilteredCircles.push({ ...circle, distance: preciseDistance });
+    //         }
+
+    //         newFilteredCircles.sort((a, b) => a.distance - b.distance);
+    //         for (var circlesWithNoBase of listCircles.filter((x) => !x.base)) {
+    //             newFilteredCircles.push(circlesWithNoBase);
+    //         }
+    //     } else {
+    //         newFilteredCircles = listCircles;
+    //     }
+
+    //     setCircles(newFilteredCircles);
+    // }, [unfilteredCircles, userLocation, setCircles]);
 
     const CircleQuestion = ({ question }) => {
         return (

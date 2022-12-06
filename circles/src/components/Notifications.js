@@ -27,10 +27,13 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
         const toast = useToast();
 
         const onApprove = async () => {
+            log("onApprove");
             setIsUpdating(true);
             setHasUpdated(true);
             axios
-                .post(`/connections/${connectionId}/approve`)
+                .post(`/connections/${connectionId}/approve`, {
+                    connectionType,
+                })
                 .then((x) => {
                     let result = x.data;
                     if (result.error) {
@@ -77,7 +80,7 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                     });
             } else {
                 axios
-                    .post(`/connections/${connectionId}/deny`)
+                    .post(`/connections/${connectionId}/deny`, { connectionType })
                     .then((x) => {
                         let result = x.data;
                         if (result.error) {

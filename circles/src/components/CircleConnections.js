@@ -2,24 +2,37 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Box, Flex, HStack, Spinner, Text, Button, useToast } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
-import UserContext from "../../components/UserContext";
-import db from "../../components/Firebase";
+import db from "components/Firebase";
 import axios from "axios";
-import { log, getDateAndTimeLong, toastError, toastSuccess, getConnectLabel } from "../../components/old_Helpers";
+import { log, getDateAndTimeLong, toastError, toastSuccess, getConnectLabel } from "components/Helpers";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine } from "react-icons/ri";
 import { AiOutlineDisconnect } from "react-icons/ai";
+import { useAtom } from "jotai";
+import { CirclePicture } from "components/CircleElements";
+import { signInStatusValues } from "components/Constants";
+import {
+    uidAtom,
+    userAtom,
+    userDataAtom,
+    signInStatusAtom,
+    userConnectionsAtom,
+    requestUserConnectionsAtom,
+    userLocationAtom,
+    connectPopupAtom,
+    isConnectingAtom,
+} from "components/Atoms";
 //#endregion
 
-export const CircleConnectionsList = ({ connections, connect, disconnect, isConnecting }) => {
+const CircleConnectionsList = ({ connection, connect, disconnect }) => {
     const borderRadius = (i) => {
         let top = i === 0 ? "7px 7px" : "0px 0px";
-        let bottom = i === connections.length - 1 ? "7px 7px" : "0px 0px";
+        let bottom = i === connection?.types.length - 1 ? "7px 7px" : "0px 0px";
         return `${top} ${bottom}`;
     };
 
-    const getDisconnectButtonText = (connection) => {
-        switch (connection.type) {
+    const getDisconnectButtonText = (type) => {
+        switch (type) {
             case "connected_to":
                 return i18n.t("Unfollow");
             default:
@@ -31,11 +44,11 @@ export const CircleConnectionsList = ({ connections, connect, disconnect, isConn
     };
 
     return (
-        connections.length > 0 && (
+        connection?.types.length > 0 && (
             <>
-                {connections.map((connection, i) => (
+                {connection.types.map((type, i) => (
                     <Flex
-                        key={connection.id}
+                        key={type}
                         flexGrow="1"
                         borderRadius={borderRadius(i)}
                         border="1px solid #e7e7e7"
@@ -45,9 +58,9 @@ export const CircleConnectionsList = ({ connections, connect, disconnect, isConn
                     >
                         <Box width="190px" flexShrink="0" paddingTop="10px" paddingBottom="10px" paddingLeft="15px">
                             <Text fontWeight="700" fontSize="18px">
-                                {getConnectLabel(connection.target.type, connection.type)}
+                                {getConnectLabel(connection.target.type, type)}
                             </Text>
-                            <Text fontSize="12px">{getDateAndTimeLong(connection.created_at)}</Text>
+                            <Text fontSize="12px">{getDateAndTimeLong(connection[type + "_data"].created_at)}</Text>
                         </Box>
                         <Box flexGrow="1">
                             {/* <Text fontSize="12px" fontWeight="700" color="#aaa">
@@ -56,9 +69,7 @@ export const CircleConnectionsList = ({ connections, connect, disconnect, isConn
                         <Text fontSize="14px">{getDateAndTimeLong(connection.created_at)}</Text> */}
                         </Box>
 
-                        {(connection.type === "connected_to" ||
-                            connection.type === "connected_mutually_to" ||
-                            connection.type === "connected_mutually_to_request") && (
+                        {(type === "connected_to" || type === "connected_mutually_to" || type === "connected_mutually_to_request") && (
                             <Box marginRight="10px">
                                 <Button
                                     minWidth="150px"
@@ -67,14 +78,13 @@ export const CircleConnectionsList = ({ connections, connect, disconnect, isConn
                                     lineHeight="0"
                                     backgroundColor="#389bf8"
                                     color="white"
-                                    isDisabled={isConnecting}
                                     position="relative"
-                                    onClick={() => disconnect(connection.type)}
+                                    onClick={() => disconnect(type)}
                                 >
                                     <HStack marginRight="13px">
                                         {/* <RiLinksLine size="18px" /> */}
                                         <AiOutlineDisconnect size="18px" />
-                                        <Text>{getDisconnectButtonText(connection)}</Text>
+                                        <Text>{getDisconnectButtonText(type)}</Text>
                                     </HStack>
                                 </Button>
                             </Box>
@@ -86,15 +96,15 @@ export const CircleConnectionsList = ({ connections, connect, disconnect, isConn
     );
 };
 
-export const CircleConnections = ({ source, target, option, isConnecting, setIsConnecting, onConnect, onClose }) => {
-    const user = useContext(UserContext);
+export const CircleConnections = ({ source, target, option, onClose }) => {
     const toast = useToast();
     const [isLoadingConnections, setIsLoadingConnections] = useState(true);
     const [isLoadingRequest, setIsLoadingRequest] = useState(true);
     const isLoading = isLoadingConnections || isLoadingRequest;
-    const [connections, setConnections] = useState([]);
-    const isConnected = connections?.some((x) => x.type === "connected_mutually_to" || x.type === "connected_mutually_to_request");
-    const isFollowing = connections?.some((x) => x.type === "connected_to");
+    const [connection, setConnection] = useState([]);
+    const isConnected = connection?.types?.includes("connected_mutually_to") || connection?.types?.includes("connected_mutually_to_request");
+    const isFollowing = connection?.types?.includes("connected_to");
+    const [isConnecting] = useAtom(isConnectingAtom);
 
     const connect = useCallback(
         (type) => {
@@ -108,6 +118,7 @@ export const CircleConnections = ({ source, target, option, isConnecting, setIsC
                     type,
                 })
                 .then((x) => {
+                    log("got response from connect" + JSON.stringify(x));
                     let result = x.data;
                     if (result.error) {
                         toastError(toast, errorMessage, result.error);
@@ -172,8 +183,8 @@ export const CircleConnections = ({ source, target, option, isConnecting, setIsC
         // subscribe to circle connections
         var q = query(collection(db, "connections"), where("source.id", "==", source.id), where("target.id", "==", target.id));
         let unsubscribeGetCircleConnections = onSnapshot(q, (snap) => {
-            const newConnections = snap.docs?.map((doc) => ({ id: doc.id, ...doc.data() })) ?? [];
-            setConnections(newConnections);
+            const newConnection = snap.docs?.map((doc) => ({ id: doc.id, ...doc.data() }))?.[0];
+            setConnection(newConnection);
             setIsLoadingConnections(false);
         });
 
@@ -189,7 +200,9 @@ export const CircleConnections = ({ source, target, option, isConnecting, setIsC
             {isLoading && <Spinner />}
             {!isLoading && (
                 <>
-                    <CircleConnectionsList connections={connections} connect={connect} disconnect={disconnect} isConnecting={isConnecting} />
+                    <Box marginTop="10px">
+                        <CircleConnectionsList connection={connection} connect={connect} disconnect={disconnect} marginTop="15px" />
+                    </Box>
 
                     <Flex flexDirection="row" flexGrow="1" marginTop="10px">
                         {(!isConnected || !isFollowing) && (
@@ -234,7 +247,7 @@ export const CircleConnections = ({ source, target, option, isConnecting, setIsC
                         )}
                         <Box flexGrow="1" />
                         {onClose && (
-                            <Button variant="ghost" borderRadius="25px" onClick={onClose} isDisabled={isConnecting} lineHeight="0">
+                            <Button variant="ghost" borderRadius="25px" onClick={onClose} lineHeight="0">
                                 {i18n.t("Close")}
                             </Button>
                         )}

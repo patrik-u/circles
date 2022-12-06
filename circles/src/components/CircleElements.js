@@ -1,5 +1,5 @@
 //#region imports
-import React, { useContext } from "react";
+import React, { useContext, forwardRef } from "react";
 import {
     Flex,
     Box,
@@ -16,11 +16,21 @@ import {
     Button,
     Spinner,
     Portal,
+    CloseButton,
 } from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
-import { getImageKitUrl, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle, getCircleTypes } from "components/Helpers";
+import {
+    log,
+    getImageKitUrl,
+    isConnectedOrPending,
+    isConnected,
+    hasUpdates,
+    singleLineEllipsisStyle,
+    twoLineEllipsisStyle,
+    getCircleTypes,
+} from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine } from "react-icons/ri";
@@ -38,9 +48,45 @@ import {
     signInStatusAtom,
     circleAtom,
     circleConnectionsAtom,
+    connectPopupAtom,
+    isConnectingAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 //#endregion
+
+export const ModalPopup = ({ children, onClose, ...props }) => {
+    return (
+        <>
+            <Box position="absolute" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" />
+            <Flex position="absolute" width="100vw" zIndex="100" justifyContent="center">
+                <Box
+                    position="relative"
+                    backgroundColor="white"
+                    borderRadius="25px"
+                    width="100%"
+                    maxWidth="570px"
+                    marginTop="60px"
+                    paddingLeft="25px"
+                    paddingRight="25px"
+                    paddingTop="15px"
+                    paddingBottom="15px"
+                    {...props}
+                >
+                    {children}
+                    <CloseButton position="absolute" top="10px" right="10px" onClick={onClose} />
+                </Box>
+            </Flex>
+        </>
+    );
+};
+
+export const DatePickerInput = forwardRef(({ value, onClick }, ref) => (
+    <Box border="1px solid #e2e8f0" height="40px" borderRadius="0.375rem" onClick={onClick} ref={ref} align="center">
+        <Text textAlign="left" lineHeight="40px" marginLeft="16px">
+            {new Date(value).toLocaleDateString()}
+        </Text>
+    </Box>
+));
 
 export const CirclePanel = ({ children, title }) => {
     return (
@@ -173,22 +219,32 @@ export const CircleRightPanel = ({ section }) => {
     switch (section) {
         case "home":
             return (
-                <>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     {circle?.type === "user" && <QuickLinksPanel />}
                     <CircleTagsPanel />
                     <CircleMembersPanel />
-                </>
+                </Box>
             );
 
         default:
         case "chat":
         case "circles":
             return isMobile ? null : (
-                <>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     {circle?.type === "user" && <QuickLinksPanel />}
                     <CircleTagsPanel />
                     <CircleMembersPanel />
-                </>
+                </Box>
             );
     }
 };
@@ -334,7 +390,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                     {...props}
                 />
             )}
-            {circle?.id !== "earth" && circle?.parent_circle && (
+            {circle?.parent_circle && (
                 <Image
                     position="absolute"
                     width={`${size / 3}px`}
@@ -368,6 +424,40 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
     );
 };
 
+export const LargeConnectButton = ({ circle }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [userData] = useAtom(userDataAtom);
+    const [user] = useAtom(userAtom);
+    const userIsConnected = isConnectedOrPending(userData, circle?.id);
+    const [, setConnectPopup] = useAtom(connectPopupAtom);
+    const [isConnecting] = useAtom(isConnectingAtom);
+
+    if (userIsConnected) return null;
+
+    return (
+        <Flex flexDirection="column" position={isMobile ? "static" : "absolute"} right="0" justifyContent="center" height="50px" zIndex="10">
+            <HStack align="center" height="40px">
+                <Button
+                    width="150px"
+                    colorScheme="blue"
+                    borderRadius="25px"
+                    lineHeight="0"
+                    backgroundColor="#389bf8"
+                    color="white"
+                    isDisabled={isConnecting}
+                    onClick={() => setConnectPopup({ source: user, target: circle, option: "connect" })}
+                    position="relative"
+                >
+                    <HStack marginRight="13px">
+                        <RiLinksLine size="18px" />
+                        <Text>{i18n.t(`Default connect [${circle?.type}]`)}</Text>
+                    </HStack>
+                </Button>
+            </HStack>
+        </Flex>
+    );
+};
+
 export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, setFilterConnected, title }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
@@ -397,15 +487,7 @@ export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, se
 
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
 
-                    {/* {circle?.name} Longer Name Network */}
-
-                    {/* <Box marginTop="4px" position="relative">
-                            <CircleTags circle={circle} size={isMobile ? "sm" : "md"} />
-                        </Box>
-                        <Flex position="absolute" top="5px" right="5px" flexDirection="row" align="center" height="24px">
-                            {circle?.id !== "earth" && <ConnectButton circle={circle} onConnect={onConnect} size={isMobile ? "md" : "lg"} />}
-                            {circle?.id !== "earth" && <NotificationsBell circle={circle} />}
-                        </Flex> */}
+                    {!isMobile && <ConnectButton circle={circle} inHeader={true} />}
                 </Flex>
             </Flex>
         </Flex>
@@ -534,127 +616,130 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const ConnectButton = ({ circle, onConnect, size = "sm", ...props }) => {
+export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
+    const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const smallSize = size === "sm" || size === "tiny";
-    const height = smallSize ? "19px" : "22px";
+    const [, setConnectPopup] = useAtom(connectPopupAtom);
+    const height = inHeader ? "40px" : "19px";
 
     const getConnectionStatus = () => {
-        return i18n.t("Connected");
+        if (!circle?.id) return i18n.t("Connected");
 
-        // PWA123 we don't have user connections
-        // let connection = user?.connections?.find((x) => x.target.id === circle.id);
-        // if (!connection) {
-        //     return i18n.t("Follower");
-        // }
-        // if (connection.type.includes("owner_of")) {
-        //     return i18n.t("Owner");
-        // } else if (connection.type.includes("admin_of")) {
-        //     return i18n.t("Admin");
-        // } else if (connection.type.includes("moderator_of")) {
-        //     return i18n.t("Moderator");
-        // } else if (connection.type.includes("connected_mutually_to")) {
-        //     switch (connection?.target?.type) {
-        //         default:
-        //         case "circle":
-        //             return i18n.t("Member");
-        //         case "user":
-        //             return i18n.t("Contact");
-        //         case "event":
-        //             return i18n.t("Attendee");
-        //         case "tag":
-        //             return i18n.t("Supporter");
-        //     }
-        // } else if (connection.type.includes("connected_to")) {
-        //     return i18n.t("Follower");
-        // } else if (connection.type.includes("creator_of")) {
-        //     return i18n.t("Creator");
-        // } else if (connection.type.includes("connected_mutually_to_request")) {
-        //     return i18n.t("Connecting");
-        // } else {
-        //     return i18n.t("Connected");
-        // }
+        if (isConnected(userData, circle?.id, ["owner_of"])) {
+            return i18n.t("Owner");
+        } else if (isConnected(userData, circle?.id, ["admin_of"])) {
+            return i18n.t("Admin");
+        } else if (isConnected(userData, circle?.id, ["moderator_of"])) {
+            return i18n.t("Moderator");
+        } else if (isConnected(userData, circle?.id, ["connected_mutually_to"])) {
+            switch (circle?.type) {
+                default:
+                case "circle":
+                    return i18n.t("Member");
+                case "user":
+                    return i18n.t("Contact");
+                case "event":
+                    return i18n.t("Attendee");
+                case "tag":
+                    return i18n.t("Supporter");
+            }
+        } else if (isConnected(userData, circle?.id, ["connected_to"])) {
+            return i18n.t("Follower");
+        } else if (isConnected(userData, circle?.id, ["creator_of"])) {
+            return i18n.t("Creator");
+        } else if (isConnected(userData, circle?.id, ["connected_mutually_to_request"])) {
+            return i18n.t(`Pending approval`);
+        } else {
+            return i18n.t("Connected");
+        }
     };
 
+    if (circle?.id === user?.id) return null;
+
     return (
-        circle?.id !== user?.id && (
-            <Box {...props}>
-                {isConnected(userData, circle?.id) ? (
-                    <Flex flexDirection="row" position="relative">
-                        <Box
-                            backgroundImage="linear-gradient(to right, transparent, #ffffff);"
-                            width="10px"
-                            height={height}
-                            position="absolute"
-                            left="-15px"
-                            _groupHover={{
-                                backgroundImage: "linear-gradient(to right, transparent, #ddd8db);",
-                            }}
-                        ></Box>
-                        <Box
-                            backgroundColor="white"
-                            width="15px"
-                            height={height}
-                            position="absolute"
-                            left="-5px"
-                            _groupHover={{
-                                backgroundColor: "#ddd8db",
-                            }}
-                        ></Box>
-                        <Button
-                            colorScheme="blue"
-                            borderRadius="25px"
-                            lineHeight="0"
-                            padding="0px 5px 0px 8px"
-                            variant="ghost"
-                            backgroundColor="#ffffff"
-                            color="#333"
-                            border="1px solid #e7e7e7"
-                            height={height}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                onConnect(user, circle, "list");
-                            }}
-                            position="relative"
-                        >
-                            <HStack spacing="4px">
-                                <Text fontSize="11px" fontWeight="700">
-                                    {getConnectionStatus()}
-                                </Text>
-                                <RiLinksLine size="12px" />
-                            </HStack>
-                        </Button>
+        <Box {...props} position={isMobile ? "static" : "absolute"} top="5px" right="0">
+            {isConnected(userData, circle?.id) ? (
+                <Flex flexDirection="row" position="relative">
+                    <Box
+                        backgroundImage="linear-gradient(to right, transparent, #ffffff);"
+                        width="10px"
+                        height={height}
+                        position="absolute"
+                        left="-15px"
+                        _groupHover={{
+                            backgroundImage: "linear-gradient(to right, transparent, #ddd8db);",
+                        }}
+                    ></Box>
+                    <Box
+                        backgroundColor="white"
+                        width="15px"
+                        height={height}
+                        position="absolute"
+                        left="-5px"
+                        _groupHover={{
+                            backgroundColor: "#ddd8db",
+                        }}
+                    ></Box>
+                    <Button
+                        colorScheme="blue"
+                        borderRadius="25px"
+                        lineHeight="0"
+                        padding="0px 5px 0px 8px"
+                        variant="ghost"
+                        backgroundColor="#ffffff"
+                        color="#333"
+                        border="1px solid #e7e7e7"
+                        height={height}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            setConnectPopup({ source: user, target: circle, option: "list" });
+                        }}
+                        position="relative"
+                    >
+                        <HStack spacing={inHeader ? "8px" : "4px"} marginRight={inHeader ? "5px" : "0px"} marginLeft={inHeader ? "10px" : "0px"}>
+                            <Text fontSize={inHeader ? "14px" : "11px"} fontWeight="700">
+                                {getConnectionStatus()}
+                            </Text>
+                            <RiLinksLine size={inHeader ? "18px" : "12px"} />
+                        </HStack>
+                    </Button>
+                </Flex>
+            ) : (
+                <Box>
+                    <Flex
+                        width={inHeader ? "150px" : height}
+                        height={height}
+                        borderRadius={inHeader ? "25px" : "50%"}
+                        lineHeight="0"
+                        backgroundColor="#389bf8"
+                        color="white"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            if (inHeader) {
+                                setConnectPopup({ source: user, target: circle, option: "connect" });
+                            } else {
+                                setConnectPopup({ source: user, target: circle, option: "list" });
+                            }
+                        }}
+                        position="relative"
+                        align="center"
+                        justifyContent="center"
+                        _hover={{
+                            backgroundColor: "var(--chakra-colors-blue-600);",
+                        }}
+                        _active={{
+                            backgroundColor: "var(--chakra-colors-blue-700);",
+                        }}
+                        cursor="pointer"
+                    >
+                        <HStack marginRight={inHeader ? "13px" : "0px"} marginLeft={inHeader ? "13px" : "0px"}>
+                            <RiLinksLine size={inHeader ? "18px" : "12px"} />
+                            {inHeader && <Text fontWeight="700">{i18n.t(`Default connect [${circle?.type}]`)}</Text>}
+                        </HStack>
                     </Flex>
-                ) : (
-                    <Box>
-                        <Flex
-                            width={height}
-                            height={height}
-                            borderRadius="50%"
-                            lineHeight="0"
-                            backgroundColor="#389bf8"
-                            color="white"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                onConnect(user, circle, "list");
-                            }}
-                            position="relative"
-                            align="center"
-                            justifyContent="center"
-                            _hover={{
-                                backgroundColor: "var(--chakra-colors-blue-600);",
-                            }}
-                            _active={{
-                                backgroundColor: "var(--chakra-colors-blue-700);",
-                            }}
-                            cursor="pointer"
-                        >
-                            <RiLinksLine size="12px" />
-                        </Flex>
-                    </Box>
-                )}
-            </Box>
-        )
+                </Box>
+            )}
+        </Box>
     );
 };

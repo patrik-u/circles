@@ -10,7 +10,7 @@ import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
 import { signInStatusValues } from "components/Constants";
-import { uidAtom, userAtom, userDataAtom, signInStatusAtom, userConnectionsAtom } from "components/Atoms";
+import { uidAtom, userAtom, userDataAtom, signInStatusAtom, userConnectionsAtom, requestUserConnectionsAtom } from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
 //#endregion
@@ -29,7 +29,8 @@ export const AccountManager = () => {
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [, setUser] = useAtom(userAtom);
     const [, setUserData] = useAtom(userDataAtom);
-    const [, userConnections] = useAtom(userConnectionsAtom);
+    const [, setUserConnections] = useAtom(userConnectionsAtom);
+    const [requestUserConnections] = useAtom(requestUserConnectionsAtom);
     const toast = useToast();
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";
@@ -148,7 +149,7 @@ export const AccountManager = () => {
                 // subscribe to user data
                 var q = query(collection(db, "circle_data"), where("circle_id", "==", uid));
                 unsubscribeGetUserData = onSnapshot(q, (snap) => {
-                    const updatedUserData = snap.docs.map((doc) => doc.data())[0];
+                    const updatedUserData = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))[0];
 
                     // ignore setting user detail data first time as we've already done so
                     if (firstGetUserData) {
@@ -226,6 +227,29 @@ export const AccountManager = () => {
             };
         }
     }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
+
+    // get user connections
+    useEffect(() => {
+        // wait to load user connections until we need it to minimize initial payload
+        if (!requestUserConnections || !uid) return;
+
+        // subscribe to user connections
+        var q = query(collection(db, "connections"), where("source.id", "==", uid));
+        let unsubscribeGetUserConnections = onSnapshot(q, (snap) => {
+            const updatedUserConnections = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+            log("getting user connections: ", JSON.stringify(updatedUserConnections, null, 2));
+            if (snap.docs[0] != null) {
+                setUserConnections((currentUser) => updatedUserConnections);
+            }
+        });
+
+        return () => {
+            if (unsubscribeGetUserConnections) {
+                unsubscribeGetUserConnections();
+            }
+        };
+    }, [requestUserConnections, uid, setUserConnections]);
 
     const onGoogleSignIn = async (response) => {
         // console.log(JSON.stringify(response, null, 2));

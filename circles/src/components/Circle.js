@@ -23,7 +23,7 @@ import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsis
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import { useAtom } from "jotai";
 import {
@@ -44,6 +44,8 @@ const CircleHome = lazy(() => import("components/CircleHome"));
 const CircleChat = lazy(() => import("components/CircleChat"));
 const CircleMap = lazy(() => import("components/CircleMap"));
 const Circles = lazy(() => import("components/Circles"));
+const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
+const CircleAdmin = lazy(() => import("components/CircleAdmin"));
 
 export const Circle = () => {
     log("Circle.render", -1);
@@ -146,7 +148,6 @@ export const Circle = () => {
     useEffect(() => {
         log("Circle.useEffect 2", 0);
         if (!user?.id || !circleId) return;
-        if (circleId === "earth") return;
 
         log("Circle.seen");
 
@@ -220,6 +221,11 @@ export const Circle = () => {
                     <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
                         <CircleHeader circle={circle} />
                     </Box>
+                    {isMobile && (
+                        <Flex align="center" justifyContent="center">
+                            <ConnectButton circle={circle} inHeader={true} />
+                        </Flex>
+                    )}
 
                     {/* Section content */}
                     <Routes>
@@ -230,6 +236,8 @@ export const Circle = () => {
                         <Route path="/rooms" element={<Circles type="room" />} />
                         <Route path="/users" element={<Circles type="user" />} />
                         <Route path="/links" element={<Circles type="link" />} />
+                        <Route path="/settings" element={<CircleSettings />} />
+                        <Route path="/admin" element={<CircleAdmin />} />
                     </Routes>
                 </Box>
                 {/* Left panel */}
@@ -245,23 +253,15 @@ export const Circle = () => {
                     </Box>
                 )}
                 {/* Right panel */}
-                <Box
-                    flex={isMobile ? "initial" : "1"}
-                    order={isMobile ? "0" : "3"}
-                    backgroundColor={debugBg ? "orange" : "transparent"}
-                    maxWidth={isMobile ? "none" : "270px"}
-                    paddingTop={isMobile ? "0px" : "10px"}
-                >
-                    <Routes>
-                        <Route path="/" element={<CircleRightPanel section="home" />} />
-                        <Route path="/chat" element={<CircleRightPanel section="chat" />} />
-                        <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
-                        <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
-                        <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
-                        <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
-                        <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
-                    </Routes>
-                </Box>
+                <Routes>
+                    <Route path="/" element={<CircleRightPanel section="home" />} />
+                    <Route path="/chat" element={<CircleRightPanel section="chat" />} />
+                    <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
+                    <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
+                    <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
+                    <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
+                    <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
+                </Routes>
             </Flex>
         </Flex>
     );

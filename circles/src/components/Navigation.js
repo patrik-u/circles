@@ -44,7 +44,7 @@ export const openCircle = (navigate, circleId, section) => {
 };
 
 export const getNavigationItems = (circleId, isAdmin) => {
-    let id = circleId ?? "earth";
+    let id = circleId;
     let navigationItems = [];
     navigationItems.push({ route: routes.circle(id).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
 
@@ -112,59 +112,8 @@ export const shouldShowNavItem = (navItem, circle, userData) => {
     if (circle == null) return true;
     if (navItem.requireAdmin && !isAdmin(circle, userData)) {
         return false;
-    } else if (navItem.requireConnection && !isConnected(userData, circle?.id)) {
+    } else if (navItem.requireConnection && !isConnected(userData, circle?.id, ["connected_mutually_to"])) {
         return false;
     }
     return true;
 };
-
-// export const circleDefaultRoute = (user, circleId) => {
-//     // if (circleId === "earth") return routes.circle(circleId).circles;
-//     // if (circleId === user?.id) return routes.circle(circleId).circles;
-//     // let connection = user?.connections?.find((y) => y.target.id === circleId);
-//     // if (!connection) {
-//     //     return routes.circle(circleId).home;
-//     // }
-//     // switch (connection.target.type) {
-//     //     case "user":
-//     //         return routes.circle(circleId).home;
-//     //     case "circle":
-//     //         return routes.circle(circleId).chat;
-//     //     case "event":
-//     //         return routes.circle(circleId).home;
-//     //     case "tag":
-//     //         return routes.circle(circleId).home;
-//     //     default:
-//     //         return routes.circle(circleId).home;
-//     // }
-
-//     let connection = user?.connections?.find((y) => y.target.id === circleId);
-//     if (connection && connection.target.type === "room") {
-//         return routes.circle(circleId).chat;
-//     }
-
-//     // for now the default route for all circles is the home screen
-//     return routes.circle(circleId).home;
-// };
-
-// export const openCircle = (navigate, user, circleId, circle, setCircle, inSelect) => {
-//     if (circle?.id !== circleId) {
-//         setCircle(null);
-//     }
-
-//     navigate(circleDefaultRoute(user, circleId));
-// };
-
-// export const openCircleSection = (navigate, user, circleId, circle, setCircle, section) => {
-//     if (circle?.id !== circleId) {
-//         setCircle(null);
-//     }
-
-//     navigate(routes.circle(circleId)[section]);
-// };
-
-// export const parseCircleId = (path) => {
-//     var match = path.match(/\/circle\/([^/]*)/);
-//     if (match === null) return null;
-//     return match[1];
-// };

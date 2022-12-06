@@ -47,7 +47,7 @@ import Circle from "./screens/circle/old_Circle";
 const App = () => {
     //#region fields
     //const Circle = lazy(() => import("./screens/circle/Circle"));
-    const CircleConnections = lazy(() => import("./screens/circle/old_CircleConnections"));
+    const CircleConnections = lazy(() => import("./components/old_CircleConnections"));
     const NewUserGuide = lazy(() => import("./screens/main/old_NewUserGuide"));
     const GraphView = lazy(() => import("./screens/main/old_GraphView"));
 
@@ -407,7 +407,7 @@ const App = () => {
                     // subscribe to user data
                     var q = query(collection(db, "circle_data"), where("circle_id", "==", uid));
                     unsubscribeGetUserData = onSnapshot(q, (snap) => {
-                        const updatedUserData = snap.docs.map((doc) => doc.data())[0];
+                        const updatedUserData = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))[0];
 
                         // ignore setting user detail data first time as we've already done so
                         if (firstGetUserData) {
