@@ -127,8 +127,9 @@ export const CircleChat = () => {
         if (!circleId) {
             return;
         }
+
         // check if user is authorized to view chat
-        if (!circle.chat_is_public && !isConnected(userData, circle?.id)) {
+        if (!circle.chat_is_public && !isConnected(userData, circleId, ["connected_mutually_to"])) {
             setIsAuthorized(false);
             return;
         } else {
@@ -154,7 +155,7 @@ export const CircleChat = () => {
             if (!datesAreOnSameDay(previousDate, message.sent_at)) {
                 // add date message
                 let date = getDayAndMonth(message.sent_at);
-                let dateMessage = { id: message.sent_at, date, type: "date", isFirst: true, isLast: true };
+                let dateMessage = { id: message.id + ".date", date, type: "date", isFirst: true, isLast: true };
                 filteredChatMessages.push(dateMessage);
                 if (previousMessage) {
                     filteredChatMessages[index - 1].isLast = true;
@@ -199,7 +200,6 @@ export const CircleChat = () => {
         log("Chat.useEffect 5");
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
-        if (circleId === "earth") return;
 
         log("Chat.seen", user?.id);
 
@@ -346,7 +346,7 @@ export const CircleChat = () => {
                             <Text fontWeight="700">{meta.title}</Text>
                             <Text>{meta.description}</Text>
                             {meta.images?.map((img, j) => (
-                                <Link href={meta.url} target="_blank">
+                                <Link key={j} href={meta.url} target="_blank">
                                     <Image src={img} />
                                 </Link>
                             ))}
@@ -424,87 +424,84 @@ export const CircleChat = () => {
     const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
     const chatBackgroundColor = "#f9f9f9";
 
-    return (
-        circle && (
-            <>
-                <Flex
-                    flexGrow="1"
-                    width="100%"
-                    height={`${chatHeight}px`}
-                    maxHeight={isMobile ? "none" : `${windowHeight - 300}px`}
-                    position="relative"
-                    left="0px"
-                    flexDirection={isMobile ? "column" : "row"}
-                    top="0px"
-                    borderRadius={isMobile ? "0px" : "5px"}
-                    overflow="hidden"
-                    backgroundColor={chatBackgroundColor}
-                >
-                    {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
-                    <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
-                        <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
-                            {!isAuthorized && (
-                                <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px">
-                                    <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
-                                </Box>
-                            )}
+    if (!circle) return null;
 
-                            {isAuthorized && (
-                                <>
-                                    <Box flexGrow="1" overflow="hidden">
-                                        <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
-                                            <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
-                                                {chatMessages?.map((item) => (
-                                                    <>
-                                                        {item.type === "date" && (
-                                                            <Box key={`${item.id}.date`} alignSelf="center">
-                                                                <Box backgroundColor="#848499" borderRadius="20px" marginTop="10px">
-                                                                    <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
-                                                                        {item.date}
-                                                                    </Text>
-                                                                </Box>
+    return (
+        <Flex
+            flexGrow="1"
+            width="100%"
+            height={`${chatHeight}px`}
+            maxHeight={isMobile ? "none" : `${windowHeight - 300}px`}
+            position="relative"
+            left="0px"
+            flexDirection={isMobile ? "column" : "row"}
+            top="0px"
+            borderRadius={isMobile ? "0px" : "5px"}
+            overflow="hidden"
+            backgroundColor={chatBackgroundColor}
+        >
+            {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
+            <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
+                <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
+                    {!isAuthorized && (
+                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px">
+                            <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
+                        </Box>
+                    )}
+
+                    {isAuthorized && (
+                        <>
+                            <Box flexGrow="1" overflow="hidden">
+                                <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
+                                    <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
+                                        {chatMessages?.map((item) => (
+                                            <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
+                                                {item.type === "date" && (
+                                                    <Box backgroundColor="#848499" borderRadius="20px" marginTop="10px">
+                                                        <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
+                                                            {item.date}
+                                                        </Text>
+                                                    </Box>
+                                                )}
+
+                                                {item.type === "message" && (
+                                                    <Flex
+                                                        flexDirection="row"
+                                                        align="end"
+                                                        borderRadius="50px"
+                                                        role="group"
+                                                        color="black"
+                                                        spacing="12px"
+                                                        bg="transparent"
+                                                        marginTop={item.isFirst ? "10px" : "0px"}
+                                                        marginBottom={!item.isLast ? "2px" : "0px"}
+                                                    >
+                                                        {item.isLast ? (
+                                                            <Box align="top" width="33px" height="37.5px" flexShrink="0">
+                                                                <CirclePicture circle={item.user} size={33} hasPopover={true} />
                                                             </Box>
+                                                        ) : (
+                                                            <Box className="circle-chat-picture" flexShrink="0" />
                                                         )}
 
-                                                        {item.type === "message" && (
-                                                            <Box key={item.id}>
-                                                                <Flex
-                                                                    flexDirection="row"
-                                                                    align="end"
-                                                                    borderRadius="50px"
-                                                                    role="group"
-                                                                    color="black"
-                                                                    spacing="12px"
-                                                                    bg="transparent"
-                                                                    marginTop={item.isFirst ? "10px" : "0px"}
-                                                                    marginBottom={!item.isLast ? "2px" : "0px"}
+                                                        <Popover
+                                                            isLazy
+                                                            trigger={isMobile ? "click" : "hover"}
+                                                            gutter="0"
+                                                            //placement="center-end"
+                                                            placement="bottom-start"
+                                                            closeOnBlur={true}
+                                                        >
+                                                            <PopoverTrigger>
+                                                                <VStack
+                                                                    align="left"
+                                                                    marginLeft="10px"
+                                                                    flexGrow="1"
+                                                                    spacing="4px"
+                                                                    maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
+                                                                    overflow="hidden"
                                                                 >
-                                                                    {item.isLast ? (
-                                                                        <Box align="top" width="33px" height="37.5px" flexShrink="0">
-                                                                            <CirclePicture circle={item.user} size={33} hasPopover={true} />
-                                                                        </Box>
-                                                                    ) : (
-                                                                        <Box className="circle-chat-picture" flexShrink="0" />
-                                                                    )}
-
-                                                                    <Popover
-                                                                        isLazy
-                                                                        trigger={isMobile ? "click" : "hover"}
-                                                                        gutter="0"
-                                                                        //placement="center-end"
-                                                                        placement="bottom-start"
-                                                                        closeOnBlur={true}
-                                                                    >
-                                                                        <PopoverTrigger>
-                                                                            <VStack
-                                                                                align="left"
-                                                                                marginLeft="10px"
-                                                                                flexGrow="1"
-                                                                                spacing="4px"
-                                                                                maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                                                                overflow="hidden"
-                                                                            >
-                                                                                {/* {item.user.id !== user.id && item.isFirst && (
+                                                                    {/* {item.user.id !== user.id && item.isFirst && (
                                                         <Box marginRight="auto">
                                                             <Text
                                                                 className="circle-list-title"
@@ -517,135 +514,125 @@ export const CircleChat = () => {
                                                             </Text>
                                                         </Box>
                                                     )} */}
-                                                                                <Box
-                                                                                    borderRadius={`${item.isFirst ? "10px" : "0px"} 10px 10px ${
-                                                                                        item.isLast ? "10px" : "0px"
-                                                                                    }`}
-                                                                                    backgroundColor={!item.isSelf ? otherMessageBg : selfMessageBg}
-                                                                                    color={item.user.id !== user?.id ? "black" : "black"}
-                                                                                    marginRight="auto"
-                                                                                    overflow="hidden"
-                                                                                    maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                                                                >
-                                                                                    {item.reply_to && (
-                                                                                        <Box padding="11px 11px 0px 11px">
-                                                                                            <VStack
-                                                                                                align="left"
-                                                                                                spacing="0px"
-                                                                                                flexGrow="1"
-                                                                                                borderLeft="3px solid #f15bee"
-                                                                                                paddingLeft="5px"
-                                                                                            >
-                                                                                                <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                                                                                    {item.reply_to.user.name}
-                                                                                                </Text>
-                                                                                                <Text
-                                                                                                    width={isMobile ? `${windowWidth - 100}px` : "335px"}
-                                                                                                    isTruncated
-                                                                                                >
-                                                                                                    {item.reply_to.message}
-                                                                                                </Text>
-                                                                                            </VStack>
-                                                                                        </Box>
-                                                                                    )}
-
-                                                                                    <Box
-                                                                                        padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`}
-                                                                                        overflow="hidden"
-                                                                                    >
-                                                                                        <Text
-                                                                                            className="circle-list-title"
-                                                                                            paddingRight="10px"
-                                                                                            lineHeight="20px"
-                                                                                            fontSize="14px"
-                                                                                        >
-                                                                                            <div
-                                                                                                className="embedChatHtmlContent"
-                                                                                                dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                                                            />
-                                                                                        </Text>
-
-                                                                                        {item.meta_data?.map((meta, i) => renderMetaData(meta, i))}
-
-                                                                                        {item.isLast && (
-                                                                                            <Box paddingBottom="4px" paddingTop="2px">
-                                                                                                <Text
-                                                                                                    align="right"
-                                                                                                    className="circle-list-title"
-                                                                                                    paddingRight="0px"
-                                                                                                    lineHeight="10px"
-                                                                                                    fontSize="10px"
-                                                                                                    color={!item.isSelf ? "#9f9f9f" : "#818181"}
-                                                                                                >
-                                                                                                    {item.sent_at.toDate().toLocaleString([], {
-                                                                                                        hour: "2-digit",
-                                                                                                        minute: "2-digit",
-                                                                                                    })}
-                                                                                                </Text>
-                                                                                            </Box>
-                                                                                        )}
-                                                                                    </Box>
-                                                                                </Box>
-                                                                            </VStack>
-                                                                        </PopoverTrigger>
-
-                                                                        <PopoverContent
-                                                                            backgroundColor="transparent"
-                                                                            borderColor="transparent"
-                                                                            boxShadow="none"
-                                                                        >
-                                                                            <Box
-                                                                                zIndex="160"
-                                                                                height="12px"
-                                                                                backgroundColor="transparent"
-                                                                                align="center"
-                                                                                position="relative"
-                                                                            >
-                                                                                <HStack
-                                                                                    align="center"
-                                                                                    position="absolute"
-                                                                                    top="-14px"
-                                                                                    left="10px"
+                                                                    <Box
+                                                                        borderRadius={`${item.isFirst ? "10px" : "0px"} 10px 10px ${
+                                                                            item.isLast ? "10px" : "0px"
+                                                                        }`}
+                                                                        backgroundColor={!item.isSelf ? otherMessageBg : selfMessageBg}
+                                                                        color={item.user.id !== user?.id ? "black" : "black"}
+                                                                        marginRight="auto"
+                                                                        overflow="hidden"
+                                                                        maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
+                                                                    >
+                                                                        {item.reply_to && (
+                                                                            <Box padding="11px 11px 0px 11px">
+                                                                                <VStack
+                                                                                    align="left"
+                                                                                    spacing="0px"
+                                                                                    flexGrow="1"
+                                                                                    borderLeft="3px solid #f15bee"
                                                                                     paddingLeft="5px"
-                                                                                    paddingRight="5px"
-                                                                                    paddingTop="3px"
-                                                                                    paddingBottom="3px"
-                                                                                    backgroundColor={popoverBg}
-                                                                                    borderRadius="50px"
                                                                                 >
-                                                                                    {!item.isSelf && (
-                                                                                        <Icon
-                                                                                            width="18px"
-                                                                                            height="18px"
-                                                                                            color={iconColor}
-                                                                                            as={BsReplyFill}
-                                                                                            cursor="pointer"
-                                                                                            onClick={() => replyChatMessage(item)}
-                                                                                        />
-                                                                                    )}
+                                                                                    <Text fontSize="14px" color="#7880f8" fontWeight="700">
+                                                                                        {item.reply_to.user.name}
+                                                                                    </Text>
+                                                                                    <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
+                                                                                        {item.reply_to.message}
+                                                                                    </Text>
+                                                                                </VStack>
+                                                                            </Box>
+                                                                        )}
 
-                                                                                    {item.isSelf && (
-                                                                                        <>
-                                                                                            <Icon
-                                                                                                width="18px"
-                                                                                                height="18px"
-                                                                                                color={iconColor}
-                                                                                                as={MdDelete}
-                                                                                                cursor="pointer"
-                                                                                                onClick={() => deleteChatMessage(item)}
-                                                                                            />
-                                                                                            <Icon
-                                                                                                width="18px"
-                                                                                                height="18px"
-                                                                                                color={iconColor}
-                                                                                                as={MdModeEdit}
-                                                                                                cursor="pointer"
-                                                                                                onClick={() => editChatMessage(item)}
-                                                                                            />
-                                                                                        </>
-                                                                                    )}
+                                                                        <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
+                                                                            <Box
+                                                                                className="circle-list-title"
+                                                                                paddingRight="10px"
+                                                                                lineHeight="20px"
+                                                                                fontSize="14px"
+                                                                            >
+                                                                                <div
+                                                                                    className="embedChatHtmlContent"
+                                                                                    dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
+                                                                                />
+                                                                            </Box>
 
-                                                                                    {/* {!item.isSelf && (
+                                                                            {item.meta_data?.map((meta, i) => renderMetaData(meta, i))}
+
+                                                                            {item.isLast && (
+                                                                                <Box paddingBottom="4px" paddingTop="2px">
+                                                                                    <Text
+                                                                                        align="right"
+                                                                                        className="circle-list-title"
+                                                                                        paddingRight="0px"
+                                                                                        lineHeight="10px"
+                                                                                        fontSize="10px"
+                                                                                        color={!item.isSelf ? "#9f9f9f" : "#818181"}
+                                                                                    >
+                                                                                        {item.sent_at.toDate().toLocaleString([], {
+                                                                                            hour: "2-digit",
+                                                                                            minute: "2-digit",
+                                                                                        })}
+                                                                                    </Text>
+                                                                                </Box>
+                                                                            )}
+                                                                        </Box>
+                                                                    </Box>
+                                                                </VStack>
+                                                            </PopoverTrigger>
+
+                                                            <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
+                                                                <Box
+                                                                    zIndex="160"
+                                                                    height="12px"
+                                                                    backgroundColor="transparent"
+                                                                    align="center"
+                                                                    position="relative"
+                                                                >
+                                                                    <HStack
+                                                                        align="center"
+                                                                        position="absolute"
+                                                                        top="-14px"
+                                                                        left="10px"
+                                                                        paddingLeft="5px"
+                                                                        paddingRight="5px"
+                                                                        paddingTop="3px"
+                                                                        paddingBottom="3px"
+                                                                        backgroundColor={popoverBg}
+                                                                        borderRadius="50px"
+                                                                    >
+                                                                        {!item.isSelf && (
+                                                                            <Icon
+                                                                                width="18px"
+                                                                                height="18px"
+                                                                                color={iconColor}
+                                                                                as={BsReplyFill}
+                                                                                cursor="pointer"
+                                                                                onClick={() => replyChatMessage(item)}
+                                                                            />
+                                                                        )}
+
+                                                                        {item.isSelf && (
+                                                                            <>
+                                                                                <Icon
+                                                                                    width="18px"
+                                                                                    height="18px"
+                                                                                    color={iconColor}
+                                                                                    as={MdDelete}
+                                                                                    cursor="pointer"
+                                                                                    onClick={() => deleteChatMessage(item)}
+                                                                                />
+                                                                                <Icon
+                                                                                    width="18px"
+                                                                                    height="18px"
+                                                                                    color={iconColor}
+                                                                                    as={MdModeEdit}
+                                                                                    cursor="pointer"
+                                                                                    onClick={() => editChatMessage(item)}
+                                                                                />
+                                                                            </>
+                                                                        )}
+
+                                                                        {/* {!item.isSelf && (
                                                                                 <Icon
                                                                                     width="18px"
                                                                                     height="18px"
@@ -654,185 +641,171 @@ export const CircleChat = () => {
                                                                                     cursor="pointer"
                                                                                 />
                                                                             )} */}
-                                                                                </HStack>
-                                                                            </Box>
-                                                                        </PopoverContent>
-                                                                    </Popover>
-                                                                </Flex>
-                                                            </Box>
-                                                        )}
-                                                    </>
-                                                ))}
+                                                                    </HStack>
+                                                                </Box>
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </Flex>
+                                                )}
+                                            </Box>
+                                        ))}
 
-                                                {!chatMessages?.length && !isLoadingMessages && <Text marginLeft="12px">{i18n.t("No messages")}</Text>}
-                                                {isLoadingMessages && <Spinner marginLeft="12px" />}
-                                            </VStack>
-                                            {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
-                                        </Scrollbars>
+                                        {!chatMessages?.length && !isLoadingMessages && <Text marginLeft="12px">{i18n.t("No messages")}</Text>}
+                                        {isLoadingMessages && <Spinner marginLeft="12px" />}
+                                    </VStack>
+                                    {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
+                                </Scrollbars>
+                            </Box>
+
+                            {isEditingMessage && (
+                                <Flex
+                                    height="60px"
+                                    backgroundColor="#f9f9f9"
+                                    align="center"
+                                    boxSizing="border-box"
+                                    marginTop="auto"
+                                    position="relative"
+                                    flexDirection="row"
+                                    width="100%"
+                                    overflow="hidden"
+                                >
+                                    <Box marginLeft="10px" marginRight="10px">
+                                        <MdModeEdit size="30px" color="#7880f8" />
                                     </Box>
 
-                                    {isEditingMessage && (
-                                        <Flex
-                                            height="60px"
-                                            backgroundColor="#f9f9f9"
-                                            align="center"
-                                            boxSizing="border-box"
-                                            marginTop="auto"
-                                            position="relative"
-                                            flexDirection="row"
-                                            width="100%"
-                                            overflow="hidden"
-                                        >
-                                            <Box marginLeft="10px" marginRight="10px">
-                                                <MdModeEdit size="30px" color="#7880f8" />
-                                            </Box>
+                                    <VStack align="left" spacing="0px" flexGrow="1">
+                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
+                                            {i18n.t("Edit message")}
+                                        </Text>
+                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
+                                            {messageToEdit.message}
+                                        </Text>
+                                    </VStack>
+                                    <Box marginLeft="10px" marginRight="10px">
+                                        <MdOutlineClose size="30px" color="#161616" onClick={closeEdit} cursor="pointer" />
+                                    </Box>
+                                </Flex>
+                            )}
 
-                                            <VStack align="left" spacing="0px" flexGrow="1">
-                                                <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                                    {i18n.t("Edit message")}
-                                                </Text>
-                                                <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
-                                                    {messageToEdit.message}
-                                                </Text>
-                                            </VStack>
-                                            <Box marginLeft="10px" marginRight="10px">
-                                                <MdOutlineClose size="30px" color="#161616" onClick={closeEdit} cursor="pointer" />
-                                            </Box>
-                                        </Flex>
-                                    )}
-
-                                    {isReplyingMessage && (
-                                        <Flex
-                                            height="60px"
-                                            backgroundColor="#f9f9f9"
-                                            align="center"
-                                            boxSizing="border-box"
-                                            marginTop="auto"
-                                            position="relative"
-                                            flexDirection="row"
-                                            width="100%"
-                                            overflow="hidden"
-                                        >
-                                            <Box marginLeft="10px" marginRight="10px">
-                                                <BsReplyFill size="30px" color="#7880f8" />
-                                            </Box>
-
-                                            <VStack align="left" spacing="0px" flexGrow="1">
-                                                <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                                    {messageToReply.user.name}
-                                                </Text>
-                                                <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
-                                                    {messageToReply.message}
-                                                </Text>
-                                            </VStack>
-                                            <Box marginLeft="10px" marginRight="10px">
-                                                <MdOutlineClose size="30px" color="#161616" onClick={closeReply} cursor="pointer" />
-                                            </Box>
-                                        </Flex>
-                                    )}
-
-                                    <Box
-                                        align="flex-end"
-                                        boxSizing="border-box"
-                                        height="60px"
-                                        paddingTop="10px"
-                                        paddingLeft="10px"
-                                        paddingRight="10px"
-                                        marginTop="auto"
-                                        position="relative"
-                                        backgroundColor="#ffffffcc"
-                                    >
-                                        <Textarea
-                                            ref={textAreaRef}
-                                            id="message"
-                                            className="messageInput"
-                                            width={isMobile ? "calc(100% - 80px)" : "calc(100% - 50px)"}
-                                            value={message}
-                                            onChange={handleMessageChange}
-                                            onKeyDown={handleMessageKeyDown}
-                                            resize="none"
-                                            maxLength="650"
-                                            rows="1"
-                                            borderRadius="40px"
-                                            placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}
-                                            onBlur={onMessageBlur}
-                                            disabled={user?.id ? false : true}
-                                        />
-                                        <Popover trigger="click" gutter="0" enabled={false}>
-                                            {user && (
-                                                <PopoverTrigger>
-                                                    <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
-                                                        <HiOutlineEmojiHappy size="30px" color={user ? "#7880f8" : "#e6e6e6"} />
-                                                    </Box>
-                                                </PopoverTrigger>
-                                            )}
-                                            {!user && (
-                                                <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0">
-                                                    <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
-                                                </Box>
-                                            )}
-                                            <PopoverContent backgroundColor="transparent" borderColor="transparent" width="352px" height="435px">
-                                                <Box zIndex="100" width="352px" height="435px">
-                                                    <PopoverArrow />
-                                                    <EmojiPicker setMessage={setMessage} />
-                                                </Box>
-                                            </PopoverContent>
-                                        </Popover>
-                                        {isMobile && (
-                                            <Box position="absolute" top="18px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
-                                                <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
-                                            </Box>
-                                        )}
+                            {isReplyingMessage && (
+                                <Flex
+                                    height="60px"
+                                    backgroundColor="#f9f9f9"
+                                    align="center"
+                                    boxSizing="border-box"
+                                    marginTop="auto"
+                                    position="relative"
+                                    flexDirection="row"
+                                    width="100%"
+                                    overflow="hidden"
+                                >
+                                    <Box marginLeft="10px" marginRight="10px">
+                                        <BsReplyFill size="30px" color="#7880f8" />
                                     </Box>
 
-                                    {circle?.chat_is_public && (
-                                        <Box alignSelf="center" position="absolute">
-                                            <Box backgroundColor="#8580ff" borderRadius="20px" marginTop="10px">
-                                                <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
-                                                    {i18n.t("This is a public chat, messages can be read by all")}
-                                                </Text>
+                                    <VStack align="left" spacing="0px" flexGrow="1">
+                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
+                                            {messageToReply.user.name}
+                                        </Text>
+                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
+                                            {messageToReply.message}
+                                        </Text>
+                                    </VStack>
+                                    <Box marginLeft="10px" marginRight="10px">
+                                        <MdOutlineClose size="30px" color="#161616" onClick={closeReply} cursor="pointer" />
+                                    </Box>
+                                </Flex>
+                            )}
+
+                            <Box
+                                align="flex-end"
+                                boxSizing="border-box"
+                                height="60px"
+                                paddingTop="10px"
+                                paddingLeft="10px"
+                                paddingRight="10px"
+                                marginTop="auto"
+                                position="relative"
+                                backgroundColor="#ffffffcc"
+                            >
+                                <Textarea
+                                    ref={textAreaRef}
+                                    id="message"
+                                    className="messageInput"
+                                    width={isMobile ? "calc(100% - 80px)" : "calc(100% - 50px)"}
+                                    value={message}
+                                    onChange={handleMessageChange}
+                                    onKeyDown={handleMessageKeyDown}
+                                    resize="none"
+                                    maxLength="650"
+                                    rows="1"
+                                    borderRadius="40px"
+                                    placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}
+                                    onBlur={onMessageBlur}
+                                    disabled={user?.id ? false : true}
+                                />
+                                <Popover trigger="click" gutter="0" enabled={false}>
+                                    {user && (
+                                        <PopoverTrigger>
+                                            <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
+                                                <HiOutlineEmojiHappy size="30px" color={user ? "#7880f8" : "#e6e6e6"} />
                                             </Box>
+                                        </PopoverTrigger>
+                                    )}
+                                    {!user && (
+                                        <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0">
+                                            <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
                                         </Box>
                                     )}
-                                </>
+                                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="352px" height="435px">
+                                        <Box zIndex="100" width="352px" height="435px">
+                                            <PopoverArrow />
+                                            <EmojiPicker setMessage={setMessage} />
+                                        </Box>
+                                    </PopoverContent>
+                                </Popover>
+                                {isMobile && (
+                                    <Box position="absolute" top="18px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
+                                        <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
+                                    </Box>
+                                )}
+                            </Box>
+
+                            {circle?.chat_is_public && (
+                                <Box alignSelf="center" position="absolute">
+                                    <Box backgroundColor="#8580ff" borderRadius="20px" marginTop="10px">
+                                        <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
+                                            {i18n.t("This is a public chat, messages can be read by all")}
+                                        </Text>
+                                    </Box>
+                                </Box>
                             )}
-                        </Flex>
-
-                        {/* Modal popup - delete message */}
-                        <Modal
-                            initialFocusRef={confirmDeleteMessageInitialRef}
-                            isOpen={confirmDeleteMessageIsOpen}
-                            onClose={confirmDeleteMessageOnClose}
-                            size="lg"
-                        >
-                            <ModalOverlay />
-                            <ModalContent borderRadius="25px">
-                                <ModalHeader>{i18n.t("Delete the message")}</ModalHeader>
-                                <ModalCloseButton />
-                                <ModalBody>
-                                    <Text fontSize="18px">{i18n.t("Do you want to delete the message?")}</Text>
-                                </ModalBody>
-
-                                <ModalFooter>
-                                    <Button colorScheme="blue" mr={3} borderRadius="25px" onClick={confirmDeleteMessage}>
-                                        {i18n.t("Yes")}
-                                    </Button>
-                                    <Button
-                                        ref={confirmDeleteMessageInitialRef}
-                                        colorScheme="blue"
-                                        mr={3}
-                                        borderRadius="25px"
-                                        onClick={confirmDeleteMessageOnClose}
-                                    >
-                                        {i18n.t("Cancel")}
-                                    </Button>
-                                </ModalFooter>
-                            </ModalContent>
-                        </Modal>
-                    </Flex>
+                        </>
+                    )}
                 </Flex>
-            </>
-        )
+
+                {/* Modal popup - delete message */}
+                <Modal initialFocusRef={confirmDeleteMessageInitialRef} isOpen={confirmDeleteMessageIsOpen} onClose={confirmDeleteMessageOnClose} size="lg">
+                    <ModalOverlay />
+                    <ModalContent borderRadius="25px">
+                        <ModalHeader>{i18n.t("Delete the message")}</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Text fontSize="18px">{i18n.t("Do you want to delete the message?")}</Text>
+                        </ModalBody>
+
+                        <ModalFooter>
+                            <Button colorScheme="blue" mr={3} borderRadius="25px" onClick={confirmDeleteMessage}>
+                                {i18n.t("Yes")}
+                            </Button>
+                            <Button ref={confirmDeleteMessageInitialRef} colorScheme="blue" mr={3} borderRadius="25px" onClick={confirmDeleteMessageOnClose}>
+                                {i18n.t("Cancel")}
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+            </Flex>
+        </Flex>
     );
 };
 

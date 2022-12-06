@@ -35,12 +35,17 @@ import {
     circlesAtom,
     locationPickerActiveAtom,
     locationPickerPositionAtom,
+    filteredCirclesAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import { Map, useMap } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "components/MapMarkers";
+import mapboxgl from "mapbox-gl";
 //#endregion
+
+// eslint-disable-next-line import/no-webpack-loader-syntax
+mapboxgl.workerClass = require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker").default;
 
 export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const satelliteMode = true;
@@ -59,7 +64,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const mapRef = useRef(null);
 
     const [circle] = useAtom(circleAtom);
-    const [circles] = useAtom(circlesAtom);
+    const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [locationPickerActive] = useAtom(locationPickerActiveAtom);
     const [locationPickerPosition] = useAtom(locationPickerPositionAtom);
 
@@ -128,9 +133,9 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
 
                 <NavigationControl />
 
-                {circle && circles?.length > 0 && <CircleMapEdges circle={circle} circles={circles} />}
+                {circle && filteredCircles?.length > 0 && <CircleMapEdges circle={circle} circles={filteredCircles} />}
                 {circle && <CircleMarker circle={circle} />}
-                {circles?.length > 0 && <CirclesMapMarkers circles={circles} />}
+                {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} />}
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
 
                 {children}

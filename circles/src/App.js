@@ -7,7 +7,9 @@ import { useAtom } from "jotai";
 import { isMobileAtom } from "components/Atoms";
 import Home from "components/Home";
 import AccountManager from "components/AccountManager";
+import LocationManager from "components/LocationManager";
 import TopMenu from "components/TopMenu";
+import ConnectPopup from "components/ConnectPopup";
 //#endregion
 
 const Circle = lazy(() => import("components/Circle"));
@@ -42,6 +44,7 @@ const App = () => {
     return (
         <Flex width="100%" height="100%" flexDirection="column">
             <AccountManager />
+            <LocationManager />
             <TopMenu />
             <Suspense fallback={<Box></Box>}>
                 <Routes>
@@ -49,6 +52,7 @@ const App = () => {
                     <Route path="/circle/:circleId/*" element={<Circle />} />
                 </Routes>
             </Suspense>
+            <ConnectPopup />
         </Flex>
     );
 };

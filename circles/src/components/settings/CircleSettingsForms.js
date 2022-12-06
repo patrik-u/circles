@@ -3,7 +3,6 @@ import { useContext, useRef, useState, forwardRef, useEffect, useMemo, lazy } fr
 import { Form, Field, Formik } from "formik";
 import MultiSelect, { components } from "react-select";
 import Select from "react-select";
-// chakra
 import {
     Box,
     FormControl,
@@ -40,12 +39,11 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import { FiFile } from "react-icons/fi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeoPoint } from "firebase/firestore";
-import { storage } from "../../components/Firebase";
-import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles } from "../../components/old_Helpers";
+import { db, storage } from "components/Firebase";
+import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles } from "components/Helpers";
 import { useNavigateNoUpdates } from "components/RouterUtils";
-import { routes } from "../../components/Navigation";
-import { ConnectionNotification } from "../main/Notifications";
-import UserContext from "../../components/UserContext";
+import { routes } from "components/Navigation";
+import { ConnectionNotification } from "components/Notifications";
 import axios from "axios";
 import { i18n, LanguagePicker } from "i18n/Localization";
 import ReactQuill from "react-quill";
@@ -54,14 +52,25 @@ import { WithContext as ReactTags } from "react-tag-input";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine, RiDeleteBinLine } from "react-icons/ri";
 import { AiOutlineEdit } from "react-icons/ai";
-import db from "../../components/Firebase";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
+import { useAtom } from "jotai";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    showNetworkLogoAtom,
+    signInStatusAtom,
+    circleAtom,
+    circlesAtom,
+    circleConnectionsAtom,
+    locationPickerActiveAtom,
+    locationPickerPositionAtom,
+} from "components/Atoms";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
+import CircleListItem from "components/CircleListItem";
 //#endregion
-
-//PWA123
-import CircleListItem from "../circle/old_CircleListItem";
-//const CircleListItem = lazy(() => import("../circle/CircleListItem"));
 
 export const DatePickerInput = forwardRef(({ value, onClick }, ref) => (
     <Box border="1px solid #e2e8f0" height="40px" borderRadius="0.375rem" onClick={onClick} ref={ref} align="center">
@@ -246,10 +255,9 @@ export const CircleContentForm = ({
         setRichContent(richText);
         setRichContentCharCount(text ? text.trim().length : 0);
     };
-
     return (
         <Formik
-            initialValues={{ name: name ?? "", description: description ?? "", language: language, chatIsPublic: chatIsPublic === true }}
+            initialValues={{ name: name ?? "", description: description ?? "", time: circle.time ?? "12:00", language: language, chatIsPublic: chatIsPublic === true }}
             onSubmit={async (values, actions) => {
                 if (isUpdateForm) {
                     // update circle
@@ -259,6 +267,11 @@ export const CircleContentForm = ({
                         parentCircle: selectedParentCircle,
                         chatIsPublic: chatIsPublicSetting,
                     };
+                    if (circle.type === "event") {
+                        updatedCircleData.startsAt = combineDateAndTime(pickedDate, values.time),
+                        updatedCircleData.time = values.time;
+                        updatedCircleData.isAllDay = isAllDay;
+                    }
 
                     console.log("chatIsPublic: ", updatedCircleData.chatIsPublic);
 
@@ -324,6 +337,8 @@ export const CircleContentForm = ({
                     parentCircle: selectedParentCircle,
                     chatIsPublic: chatIsPublicSetting,
                 });
+
+                if ()
 
                 // console.log(
                 //     JSON.stringify(putCircleResult.data, null, 2)
@@ -599,9 +614,9 @@ export const EventContentForm = ({
                 // create new event
                 let putCircleResult = await axios.post(`/circles`, {
                     name: values.name,
+                    content: values.content,
                     startsAt: CombineDateAndTime(pickedDate, values.time),
                     time: values.time,
-                    content: values.content,
                     isAllDay: isAllDay,
                     language: values.language,
                     type: "event",
@@ -1256,194 +1271,6 @@ export const CircleImagesForm = ({ isUpdateForm, picture, cover, onCancel, onNex
         </Formik>
     );
 };
-
-export const allQuestions = [
-    {
-        id: "ideal-future",
-        label: i18n.t("My ideal future looks like"),
-        type: ["user"],
-    },
-    {
-        id: "insufferable-present",
-        label: i18n.t("My insufferable present is"),
-        type: ["user"],
-    },
-    {
-        id: "excited-about-now",
-        label: i18n.t("Right now I'm excited about"),
-        type: ["user"],
-    },
-    {
-        id: "my-superpower",
-        label: i18n.t("My superpower is"),
-        type: ["user"],
-    },
-    {
-        id: "role-of-species",
-        label: i18n.t("I think the role of our species on the planet is"),
-        type: ["user"],
-    },
-    {
-        id: "my-biggest-fear-is",
-        label: i18n.t("My biggest fear is"),
-        type: ["user"],
-    },
-    {
-        id: "adopted-ritual",
-        label: i18n.t("One ritual I have adopted is"),
-        type: ["user"],
-    },
-    {
-        id: "lottery",
-        label: i18n.t("If I won the lottery tomorrow I would"),
-        type: ["user"],
-    },
-    {
-        id: "ideal-world",
-        label: i18n.t("My ideal world looks like"),
-        type: ["user"],
-    },
-    {
-        id: "president",
-        label: i18n.t("If I were president, I would"),
-        type: ["user"],
-    },
-    {
-        id: "three-words",
-        label: i18n.t("Three words to describe my personality are"),
-        type: ["user"],
-    },
-    {
-        id: "advice",
-        label: i18n.t("My advice to my younger self would be"),
-        type: ["user"],
-    },
-    {
-        id: "vulnerable",
-        label: i18n.t("I feel vulnerable when"),
-        type: ["user"],
-    },
-    {
-        id: "prediction",
-        label: i18n.t("My best prediction for what the world will look like in 2100"),
-        type: ["user"],
-    },
-    {
-        id: "mantra",
-        label: i18n.t("My mantra is"),
-        type: ["user"],
-    },
-    {
-        id: "values",
-        label: i18n.t("The values I hold most sacred are"),
-        type: ["user"],
-    },
-    {
-        id: "changemaking",
-        label: i18n.t("I got into changemaking because"),
-        type: ["user"],
-    },
-    {
-        id: "impactful-project",
-        label: i18n.t("My most impactful project so far has been"),
-        type: ["user"],
-    },
-    {
-        id: "crazy-idea",
-        label: i18n.t("My craziest idea is"),
-        type: ["user"],
-    },
-    {
-        id: "quote",
-        label: i18n.t("A quote that means a lot to me is"),
-        type: ["user"],
-    },
-    {
-        id: "work-on",
-        label: i18n.t("I really need to work on"),
-        type: ["user"],
-    },
-    {
-        id: "want-to-work-on",
-        label: i18n.t("I really want to work on"),
-        type: ["user"],
-    },
-    {
-        id: "sport",
-        label: i18n.t("My favorite sport is"),
-        type: ["user"],
-    },
-    {
-        id: "ilikewhenhumans",
-        label: i18n.t("I like it when humans"),
-        type: ["user"],
-    },
-    {
-        id: "memory",
-        label: i18n.t("A significant memory or moment in my life was"),
-        type: ["user"],
-    },
-    {
-        id: "peoplecomewhen",
-        label: i18n.t("People come to me when they need"),
-        type: ["user"],
-    },
-    {
-        id: "happy",
-        label: i18n.t("What makes me truly happy is"),
-        type: ["user"],
-    },
-    {
-        id: "look-up-to",
-        label: i18n.t("A person I look up to is... because..."),
-        type: ["user"],
-    },
-    {
-        id: "poem",
-        label: i18n.t("A poem I find meaningful"),
-        type: ["user"],
-    },
-    {
-        id: "inspires",
-        label: i18n.t("What inspires me is"),
-        type: ["user"],
-    },
-    {
-        id: "intrinsic",
-        label: i18n.t("My intrinsic motivation is"),
-        type: ["user"],
-    },
-    {
-        id: "music",
-        label: i18n.t("My favorite music is"),
-        type: ["user"],
-    },
-    {
-        id: "food",
-        label: i18n.t("My favorite food is"),
-        type: ["user"],
-    },
-    {
-        id: "inserviceof",
-        label: i18n.t("I show up in service of"),
-        type: ["user"],
-    },
-    {
-        id: "favoriteproject",
-        label: i18n.t("My favorite changemaking project in the world is"),
-        type: ["user"],
-    },
-    {
-        id: "weaknesses",
-        label: i18n.t("The weaknesses of my greatest strength are"),
-        type: ["user"],
-    },
-    {
-        id: "favoritequestion",
-        label: i18n.t("My favorite question is"),
-        type: ["user"],
-    },
-];
 
 export const CircleQuestionsForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const [isSavingQuestions, setIsSavingQuestions] = useState(false);

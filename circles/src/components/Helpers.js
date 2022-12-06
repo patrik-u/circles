@@ -23,15 +23,39 @@ export const getCircleTypes = (sourceType, targetType) => {
     return types.sort().join("_");
 };
 
-export const isConnected = (userData, circleId) => {
+export const isConnected = (userData, circleId, types) => {
     if (!circleId || !userData) return false;
-    return userData.mutual_connections?.includes(circleId);
+    if (userData.id === circleId) return true;
+
+    if (!types) {
+        types = [
+            "connected_mutually_to",
+            "connected_to",
+            "owner_of",
+            "admin_of",
+            "moderator_of",
+            "creator_of",
+            "connected_mutually_to_request",
+            "admin_of_request",
+        ];
+    }
+
+    for (let type of types) {
+        if (userData[type]?.includes(circleId)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+export const isConnectedOrPending = (userData, circleId) => {
+    if (!circleId || !userData) return false;
+    return userData.id === circleId || userData.connected_mutually_to?.includes(circleId) || userData.connected_mutually_to_request?.includes(circleId);
 };
 
 export const hasUpdates = (userData, circle, category) => {
     // show update indicator if user is connected to circle and user data indicates user hasn't seen latest updates
     if (!userData || !circle || !category) return false;
-    if (circle.id === "earth") return false;
     if (!isConnected(userData, circle?.id)) return false;
 
     let updatedAt = fromFsDate(circle.updates?.[category]);
@@ -189,6 +213,16 @@ export const datesAreOnSameDay = (first, second) => {
     );
 };
 
+export const combineDateAndTime = (date, time) => {
+    const timeString = time + ":00";
+    const year = date.getFullYear();
+    const month = ("0" + (date.getMonth() + 1)).slice(-2);
+    const day = ("0" + date.getDate()).slice(-2);
+    const dateString = "" + year + "-" + month + "-" + day;
+    const datec = dateString + "T" + timeString;
+    return new Date(datec);
+};
+
 export const getDateWithoutTime = (date = new Date()) => {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
@@ -306,6 +340,13 @@ export const getLngLatArray = (coords) => {
 };
 
 export const toastError = (toast, title, description) => {
+    if (typeof title !== "string") {
+        title = JSON.stringify(title);
+    }
+    if (typeof description !== "string") {
+        description = JSON.stringify(description);
+    }
+
     toast({
         title: title,
         description: description,
@@ -318,6 +359,13 @@ export const toastError = (toast, title, description) => {
 };
 
 export const toastInfo = (toast, title, description) => {
+    if (typeof title !== "string") {
+        title = JSON.stringify(title);
+    }
+    if (typeof description !== "string") {
+        description = JSON.stringify(description);
+    }
+
     toast({
         title: title,
         description: description,
@@ -330,6 +378,13 @@ export const toastInfo = (toast, title, description) => {
 };
 
 export const toastWarning = (toast, title, description) => {
+    if (typeof title !== "string") {
+        title = JSON.stringify(title);
+    }
+    if (typeof description !== "string") {
+        description = JSON.stringify(description);
+    }
+
     toast({
         title: title,
         description: description,
@@ -342,6 +397,13 @@ export const toastWarning = (toast, title, description) => {
 };
 
 export const toastSuccess = (toast, title, description) => {
+    if (typeof title !== "string") {
+        title = JSON.stringify(title);
+    }
+    if (typeof description !== "string") {
+        description = JSON.stringify(description);
+    }
+
     toast({
         title: title,
         description: description,
@@ -354,7 +416,44 @@ export const toastSuccess = (toast, title, description) => {
 
 export const isAdmin = (circle, userData) => {
     if (!circle || !userData) return false;
-    return userData.admin_of?.includes(circle.id);
+    return userData.admin_of?.includes(circle.id) || userData.owner_of?.includes(circle.id);
+};
+
+export const adminCircles = (userConnections) => {
+    if (!userConnections) return [];
+    let circles = userConnections.filter((x) => x.types?.includes("owner_of") || x.types?.includes("admin_of"));
+    return circles?.map((x) => x.target) ?? [];
+};
+
+export const getConnectLabel = (circleType, connectType) => {
+    switch (connectType) {
+        case "owner_of":
+            return i18n.t("Owner");
+        case "admin_of":
+            return i18n.t("Admin");
+        case "moderator_of":
+            return i18n.t("Moderator");
+        case "connected_mutually_to":
+            switch (circleType) {
+                default:
+                case "circle":
+                    return i18n.t("Member");
+                case "user":
+                    return i18n.t("Contact");
+                case "event":
+                    return i18n.t("Attendee");
+                case "tag":
+                    return i18n.t("Supporter");
+            }
+        case "connected_mutually_to_request":
+            return i18n.t(`Request [${circleType}]`);
+        case "connected_to":
+            return i18n.t("Follower");
+        case "creator_of":
+            return i18n.t("Creator");
+        default:
+            return i18n.t("Connected");
+    }
 };
 
 // //  takes connections to same source or target and clusters them
@@ -399,11 +498,6 @@ export const isAdmin = (circle, userData) => {
 //     return filteredConnections;
 // };
 
-// export const adminCircles = (user) => {
-//     let circles = user?.connections?.filter((x) => x.type?.includes("owner_of") || x.type?.includes("admin_of"));
-//     return circles?.map((x) => x.target) ?? [];
-// };
-
 // export const isFollowing = (user, circle) => {
 //     if (!circle || !user) return false;
 //     return user?.connections?.some((x) => x.target.id === circle.id && x.type.includes("connected_to"));
@@ -418,37 +512,6 @@ export const isAdmin = (circle, userData) => {
 
 // export const isMember = (userConnections, circleId) => {
 //     return userConnections?.some((x) => x.target.id === circleId && x.type.includes("connected_mutually_to"));
-// };
-
-// export const getConnectLabel = (circleType, connectType) => {
-//     switch (connectType) {
-//         case "owner_of":
-//             return i18n.t("Owner");
-//         case "admin_of":
-//             return i18n.t("Admin");
-//         case "moderator_of":
-//             return i18n.t("Moderator");
-//         case "connected_mutually_to":
-//             switch (circleType) {
-//                 default:
-//                 case "circle":
-//                     return i18n.t("Member");
-//                 case "user":
-//                     return i18n.t("Contact");
-//                 case "event":
-//                     return i18n.t("Attendee");
-//                 case "tag":
-//                     return i18n.t("Supporter");
-//             }
-//         case "connected_mutually_to_request":
-//             return i18n.t(`Request [${circleType}]`);
-//         case "connected_to":
-//             return i18n.t("Follower");
-//         case "creator_of":
-//             return i18n.t("Creator");
-//         default:
-//             return i18n.t("Connected");
-//     }
 // };
 
 // export const getConnectionLabel = (user, item) => {
