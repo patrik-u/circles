@@ -57,8 +57,8 @@ import { displayModes } from "components/Constants";
 export const ModalPopup = ({ children, onClose, ...props }) => {
     return (
         <>
-            <Box position="absolute" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" />
-            <Flex position="absolute" width="100vw" zIndex="100" justifyContent="center">
+            <Box position="fixed" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" top="0" />
+            <Flex position="fixed" width="100vw" zIndex="100" justifyContent="center" top="0">
                 <Box
                     position="relative"
                     backgroundColor="white"
@@ -89,8 +89,10 @@ export const DatePickerInput = forwardRef(({ value, onClick }, ref) => (
 ));
 
 export const CirclePanel = ({ children, title }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
     return (
-        <Box align="left" marginLeft={{ base: "22px", md: "22px" }} marginBottom={{ base: "50px", md: "0px" }}>
+        <Box align="left" marginLeft={{ base: "22px", md: "22px" }} marginBottom={{ base: "50px", md: "0px" }} paddingBottom={isMobile ? "0px" : "5px"}>
             <Text className="contentSubHeader">{title}</Text>
             {children}
         </Box>
@@ -225,7 +227,7 @@ export const CircleRightPanel = ({ section }) => {
                     maxWidth={isMobile ? "none" : "270px"}
                     paddingTop={isMobile ? "0px" : "10px"}
                 >
-                    {circle?.type === "user" && <QuickLinksPanel />}
+                    <QuickLinksPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
                 </Box>
@@ -241,7 +243,7 @@ export const CircleRightPanel = ({ section }) => {
                     maxWidth={isMobile ? "none" : "270px"}
                     paddingTop={isMobile ? "0px" : "10px"}
                 >
-                    {circle?.type === "user" && <QuickLinksPanel />}
+                    <QuickLinksPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
                 </Box>
@@ -310,7 +312,7 @@ export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) 
     );
 };
 
-export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disableClick, ...props }) => {
+export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disableClick, parentCircleSizeRatio = 3, parentCircleOffset = 0, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
@@ -393,10 +395,10 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
             {circle?.parent_circle && (
                 <Image
                     position="absolute"
-                    width={`${size / 3}px`}
-                    height={`${size / 3}px`}
-                    top="0px"
-                    left="0px"
+                    width={`${size / parentCircleSizeRatio}px`}
+                    height={`${size / parentCircleSizeRatio}px`}
+                    top={`${parentCircleOffset}px`}
+                    left={`${parentCircleOffset}px`}
                     src={getCirclePicture(circle?.parent_circle?.picture)}
                     flexShrink="0"
                     flexGrow="0"
@@ -458,7 +460,7 @@ export const LargeConnectButton = ({ circle }) => {
     );
 };
 
-export const CircleHeader = ({ circle, onConnect, createNew, filterConnected, setFilterConnected, title }) => {
+export const CircleHeader = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
     const getNameFontSize = (name) => {
@@ -658,7 +660,7 @@ export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
     if (circle?.id === user?.id) return null;
 
     return (
-        <Box {...props} position={isMobile ? "static" : "absolute"} top="5px" right="0">
+        <Box position={isMobile || !inHeader ? "static" : "absolute"} top={inHeader ? "5px" : "auto"} right={inHeader ? "0" : "auto"} {...props}>
             {isConnected(userData, circle?.id) ? (
                 <Flex flexDirection="row" position="relative">
                     <Box

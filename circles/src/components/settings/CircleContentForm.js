@@ -129,10 +129,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 ? { ...parentCircle, value: parentCircle.id, label: parentCircle.name }
                 : null
         );
-        log("selectedParentCircle = " + JSON.stringify(selectedParentCircle));
-        //log("parentCircle = " + JSON.stringify(parentCircle));
-        log("connectedToGråboGro?: " + latestParentCircles.some((x) => x.id === parentCircle?.id));
-        //log("userConnections = " + JSON.stringify(userConnections));
     }, [user, userConnections, setSelectedParentCircle, selectedParentCircle, circle?.parent_circle]);
 
     if (!circle) return null;
@@ -161,8 +157,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         updatedCircleData.time = values.time;
                         updatedCircleData.isAllDay = isAllDay;
                     }
-
-                    console.log("chatIsPublic: ", updatedCircleData.chatIsPublic);
 
                     if (!isGuideForm) {
                         updatedCircleData.content = richContent;

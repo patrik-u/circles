@@ -26,14 +26,13 @@ import {
 //#endregion
 
 const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
-// const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
-// const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
-// const CircleBaseForm = lazy(() => import("components/settings/CircleBaseForm"));
-// const CircleSocialMediaForm = lazy(() => import("components/settings/CircleSocialMediaForm"));
-// const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
-// const CircleDeleteForm = lazy(() => import("components/settings/CircleDeleteForm"));
-// const CircleConnectionsSettings = lazy(() => import("components/settings/CircleConnectionsSettings"));
-// const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
+const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
+const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
+const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
+const CircleBaseForm = lazy(() => import("components/settings/CircleBaseForm"));
+const CircleQuickLinksForm = lazy(() => import("components/settings/CircleQuickLinksForm"));
+const CircleConnectionsForm = lazy(() => import("components/settings/CircleConnectionsForm"));
+const CircleDeleteForm = lazy(() => import("components/settings/CircleDeleteForm"));
 
 const CircleSettings = () => {
     const navigate = useNavigateNoUpdates();
@@ -77,23 +76,28 @@ const CircleSettings = () => {
 
     return (
         <Flex flexGrow="1" width="100%" position="relative" left="0px" flexDirection={isMobile ? "column" : "row"} top="0px">
-            <Routes>
-                <Route path="/" element={<CircleContentForm isUpdateForm={true} circle={circle} />} />
-                {/* <Route path="/images" element={<CircleImagesForm isUpdateForm={true} circle={circle} />} />
-                <Route path="/tags" element={<CircleTagsForm isUpdateForm={true} circle={circle} />} />
-                <Route path="/questions" element={<CircleQuestionsForm isUpdateForm={true} circle={circle} />} />
-                <Route path="/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
-                <Route path="/socialmedia" element={<CircleSocialMediaForm circle={circle} />} />
-                <Route path="/connections" element={<CircleConnectionsSettings circle={circle} />} />
-                <Route path="/misc" element={<CircleDeleteForm circle={circle} />} /> */}
-            </Routes>
+            <Box marginLeft="15px" marginRight="15px" width="100%">
+                <Routes>
+                    <Route path="/" element={<CircleContentForm isUpdateForm={true} circle={circle} />} />
+                    <Route path="/images" element={<CircleImagesForm isUpdateForm={true} circle={circle} />} />
+                    <Route path="/tags" element={<CircleTagsForm isUpdateForm={true} circle={circle} />} />
+                    <Route path="/questions" element={<CircleQuestionsForm isUpdateForm={true} circle={circle} />} />
+                    <Route path="/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
+                    <Route path="/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
+                    <Route path="/connections" element={<CircleConnectionsForm circle={circle} />} />
+                    <Route path="/misc" element={<CircleDeleteForm circle={circle} />} />
+                </Routes>
+            </Box>
 
             <Flex
                 position={"relative"}
                 flexDirection={isMobile ? "row" : "column"}
                 height={isMobile ? "50px" : "auto"}
+                minHeight={isMobile ? "none" : "650px"}
                 backgroundColor="#fdfdfd"
-                width={isMobile ? "100%" : "120px"}
+                width={isMobile ? "100%" : "130px"}
+                flexGrow="0"
+                flexShrink="0"
                 order="-1"
             >
                 <Scrollbars autoHide height={isMobile ? "50px" : "100%"} width="100%">

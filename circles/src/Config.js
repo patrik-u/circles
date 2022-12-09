@@ -54,7 +54,7 @@ const configs = {
         algoliaCirclesIndex: "-- PROD ALGOLIA SEARCH INDEX --",
     },
     devprod: {
-        environment: "dev-prod",
+        environment: "devprod",
         apiUrl: "http://localhost:5001/circles-83729/europe-west1/api",
         firebase: {
             apiKey: "AIzaSyC1fOcQ-PgqfyrUsHV2J7fMJPX0aLyZrco",
@@ -73,9 +73,25 @@ const configs = {
     },
 };
 
-const config = configs.dev; // DEV (staging backend)
-//const config = configs.devprod; // DEV (prod backend)
-//const config = configs.staging; // STAGING (for deploy to staging)
-//const config = configs.prod; // PRODUCTION (for deploy to prod)
+const getConfig = () => {
+    switch (process.env.REACT_APP_ENVIRONMENT) {
+        default:
+        case "dev":
+            return configs.dev;
+        case "staging":
+            return configs.staging;
+        case "prod":
+            return configs.prod;
+        case "devprod":
+            return configs.devprod;
+    }
+};
+
+const config = getConfig();
+
+//config = configs.dev; // DEV (local backend)
+//config = configs.devprod; // DEV (prod backend)
+//config = configs.staging; // STAGING (for deploy to staging)
+//config = configs.prod; // PRODUCTION (for deploy to prod)
 
 export default config;

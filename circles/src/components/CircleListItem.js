@@ -8,7 +8,7 @@ import { RiMapPinFill } from "react-icons/ri";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
-export const CircleListItem = ({ item, onClick, onConnect, inSelect, ...props }) => {
+export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
     const location = useLocationNoUpdates();
     if (!item) return null;
 
@@ -90,7 +90,7 @@ export const CircleListItem = ({ item, onClick, onConnect, inSelect, ...props })
             </Box> */}
             </VStack>
 
-            {!inSelect && <ConnectButton circle={item} onConnect={onConnect} position="absolute" bottom="5px" right="10px" />}
+            {!inSelect && <ConnectButton circle={item} position="absolute" bottom="5px" right="10px" />}
 
             <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
                 {item.type === "event" && (

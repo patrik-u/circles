@@ -66,7 +66,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const [circle] = useAtom(circleAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [locationPickerActive] = useAtom(locationPickerActiveAtom);
-    const [locationPickerPosition] = useAtom(locationPickerPositionAtom);
+    const [locationPickerPosition, setLocationPickerPosition] = useAtom(locationPickerPositionAtom);
 
     //const { current: mapbox } = useMap();
     const fog = {
@@ -101,6 +101,10 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     }));
 
     const mapClick = (evt) => {
+        if (locationPickerActive) {
+            setLocationPickerPosition([evt.lngLat.lng, evt.lngLat.lat]);
+        }
+
         if (onMapClick) {
             onMapClick(evt);
         }

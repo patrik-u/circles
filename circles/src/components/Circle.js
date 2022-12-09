@@ -19,11 +19,11 @@ import {
 } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
-import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle, getDefaultCirclePicture } from "components/Helpers";
+import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle, getDefaultCirclePicture, isConnected } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import { useAtom } from "jotai";
 import {
@@ -59,6 +59,7 @@ export const Circle = () => {
     const [circles, setCircles] = useAtom(circlesAtom);
     const [circleConnections, setCircleConnections] = useAtom(circleConnectionsAtom);
     const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
 
     useEffect(() => {
         setShowNetworkLogo(true);
@@ -163,11 +164,10 @@ export const Circle = () => {
 
     const circlePictureSize = isMobile ? 120 : 160;
 
-    const CircleProfilePicture = ({ picture, type, size, ...props }) => {
+    const CircleProfilePicture = ({ circle, size, ...props }) => {
         const borderWidth = 3;
         const sizePx = `${size}px`;
         const sizeWithoutBorder = size - borderWidth * 2;
-        const sizeWithoutBorderPx = `${sizeWithoutBorder}px`;
 
         return (
             <Flex
@@ -182,15 +182,9 @@ export const Circle = () => {
                 position="absolute"
                 top={`-${size / 3}px`}
                 {...props}
+                zIndex="200"
             >
-                <Image
-                    src={getImageKitUrl(circle?.picture ?? getDefaultCirclePicture(circle?.type), sizeWithoutBorder, sizeWithoutBorder)}
-                    fallbackSrc={getImageKitUrl(getDefaultCirclePicture(circle?.type), sizeWithoutBorder, sizeWithoutBorder)}
-                    borderRadius="50%"
-                    width={sizeWithoutBorderPx}
-                    height={sizeWithoutBorderPx}
-                    objectFit="cover"
-                />
+                <CirclePicture circle={circle} size={sizeWithoutBorder} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
             </Flex>
         );
     };
@@ -216,13 +210,13 @@ export const Circle = () => {
                     backgroundColor={debugBg ? "lightgreen" : "transparent"}
                     position="relative"
                 >
-                    <CircleProfilePicture picture={circle?.picture} type={circle?.type} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
+                    <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
                     {/* Header */}
                     <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
                         <CircleHeader circle={circle} />
                     </Box>
-                    {isMobile && (
-                        <Flex align="center" justifyContent="center">
+                    {isMobile && !isConnected(userData, circle.id, ["connected_mutually_to"]) && (
+                        <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
                             <ConnectButton circle={circle} inHeader={true} />
                         </Flex>
                     )}
@@ -236,7 +230,7 @@ export const Circle = () => {
                         <Route path="/rooms" element={<Circles type="room" />} />
                         <Route path="/users" element={<Circles type="user" />} />
                         <Route path="/links" element={<Circles type="link" />} />
-                        <Route path="/settings" element={<CircleSettings />} />
+                        <Route path="/settings/*" element={<CircleSettings />} />
                         <Route path="/admin" element={<CircleAdmin />} />
                     </Routes>
                 </Box>
