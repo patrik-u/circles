@@ -96,6 +96,11 @@ export const Home = () => {
                     )}
                 </Flex>
             </Flex>
+            <Box position="absolute" bottom="5px" right="10px" color={process.env.REACT_APP_ENVIRONMENT === "prod" ? "white" : "#a9a9a9"}>
+                <Text>
+                    {process.env.REACT_APP_NAME} {process.env.REACT_APP_VERSION} ({process.env.REACT_APP_ENVIRONMENT})
+                </Text>
+            </Box>
         </Flex>
     );
 };

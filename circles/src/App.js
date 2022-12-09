@@ -10,6 +10,7 @@ import AccountManager from "components/AccountManager";
 import LocationManager from "components/LocationManager";
 import TopMenu from "components/TopMenu";
 import ConnectPopup from "components/ConnectPopup";
+import PushNotificationsManager from "components/PushNotificationsManager";
 //#endregion
 
 const Circle = lazy(() => import("components/Circle"));
@@ -42,18 +43,22 @@ const App = () => {
     //#endregion
 
     return (
-        <Flex width="100%" height="100%" flexDirection="column">
+        <>
             <AccountManager />
             <LocationManager />
-            <TopMenu />
-            <Suspense fallback={<Box></Box>}>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/circle/:circleId/*" element={<Circle />} />
-                </Routes>
-            </Suspense>
+            <PushNotificationsManager />
+
+            <Flex width="100%" height="100%" flexDirection="column">
+                <TopMenu />
+                <Suspense fallback={<Box></Box>}>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/circle/:circleId/*" element={<Circle />} />
+                    </Routes>
+                </Suspense>
+            </Flex>
             <ConnectPopup />
-        </Flex>
+        </>
     );
 };
 

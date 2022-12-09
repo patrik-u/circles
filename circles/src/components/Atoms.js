@@ -39,6 +39,10 @@ export const filteredCirclesAtom = atom((get) => {
     return circles.filter((circle) => filter.types.includes(circle.type));
 });
 
+// location picker atoms
+export const locationPickerActiveAtom = atom(false);
+export const locationPickerPositionAtom = atom(null);
+
 // Filtering logic:
 // useEffect(() => {
 //     log("Circles.useEffect 2", 0);
@@ -78,7 +82,3 @@ export const filteredCirclesAtom = atom((get) => {
 
 //     setCircles(newFilteredCircles);
 // }, [unfilteredCircles, userLocation, setCircles, type]);
-
-// location picker atoms
-export const locationPickerActiveAtom = atom(false);
-export const locationPickerPositionAtom = atom(null);

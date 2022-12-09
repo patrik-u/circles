@@ -97,6 +97,29 @@ const getCircleData = async (circleId) => {
     return { id: userDetailDocId, ...circleDataSnapshot.docs[0].data() };
 };
 
+const getTagByName = async (name, createIfNotExist = false) => {
+    let tagDoc = await db.collection("circles").where("type", "==", "tag").where("name", "==", name).get();
+    if (tagDoc.docs.length <= 0) {
+        if (createIfNotExist) {
+            let newTagData = {
+                type: "tag",
+                name: name,
+                created_at: new Date(),
+                language: "en",
+                text: "#" + name,
+                description: "",
+            };
+
+            let newTag = db.collection("circles").doc();
+            await newTag.set(newTagData);
+            return { id: newTag.id, ...newTagData };
+        } else {
+            return null;
+        }
+    }
+    return { id: tagDoc.docs[0].id, ...tagDoc.docs[0].data() };
+};
+
 const getAdminConnections = async (id) => {
     let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains-any", ["owned_by", "admin_by"]);
     let result = await query.get();
@@ -779,7 +802,18 @@ app.put("/circles/:id", auth, async (req, res) => {
                 errors.tags = "Invalid tags data";
             }
             // TODO validate tags data
-            circleData.tags = req.body.circleData.tags;
+            let validatedTags = [];
+            for (const tag of req.body.circleData.tags) {
+                if (tag.is_custom) {
+                    // create tag if it doesn't exist
+                    let newTag = await getTagByName(tag.name, true);
+                    validatedTags.push(newTag);
+                } else {
+                    validatedTags.push(tag);
+                }
+            }
+
+            circleData.tags = validatedTags;
         }
         if (req.body.circleData?.questions) {
             // TODO validate questions data
@@ -812,19 +846,23 @@ app.put("/circles/:id", auth, async (req, res) => {
         }
 
         // verify user is admin of parent circle
-        let parent = null;
         let oldParentId = circle.parent_circle?.id;
-        let parentId = req.body.circleData.parentCircle?.id;
-        if (parentId !== oldParentId) {
-            if (parentId) {
-                // check if user is owner or admin and allowed to set circle parent
-                const isAuthorized = await isAdminOf(authCallerId, parentId);
-                if (!isAuthorized) {
-                    errors.parentCircle = "User is not authorized to set parent circle";
+        let hasNewParent = false;
+        let parent = null;
+        if (req.body.circleData?.parentCircle !== undefined) {
+            let parentId = req.body.circleData.parentCircle.id;
+            if (parentId !== oldParentId) {
+                hasNewParent = true;
+                if (parentId) {
+                    // check if user is owner or admin and allowed to set circle parent
+                    const isAuthorized = await isAdminOf(authCallerId, parentId);
+                    if (!isAuthorized) {
+                        errors.parentCircle = "User is not authorized to set parent circle";
+                    }
+                    parent = await getCircle(parentId);
                 }
-                parent = await getCircle(parentId);
+                circleData.parent_circle = parent ?? {};
             }
-            circleData.parent_circle = parent ?? {};
         }
 
         if (Object.keys(errors).length !== 0) {
@@ -836,7 +874,7 @@ app.put("/circles/:id", auth, async (req, res) => {
             await updateCircle(circleId, circleData);
 
             // update connection to parent if changed
-            if (parentId !== oldParentId) {
+            if (hasNewParent) {
                 circle = await getCircle(circleId);
                 if (oldParentId) {
                     let oldParent = await getCircle(oldParentId);
@@ -856,10 +894,6 @@ app.put("/circles/:id", auth, async (req, res) => {
                 // clear all connections to previous tags
                 if (circle.tags) {
                     for (const tag of circle.tags) {
-                        if (tag.is_custom) {
-                            // ignore custom tags
-                            continue;
-                        }
                         let connectionsCircleToTag = await getAllConnections(circleId, tag.id, "connected_mutually_to");
                         if (connectionsCircleToTag) {
                             for (const connection of connectionsCircleToTag) {
@@ -877,12 +911,9 @@ app.put("/circles/:id", auth, async (req, res) => {
 
                 // add connections to new tags
                 for (const tag of circleData.tags) {
-                    if (tag.is_custom) {
-                        // ignore custom tags
-                        continue;
-                    }
-                    await createConnection(circleId, tag.id, "connected_mutually_to", true, authCallerId); // TODO we might not want to notify owner/admins of tags when someone connects to it
-                    await createConnection(tag.id, circleId, "connected_mutually_to");
+                    let tagId = tag.id;
+                    await createConnection(circleId, tagId, "connected_mutually_to");
+                    await createConnection(tagId, circleId, "connected_mutually_to");
                 }
             }
         }
@@ -1810,6 +1841,40 @@ app.post("/update", auth, async (req, res) => {
             });
 
             return res.json({ connectionsRepaired: connectionsRepaired });
+        } else if (commandArgs[0] === "convert_custom_tags") {
+            // should be run once
+            // this temporary command only needs to be run once
+            let circles = await db.collection("circles").get();
+
+            let tagsConverted = [];
+
+            // loop through circles and update custom tags
+            for (var i = 0; i < circles.docs.length; ++i) {
+                let circle = { id: circles.docs[i].id, ...circles.docs[i].data() };
+                if (!circle.tags) continue;
+
+                let anyConverted = false;
+                let newTags = [];
+
+                for (var j = 0; j < circle.tags.length; ++j) {
+                    if (!circle.tags[j].is_custom) {
+                        newTags.push(circle.tags[j]);
+                        continue;
+                    } else {
+                        anyConverted = true;
+                        let newTag = await getTagByName(circle.tags[j].name, true);
+                        tagsConverted.push(newTag);
+                        newTags.push(newTag);
+                    }
+                }
+
+                if (anyConverted) {
+                    let circleRef = db.collection("circles").doc(circle.id);
+                    await circleRef.update({ tags: newTags });
+                }
+            }
+
+            return res.json({ tagsConverted: tagsConverted });
         } else if (commandArgs[0] === "test123") {
             // go through every circle_data and see if any of them lack corresponding circle
             let circleData = await db.collection("circle_data").get();

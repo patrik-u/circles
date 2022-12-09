@@ -197,6 +197,8 @@ export const fromFsDate = (date) => {
         return new Date(date._seconds * 1000);
     } else if (date.seconds) {
         return new Date(date.seconds * 1000);
+    } else if (typeof date === "number") {
+        return new Date(date);
     } else {
         return date;
     }
@@ -416,6 +418,8 @@ export const toastSuccess = (toast, title, description) => {
 
 export const isAdmin = (circle, userData) => {
     if (!circle || !userData) return false;
+    if (userData.id === circle.id) return true;
+
     return userData.admin_of?.includes(circle.id) || userData.owner_of?.includes(circle.id);
 };
 

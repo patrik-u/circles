@@ -419,7 +419,7 @@ export const CircleChat = () => {
     };
 
     // top bar + cover image + header
-    const chatHeight = isMobile ? windowHeight - (40 + 250 + 93) : 900;
+    const chatHeight = isMobile ? windowHeight - (40 + 250 + 123) : 900;
     const selfMessageBg = "#c3f5bf"; //"#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
     const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
     const chatBackgroundColor = "#f9f9f9";
@@ -431,7 +431,7 @@ export const CircleChat = () => {
             flexGrow="1"
             width="100%"
             height={`${chatHeight}px`}
-            maxHeight={isMobile ? "none" : `${windowHeight - 300}px`}
+            maxHeight={isMobile ? "none" : `${windowHeight - 325}px`}
             position="relative"
             left="0px"
             flexDirection={isMobile ? "column" : "row"}
