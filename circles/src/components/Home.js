@@ -8,7 +8,7 @@ import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom, messageTokenAtom } from "components/Atoms";
 import { auth } from "components/Firebase";
 import { signOut } from "firebase/auth";
 import config from "Config";
@@ -27,6 +27,7 @@ export const Home = () => {
     const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
+    const [messageToken] = useAtom(messageTokenAtom);
 
     const [latestCircles, setLatestCircles] = useState([]);
 
@@ -64,7 +65,7 @@ export const Home = () => {
 
                 <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">
                     <CircleSearchBox marginTop="35px" marginBottom="0px" />
-
+                    <Text>{messageToken}</Text>
                     {!searchResultsShown && (
                         <Flex marginBottom="200px" marginTop="35px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
                             <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">

@@ -1,6 +1,6 @@
 import { getFirestore } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
-import { getMessaging } from "firebase/messaging/sw";
+import { getMessaging } from "firebase/messaging";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import config from "../Config";

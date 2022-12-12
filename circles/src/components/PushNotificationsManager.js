@@ -11,7 +11,16 @@ import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
 import { signInStatusValues } from "components/Constants";
-import { uidAtom, userAtom, userDataAtom, signInStatusAtom, userConnectionsAtom, requestUserConnectionsAtom, userLocationAtom } from "components/Atoms";
+import {
+    uidAtom,
+    userAtom,
+    userDataAtom,
+    signInStatusAtom,
+    userConnectionsAtom,
+    requestUserConnectionsAtom,
+    userLocationAtom,
+    messageTokenAtom,
+} from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
 import { getPreciseDistance } from "geolib";
@@ -22,11 +31,14 @@ export const PushNotificationsManager = () => {
     log("PushNotificationsManager.render", -1);
 
     const [signInStatus] = useAtom(signInStatusAtom);
+    const [uid] = useAtom(uidAtom);
+    const [, setMessageToken] = useAtom(messageTokenAtom);
+    const toast = useToast();
 
     //#region useEffects
 
     useEffect(() => {
-        log("PushNotificationsManager.useEffect", 0);
+        log("PushNotificationsManager.useEffect", -1);
         if (signInStatus.signedIn) {
             if (!("Notification" in window)) {
                 // browser does't support notifications
@@ -38,50 +50,44 @@ export const PushNotificationsManager = () => {
             log("Asking for permission to receive notifications");
             Notification.requestPermission().then((permission) => {
                 if (permission === "granted") {
-                    console.log("Notification permission granted.");
-                    getToken(messaging).then((token) => {
-                        log("messaging token: " + token);
-                    });
+                    log("Notification permission granted.");
 
                     // get messaging token
+                    getToken(messaging).then((token) => {
+                        // TODO register token in db?
+                        log("messaging token: " + token);
+                        setMessageToken(token);
+
+                        // update message token in db
+                        axios.post(`/messageToken`, { messageToken: token });
+                    });
                 } else if (permission === "denied") {
-                    console.log("Permission for Notifications was denied");
+                    log("Permission for Notifications was denied");
                 }
             });
-            //} else {
-            //log("Permission for push notifications granted");
-            //}
 
-            // let unsubscribeGetMessages = onMessage(messaging, (payload) => {
-            //     console.log("message received" + payload);
-            // });
-            // requestPermission(messaging).then(() => {
-            //     return messaging.getToken();
-            // }).then(token => {
-            //     log("permission to enable push notifications granted. token: " + token);
-            // }).catch(error => {
-            //     log("Error when requesting permission to enable push notifications." + JSON.stringify(error));
-            // });
+            // listen to messages
+            log("subscribing to push messages", 0, true);
+            let unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                log("message received" + JSON.stringify(payload), 0, true);
+                toast({
+                    title: payload.notification.title,
+                    description: payload.notification.body,
+                    status: "info",
+                    position: "top",
+                    duration: null,
+                    isClosable: true,
+                });
+            });
 
-            // messaging
-            //     .requestPermission()
-            //     .then(() => {
-            //         return messaging.getToken();
-            //     })
-            //     .then((token) => {
-            //         log("permission to enable push notifications granted. token: " + token);
-            //     })
-            //     .catch((error) => {
-            //         log("Error when requesting permission to enable push notifications." + JSON.stringify(error));
-            //     });
-
-            // return () => {
-            //     if (unsubscribeGetMessages) {
-            //         unsubscribeGetMessages();
-            //     }
-            // };
+            return () => {
+                if (unsubscribeOnMessage) {
+                    log("unsubscribing from push messages");
+                    unsubscribeOnMessage();
+                }
+            };
         }
-    }, [signInStatus?.signedIn]);
+    }, [signInStatus?.signedIn, toast, setMessageToken, uid]);
 
     //#endregion
 

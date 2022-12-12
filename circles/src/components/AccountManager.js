@@ -39,7 +39,7 @@ export const AccountManager = () => {
     // //#region useEffects
     //initialize firebase sign in
     useEffect(() => {
-        log("AccountManager.useEffect 1", 0);
+        log("AccountManager.useEffect 1", -1);
         const unsubscribeOnAuthStateChanged = onAuthStateChanged(auth, async (inUser) => {
             // event called when user is authenticated or when user is no longer authenticated
             if (inUser) {
@@ -98,7 +98,7 @@ export const AccountManager = () => {
             return; // not authenticated in firebase
         }
 
-        log("AccountManager.useEffect 2", 0);
+        log("AccountManager.useEffect 2", -1);
 
         const signInFailed = (error) => {
             setUid((x) => null);

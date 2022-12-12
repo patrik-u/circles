@@ -71,7 +71,7 @@ export const CircleChat = () => {
     const { windowWidth, windowHeight } = useWindowDimensions();
 
     useEffect(() => {
-        log("Chat.useEffect 1");
+        log("Chat.useEffect 1", -1);
         setScrollToLastSmooth(false);
         window.scrollTo(0, document.body.scrollHeight);
     }, []);
@@ -91,7 +91,7 @@ export const CircleChat = () => {
     }, [user?.id, circle?.id, setChatCircle]);
 
     useEffect(() => {
-        log("Chat.useEffect 2");
+        log("Chat.useEffect 2", -1);
         let circleId = circle?.id;
         if (!circleId) {
             return;
@@ -138,7 +138,7 @@ export const CircleChat = () => {
     }, [circle?.id, setIsAuthorized, circle?.chat_is_public, userData]);
 
     useEffect(() => {
-        log("Chat.useEffect 3");
+        log("Chat.useEffect 3", -1);
         if (!unfilteredChatMessages) {
             setChatMessages([]);
             return;
@@ -188,7 +188,7 @@ export const CircleChat = () => {
     }, [unfilteredChatMessages, user?.id, isMobile]);
 
     useEffect(() => {
-        log("Chat.useEffect 4");
+        log("Chat.useEffect 4", -1);
         if (scrollLastRef.current && scrollToLast && chatMessages.length > 0) {
             var behavior = scrollToLastSmooth ? "smooth" : "auto";
             scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "nearest" });
@@ -197,7 +197,7 @@ export const CircleChat = () => {
     }, [chatMessages, scrollToLast, scrollToLastSmooth]);
 
     useEffect(() => {
-        log("Chat.useEffect 5");
+        log("Chat.useEffect 5", -1);
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
 

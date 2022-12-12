@@ -398,7 +398,7 @@ const Notifications = () => {
     };
 
     useEffect(() => {
-        log("Notifications.useEffect");
+        log("Notifications.useEffect", -1);
         if (!user?.id) return;
 
         //console.log("querying for notifications", user.id);

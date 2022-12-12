@@ -85,7 +85,7 @@ export const CircleTagsForm = ({ isUpdateForm, circle, onCancel, onNext, onUpdat
     const [hasUpdated, setHasUpdated] = useState(false);
 
     useEffect(() => {
-        log("CircleTagsForm.useEffect 1");
+        log("CircleTagsForm.useEffect 1", -1);
         // get all tags
         setHasUpdated(false);
         setIsLoadingTags(true);

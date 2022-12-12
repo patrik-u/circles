@@ -174,7 +174,7 @@ const Messages = () => {
     };
 
     useEffect(() => {
-        log("Messages.useEffect");
+        log("Messages.useEffect", -1);
         if (!user?.id) return;
 
         //console.log("querying for messages", user.id);

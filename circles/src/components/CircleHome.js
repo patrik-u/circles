@@ -54,7 +54,7 @@ const ShareButtonMenu = ({ children, referrer }) => {
     };
 
     useEffect(() => {
-        log("ShareButtonMenu.useEffect 1");
+        log("ShareButtonMenu.useEffect 1", -1);
         const urlParams = new URLSearchParams(window.location.search);
 
         if (referrer) {

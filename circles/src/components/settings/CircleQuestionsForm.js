@@ -81,7 +81,7 @@ export const CircleQuestionsForm = ({ isUpdateForm, circle, isGuideForm, onNext,
     const toast = useToast();
 
     useEffect(() => {
-        log("CircleQuestionsForm.useEffect 1");
+        log("CircleQuestionsForm.useEffect 1", -1);
         if (!circle?.questions || hasInitialized) return;
         setQuestions(circle?.questions);
         setHasInitialized(true);

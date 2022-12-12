@@ -128,7 +128,7 @@ const ThreeboxMap = ({ onMapClick, children, satelliteMode }, ref) => {
     };
 
     useEffect(() => {
-        log("ThreeboxMap.useEffect 1");
+        log("ThreeboxMap.useEffect 1", -1);
         if (mapbox && threebox && layer && isMapInitialized) {
             //mapbox.setProjection("globe"); // when globe projection exists
             // mapbox.projection = "globe";

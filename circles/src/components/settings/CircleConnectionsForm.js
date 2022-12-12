@@ -83,7 +83,7 @@ const CircleRequestToConnectForm = ({ circle, onClose, onNext }) => {
     const [inviteToBeAdmin, setInviteToBeAdmin] = useState(false);
 
     useEffect(() => {
-        log("CircleRequestToConnectForm.useEffect 1");
+        log("CircleRequestToConnectForm.useEffect 1", -1);
         // get all circles in the system
         if (!circle?.id) return;
         setIsLoadingCircles(true);
@@ -247,7 +247,7 @@ export const CircleConnectionsForm = ({ circle, isUpdateForm }) => {
     }, [connections, circle?.id]);
 
     useEffect(() => {
-        log("CircleConnectionsForm.useEffect 1");
+        log("CircleConnectionsForm.useEffect 1", -1);
         if (!circle?.id) return;
         setIsLoadingConnections(true);
 

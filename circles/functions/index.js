@@ -595,6 +595,28 @@ const updateTags = async (source, target, operation) => {
     }
 };
 
+// sets circle content the user has seen
+const setUserSeen = async (userId, circleId, category) => {
+    const date = new Date();
+
+    // update user seen
+    const userDataRef = db.collection("circle_data").doc(userId);
+
+    let seen = {
+        [circleId]: {
+            any: date,
+            [category]: date,
+        },
+    };
+
+    await userDataRef.set(
+        {
+            seen,
+        },
+        { merge: true }
+    );
+};
+
 //#endregion
 
 //#region circles
@@ -1271,26 +1293,41 @@ app.get("/signin", auth, async (req, res) => {
     }
 });
 
-const setUserSeen = async (userId, circleId, category) => {
-    const date = new Date();
+app.post("/messageToken", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const messageToken = req.body.messageToken;
 
-    // update user seen
-    const userDataRef = db.collection("circle_data").doc(userId);
+    if (!messageToken) {
+        return res.json({ error: "Invalid input" });
+    }
 
-    let seen = {
-        [circleId]: {
-            any: date,
-            [category]: date,
-        },
-    };
+    try {
+        const userData = await getCircleData(authCallerId);
 
-    await userDataRef.set(
-        {
-            seen,
-        },
-        { merge: true }
-    );
-};
+        let messageTokens = userData.message_tokens ?? [];
+        if (messageTokens.some((x) => x.token === messageToken)) {
+            // update token
+            messageTokens = messageTokens.map((x) => {
+                if (x.token === messageToken) {
+                    x.updated_at = new Date();
+                }
+                return x;
+            });
+        } else {
+            // add new token
+            let created_at = new Date();
+            messageTokens.push({ token: messageToken, created_at: created_at, updated_at: created_at });
+        }
+
+        const circleRef = db.collection("circle_data").doc(authCallerId);
+        await circleRef.update({ message_tokens: messageTokens });
+
+        return res.json({ message: "Ok" });
+    } catch (error) {
+        functions.logger.error("Error setting message token:", error);
+        return res.json({ error: error });
+    }
+});
 
 app.post("/seen", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
@@ -1652,6 +1689,30 @@ app.put("/notifications", auth, async (req, res) => {
 
 //#region admin
 
+const sendMessage = async (senderId, receiverId, title, body) => {
+    const sender = await getCircle(senderId);
+    const circleData = await getCircleData(receiverId);
+
+    // loop through message tokens and send message
+    for (const messageToken of circleData.message_tokens) {
+        let messageData = {
+            notification: {
+                title: title,
+                body: body,
+                //icon: sender.picture,
+                image: sender.picture,
+                //badge: "1",
+                //sound: "default",
+                //tag: // to group/replace existing notification in drawer
+                //click_action: "test",
+            },
+            token: messageToken.token,
+        };
+
+        await admin.messaging().send(messageData);
+    }
+};
+
 // performs system updates/upgrades
 app.post("/update", auth, async (req, res) => {
     let config = await getConfig();
@@ -1669,6 +1730,10 @@ app.post("/update", auth, async (req, res) => {
         // go through all connections and add circle_types array
         if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
+        } else if (commandArgs[0] === "send_test_message") {
+            const circleId = commandArgs[1];
+            const randomNumber = Math.round(Math.random() * 1000);
+            await sendMessage(authCallerId, circleId, "test" + randomNumber, "test message" + randomNumber);
         } else if (commandArgs[0] === "update_circle_connections") {
             // this temporary command only needs to be run once
             // go through every connection and add it to source's list of connections

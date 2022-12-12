@@ -33,7 +33,7 @@ const CircleAdmin = () => {
                     isClosable: true,
                 });
             } else {
-                setCommand("");
+                //setCommand("");
                 setCommandOutput(JSON.stringify(postTestResult.data, null, 2));
                 toast({
                     title: "Command executed",

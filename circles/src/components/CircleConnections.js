@@ -168,7 +168,7 @@ export const CircleConnections = ({ source, target, option, onClose }) => {
     );
 
     useEffect(() => {
-        log("CircleConnections.useEffect 1", 0);
+        log("CircleConnections.useEffect 1", -1);
         if (!source?.id || !target?.id) return;
         if (option === "follow") {
             connect("connected_to");
