@@ -32,6 +32,7 @@ export const Circles = ({ type }) => {
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
+    const [signInStatus] = useAtom(signInStatusAtom);
     const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
@@ -43,7 +44,8 @@ export const Circles = ({ type }) => {
     }, [circlesFilter, setCirclesFilter, type]);
 
     useEffect(() => {
-        log("Circles.useEffect 3", 0);
+        log("Circles.useEffect 3", -1);
+        if (!signInStatus.signedIn) return;
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
 
@@ -57,7 +59,7 @@ export const Circles = ({ type }) => {
             })
             .then((x) => {})
             .catch((error) => {});
-    }, [user?.id, circle?.id, type]);
+    }, [user?.id, circle?.id, type, signInStatus]);
 
     return (
         <Box flexGrow="1" width="100%" height="100%" align="center" position="relative" top="0px" left="0px">

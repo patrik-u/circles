@@ -147,7 +147,8 @@ export const Circle = () => {
     }, [circleId, setCircles, setCircleConnections]);
 
     useEffect(() => {
-        log("Circle.useEffect 2", 0);
+        log("Circle.useEffect 2", -1);
+        if (!signInStatus.signedIn) return;
         if (!user?.id || !circleId) return;
 
         log("Circle.seen");
@@ -160,7 +161,7 @@ export const Circle = () => {
             })
             .then((x) => {})
             .catch((error) => {});
-    }, [user?.id, circleId]);
+    }, [user?.id, circleId, signInStatus]);
 
     const circlePictureSize = isMobile ? 120 : 160;
 

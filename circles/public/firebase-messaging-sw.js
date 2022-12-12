@@ -20,7 +20,7 @@ const firebaseApp = firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function (payload) {
-    console.log("Received background message ", payload);
+    console.log("%cReceived background message " + payload, "background: #222; color: #bada55");
 
     const notificationTitle = payload.notification.title;
     const notificationOptions = {

@@ -32,7 +32,7 @@ const App = () => {
     );
 
     useEffect(() => {
-        log("App2.useEffect 1");
+        log("App2.useEffect 1", -1);
         window.addEventListener("resize", onWindowResize);
 
         return () => {

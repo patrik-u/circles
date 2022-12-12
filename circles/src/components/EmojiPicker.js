@@ -14,7 +14,7 @@ const EmojiPicker = ({ setMessage }) => {
     // };
 
     useEffect(() => {
-        log("EmojiPicker.useEffect 1");
+        log("EmojiPicker.useEffect 1", -1);
         if (picker) {
             //picker.props.onEmojiSelect = callback;
             return;

@@ -73,7 +73,7 @@ export const LoginRegisterMenu = () => {
 
     const displayLoginRegisterMenu = !signInStatus.signedIn && !signInStatus.signingIn;
 
-    log(`LoginRegisterMenu signedIn: ${signInStatus.signedIn}, signingIn: ${signInStatus.signingIn}`, 0);
+    log(`LoginRegisterMenu signedIn: ${signInStatus.signedIn}, signingIn: ${signInStatus.signingIn}`, -1);
 
     const [signInButton, setSignInButton] = useState(null);
     const [signInButton2, setSignInButton2] = useState(null);
@@ -92,7 +92,7 @@ export const LoginRegisterMenu = () => {
     const [newUserData, setNewUserData] = useState(null);
 
     useEffect(() => {
-        log("LoginRegisterMenu.useEffect 1");
+        log("LoginRegisterMenu.useEffect 1", -1);
         if (signInStatus.signingIn || signInStatus.signedIn) {
             signInOnClose();
             signUpOnClose();
@@ -100,7 +100,7 @@ export const LoginRegisterMenu = () => {
     }, [signInStatus, signInOnClose, signUpOnClose]);
 
     useEffect(() => {
-        log("LoginRegisterMenu.useEffect 2");
+        log("LoginRegisterMenu.useEffect 2", -1);
         if (!signInButton && !signInButton2) return;
 
         // have we already loaded the google one tap script?
@@ -142,7 +142,7 @@ export const LoginRegisterMenu = () => {
     };
 
     useEffect(() => {
-        log("LoginRegisterMenu.useEffect 3");
+        log("LoginRegisterMenu.useEffect 3", -1);
         if (!user?.id || !newUserData) return;
 
         // check if user just created a new account with name, email and password

@@ -56,7 +56,7 @@ export const LocationManager = () => {
     );
 
     useEffect(() => {
-        log("LocationManager.useEffect", 0);
+        log("LocationManager.useEffect", -1);
         let watchPositionId = null;
 
         // request permission to get geolocation

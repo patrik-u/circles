@@ -68,10 +68,15 @@ export const hasUpdates = (userData, circle, category) => {
     return updatedAt > seenAt;
 };
 
-export const log = (message, logLevel = 0) => {
+export const log = (message, logLevel = 0, highlight = false) => {
     // logLevel 0 = everything, 1 = important, 2 = production
     if (logLevel >= config.logLevel) {
-        console.log(message);
+        if (highlight) {
+            const style = "background-color: darkblue; color: white; font-style: bold;";
+            console.log("%c" + message, style);
+        } else {
+            console.log(message);
+        }
     }
 };
 
