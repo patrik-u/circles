@@ -1823,8 +1823,11 @@ app.post("/update", auth, async (req, res) => {
             connections.forEach(async (doc) => {
                 let connection = { id: doc.id, ...doc.data() };
 
-                // if connection is to earth then skip it
-                if (connection.source.id === "earth" || connection.target.id === "earth") {
+                if (!connection.source || !connection.target) {
+                    // if connection is invalid then skip it
+                    connectionsToDelete.push(connection.id);
+                } else if (connection.source.id === "earth" || connection.target.id === "earth") {
+                    // if connection is to earth then skip it
                     connectionsToDelete.push(connection.id);
                 } else {
                     // see if connection has been touched already

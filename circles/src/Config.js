@@ -50,9 +50,9 @@ const configs = {
         },
         googleId: "329114176340-7eepmp4poj59j1cv3ksrg935klvm9rc3.apps.googleusercontent.com",
         logLevel: 2,
-        algoliaId: "-- PROD ALGOLIA ID --",
-        algoliaSearchKey: "-- PROD ALGOLIA SEARCH KEY --",
-        algoliaCirclesIndex: "-- PROD ALGOLIA SEARCH INDEX --",
+        algoliaId: "DMKZGLF95G",
+        algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
+        algoliaCirclesIndex: "circles",
     },
     devprod: {
         environment: "devprod",
@@ -68,9 +68,9 @@ const configs = {
         },
         googleId: "329114176340-7eepmp4poj59j1cv3ksrg935klvm9rc3.apps.googleusercontent.com",
         logLevel: 2,
-        algoliaId: "-- PROD ALGOLIA ID --",
-        algoliaSearchKey: "-- PROD ALGOLIA SEARCH KEY --",
-        algoliaCirclesIndex: "-- PROD ALGOLIA SEARCH INDEX --",
+        algoliaId: "DMKZGLF95G",
+        algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
+        algoliaCirclesIndex: "circles",
     },
 };
 

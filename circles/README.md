@@ -13,9 +13,9 @@ Then run the application:
 
 *Optional:* if you want to run application against staging or prod backend you can run:
 
- `npm start:staging` or
+ `npm run start:staging` or
 
- `npm start:prod`
+ `npm run start:prod`
 
 
 
