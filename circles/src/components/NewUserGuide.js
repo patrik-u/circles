@@ -1,18 +1,36 @@
 //#region imports
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, lazy, Suspense } from "react";
 import { Flex, Box, Text, ModalContent, ModalBody, ModalCloseButton, Spinner, Button, Checkbox, useToast, HStack, VStack } from "@chakra-ui/react";
-import UserContext from "../../components/UserContext";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
-import { toastError, log } from "../../components/Helpers";
-import { CircleContentForm, CircleImagesForm, CircleTagsForm, CircleQuestionsForm } from "../../components/CircleSettingsForms";
+import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
-import config from "../../Config";
-import PrivacyPolicy from "./PrivacyPolicy";
+import config from "Config";
+import PrivacyPolicy from "components/PrivacyPolicy";
+import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    showNetworkLogoAtom,
+    signInStatusAtom,
+    circleAtom,
+    circlesAtom,
+    circleConnectionsAtom,
+    locationPickerActiveAtom,
+    locationPickerPositionAtom,
+} from "components/Atoms";
+import { useAtom } from "jotai";
 //#endregion
 
+const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
+const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
+const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
+const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
+
 export const NewUserGuide = ({ onClose }) => {
-    const user = useContext(UserContext);
+    const [user] = useAtom(userAtom);
     const allSteps = useMemo(
         () => ({
             default: { id: "default", label: "Default" },
@@ -40,8 +58,7 @@ export const NewUserGuide = ({ onClose }) => {
         log("NewUserGuide.useEffect 1");
         if (!user?.id || hasBeenInitialized) return;
         setHasBeenInitialized(true);
-        let isProd = config.environment === "prod";
-        let ignoreCheck = false; //!isProd;
+        let ignoreCheck = config.alwaysShowGuide;
         let profileSteps = [];
         if (!user.agreed_to_tnc || ignoreCheck) {
             // user hasn't agreed to terms and conditions
@@ -215,17 +232,9 @@ export const NewUserGuide = ({ onClose }) => {
                 return (
                     <Box>
                         <VStack align="start">
-                            <CircleContentForm
-                                isUpdateForm={true}
-                                language={user.language}
-                                circleId={user.id}
-                                name={user.name}
-                                description={user.description}
-                                content={user.content}
-                                type="user"
-                                isGuideForm={true}
-                                onNext={next}
-                            />
+                            <Suspense fallback={<Spinner />}>
+                                <CircleContentForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
                         </VStack>
                     </Box>
                 );
@@ -234,17 +243,9 @@ export const NewUserGuide = ({ onClose }) => {
                 return (
                     <Box>
                         <VStack align="start">
-                            <CircleImagesForm
-                                isUpdateForm={true}
-                                picture={user.picture}
-                                cover={user.cover}
-                                circleId={user.id}
-                                name={user.name}
-                                description={user.description}
-                                type="user"
-                                isGuideForm={true}
-                                onNext={next}
-                            />
+                            <Suspense fallback={<Spinner />}>
+                                <CircleImagesForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
                         </VStack>
                     </Box>
                 );
@@ -253,7 +254,9 @@ export const NewUserGuide = ({ onClose }) => {
                 return (
                     <Box>
                         <VStack align="start">
-                            <CircleTagsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            <Suspense fallback={<Spinner />}>
+                                <CircleTagsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
                         </VStack>
                     </Box>
                 );
@@ -262,7 +265,9 @@ export const NewUserGuide = ({ onClose }) => {
                 return (
                     <Box>
                         <VStack align="start">
-                            <CircleQuestionsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            <Suspense fallback={<Spinner />}>
+                                <CircleQuestionsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
                         </VStack>
                     </Box>
                 );
@@ -297,25 +302,22 @@ export const NewUserGuide = ({ onClose }) => {
     };
 
     return (
-        <ModalContent borderRadius="25px">
-            {activeStep.id !== "tnc" && <ModalCloseButton />}
-            <ModalBody>
-                <Box marginTop="10px">{getActiveStepComponent()}</Box>
-                <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
-                    <HStack align="center">
-                        {steps.map((x, i) => (
-                            <Box
-                                key={x.id}
-                                width="10px"
-                                height="10px"
-                                borderRadius="50%"
-                                backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
-                            ></Box>
-                        ))}
-                    </HStack>
-                </Flex>
-            </ModalBody>
-        </ModalContent>
+        <Box>
+            <Box marginTop="10px">{getActiveStepComponent()}</Box>
+            <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
+                <HStack align="center">
+                    {steps.map((x, i) => (
+                        <Box
+                            key={x.id}
+                            width="10px"
+                            height="10px"
+                            borderRadius="50%"
+                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
+                        ></Box>
+                    ))}
+                </HStack>
+            </Flex>
+        </Box>
     );
 };
 

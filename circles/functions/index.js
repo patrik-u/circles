@@ -875,7 +875,7 @@ app.put("/circles/:id", auth, async (req, res) => {
         let hasNewParent = false;
         let parent = null;
         if (req.body.circleData?.parentCircle !== undefined) {
-            let parentId = req.body.circleData.parentCircle.id;
+            let parentId = req.body.circleData.parentCircle?.id;
             if (parentId !== oldParentId) {
                 hasNewParent = true;
                 if (parentId) {

@@ -10,6 +10,7 @@ import AccountManager from "components/AccountManager";
 import LocationManager from "components/LocationManager";
 import TopMenu from "components/TopMenu";
 import ConnectPopup from "components/ConnectPopup";
+import NewUserPopup from "components/NewUserPopup";
 import PushNotificationsManager from "components/PushNotificationsManager";
 //#endregion
 
@@ -58,6 +59,7 @@ const App = () => {
                 </Suspense>
             </Flex>
             <ConnectPopup />
+            <NewUserPopup />
         </>
     );
 };

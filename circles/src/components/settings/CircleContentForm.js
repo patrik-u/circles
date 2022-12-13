@@ -399,15 +399,21 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                 </Flex>
                             )}
 
-                            <Field name="chatIsPublic">
-                                {({ field, form }) => (
-                                    <FormControl isInvalid={form.errors.chatIsPublic && form.touched.chatIsPublic}>
-                                        <Checkbox isChecked={chatIsPublicSetting} id="chatIsPublic" onChange={(e) => setChatIsPublicSetting(e.target.checked)}>
-                                            {i18n.t(`Make chat public`)}
-                                        </Checkbox>
-                                    </FormControl>
-                                )}
-                            </Field>
+                            {!isGuideForm && (
+                                <Field name="chatIsPublic">
+                                    {({ field, form }) => (
+                                        <FormControl isInvalid={form.errors.chatIsPublic && form.touched.chatIsPublic}>
+                                            <Checkbox
+                                                isChecked={chatIsPublicSetting}
+                                                id="chatIsPublic"
+                                                onChange={(e) => setChatIsPublicSetting(e.target.checked)}
+                                            >
+                                                {i18n.t(`Make chat public`)}
+                                            </Checkbox>
+                                        </FormControl>
+                                    )}
+                                </Field>
+                            )}
 
                             {!isGuideForm && (
                                 <Flex flexDirection="row" width="100%">

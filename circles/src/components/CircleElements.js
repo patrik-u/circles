@@ -57,18 +57,19 @@ import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 //#endregion
 
-const FloatingAddButton = () => {
+export const FloatingAddButton = () => {
     const [circle] = useAtom(circleAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const navigate = useNavigateNoUpdates();
+    const size = isMobile ? "46px" : "54px";
 
     return (
-        <VStack position="absolute" right="18px" bottom={"30px"} zIndex="50">
+        <VStack position="fixed" right="18px" bottom={isMobile ? "80px" : "30px"} zIndex="50">
             <Flex
                 backgroundColor="#c242bbdd"
                 _hover={{ backgroundColor: "#e94ce1dd" }}
-                width="54px"
-                height="54px"
+                width={size}
+                height={size}
                 borderRadius="50%"
                 cursor="pointer"
                 alignItems="center"
