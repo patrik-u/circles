@@ -15,7 +15,7 @@ export const isConnectingAtom = atom(false);
 // user account atoms
 export const uidAtom = atom(null);
 export const userAtom = atomWithStorage(null);
-export const userDataAtom = atom(null);
+export const userDataAtom = atomWithStorage(null);
 export const userConnectionsAtom = atom(null);
 export const signInStatusAtom = atom(signInStatusValues.signingIn);
 export const userLocationAtom = atom({ latitude: undefined, longitude: undefined });

@@ -1,5 +1,5 @@
 //#region imports
-import React, { useContext, forwardRef } from "react";
+import React, { useContext, forwardRef, useState, useEffect } from "react";
 import {
     Flex,
     Box,
@@ -52,7 +52,142 @@ import {
     isConnectingAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
+import axios from "axios";
+import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
+import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 //#endregion
+
+const FloatingAddButton = () => {
+    const [circle] = useAtom(circleAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+    const navigate = useNavigateNoUpdates();
+
+    return (
+        <VStack position="absolute" right="18px" bottom={"30px"} zIndex="50">
+            <Flex
+                backgroundColor="#c242bbdd"
+                _hover={{ backgroundColor: "#e94ce1dd" }}
+                width="54px"
+                height="54px"
+                borderRadius="50%"
+                cursor="pointer"
+                alignItems="center"
+                justifyContent="center"
+                onClick={() => navigate(routes.circle(circle?.id).new)}
+            >
+                <Icon width="28px" height="28px" color="white" as={IoAdd} />
+            </Flex>
+        </VStack>
+    );
+};
+
+export const FavoriteButton = () => {
+    const [circle] = useAtom(circleAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const iconSize = isMobile ? "20px" : "26px";
+    const [favoriteSetting, setFavoriteSetting] = useState(false);
+
+    useEffect(() => {
+        if (!userData?.circle_settings) {
+            setFavoriteSetting(false);
+        } else {
+            setFavoriteSetting(userData.circle_settings[circle.id]?.favorite);
+        }
+    }, [circle?.id, userData?.circle_settings]);
+
+    const toggleFavorite = () => {
+        if (!circle?.id) {
+            return;
+        }
+
+        let favorite = favoriteSetting;
+        if (favorite === true) {
+            favorite = false;
+        } else {
+            favorite = true;
+        }
+        setFavoriteSetting(favorite);
+
+        // update notification settings
+        axios.post(`/circles/${user.id}/settings`, {
+            circleId: circle.id,
+            settings: { favorite: favorite },
+        });
+    };
+
+    if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
+
+    return (
+        <Box position="relative" height={iconSize} marginLeft="5px">
+            <Icon
+                width={iconSize}
+                height={iconSize}
+                color={"#333"}
+                _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                _active={{ transform: "scale(0.98)" }}
+                as={favoriteSetting === true ? AiFillStar : AiOutlineStar}
+                onClick={toggleFavorite}
+                cursor="pointer"
+            />
+        </Box>
+    );
+};
+
+export const NotificationsBell = () => {
+    const [circle] = useAtom(circleAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const iconSize = isMobile ? "20px" : "26px";
+    const [notificationSetting, setNotificationSetting] = useState(null);
+
+    useEffect(() => {
+        if (!userData?.circle_settings) {
+            setNotificationSetting(false);
+        } else {
+            setNotificationSetting(userData.circle_settings[circle.id]?.notifications);
+        }
+    }, [circle?.id, userData?.circle_settings]);
+
+    const toggleNotifications = () => {
+        if (!circle?.id) {
+            return;
+        }
+
+        let settings = notificationSetting;
+        if (settings === "off") {
+            settings = "on";
+        } else {
+            settings = "off";
+        }
+        setNotificationSetting(settings);
+
+        // update notification settings
+        axios.post(`/circles/${user.id}/settings`, {
+            circleId: circle.id,
+            settings: { notifications: settings },
+        });
+    };
+
+    if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
+
+    return (
+        <Box position="relative" height={iconSize} marginLeft="5px">
+            <Icon
+                width={iconSize}
+                height={iconSize}
+                color={"#333"}
+                _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                _active={{ transform: "scale(0.98)" }}
+                as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert}
+                onClick={toggleNotifications}
+                cursor="pointer"
+            />
+        </Box>
+    );
+};
 
 export const ModalPopup = ({ children, onClose, ...props }) => {
     return (
@@ -462,6 +597,7 @@ export const LargeConnectButton = ({ circle }) => {
 
 export const CircleHeader = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
+    const [userData] = useAtom(userDataAtom);
 
     const getNameFontSize = (name) => {
         if (!isMobile || !name) return "32px";
@@ -473,6 +609,8 @@ export const CircleHeader = ({ circle }) => {
         if (name.length <= 20) return "19px";
         return "19px";
     };
+
+    if (!circle) return null;
 
     return (
         <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "120px" : "140px"}>
@@ -489,7 +627,11 @@ export const CircleHeader = ({ circle }) => {
 
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
 
-                    {!isMobile && <ConnectButton circle={circle} inHeader={true} />}
+                    <HStack position="absolute" top="5px" right={isMobile ? "10px" : "0px"}>
+                        <FavoriteButton />
+                        {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
+                        {!isMobile && <ConnectButton circle={circle} inHeader={true} />}
+                    </HStack>
                 </Flex>
             </Flex>
         </Flex>
@@ -660,7 +802,7 @@ export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
     if (circle?.id === user?.id) return null;
 
     return (
-        <Box position={isMobile || !inHeader ? "static" : "absolute"} top={inHeader ? "5px" : "auto"} right={inHeader ? "0" : "auto"} {...props}>
+        <Box {...props}>
             {isConnected(userData, circle?.id) ? (
                 <Flex flexDirection="row" position="relative">
                     <Box

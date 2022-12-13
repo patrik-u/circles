@@ -28,4 +28,9 @@ messaging.onBackgroundMessage(function (payload) {
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
+
+    // add badge on the app icon
+    self.registration.getNotifications().then(function (notifications) {
+        self.registration.setAppBadge(notifications.length);
+    });
 });

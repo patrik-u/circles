@@ -19,12 +19,15 @@ const firebaseApp = firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function (payload) {
-    console.log("Received background message ", payload);
-
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
+
+    // add badge on the app icon
+    self.registration.getNotifications().then(function (notifications) {
+        self.registration.setAppBadge(notifications.length);
+    });
 });

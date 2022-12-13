@@ -5,7 +5,6 @@ import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
-import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiOutlineMessage } from "react-icons/ai";
 import { timeSince, fromFsDate, log, singleLineEllipsisStyle, isConnected } from "components/Helpers";
 import { openCircle } from "components/Navigation";
@@ -16,56 +15,6 @@ import db, { auth } from "components/Firebase";
 import { signOut } from "firebase/auth";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
-
-//PWA123 complete
-
-export const NotificationsBell = () => {
-    const [circle] = useAtom(circleAtom);
-    const [user] = useAtom(userAtom);
-    const [userData] = useAtom(userDataAtom);
-    const iconSize = { base: "18px", md: "20px" };
-    const [notificationSetting, setNotificationSetting] = useState(user?.circle_settings?.[circle.id]?.notifications);
-
-    const toggleNotifications = () => {
-        if (!circle?.id) {
-            return;
-        }
-
-        let settings = notificationSetting;
-        if (settings === "off") {
-            settings = "on";
-        } else {
-            settings = "off";
-        }
-        setNotificationSetting(settings);
-
-        // update notification settings
-        axios.post("/chat_notification_settings", {
-            circleId: circle.id,
-            settings: settings,
-        });
-    };
-
-    return (
-        user?.id &&
-        isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
-            <>
-                <Box position="relative" height={iconSize} marginLeft="5px">
-                    <Icon
-                        width={iconSize}
-                        height={iconSize}
-                        color={"#333"}
-                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                        _active={{ transform: "scale(0.98)" }}
-                        as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert}
-                        onClick={toggleNotifications}
-                        cursor="pointer"
-                    />
-                </Box>
-            </>
-        )
-    );
-};
 
 export const MessageNotification = ({ notification, onClick }) => {
     const [user] = useAtom(userAtom);
