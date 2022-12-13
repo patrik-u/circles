@@ -9,7 +9,7 @@ import { Routes, Route, useParams } from "react-router-dom";
 
 import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
-import BottomNavigator from "components/BottomNavigator";
+import HorizontalNavigator from "components/HorizontalNavigator";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -207,7 +207,7 @@ export const Circle = () => {
                             <ConnectButton circle={circle} inHeader={true} />
                         </Flex>
                     )}
-                    {isMobile && <BottomNavigator />}
+                    {isMobile && <HorizontalNavigator />}
 
                     {/* Section content */}
                     <Routes>
