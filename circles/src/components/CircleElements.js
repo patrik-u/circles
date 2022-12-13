@@ -55,6 +55,7 @@ import { ImQrcode } from "react-icons/im";
 
 export const ShareButtonMenu = ({ children, referrer }) => {
     const location = useLocationNoUpdates();
+    const [isMobile] = useAtom(isMobileAtom);
     const [absoluteLocation, setAbsoluteLocation] = useState();
     const [absoluteQrLocation, setAbsoluteQrLocation] = useState();
     const toast = useToast();
@@ -97,22 +98,13 @@ export const ShareButtonMenu = ({ children, referrer }) => {
         setAbsoluteQrLocation((current) => urlWithQrParams);
     }, [location, referrer]);
 
+    const size = isMobile ? "20px" : "24px";
+
     return (
         <Menu closeOnBlur="true">
-            <MenuButton
-                as={Button}
-                rounded={"full"}
-                variant={"link"}
-                cursor={"pointer"}
-                minW={0}
-                position="absolute"
-                right="20px"
-                bottom="-40px"
-                overflow="hidden"
-                zIndex="1"
-            >
+            <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} minW={0} overflow="hidden" zIndex="1">
                 <Flex flexDirection="row" align="center">
-                    <RiShareLine size="24px" color="black" />
+                    <RiShareLine size={size} color="black" />
                 </Flex>
             </MenuButton>
             <MenuList alignItems={"center"} borderRadius="10" width={{ base: "100%", md: "250px" }} overflow="hidden">
@@ -713,10 +705,11 @@ export const CircleHeader = ({ circle }) => {
 
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
 
-                    <HStack position="absolute" top="5px" right={isMobile ? "10px" : "0px"}>
+                    <HStack position="absolute" top={isMobile ? "-33px" : "5px"} right={isMobile ? "65px" : "0px"}>
                         <FavoriteButton />
                         {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
-                        {!isMobile && <ConnectButton circle={circle} inHeader={true} />}
+                        <ShareButtonMenu />
+                        <ConnectButton circle={circle} inHeader={isMobile ? false : true} fadeBackground={!isMobile} />
                     </HStack>
                 </Flex>
             </Flex>
@@ -846,11 +839,12 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
+export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, ...props }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
+    const [isMobile] = useAtom(isMobileAtom);
     const [, setConnectPopup] = useAtom(connectPopupAtom);
-    const height = inHeader ? "40px" : "19px";
+    const height = inHeader && !isMobile ? "40px" : "19px";
 
     const getConnectionStatus = () => {
         if (!circle?.id) return i18n.t("Connected");
@@ -890,26 +884,30 @@ export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
         <Box {...props}>
             {isConnected(userData, circle?.id) ? (
                 <Flex flexDirection="row" position="relative">
-                    <Box
-                        backgroundImage="linear-gradient(to right, transparent, #ffffff);"
-                        width="10px"
-                        height={height}
-                        position="absolute"
-                        left="-15px"
-                        _groupHover={{
-                            backgroundImage: "linear-gradient(to right, transparent, #ddd8db);",
-                        }}
-                    ></Box>
-                    <Box
-                        backgroundColor="white"
-                        width="15px"
-                        height={height}
-                        position="absolute"
-                        left="-5px"
-                        _groupHover={{
-                            backgroundColor: "#ddd8db",
-                        }}
-                    ></Box>
+                    {fadeBackground && (
+                        <>
+                            <Box
+                                backgroundImage="linear-gradient(to right, transparent, #ffffff);"
+                                width="10px"
+                                height={height}
+                                position="absolute"
+                                left="-15px"
+                                _groupHover={{
+                                    backgroundImage: "linear-gradient(to right, transparent, #ddd8db);",
+                                }}
+                            ></Box>
+                            <Box
+                                backgroundColor="white"
+                                width="15px"
+                                height={height}
+                                position="absolute"
+                                left="-5px"
+                                _groupHover={{
+                                    backgroundColor: "#ddd8db",
+                                }}
+                            ></Box>
+                        </>
+                    )}
                     <Button
                         colorScheme="blue"
                         borderRadius="25px"

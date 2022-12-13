@@ -9,7 +9,7 @@ import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUti
 import { useAtom } from "jotai";
 //#endregion
 
-export const BottomNavigator = () => {
+export const HorizontalNavigator = () => {
     const navHeight = "50px";
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
@@ -66,4 +66,4 @@ export const BottomNavigator = () => {
     );
 };
 
-export default BottomNavigator;
+export default HorizontalNavigator;
