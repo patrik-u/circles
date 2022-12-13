@@ -16,6 +16,7 @@ const configs = {
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",
+        alwaysShowGuide: true,
     },
     staging: {
         environment: "staging",

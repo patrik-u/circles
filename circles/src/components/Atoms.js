@@ -7,6 +7,7 @@ import { isMobile as detectIsMobile } from "react-device-detect";
 export const isMobileAtom = atom(detectIsMobile);
 export const displayModeAtom = atom(displayModes.default);
 export const searchResultsShownAtom = atom(false);
+export const newUserPopupAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);

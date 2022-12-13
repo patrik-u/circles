@@ -25,6 +25,7 @@ import { Routes, Route, useParams } from "react-router-dom";
 
 import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
+import BottomNavigator from "components/BottomNavigator";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -46,6 +47,7 @@ const CircleMap = lazy(() => import("components/CircleMap"));
 const Circles = lazy(() => import("components/Circles"));
 const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
 const CircleAdmin = lazy(() => import("components/CircleAdmin"));
+const CircleCreateNew = lazy(() => import("components/settings/CircleCreateNew"));
 
 export const Circle = () => {
     log("Circle.render", -1);
@@ -216,11 +218,12 @@ export const Circle = () => {
                     <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
                         <CircleHeader circle={circle} />
                     </Box>
-                    {isMobile && !isConnected(userData, circle.id, ["connected_mutually_to"]) && (
+                    {isMobile && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
                         <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
                             <ConnectButton circle={circle} inHeader={true} />
                         </Flex>
                     )}
+                    {isMobile && <BottomNavigator />}
 
                     {/* Section content */}
                     <Routes>
@@ -233,6 +236,7 @@ export const Circle = () => {
                         <Route path="/links" element={<Circles type="link" />} />
                         <Route path="/settings/*" element={<CircleSettings />} />
                         <Route path="/admin" element={<CircleAdmin />} />
+                        <Route path="/new" element={<CircleCreateNew />} />
                     </Routes>
                 </Box>
                 {/* Left panel */}
