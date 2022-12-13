@@ -1,5 +1,5 @@
 //#region imports
-import React, { forwardRef, useState, useEffect } from "react";
+import React, { forwardRef, useState, useEffect, useRef } from "react";
 import {
     Flex,
     Box,
@@ -21,6 +21,9 @@ import {
     MenuButton,
     MenuList,
     MenuItem,
+    Fade,
+    useDisclosure,
+    useOutsideClick,
 } from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
@@ -53,12 +56,25 @@ import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 //#endregion
 
+const buttonHighlight = "#1fff50dd";
+
 export const ShareButtonMenu = ({ children, referrer }) => {
     const location = useLocationNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [absoluteLocation, setAbsoluteLocation] = useState();
     const [absoluteQrLocation, setAbsoluteQrLocation] = useState();
+
+    const { isOpen: menuIsOpen, onOpen: menuOnOpen, onClose: menuOnClose } = useDisclosure();
+    const menuBoxRef = useRef(null);
+
+    useOutsideClick({
+        ref: menuBoxRef,
+        handler: () => menuOnClose(),
+    });
+
     const toast = useToast();
+    const iconSize = isMobile ? 20 : 26;
+    const iconSizePx = iconSize + "px";
 
     const copyPageLink = () => {
         navigator.clipboard.writeText(absoluteLocation).then(
@@ -67,6 +83,7 @@ export const ShareButtonMenu = ({ children, referrer }) => {
             },
             function (err) {}
         );
+        menuOnClose();
     };
 
     const downloadQrCode = () => {
@@ -79,6 +96,7 @@ export const ShareButtonMenu = ({ children, referrer }) => {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+        menuOnClose();
     };
 
     useEffect(() => {
@@ -101,38 +119,75 @@ export const ShareButtonMenu = ({ children, referrer }) => {
     const size = isMobile ? "20px" : "24px";
 
     return (
-        <Menu closeOnBlur="true">
-            <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} minW={0} overflow="hidden" zIndex="1">
-                <Flex flexDirection="row" align="center">
-                    <RiShareLine size={size} color="black" />
-                </Flex>
-            </MenuButton>
-            <MenuList alignItems={"center"} borderRadius="10" width={{ base: "100%", md: "250px" }} overflow="hidden">
-                <MenuItem>
-                    <FacebookShareButton url={absoluteLocation}>
-                        <HStack align="center">
-                            <FacebookIcon size={32} round />
-                            <Text>{i18n.t("Share on Facebook")}</Text>
-                        </HStack>
-                    </FacebookShareButton>
-                </MenuItem>
-                <MenuItem>
-                    <TwitterShareButton url={absoluteLocation}>
-                        <HStack align="center">
-                            <TwitterIcon size={32} round />
-                            <Text>{i18n.t("Share on Twitter")}</Text>
-                        </HStack>
-                    </TwitterShareButton>
-                </MenuItem>
-                <MenuItem icon={<IoIosLink size={28} />} onClick={copyPageLink}>
-                    {i18n.t("Copy link to page")}
-                </MenuItem>
-                <MenuItem icon={<ImQrcode size={28} />} onClick={downloadQrCode}>
-                    {i18n.t("Download QR code")}
-                    <QRCodeCanvas id="qr-code" size={400} includeMargin={true} value={absoluteQrLocation} hidden />
-                </MenuItem>
-            </MenuList>
-        </Menu>
+        <>
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                backgroundColor="#f4f4f4dd"
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                onClick={menuOnOpen}
+                cursor="pointer"
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={RiShareLine} />
+            </Flex>
+            {menuIsOpen && (
+                <Box
+                    ref={menuBoxRef}
+                    className="notificationsBoxParent"
+                    zIndex="55"
+                    position="absolute"
+                    borderRadius="20px"
+                    overflow="hidden"
+                    top="43px"
+                    right="-50px"
+                    width="220px"
+                    backgroundColor="white"
+                    height="200px"
+                >
+                    <Fade in={menuIsOpen} height="100%" width="100%">
+                        <Box className="notificationsBox" height="100%" width="100%">
+                            <Flex flexDirection="column">
+                                <Box height="50px" _hover={{ backgroundColor: "#e8f3fadd" }} padding="10px">
+                                    <FacebookShareButton url={absoluteLocation} beforeOnClick={menuOnClose}>
+                                        <HStack align="center">
+                                            <FacebookIcon size={32} round />
+                                            <Text>{i18n.t("Share on Facebook")}</Text>
+                                        </HStack>
+                                    </FacebookShareButton>
+                                </Box>
+
+                                <Box height="50px" _hover={{ backgroundColor: "#e8f3fadd" }} padding="10px">
+                                    <TwitterShareButton url={absoluteLocation} beforeOnClick={menuOnClose}>
+                                        <HStack align="center">
+                                            <TwitterIcon size={32} round />
+                                            <Text>{i18n.t("Share on Twitter")}</Text>
+                                        </HStack>
+                                    </TwitterShareButton>
+                                </Box>
+
+                                <Box height="50px" _hover={{ backgroundColor: "#e8f3fadd" }} padding="10px" onClick={copyPageLink} cursor="pointer">
+                                    <HStack spacing="12px">
+                                        <IoIosLink size={28} />
+                                        <Text>{i18n.t("Copy link to page")}</Text>
+                                    </HStack>
+                                </Box>
+                                <Box height="50px" _hover={{ backgroundColor: "#e8f3fadd" }} padding="10px" onClick={downloadQrCode} cursor="pointer">
+                                    <HStack spacing="12px">
+                                        <ImQrcode size={28} />
+                                        <Text>{i18n.t("Download QR code")}</Text>
+                                        <QRCodeCanvas id="qr-code" size={400} includeMargin={true} value={absoluteQrLocation} hidden />
+                                    </HStack>
+                                </Box>
+                            </Flex>
+                        </Box>
+                    </Fade>
+                </Box>
+            )}
+        </>
     );
 };
 
@@ -166,7 +221,8 @@ export const FavoriteButton = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const iconSize = isMobile ? "20px" : "26px";
+    const iconSize = isMobile ? 20 : 26;
+    const iconSizePx = iconSize + "px";
     const [favoriteSetting, setFavoriteSetting] = useState(false);
 
     useEffect(() => {
@@ -200,18 +256,20 @@ export const FavoriteButton = () => {
     if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
     return (
-        <Box position="relative" height={iconSize} marginLeft="5px">
-            <Icon
-                width={iconSize}
-                height={iconSize}
-                color={"#333"}
-                _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                _active={{ transform: "scale(0.98)" }}
-                as={favoriteSetting === true ? AiFillStar : AiOutlineStar}
-                onClick={toggleFavorite}
-                cursor="pointer"
-            />
-        </Box>
+        <Flex
+            position="relative"
+            width={iconSize + 8 + "px"}
+            height={iconSize + 8 + "px"}
+            backgroundColor="#f4f4f4dd"
+            _hover={{ backgroundColor: buttonHighlight }}
+            borderRadius="50%"
+            justifyContent="center"
+            alignItems="center"
+            onClick={toggleFavorite}
+            cursor="pointer"
+        >
+            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={favoriteSetting === true ? AiFillStar : AiOutlineStar} />
+        </Flex>
     );
 };
 
@@ -220,7 +278,9 @@ export const NotificationsBell = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const iconSize = isMobile ? "20px" : "26px";
+    const iconSize = isMobile ? 20 : 26;
+    const iconSizePx = iconSize + "px";
+
     const [notificationSetting, setNotificationSetting] = useState(null);
 
     useEffect(() => {
@@ -254,18 +314,20 @@ export const NotificationsBell = () => {
     if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
     return (
-        <Box position="relative" height={iconSize} marginLeft="5px">
-            <Icon
-                width={iconSize}
-                height={iconSize}
-                color={"#333"}
-                _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                _active={{ transform: "scale(0.98)" }}
-                as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert}
-                onClick={toggleNotifications}
-                cursor="pointer"
-            />
-        </Box>
+        <Flex
+            position="relative"
+            width={iconSize + 8 + "px"}
+            height={iconSize + 8 + "px"}
+            backgroundColor="#f4f4f4dd"
+            _hover={{ backgroundColor: buttonHighlight }}
+            borderRadius="50%"
+            justifyContent="center"
+            alignItems="center"
+            onClick={toggleNotifications}
+            cursor="pointer"
+        >
+            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert} />
+        </Flex>
     );
 };
 
@@ -479,7 +541,7 @@ export const DisplayModeButtons = ({ ...props }) => {
         >
             <Flex
                 backgroundColor="#f4f4f4dd"
-                _hover={{ backgroundColor: "#1fff50dd" }}
+                _hover={{ backgroundColor: buttonHighlight }}
                 width={iconCircleSize}
                 height={iconCircleSize}
                 borderRadius="50%"
@@ -705,7 +767,7 @@ export const CircleHeader = ({ circle }) => {
 
                     <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
 
-                    <HStack position="absolute" top={isMobile ? "-33px" : "5px"} right={isMobile ? "65px" : "0px"}>
+                    <HStack position="absolute" top={isMobile ? "-41px" : "5px"} right={isMobile ? "56px" : "0px"}>
                         <FavoriteButton />
                         {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
                         <ShareButtonMenu />

@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.0.8",
+    "version": "1.0.10",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -70,7 +70,7 @@
         "start:devprod": "env-cmd -f .env.devprod npm start",
         "build": "react-scripts build && copy build\\index.html functions\\hosting\\index.html && del build\\index.html",
         "build:staging": "env-cmd -f .env.staging npm run build && copy src\\assets\\firebase-messaging-sw\\firebase-messaging-sw-staging.js build\\firebase-messaging-sw.js",
-        "build:prod": "env-cmd -f .env.prod npm run build && copy src\\assets\\firebase-messaging-sw\\firebase-messaging-sw-prd.js build\\firebase-messaging-sw.js",
+        "build:prod": "env-cmd -f .env.prod npm run build && copy src\\assets\\firebase-messaging-sw\\firebase-messaging-sw-prod.js build\\firebase-messaging-sw.js",
         "deploy:staging": "npm run build:staging && firebase deploy -P staging",
         "deploy:prod": "npm run build:prod && firebase deploy -P prod",
         "test": "react-scripts test",
