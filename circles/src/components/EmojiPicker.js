@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { log } from "./old_Helpers";
+import React, { useEffect, useRef, useState } from "react";
+import { log } from "components/Helpers";
 import data from "@emoji-mart/data";
-import { NimblePicker, Picker, PickerProps } from "emoji-mart";
+import { Picker } from "emoji-mart";
 
 const EmojiPicker = ({ setMessage }) => {
     const ref = useRef();
-    const [isInitialized, setIsInitialized] = useState(false);
+    const [, setIsInitialized] = useState(false);
     const [picker, setPicker] = useState(null);
 
     // const onEmojiSelect = (res) => {

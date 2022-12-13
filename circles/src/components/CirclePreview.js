@@ -1,12 +1,10 @@
 //#region imports
-import React, { useContext } from "react";
+import React from "react";
 import { Box, Flex, HStack, VStack, Text, Icon } from "@chakra-ui/react";
 import { getDistanceString, getDateAndTimeLong, getDateLong, getEventTime, isPastEvent } from "components/Helpers";
 import { CirclePicture, CircleCover } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
-import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 //#endregion
 
 export const CirclePreview = ({ item, onClick, focusItem, navigate, location, ...props }) => {

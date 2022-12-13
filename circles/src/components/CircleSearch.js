@@ -1,23 +1,18 @@
 // #region imports
-import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
-import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
-import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button, InputRightElement, Icon } from "@chakra-ui/react";
-import { CirclePicture } from "components/CircleElements";
-import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers";
+import React, { useState, useEffect } from "react";
+import { Box, Input, Flex, InputGroup, InputLeftElement, Text, InputRightElement, Icon } from "@chakra-ui/react";
 import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { HiOutlineSearch } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom } from "components/Atoms";
-import { auth } from "components/Firebase";
-import { signOut } from "firebase/auth";
+import { isMobileAtom, searchResultsShownAtom } from "components/Atoms";
 import config from "Config";
 import CircleListItem from "components/CircleListItem";
 import i18n from "i18n/Localization";
 
 import algoliasearch from "algoliasearch/lite";
-import { InstantSearch, Hits, RefinementList, useInstantSearch, useSearchBox, useConnector, useHits } from "react-instantsearch-hooks-web";
+import { InstantSearch, useInstantSearch, useSearchBox, useHits } from "react-instantsearch-hooks-web";
 // #endregion
 
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);

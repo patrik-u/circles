@@ -1,6 +1,6 @@
 //#region imports
-import React, { useState, useEffect } from "react";
-import { Box, Flex, VStack, Button, useToast, HStack, Input, Textarea } from "@chakra-ui/react";
+import React, { useState } from "react";
+import { Box, Flex, Button, useToast, HStack, Input, Textarea } from "@chakra-ui/react";
 import axios from "axios";
 import { log } from "components/Helpers";
 //#endregion

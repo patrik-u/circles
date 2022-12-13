@@ -1,14 +1,12 @@
 //#region imports
-import React, { useContext } from "react";
+import React from "react";
 import { Flex, Box, Text } from "@chakra-ui/react";
 import { hasUpdates } from "components/Helpers";
 import { getNavigationItems, shouldShowNavItem } from "components/Navigation";
 import { matchPath } from "react-router-dom";
-import { CirclePicture } from "components/CircleElements";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import { userAtom, circleAtom } from "components/Atoms";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import { Scrollbars } from "react-custom-scrollbars-2";
 //#endregion
 
 export const BottomNavigator = () => {

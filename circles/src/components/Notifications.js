@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
@@ -13,9 +13,7 @@ import { HiCheck, HiX } from "react-icons/hi";
 import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl, getDefaultCirclePicture } from "components/Helpers";
 import { openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, circleAtom, chatCircleAtom } from "components/Atoms";
-import { auth } from "components/Firebase";
-import { signOut } from "firebase/auth";
+import { userAtom } from "components/Atoms";
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {
@@ -365,9 +363,7 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
 };
 
 const Notifications = () => {
-    const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
-    const [circle] = useAtom(circleAtom);
     const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();

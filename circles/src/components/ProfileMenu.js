@@ -1,20 +1,15 @@
 //#region imports
-import React, { useContext, useState } from "react";
+import React from "react";
 import { Menu, MenuButton, MenuDivider, MenuItem, Button, Center, Avatar, MenuList, useDisclosure, Image } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import { routes, openCircle } from "components/Navigation";
-import { useEffect } from "react";
-import { atom, atomWithStorage, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, userAtom } from "components/Atoms";
-import { defaultUserPicture, signInStatusValues } from "components/Constants";
-import { auth } from "components/Firebase";
-import { signOut } from "firebase/auth";
+import { defaultUserPicture } from "components/Constants";
 import { userSignOut } from "components/AccountManager";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
-
-//PWA123 complete
 
 export const ProfileMenu = () => {
     log("ProfileMenu.render", -1);

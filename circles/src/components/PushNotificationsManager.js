@@ -1,29 +1,13 @@
 //#region imports
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { useToast } from "@chakra-ui/react";
-import db, { auth, messaging } from "components/Firebase";
-import * as Sentry from "@sentry/react";
-import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
-import { onMessage, requestPermission, getToken } from "firebase/messaging";
+import { messaging } from "components/Firebase";
+import { getToken } from "firebase/messaging";
 import axios from "axios";
-import { toastError, log } from "components/Helpers";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import i18n from "i18n/Localization";
+import { log } from "components/Helpers";
 import { useAtom } from "jotai";
-import { signInStatusValues } from "components/Constants";
-import {
-    uidAtom,
-    userAtom,
-    userDataAtom,
-    signInStatusAtom,
-    userConnectionsAtom,
-    requestUserConnectionsAtom,
-    userLocationAtom,
-    messageTokenAtom,
-} from "components/Atoms";
+import { uidAtom, signInStatusAtom, messageTokenAtom } from "components/Atoms";
 import config from "Config";
-import useScript from "components/useScript";
-import { getPreciseDistance } from "geolib";
 //#endregion
 
 // asks permission for user location and updates it

@@ -1,44 +1,10 @@
 //#region imports
-import React, { useEffect, useContext, lazy, Suspense, useMemo, useState, useRef, useImperativeHandle, forwardRef } from "react";
-import {
-    Flex,
-    Box,
-    Text,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    Button,
-    useToast,
-    HStack,
-    useDisclosure,
-    Image,
-} from "@chakra-ui/react";
-import db from "components/Firebase";
-import axios from "axios";
-import { log, getLatlng, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle } from "components/Helpers";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import { Routes, Route, useParams } from "react-router-dom";
-import { CircleHeader, CircleCover, DisplayModeButtons } from "components/CircleElements";
+import React, { useState, useRef, useImperativeHandle, forwardRef } from "react";
+import { Flex } from "@chakra-ui/react";
+import { getLatlng } from "components/Helpers";
 import { useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    locationPickerActiveAtom,
-    locationPickerPositionAtom,
-    filteredCirclesAtom,
-} from "components/Atoms";
-import { displayModes } from "components/Constants";
-import { Map, useMap } from "react-map-gl";
+import { isMobileAtom, circleAtom, locationPickerActiveAtom, locationPickerPositionAtom, filteredCirclesAtom } from "components/Atoms";
+import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "components/MapMarkers";
 import mapboxgl from "mapbox-gl";
@@ -59,7 +25,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         zoom: 2.2,
         bearing: 0,
     };
-    const [isMapInitialized, setIsMapInitialized] = useState(false);
+    const [, setIsMapInitialized] = useState(false);
     const [mapViewport, setMapViewport] = useState(defaultViewport);
     const mapRef = useRef(null);
 

@@ -5,7 +5,7 @@ import { getDistanceString, getDateAndTimeLong, getDateLong, singleLineEllipsisS
 import { CirclePicture, CircleTags, ConnectButton } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
+import { useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
 export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {

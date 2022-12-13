@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, Flex, HStack, Spinner, Text, Button, useToast } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
 import db from "components/Firebase";
@@ -9,19 +9,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { RiLinksLine } from "react-icons/ri";
 import { AiOutlineDisconnect } from "react-icons/ai";
 import { useAtom } from "jotai";
-import { CirclePicture } from "components/CircleElements";
-import { signInStatusValues } from "components/Constants";
-import {
-    uidAtom,
-    userAtom,
-    userDataAtom,
-    signInStatusAtom,
-    userConnectionsAtom,
-    requestUserConnectionsAtom,
-    userLocationAtom,
-    connectPopupAtom,
-    isConnectingAtom,
-} from "components/Atoms";
+import { isConnectingAtom } from "components/Atoms";
 //#endregion
 
 const CircleConnectionsList = ({ connection, connect, disconnect }) => {

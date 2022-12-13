@@ -1,30 +1,14 @@
 //#region imports
-import React, { useState, useEffect, useContext } from "react";
-import { Box, Flex, VStack, Text, Icon } from "@chakra-ui/react";
+import React, { useEffect } from "react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
 import axios from "axios";
-import { getLatlng, getDistanceString, log, fromFsDate, getDateWithoutTime, getCircleTypes } from "components/Helpers";
-import { routes, openCircle } from "components/Navigation";
-import { CirclePicture } from "components/CircleElements";
-import { RiMapPinFill } from "react-icons/ri";
-import { getPreciseDistance } from "geolib";
+import { log } from "components/Helpers";
+import { openCircle } from "components/Navigation";
 import CircleListItem from "components/CircleListItem";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    circleConnectionsAtom,
-    userLocationAtom,
-    circlesFilterAtom,
-    filteredCirclesAtom,
-} from "components/Atoms";
+import { userAtom, signInStatusAtom, circleAtom, circlesFilterAtom, filteredCirclesAtom } from "components/Atoms";
 //#endregion
 
 export const Circles = ({ type }) => {

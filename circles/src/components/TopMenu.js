@@ -1,20 +1,18 @@
 //#region imports
-import React, { useContext, useState } from "react";
-import { Flex, Box, Image, Spinner, HStack } from "@chakra-ui/react";
+import React from "react";
+import { Flex, Box, Image, HStack } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
-import Notifications from "./Notifications";
-import Messages from "./Messages";
-import ProfileMenu from "./ProfileMenu";
-import { routes, openCircle } from "components/Navigation";
+import Notifications from "components/Notifications";
+import Messages from "components/Messages";
+import ProfileMenu from "components/ProfileMenu";
+import { routes } from "components/Navigation";
 import { LoginRegisterMenu } from "components/LoginForms";
-import { atom, atomWithStorage, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleSearchBox, MobileSearchBox } from "components/CircleSearch";
-import { Routes, Route, useParams } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 //#endregion
-
-//PWA123 complete
 
 export const TopMenu = () => {
     log("TopMenu.render", -1);
