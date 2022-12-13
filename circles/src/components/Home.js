@@ -27,30 +27,18 @@ export const Home = () => {
     const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
-    const [messageToken] = useAtom(messageTokenAtom);
 
-    const [latestCircles, setLatestCircles] = useState([]);
-
-    useEffect(() => {
-        if (!userData?.latestCircles) {
-            // read from local storage
-            let latestCirclesStr = window.localStorage.getItem("latestCircles");
-            if (latestCirclesStr) {
-                setLatestCircles(JSON.parse(latestCirclesStr));
+    const getFavoriteCircles = (userData) => {
+        if (!userData) return [];
+        let favoriteCircles = [];
+        for (var circleId in userData.circle_settings) {
+            let favorite = userData.circle_settings[circleId].favorite;
+            if (favorite) {
+                favoriteCircles.push(userData.circle_settings[circleId].circle);
             }
-            return;
         }
-
-        log(JSON.stringify(userData, null, 2));
-
-        // read from user.connections
-        let userCircles = userData?.latestCircles
-            ?.filter((x) => x.target.type === "circle")
-            ?.slice(0, 10)
-            ?.map((x) => x.target);
-        setLatestCircles(userCircles);
-        window.localStorage.setItem("latestCircles", JSON.stringify(userCircles));
-    }, [userData]);
+        return favoriteCircles;
+    };
 
     useEffect(() => {
         setShowNetworkLogo(false);
@@ -65,11 +53,17 @@ export const Home = () => {
 
                 <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">
                     <CircleSearchBox marginTop="35px" marginBottom="0px" />
-                    <Text>{messageToken}</Text>
                     {!searchResultsShown && (
                         <Flex marginBottom="200px" marginTop="35px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
-                            <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px">
-                                {latestCircles?.map((item) => (
+                            <SimpleGrid
+                                columns={isMobile ? 4 : 5}
+                                spacing={isMobile ? 5 : 10}
+                                maxWidth="500px"
+                                marginLeft="15px"
+                                marginRight="15px"
+                                alignSelf="start"
+                            >
+                                {getFavoriteCircles(userData)?.map((item) => (
                                     <Box
                                         key={item.id}
                                         align="center"
@@ -97,7 +91,7 @@ export const Home = () => {
                     )}
                 </Flex>
             </Flex>
-            <Box position="absolute" bottom="5px" right="10px" color={process.env.REACT_APP_ENVIRONMENT === "prod" ? "white" : "#a9a9a9"}>
+            <Box position="absolute" bottom="5px" right="10px" color={process.env.REACT_APP_ENVIRONMENT === "prod" ? "#f3f3f3" : "#a9a9a9"}>
                 <Text>
                     {process.env.REACT_APP_NAME} {process.env.REACT_APP_VERSION} ({process.env.REACT_APP_ENVIRONMENT})
                 </Text>

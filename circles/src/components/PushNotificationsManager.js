@@ -58,33 +58,36 @@ export const PushNotificationsManager = () => {
                         log("messaging token: " + token);
                         setMessageToken(token);
 
-                        // update message token in db
-                        axios.post(`/messageToken`, { messageToken: token });
+                        // only register token in prod
+                        if (config.environment === "prod") {
+                            // update message token in db
+                            axios.post(`/messageToken`, { messageToken: token });
+                        }
                     });
                 } else if (permission === "denied") {
                     log("Permission for Notifications was denied");
                 }
             });
 
-            // listen to messages
-            log("subscribing to push messages", 0, true);
-            let unsubscribeOnMessage = onMessage(messaging, (payload) => {
-                log("message received" + JSON.stringify(payload), 0, true);
-                toast({
-                    title: payload.notification.title,
-                    description: payload.notification.body,
-                    status: "info",
-                    position: "top",
-                    duration: null,
-                    isClosable: true,
-                });
-            });
+            // uncomment to listen to push messages in the foreground
+            // log("subscribing to push messages", 0, true);
+            // let unsubscribeOnMessage = onMessage(messaging, (payload) => {
+            //     log("message received" + JSON.stringify(payload), 0, true);
+            //     toast({
+            //         title: payload.notification.title,
+            //         description: payload.notification.body,
+            //         status: "info",
+            //         position: "top",
+            //         duration: null,
+            //         isClosable: true,
+            //     });
+            // });
 
             return () => {
-                if (unsubscribeOnMessage) {
-                    log("unsubscribing from push messages");
-                    unsubscribeOnMessage();
-                }
+                // if (unsubscribeOnMessage) {
+                //     log("unsubscribing from push messages");
+                //     unsubscribeOnMessage();
+                // }
             };
         }
     }, [signInStatus?.signedIn, toast, setMessageToken, uid]);

@@ -483,7 +483,7 @@ const getUserCircleSettings = async (userId, circleId) => {
     return data?.circle_settings?.[circleId];
 };
 
-const sendMessageNotification = async (userId, circle, message) => {
+const sendMessageNotification = async (target, circle, message) => {
     // const newMessage = {
     //     circle_id: circleId,
     //     user,
@@ -495,7 +495,7 @@ const sendMessageNotification = async (userId, circle, message) => {
     //"[circle] Tim: Hey blah blah..." (number of unread messages)
 
     let notificationRef = null;
-    const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", userId).where("circle_id", "==", message.circle_id).get();
+    const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", target.id).where("circle_id", "==", message.circle_id).get();
     if (notificationsSnapshot.docs.length <= 0) {
         notificationRef = db.collection("chat_notifications").doc();
     } else {
@@ -504,7 +504,7 @@ const sendMessageNotification = async (userId, circle, message) => {
 
     const date = new Date();
     const newNotification = {
-        user_id: userId,
+        user_id: target.id,
         circle_id: message.circle_id,
         circle: circle,
         date: date,
@@ -513,7 +513,7 @@ const sendMessageNotification = async (userId, circle, message) => {
         last_message: message,
     };
 
-    let circleSettings = await getUserCircleSettings(userId, message.circle_id);
+    let circleSettings = await getUserCircleSettings(target.id, message.circle_id);
     if (circleSettings?.notifications === "off") {
         newNotification.unread_messages = 0;
         newNotification.is_seen = true;
@@ -521,6 +521,9 @@ const sendMessageNotification = async (userId, circle, message) => {
     }
 
     await notificationRef.set(newNotification, { merge: true });
+
+    // send push notification
+    await sendPushNotification(message.user, target, message.message, circle);
 };
 
 // returns true if source is administrator of target
@@ -1243,6 +1246,55 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
     }
 });
 
+// update circle settings for circle
+app.post("/circles/:id/settings", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const circleId = req.params.id;
+    const targetCircleId = req.body.circleId;
+    const settings = req.body.settings;
+
+    if (!circleId || !targetCircleId) {
+        return res.json({ error: "Invalid input" });
+    }
+
+    let newSettings = {};
+    if (settings.notifications) {
+        newSettings.notifications = settings.notifications;
+    }
+    if (typeof settings.favorite === "boolean") {
+        newSettings.favorite = settings.favorite;
+    }
+
+    if (Object.keys(newSettings).length === 0) {
+        return res.json({ error: "Invalid input" });
+    }
+
+    let circle = await getCircle(targetCircleId);
+    newSettings.circle = { id: circle.id, name: circle.name, picture: circle.picture }; // store basic info about circle
+
+    // verify user is authorized to change settings
+    const isAuthorized = await isAdminOf(authCallerId, circleId);
+    if (!isAuthorized) {
+        return res.status(403).json({ error: "unauthorized" });
+    }
+
+    // update setting for circle, this could be turning notifications on/off, adding circle as favorite, etc.
+    const userDataRef = db.collection("circle_data").doc(circleId);
+
+    let circle_settings = {
+        [targetCircleId]: newSettings,
+    };
+
+    await userDataRef.set(
+        {
+            circle_settings,
+        },
+        { merge: true }
+    );
+
+    return res.json({ message: "Ok" });
+});
+
 //#endregion
 
 //#region sign in & user
@@ -1473,7 +1525,7 @@ app.post("/chat_messages", auth, async (req, res) => {
                 // ignore notifying sender and non-users
                 continue;
             }
-            await sendMessageNotification(memberConnection.target.id, circle, newMessage);
+            await sendMessageNotification(memberConnection.target, circle, newMessage);
         }
 
         return res.json({ message: "Message sent" });
@@ -1630,37 +1682,6 @@ app.put("/chat_notifications", auth, async (req, res) => {
     }
 });
 
-// update chat notifications settings
-app.post("/chat_notification_settings", auth, async (req, res) => {
-    const authCallerId = req.user.user_id;
-    const circleId = req.body.circleId;
-    const settings = req.body.settings;
-
-    console.log("circleId:" + circleId);
-    console.log("settings:" + settings);
-    if (!circleId || (settings !== "on" && settings !== "off")) {
-        return res.json({ error: "Invalid input" });
-    }
-
-    // update user notificatin settings for circle
-    const userDataRef = db.collection("circle_data").doc(authCallerId);
-
-    let circle_settings = {
-        [circleId]: {
-            notifications: settings,
-        },
-    };
-
-    await userDataRef.set(
-        {
-            circle_settings,
-        },
-        { merge: true }
-    );
-
-    return res.json({ message: "Ok" });
-});
-
 //#endregion
 
 //#region notifications
@@ -1689,27 +1710,52 @@ app.put("/notifications", auth, async (req, res) => {
 
 //#region admin
 
-const sendMessage = async (senderId, receiverId, title, body) => {
-    const sender = await getCircle(senderId);
-    const circleData = await getCircleData(receiverId);
+const sendPushNotification = async (sender, receiver, message, circle) => {
+    if (typeof sender === "string") {
+        sender = await getCircle(sender);
+    }
+    if (typeof circle === "string") {
+        circle = await getCircle(circle);
+    }
+
+    let receiverId = typeof receiver === "string" ? receiver : receiver.id;
+    const receiverData = await getCircleData(receiverId);
 
     // loop through message tokens and send message
-    for (const messageToken of circleData.message_tokens) {
+    let messageTokens = receiverData.message_tokens ?? [];
+    for (const messageToken of messageTokens) {
         let messageData = {
             notification: {
-                title: title,
-                body: body,
-                //icon: sender.picture,
-                image: sender.picture,
-                //badge: "1",
-                //sound: "default",
-                //tag: // to group/replace existing notification in drawer
-                //click_action: "test",
+                title: circle.name,
+                body: sender.name + ": " + message,
+                image: circle.picture,
+            },
+            webpush: {
+                notification: {
+                    title: circle.name,
+                    body: sender.name + ": " + message,
+                    icon: circle.picture,
+                    click_action: "/circle/" + circle.id + "/chat",
+                },
             },
             token: messageToken.token,
         };
 
-        await admin.messaging().send(messageData);
+        try {
+            console.log("sending push notification to " + receiverId + " with token " + messageToken.token);
+            await admin.messaging().send(messageData);
+        } catch (error) {
+            functions.logger.error("Error while sending push notification:", error);
+            if (error.code === "messaging/invalid-registration-token" || error.code === "messaging/registration-token-not-registered") {
+                // remove invalid token
+                let userData = await getCircleData(receiverId);
+                let messageTokens = userData.message_tokens ?? [];
+                messageTokens = messageTokens.filter((x) => x.token !== messageToken.token);
+
+                const circleRef = db.collection("circle_data").doc(receiverId);
+                await circleRef.update({ message_tokens: messageTokens });
+            }
+        }
     }
 };
 
@@ -1732,8 +1778,8 @@ app.post("/update", auth, async (req, res) => {
             await deleteCircle(commandArgs[1]);
         } else if (commandArgs[0] === "send_test_message") {
             const circleId = commandArgs[1];
-            const randomNumber = Math.round(Math.random() * 1000);
-            await sendMessage(authCallerId, circleId, "test" + randomNumber, "test message" + randomNumber);
+            const message = commandArgs.slice(2).join(" ");
+            await sendPushNotification(authCallerId, circleId, message, authCallerId);
         } else if (commandArgs[0] === "update_circle_connections") {
             // this temporary command only needs to be run once
             // go through every connection and add it to source's list of connections

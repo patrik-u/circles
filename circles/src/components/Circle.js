@@ -23,7 +23,7 @@ import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsis
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import { useAtom } from "jotai";
 import {
@@ -258,6 +258,8 @@ export const Circle = () => {
                     <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
                 </Routes>
             </Flex>
+
+            <FloatingAddButton />
         </Flex>
     );
 };
