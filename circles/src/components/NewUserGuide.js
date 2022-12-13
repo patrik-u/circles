@@ -1,26 +1,13 @@
 //#region imports
-import React, { useState, useEffect, useContext, useMemo, lazy, Suspense } from "react";
-import { Flex, Box, Text, ModalContent, ModalBody, ModalCloseButton, Spinner, Button, Checkbox, useToast, HStack, VStack } from "@chakra-ui/react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack } from "@chakra-ui/react";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
 import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
 import PrivacyPolicy from "components/PrivacyPolicy";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    circleConnectionsAtom,
-    locationPickerActiveAtom,
-    locationPickerPositionAtom,
-} from "components/Atoms";
+import { userAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 //#endregion
 

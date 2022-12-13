@@ -1,23 +1,11 @@
 //#region imports
-import React, { useState, useEffect, useContext, lazy } from "react";
+import React, { useState, useEffect, lazy } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
 import { log } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    circleConnectionsAtom,
-    locationPickerActiveAtom,
-    locationPickerPositionAtom,
-} from "components/Atoms";
+import { useNavigateNoUpdates } from "components/RouterUtils";
+import { isMobileAtom, userAtom, signInStatusAtom, circleAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 //#endregion
 
@@ -31,19 +19,17 @@ export const CircleCreateNew = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [createdCircle, setCreatedCircle] = useState({});
     const [circle] = useAtom(circleAtom);
-    const [isInitialized, setIsInitialized] = useState(false);
     const [signInStatus] = useAtom(signInStatusAtom);
     const navigate = useNavigateNoUpdates();
-    const [user] = useAtom(userAtom);
     const [step, setStep] = useState(0);
 
-    const createCircleSteps = [
-        { label: i18n.t("Type") },
-        { label: i18n.t("about") },
-        { label: i18n.t("images") },
-        { label: i18n.t("Tags") },
-        { label: i18n.t("base") },
-    ];
+    // const createCircleSteps = [
+    //     { label: i18n.t("Type") },
+    //     { label: i18n.t("about") },
+    //     { label: i18n.t("images") },
+    //     { label: i18n.t("Tags") },
+    //     { label: i18n.t("base") },
+    // ];
 
     useEffect(() => {
         setStep(0);
@@ -71,7 +57,6 @@ export const CircleCreateNew = () => {
     const onCreateCircleUpdated = (updatedCircleData) => {
         setCreatedCircle((previusCreatedCircle) => ({ ...previusCreatedCircle, ...updatedCircleData }));
     };
-    log("CircleCreateNew: " + circle?.id + ", signedIn: " + signInStatus.signedIn);
 
     if (!circle?.id || !signInStatus.signedIn) return null;
 

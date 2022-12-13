@@ -1,5 +1,5 @@
 //#region imports
-import React, { useContext, forwardRef, useState, useEffect } from "react";
+import React, { forwardRef, useState, useEffect } from "react";
 import {
     Flex,
     Box,
@@ -14,15 +14,18 @@ import {
     PopoverTrigger,
     PopoverArrow,
     Button,
-    Spinner,
     Portal,
     CloseButton,
+    useToast,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem,
 } from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
 import {
-    log,
     getImageKitUrl,
     isConnectedOrPending,
     isConnected,
@@ -30,32 +33,116 @@ import {
     singleLineEllipsisStyle,
     twoLineEllipsisStyle,
     getCircleTypes,
+    toastInfo,
+    log,
 } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
-import { RiLinksLine } from "react-icons/ri";
+import { RiLinksLine, RiShareLine } from "react-icons/ri";
+import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
+import { QRCodeCanvas } from "qrcode.react";
 import { GrGallery } from "react-icons/gr";
 import { FaMapMarkedAlt } from "react-icons/fa";
-import { IoMap } from "react-icons/io5";
-import Scrollbars from "react-custom-scrollbars-2";
-import { atom, atomWithStorage, useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circleConnectionsAtom,
-    connectPopupAtom,
-    isConnectingAtom,
-} from "components/Atoms";
+import { useAtom } from "jotai";
+import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import axios from "axios";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
+import { IoIosLink } from "react-icons/io";
+import { ImQrcode } from "react-icons/im";
 //#endregion
+
+export const ShareButtonMenu = ({ children, referrer }) => {
+    const location = useLocationNoUpdates();
+    const [absoluteLocation, setAbsoluteLocation] = useState();
+    const [absoluteQrLocation, setAbsoluteQrLocation] = useState();
+    const toast = useToast();
+
+    const copyPageLink = () => {
+        navigator.clipboard.writeText(absoluteLocation).then(
+            function () {
+                toastInfo(toast, i18n.t("Copied to clipboard"));
+            },
+            function (err) {}
+        );
+    };
+
+    const downloadQrCode = () => {
+        // generate download with use canvas and stream
+        const canvas = document.getElementById("qr-code");
+        const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        let downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = `qr.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
+
+    useEffect(() => {
+        log("ShareButtonMenu.useEffect 1", -1);
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (referrer) {
+            urlParams.set("referrerId", referrer.id);
+        }
+
+        var hasParams = Array.from(urlParams).length > 0;
+        var urlWithParams = hasParams ? window.location.href.split("?")[0] + "?" + urlParams.toString() : window.location.href;
+
+        urlParams.set("qrCode", "true");
+        var urlWithQrParams = window.location.href.split("?")[0] + "?" + urlParams.toString();
+        setAbsoluteLocation((current) => urlWithParams);
+        setAbsoluteQrLocation((current) => urlWithQrParams);
+    }, [location, referrer]);
+
+    return (
+        <Menu closeOnBlur="true">
+            <MenuButton
+                as={Button}
+                rounded={"full"}
+                variant={"link"}
+                cursor={"pointer"}
+                minW={0}
+                position="absolute"
+                right="20px"
+                bottom="-40px"
+                overflow="hidden"
+                zIndex="1"
+            >
+                <Flex flexDirection="row" align="center">
+                    <RiShareLine size="24px" color="black" />
+                </Flex>
+            </MenuButton>
+            <MenuList alignItems={"center"} borderRadius="10" width={{ base: "100%", md: "250px" }} overflow="hidden">
+                <MenuItem>
+                    <FacebookShareButton url={absoluteLocation}>
+                        <HStack align="center">
+                            <FacebookIcon size={32} round />
+                            <Text>{i18n.t("Share on Facebook")}</Text>
+                        </HStack>
+                    </FacebookShareButton>
+                </MenuItem>
+                <MenuItem>
+                    <TwitterShareButton url={absoluteLocation}>
+                        <HStack align="center">
+                            <TwitterIcon size={32} round />
+                            <Text>{i18n.t("Share on Twitter")}</Text>
+                        </HStack>
+                    </TwitterShareButton>
+                </MenuItem>
+                <MenuItem icon={<IoIosLink size={28} />} onClick={copyPageLink}>
+                    {i18n.t("Copy link to page")}
+                </MenuItem>
+                <MenuItem icon={<ImQrcode size={28} />} onClick={downloadQrCode}>
+                    {i18n.t("Download QR code")}
+                    <QRCodeCanvas id="qr-code" size={400} includeMargin={true} value={absoluteQrLocation} hidden />
+                </MenuItem>
+            </MenuList>
+        </Menu>
+    );
+};
 
 export const FloatingAddButton = () => {
     const [circle] = useAtom(circleAtom);
@@ -322,7 +409,6 @@ export const QuickLinksPanel = () => {
 };
 
 export const CircleMembersPanel = () => {
-    const [isMobile] = useAtom(isMobileAtom);
     const [circle] = useAtom(circleAtom);
     const [circleConnections] = useAtom(circleConnectionsAtom);
     if (!circle?.id) return null;
@@ -352,7 +438,6 @@ export const CircleMembersPanel = () => {
 
 export const CircleRightPanel = ({ section }) => {
     const [isMobile] = useAtom(isMobileAtom);
-    const [circle] = useAtom(circleAtom);
 
     switch (section) {
         case "home":
@@ -762,7 +847,6 @@ export const getConnectLabel = (circleType, connectType) => {
 };
 
 export const ConnectButton = ({ circle, inHeader = false, ...props }) => {
-    const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [, setConnectPopup] = useAtom(connectPopupAtom);

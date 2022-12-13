@@ -1,21 +1,13 @@
 // #region imports
-import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
-import ReactFlow, { MiniMap, Controls, useNodesState, useEdgesState, addEdge, Handle, Position } from "reactflow";
-import { Box, Image, Input, Flex, InputGroup, InputLeftElement, SimpleGrid, Text, Button } from "@chakra-ui/react";
+import React, { useEffect } from "react";
+import { Box, Image, Flex, SimpleGrid, Text } from "@chakra-ui/react";
 import { CirclePicture } from "components/CircleElements";
 import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers";
 import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
-import { HiOutlineSearch } from "react-icons/hi";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom, messageTokenAtom } from "components/Atoms";
-import { auth } from "components/Firebase";
-import { signOut } from "firebase/auth";
-import config from "Config";
-import CircleListItem from "components/CircleListItem";
+import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom } from "components/Atoms";
 import CircleSearchBox from "components/CircleSearch";
-import algoliasearch from "algoliasearch/lite";
-import { InstantSearch, SearchBox, Hits, RefinementList, useInstantSearch, useSearchBox } from "react-instantsearch-hooks-web";
 // #endregion
 
 export const Home = () => {

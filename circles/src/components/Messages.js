@@ -1,18 +1,17 @@
 //#region imports
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
 import { AiOutlineMessage } from "react-icons/ai";
-import { timeSince, fromFsDate, log, singleLineEllipsisStyle, isConnected } from "components/Helpers";
+import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "components/Helpers";
 import { openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, circleAtom, chatCircleAtom } from "components/Atoms";
-import db, { auth } from "components/Firebase";
-import { signOut } from "firebase/auth";
+import { isMobileAtom, userAtom, chatCircleAtom } from "components/Atoms";
+import db from "components/Firebase";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
 

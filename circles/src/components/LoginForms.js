@@ -1,15 +1,11 @@
 /* global google */
 //#region imports
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-    Flex,
     Box,
     Text,
-    Menu,
     Image,
-    MenuButton,
     Button,
-    MenuList,
     useToast,
     HStack,
     VStack,
@@ -28,29 +24,17 @@ import {
     ModalBody,
     ModalFooter,
     Link,
-    useOutsideClick,
-    Fade,
 } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
-import db, { auth } from "./Firebase";
-import {
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signInWithCredential,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendPasswordResetEmail,
-} from "firebase/auth";
+import { auth } from "./Firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import axios from "axios";
-import { isMobile as detectIsMobile } from "react-device-detect";
-import { collection, doc, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { Routes, Route, useNavigate, useHistory, useLocation, match, matchPath, useMatch, matchRoutes } from "react-router-dom";
 import i18n from "i18n/Localization";
 import { toastError, toastSuccess, validateEmail, validatePassword, log } from "./Helpers";
 import { Form, Field, Formik } from "formik";
 import { BiHide, BiShow } from "react-icons/bi";
 
-import { atom, atomWithStorage, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, userAtom } from "./Atoms";
 import useScript from "./useScript";
 //#endregion
@@ -62,7 +46,7 @@ export const LoginRegisterMenu = () => {
 
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [user, setUser] = useAtom(userAtom);
+    const [user] = useAtom(userAtom);
 
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";

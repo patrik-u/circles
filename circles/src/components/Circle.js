@@ -1,25 +1,9 @@
 //#region imports
-import React, { useEffect, useContext, lazy, Suspense, useMemo } from "react";
-import {
-    Flex,
-    Box,
-    Text,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    Button,
-    useToast,
-    HStack,
-    useDisclosure,
-    Image,
-} from "@chakra-ui/react";
+import React, { useEffect, lazy } from "react";
+import { Flex, Box } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
-import { log, fromFsDate, getDateWithoutTime, getImageKitUrl, singleLineEllipsisStyle, getDefaultCirclePicture, isConnected } from "components/Helpers";
+import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
 
@@ -58,8 +42,8 @@ export const Circle = () => {
     const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
     const [circle, setCircle] = useAtom(circleAtom);
     const [displayMode] = useAtom(displayModeAtom);
-    const [circles, setCircles] = useAtom(circlesAtom);
-    const [circleConnections, setCircleConnections] = useAtom(circleConnectionsAtom);
+    const [, setCircles] = useAtom(circlesAtom);
+    const [, setCircleConnections] = useAtom(circleConnectionsAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
 

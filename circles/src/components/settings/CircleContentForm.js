@@ -1,7 +1,7 @@
 //#region imports
-import { useContext, useRef, useState, forwardRef, useEffect, useMemo, lazy } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Form, Field, Formik } from "formik";
-import MultiSelect, { components } from "react-select";
+import { components } from "react-select";
 import Select from "react-select";
 import {
     Box,
@@ -12,64 +12,25 @@ import {
     Textarea,
     FormErrorMessage,
     Flex,
-    Spinner,
     InputGroup,
     HStack,
     VStack,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalBody,
-    ModalCloseButton,
     Text,
-    Image,
-    Icon,
     Checkbox,
     Button,
     Select as ChakraSelect,
-    RadioGroup,
-    Stack,
-    Radio,
-    StackDivider,
     useToast,
-    useDisclosure,
 } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
-import { Scrollbars } from "react-custom-scrollbars-2";
-import { FiFile } from "react-icons/fi";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { GeoPoint } from "firebase/firestore";
-import { db, storage } from "components/Firebase";
-import { toastError, toastSuccess, singleLineEllipsisStyle, log, adminCircles, combineDateAndTime } from "components/Helpers";
+import { adminCircles, combineDateAndTime } from "components/Helpers";
 
-import { routes } from "components/Navigation";
-import { ConnectionNotification } from "components/Notifications";
 import axios from "axios";
 import { i18n, LanguagePicker } from "i18n/Localization";
 import ReactQuill from "react-quill";
 import DatePicker from "react-datepicker";
 import { DatePickerInput } from "components/CircleElements";
-import { WithContext as ReactTags } from "react-tag-input";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { RiLinksLine, RiDeleteBinLine } from "react-icons/ri";
-import { AiOutlineEdit } from "react-icons/ai";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    circleConnectionsAtom,
-    locationPickerActiveAtom,
-    locationPickerPositionAtom,
-    requestUserConnectionsAtom,
-    userConnectionsAtom,
-} from "components/Atoms";
+import { userAtom, requestUserConnectionsAtom, userConnectionsAtom } from "components/Atoms";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
 import CircleListItem from "components/CircleListItem";

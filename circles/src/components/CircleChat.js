@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Box,
     Textarea,
@@ -30,10 +30,9 @@ import useWindowDimensions from "components/useWindowDimensions";
 import i18n from "i18n/Localization";
 import db from "components/Firebase";
 import axios from "axios";
-import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getImageKitUrl } from "components/Helpers";
+import { getDayAndMonth, datesAreOnSameDay, log, isConnected } from "components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
-import { CircleHeader, CirclePicture } from "components/CircleElements";
-import { routes } from "components/Navigation";
+import { CirclePicture } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { BsReplyFill } from "react-icons/bs";
@@ -43,7 +42,7 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom, chatCircleAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom } from "components/Atoms";
 //#endregion
 
 export const CircleChat = () => {
@@ -52,11 +51,11 @@ export const CircleChat = () => {
     const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
 
-    const [chatCircle, setChatCircle] = useAtom(chatCircleAtom);
+    const [, setChatCircle] = useAtom(chatCircleAtom);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
     const [chatMessages, setChatMessages] = useState([]);
     const [message, setMessage] = useState("");
-    const [isSending, setIsSending] = useState(false);
+    const [, setIsSending] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
     const [scrollToLast, setScrollToLast] = useState(true);
     const [scrollToLastSmooth, setScrollToLastSmooth] = useState(false);
@@ -64,9 +63,8 @@ export const CircleChat = () => {
     const scrollLastRef = useRef();
     const scrollbarsRef = useRef();
     const toast = useToast();
-    const navigate = useNavigate();
     const [isAuthorized, setIsAuthorized] = useState(true);
-    const [caretIndex, setCaretIndex] = useState(0);
+    const [, setCaretIndex] = useState(0);
     const textAreaRef = useRef();
     const { windowWidth, windowHeight } = useWindowDimensions();
 

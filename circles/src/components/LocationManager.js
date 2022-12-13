@@ -1,18 +1,8 @@
 //#region imports
-import { useEffect, useState, useCallback } from "react";
-import { useToast } from "@chakra-ui/react";
-import db, { auth } from "components/Firebase";
-import * as Sentry from "@sentry/react";
-import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
-import axios from "axios";
-import { toastError, log } from "components/Helpers";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
-import i18n from "i18n/Localization";
+import { useEffect, useCallback } from "react";
+import { log } from "components/Helpers";
 import { useAtom } from "jotai";
-import { signInStatusValues } from "components/Constants";
-import { uidAtom, userAtom, userDataAtom, signInStatusAtom, userConnectionsAtom, requestUserConnectionsAtom, userLocationAtom } from "components/Atoms";
-import config from "Config";
-import useScript from "components/useScript";
+import { userLocationAtom } from "components/Atoms";
 import { getPreciseDistance } from "geolib";
 //#endregion
 

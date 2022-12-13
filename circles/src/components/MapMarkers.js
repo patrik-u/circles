@@ -1,14 +1,14 @@
 //#region imports
-import React, { useContext, lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, mapNavigateTo, getLngLatArray, getImageKitUrl } from "components/Helpers";
+import { lat, lng, getLngLatArray, getImageKitUrl } from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
-import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
+import { userAtom } from "components/Atoms";
+import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
 
 export const LocationPickerMarker = ({ position }) => {

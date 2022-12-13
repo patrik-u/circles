@@ -1,28 +1,13 @@
 //#region imports
-import React, { useEffect, useContext, lazy } from "react";
-import { Box, Flex, Text, useToast } from "@chakra-ui/react";
+import React, { lazy } from "react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import i18n from "i18n/Localization";
-import { log } from "components/Helpers";
 import { Routes, Route, matchPath } from "react-router-dom";
-import { CircleHeader } from "components/CircleElements";
 import { routes } from "components/Navigation";
-import { defaultContentWidth } from "components/Constants";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    displayModeAtom,
-    showNetworkLogoAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesAtom,
-    circleConnectionsAtom,
-    locationPickerActiveAtom,
-    locationPickerPositionAtom,
-} from "components/Atoms";
+import { isMobileAtom, circleAtom } from "components/Atoms";
 //#endregion
 
 const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));

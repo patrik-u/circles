@@ -1,16 +1,15 @@
 //#region imports
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { Flex, Box, VStack, Text, Image, Icon } from "@chakra-ui/react";
-import { useLocation, matchPath } from "react-router-dom";
+import { matchPath } from "react-router-dom";
 import { hasUpdates, getImageKitUrl } from "components/Helpers";
-import { openCircle, getNavigationItems, shouldShowNavItem } from "components/Navigation";
+import { getNavigationItems, shouldShowNavItem } from "components/Navigation";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, signInStatusAtom, circleAtom } from "components/Atoms";
+import { userAtom, userDataAtom, circleAtom } from "components/Atoms";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 //#endregion
 
 export const LeftMenu = ({ ...props }) => {
-    const [isMobile] = useAtom(isMobileAtom);
     const [circle] = useAtom(circleAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -20,7 +19,7 @@ export const LeftMenu = ({ ...props }) => {
     const isMatch = getNavigationItems(circle?.id, user?.is_admin)
         .filter((x) => shouldShowNavItem(x, circle, userData))
         .map((navItem) => matchPath(navItem.matchSubPaths ? navItem.route + "/*" : navItem.route, location.pathname) != null);
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded] = useState(true);
     const expandedSize = 200; //72;
     const expandedSizePx = expandedSize + "px";
 
