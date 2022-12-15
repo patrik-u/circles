@@ -51,7 +51,7 @@ if (config.environment === "prod") {
             }
             return event;
         },
-        release: "circles@0.2.0",
+        release: `${process.env.REACT_APP_NAME}@${process.env.REACT_APP_VERSION}`,
         environment: config.environment,
         integrations: [new Integrations.BrowserTracing()],
 
@@ -83,7 +83,11 @@ root.render(
     </Router>
 );
 
-serviceWorkerRegistration.register();
+try {
+    serviceWorkerRegistration.register();
+} catch (error) {
+    console.log(error);
+}
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

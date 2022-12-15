@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useToast } from "@chakra-ui/react";
 import { messaging } from "components/Firebase";
 import { getToken } from "firebase/messaging";
+import { isSupported } from "firebase/messaging";
 import axios from "axios";
 import { log } from "components/Helpers";
 import { useAtom } from "jotai";
@@ -36,18 +37,26 @@ export const PushNotificationsManager = () => {
                 if (permission === "granted") {
                     log("Notification permission granted.");
 
-                    // get messaging token
-                    getToken(messaging).then((token) => {
-                        // TODO register token in db?
-                        log("messaging token: " + token);
-                        setMessageToken(token);
+                    try {
+                        isSupported().then((supported) => {
+                            if (!supported) return;
 
-                        // only register token in prod
-                        if (config.environment === "prod") {
-                            // update message token in db
-                            axios.post(`/messageToken`, { messageToken: token });
-                        }
-                    });
+                            // get messaging token
+                            getToken(messaging).then((token) => {
+                                // TODO register token in db?
+                                log("messaging token: " + token);
+                                setMessageToken(token);
+
+                                // only register token in prod
+                                if (config.environment === "prod") {
+                                    // update message token in db
+                                    axios.post(`/messageToken`, { messageToken: token });
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        log("error getting messaging token: " + error);
+                    }
                 } else if (permission === "denied") {
                     log("Permission for Notifications was denied");
                 }
