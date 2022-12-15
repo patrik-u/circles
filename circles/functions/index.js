@@ -9,6 +9,7 @@ const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 const linkify = require("linkifyjs");
+const { Configuration, OpenAIApi } = require("openai");
 
 admin.initializeApp();
 
@@ -1759,6 +1760,33 @@ const sendPushNotification = async (sender, receiver, message, circle) => {
     }
 };
 
+app.post("/openai", auth, async (req, res) => {
+    let config = await getConfig();
+    const authCallerId = req.user.user_id;
+    const model = req.body.model;
+    const prompt = req.body.prompt;
+    const temperature = req.body.temperature;
+    const max_tokens = req.body.max_tokens;
+
+    if (!config.admins.includes(authCallerId)) {
+        return res.status(403).json({ error: "unauthorized" });
+    }
+
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    const response = await openai.createCompletion({
+        model: "text-davinci-003", // model
+        prompt: "Write a short poem about creativity", // prompt,
+        temperature: 0, //temperature, //0,
+        max_tokens: 500, // max_tokens,
+    });
+
+    return res.json(response.data);
+});
+
 // performs system updates/upgrades
 app.post("/update", auth, async (req, res) => {
     let config = await getConfig();
@@ -1776,6 +1804,24 @@ app.post("/update", auth, async (req, res) => {
         // go through all connections and add circle_types array
         if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
+        } else if (commandArgs[0] === "openai") {
+            const max_tokens = parseInt(commandArgs[1]);
+            const temperature = parseFloat(commandArgs[2]);
+            const prompt = commandArgs.slice(3).join(" ");
+
+            const configuration = new Configuration({
+                apiKey: process.env.OPENAI,
+            });
+
+            const openai = new OpenAIApi(configuration);
+            const response = await openai.createCompletion({
+                model: "text-davinci-003", // model
+                prompt: prompt, // prompt,
+                temperature: temperature, //0,
+                max_tokens: max_tokens,
+            });
+
+            return res.json(response.data);
         } else if (commandArgs[0] === "send_test_message") {
             const circleId = commandArgs[1];
             const message = commandArgs.slice(2).join(" ");
@@ -2083,6 +2129,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
+    secrets: ["OPENAI"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);

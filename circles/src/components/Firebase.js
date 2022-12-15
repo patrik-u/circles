@@ -7,10 +7,19 @@ import config from "../Config";
 
 // Initialize Firebase
 const app = initializeApp(config.firebase);
+
+const getFirebaseMessaging = () => {
+    try {
+        return getMessaging(app);
+    } catch {
+        return null;
+    }
+};
+
 export const auth = getAuth();
 export const db = getFirestore();
 export const storage = getStorage(app);
-export const messaging = getMessaging(app);
-auth.languageCode = "se";
+export const messaging = getFirebaseMessaging();
+//auth.languageCode = "se";
 
 export default db;
