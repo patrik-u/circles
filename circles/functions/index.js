@@ -10,6 +10,7 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 const linkify = require("linkifyjs");
 const { Configuration, OpenAIApi } = require("openai");
+const OneSignal = require("onesignal-node");
 
 admin.initializeApp();
 
@@ -23,6 +24,21 @@ const app = express();
 app.use(cors());
 
 const db = admin.firestore();
+
+//const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+// const oneSignalApiKeyProvider = {
+//     getToken() {
+//         return process.env.ONESIGNAL_API_KEY;
+//     },
+// };
+// const oneSignalConfiguration = OneSignal.createConfiguration({
+//     authMethods: {
+//         app_key: {
+//             tokenProvider: oneSignalApiKeyProvider,
+//         },
+//     },
+// });
+// const oneSignalClient = new OneSignal.DefaultApi(oneSignalConfiguration);
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -484,7 +500,7 @@ const getUserCircleSettings = async (userId, circleId) => {
     return data?.circle_settings?.[circleId];
 };
 
-const sendMessageNotification = async (target, circle, message) => {
+const sendMessageNotification = async (target, circle, message, bigPicture) => {
     // const newMessage = {
     //     circle_id: circleId,
     //     user,
@@ -524,7 +540,7 @@ const sendMessageNotification = async (target, circle, message) => {
     await notificationRef.set(newNotification, { merge: true });
 
     // send push notification
-    await sendPushNotification(message.user, target, message.message, circle);
+    await sendPushNotification(message.user, target, message.message, circle, bigPicture);
 };
 
 // returns true if source is administrator of target
@@ -1346,38 +1362,38 @@ app.get("/signin", auth, async (req, res) => {
     }
 });
 
-app.post("/messageToken", auth, async (req, res) => {
+app.post("/registerOneSignalUserId", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
-    const messageToken = req.body.messageToken;
+    const userId = req.body.userId;
 
-    if (!messageToken) {
+    if (!userId) {
         return res.json({ error: "Invalid input" });
     }
 
     try {
         const userData = await getCircleData(authCallerId);
 
-        let messageTokens = userData.message_tokens ?? [];
-        if (messageTokens.some((x) => x.token === messageToken)) {
-            // update token
-            messageTokens = messageTokens.map((x) => {
-                if (x.token === messageToken) {
+        let oneSignalIds = userData.onesignal_ids ?? [];
+        if (oneSignalIds.some((x) => x.user_id === userId)) {
+            // update updated_at
+            oneSignalIds = oneSignalIds.map((x) => {
+                if (x.user_id === userId) {
                     x.updated_at = new Date();
                 }
                 return x;
             });
         } else {
-            // add new token
+            // add new one signal id
             let created_at = new Date();
-            messageTokens.push({ token: messageToken, created_at: created_at, updated_at: created_at });
+            oneSignalIds.push({ user_id: userId, created_at: created_at, updated_at: created_at });
         }
 
         const circleRef = db.collection("circle_data").doc(authCallerId);
-        await circleRef.update({ message_tokens: messageTokens });
+        await circleRef.update({ onesignal_ids: oneSignalIds });
 
         return res.json({ message: "Ok" });
     } catch (error) {
-        functions.logger.error("Error setting message token:", error);
+        functions.logger.error("Error setting message one OneSignal user id:", error);
         return res.json({ error: error });
     }
 });
@@ -1517,18 +1533,18 @@ app.post("/chat_messages", auth, async (req, res) => {
         setUserSeen(authCallerId, circleId, "chat");
 
         // check if message contains link and add preview image
-        addPreviewImages(chatMessageRef, links);
-
-        // send notification to all users connected to circle
-        let memberConnections = await getMemberConnections(circleId);
-        for (var memberConnection of memberConnections) {
-            if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
-                // ignore notifying sender and non-users
-                continue;
-            }
-            await sendMessageNotification(memberConnection.target, circle, newMessage);
-        }
-
+        addPreviewImages(chatMessageRef, links).then((previewImage) => {
+            // send notification to all users connected to circle
+            getMemberConnections(circleId).then((memberConnections) => {
+                for (var memberConnection of memberConnections) {
+                    if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
+                        // ignore notifying sender and non-users
+                        continue;
+                    }
+                    sendMessageNotification(memberConnection.target, circle, newMessage, previewImage);
+                }
+            });
+        });
         return res.json({ message: "Message sent" });
     } catch (error) {
         functions.logger.error("Error while trying to send chat message:", error);
@@ -1611,6 +1627,7 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
 
 // check if message contains link and adds preview image
 const addPreviewImages = async (chatMessageRef, links) => {
+    let previewImage = null;
     // add preview images
     const metaData = [];
     for (const link of links) {
@@ -1630,12 +1647,18 @@ const addPreviewImages = async (chatMessageRef, links) => {
                     url: linkUrl,
                 });
             }
+
+            if (linkPreview?.images?.length > 0) {
+                previewImage = linkPreview.images[0];
+            }
         }
     }
 
     if (metaData.length > 0) {
         await chatMessageRef.update({ meta_data: metaData });
     }
+
+    return previewImage;
 };
 
 // #endregion
@@ -1711,7 +1734,7 @@ app.put("/notifications", auth, async (req, res) => {
 
 //#region admin
 
-const sendPushNotification = async (sender, receiver, message, circle) => {
+const sendPushNotification = async (sender, receiver, message, circle, bigPicture) => {
     if (typeof sender === "string") {
         sender = await getCircle(sender);
     }
@@ -1722,69 +1745,97 @@ const sendPushNotification = async (sender, receiver, message, circle) => {
     let receiverId = typeof receiver === "string" ? receiver : receiver.id;
     const receiverData = await getCircleData(receiverId);
 
-    // loop through message tokens and send message
-    let messageTokens = receiverData.message_tokens ?? [];
-    for (const messageToken of messageTokens) {
-        let messageData = {
-            notification: {
-                title: circle.name,
-                body: sender.name + ": " + message,
-                image: circle.picture,
-            },
-            webpush: {
-                notification: {
-                    title: circle.name,
-                    body: sender.name + ": " + message,
-                    icon: circle.picture,
-                    click_action: "/circle/" + circle.id + "/chat",
-                },
-            },
-            token: messageToken.token,
-        };
+    if (!receiverData.onesignal_ids || receiverData.onesignal_ids.length === 0) {
+        return;
+    }
 
-        try {
-            console.log("sending push notification to " + receiverId + " with token " + messageToken.token);
-            await admin.messaging().send(messageData);
-        } catch (error) {
-            functions.logger.error("Error while sending push notification:", error);
-            if (error.code === "messaging/invalid-registration-token" || error.code === "messaging/registration-token-not-registered") {
-                // remove invalid token
-                let userData = await getCircleData(receiverId);
-                let messageTokens = userData.message_tokens ?? [];
-                messageTokens = messageTokens.filter((x) => x.token !== messageToken.token);
+    const config = await getConfig();
+    let hostUrl = config.host_url;
+    hostUrl += hostUrl.endsWith("/") ? "" : "/";
+    const url = `${hostUrl}/circle/${circle.id}`;
 
-                const circleRef = db.collection("circle_data").doc(receiverId);
-                await circleRef.update({ message_tokens: messageTokens });
-            }
+    const notification = {
+        //included_segments: ["Subscribed Users"], // can be used instead of include_player_ids to send to every user in a segment
+        contents: {
+            en: sender.name + ": " + message,
+        },
+        headings: {
+            en: circle.name,
+        },
+        url: url,
+        // web_buttons: [
+        //     {
+        //         id: "open_circle",
+        //         text: "Open Circle",
+        //         icon: "https://www.google.com/favicon.ico",
+        //         url: "https://www.google.com",
+        //     },
+        // ],
+        include_player_ids: receiverData.onesignal_ids.map((x) => x.user_id),
+        //android_channel_id: "Chat", // here we can set up channel id to allow android users to turn specific categories on/off, this requires configuration in the OneSignal dashboard, see: https://documentation.onesignal.com/docs/android-notification-categories
+        //small_icon: // here we can configure the tiny icon that shows in the status bar of message (default is a bell icon)
+        android_group: circle.id, // android grouping of messages
+        collapse_id: circle.id + sender.id, // ensures only one message per circle per sender will be shown on a device at any point
+        thread_id: circle.id, //iOS grouping
+        priority: 10, // 10 = high priority, 5 = normal priority
+    };
+
+    if (bigPicture) {
+        notification.big_picture = bigPicture;
+        notification.huawei_big_picture = bigPicture;
+        notification.chrome_web_image = bigPicture;
+    }
+    if (circle.picture) {
+        notification.large_icon = circle.picture;
+        notification.chrome_web_icon = circle.picture;
+        notification.firefox_icon = circle.picture;
+        notification.huawei_large_icon = circle.picture;
+    }
+
+    functions.logger.log("attempting to send notification, click_action:" + url);
+
+    try {
+        functions.logger.log("onesignal-app-id: " + process.env.ONESIGNAL_APP_ID);
+        functions.logger.log("onesignal-api-key: " + process.env.ONESIGNAL_API_KEY?.substring(0, 5));
+
+        const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+        const res = await oneSignalClient.createNotification(notification);
+        console.log("push notification sent, response: ", res);
+    } catch (error) {
+        if (error instanceof OneSignal.HTTPError) {
+            console.log(error.statusCode);
+            console.log(error.body);
         }
     }
 };
 
 app.post("/openai", auth, async (req, res) => {
-    let config = await getConfig();
-    const authCallerId = req.user.user_id;
-    const model = req.body.model;
-    const prompt = req.body.prompt;
-    const temperature = req.body.temperature;
-    const max_tokens = req.body.max_tokens;
+    // see update method for how open AI is used
+    // let config = await getConfig();
+    // const authCallerId = req.user.user_id;
+    // const model = req.body.model;
+    // const prompt = req.body.prompt;
+    // const temperature = req.body.temperature;
+    // const max_tokens = req.body.max_tokens;
 
-    if (!config.admins.includes(authCallerId)) {
-        return res.status(403).json({ error: "unauthorized" });
-    }
+    // if (!config.admins.includes(authCallerId)) {
+    //     return res.status(403).json({ error: "unauthorized" });
+    // }
 
-    const configuration = new Configuration({
-        apiKey: process.env.OPENAI,
-    });
+    // const configuration = new Configuration({
+    //     apiKey: process.env.OPENAI,
+    // });
 
-    const openai = new OpenAIApi(configuration);
-    const response = await openai.createCompletion({
-        model: "text-davinci-003", // model
-        prompt: "Write a short poem about creativity", // prompt,
-        temperature: 0, //temperature, //0,
-        max_tokens: 500, // max_tokens,
-    });
+    // const openai = new OpenAIApi(configuration);
+    // const response = await openai.createCompletion({
+    //     model: "text-davinci-003", // model
+    //     prompt: "Write a short poem about creativity", // prompt,
+    //     temperature: 0, //temperature, //0,
+    //     max_tokens: 500, // max_tokens,
+    // });
 
-    return res.json(response.data);
+    //return res.json(response.data);
+    return res.json({});
 });
 
 // performs system updates/upgrades
@@ -2129,7 +2180,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI"],
+    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);
