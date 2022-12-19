@@ -1,14 +1,13 @@
 //#region imports
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import { messaging } from "components/Firebase";
-import { getToken } from "firebase/messaging";
-import { isSupported } from "firebase/messaging";
 import axios from "axios";
 import { log } from "components/Helpers";
 import { useAtom } from "jotai";
-import { uidAtom, signInStatusAtom, messageTokenAtom } from "components/Atoms";
+import { uidAtom, signInStatusAtom, messageTokenAtom, userDataAtom } from "components/Atoms";
 import config from "Config";
+import OneSignal from "react-onesignal";
+import { useLocation } from "react-router-dom";
 //#endregion
 
 // asks permission for user location and updates it
@@ -17,50 +16,33 @@ export const PushNotificationsManager = () => {
 
     const [signInStatus] = useAtom(signInStatusAtom);
     const [uid] = useAtom(uidAtom);
+    const [userData] = useAtom(userDataAtom);
     const [, setMessageToken] = useAtom(messageTokenAtom);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [isUserIdReported, setIsUserIdReported] = useState(false);
     const toast = useToast();
+    const location = useLocation();
 
     //#region useEffects
 
     useEffect(() => {
         log("PushNotificationsManager.useEffect", -1);
-        if (signInStatus.signedIn) {
-            if (!("Notification" in window)) {
-                // browser does't support notifications
-                log("Browser does't support notifications");
-                return;
-            }
+        if (!signInStatus.signedIn || isInitialized) {
+            return;
+            //     // browser does't support notifications
+            //     log("Browser does't support notifications");
+            //     return;
+            // }
 
             //if (Notification.permission !== "granted") {
-            log("Asking for permission to receive notifications");
-            Notification.requestPermission().then((permission) => {
-                if (permission === "granted") {
-                    log("Notification permission granted.");
-
-                    try {
-                        isSupported().then((supported) => {
-                            if (!supported) return;
-
-                            // get messaging token
-                            getToken(messaging).then((token) => {
-                                // TODO register token in db?
-                                log("messaging token: " + token);
-                                setMessageToken(token);
-
-                                // only register token in prod
-                                if (config.environment === "prod") {
-                                    // update message token in db
-                                    axios.post(`/messageToken`, { messageToken: token });
-                                }
-                            });
-                        });
-                    } catch (error) {
-                        log("error getting messaging token: " + error);
-                    }
-                } else if (permission === "denied") {
-                    log("Permission for Notifications was denied");
-                }
-            });
+            // log("Asking for permission to receive notifications");
+            // Notification.requestPermission().then((permission) => {
+            //     if (permission === "granted") {
+            //         log("Notification permission granted.");
+            //     } else if (permission === "denied") {
+            //         log("Permission for Notifications was denied");
+            //     }
+            // });
 
             // uncomment to listen to push messages in the foreground
             // log("subscribing to push messages", 0, true);
@@ -75,15 +57,55 @@ export const PushNotificationsManager = () => {
             //         isClosable: true,
             //     });
             // });
-
-            return () => {
-                // if (unsubscribeOnMessage) {
-                //     log("unsubscribing from push messages");
-                //     unsubscribeOnMessage();
-                // }
-            };
         }
-    }, [signInStatus?.signedIn, toast, setMessageToken, uid]);
+
+        // OneSignal.on("subscriptionChange", (isSubscribed) => {
+        //     log("Subscription changed fired, value: " + isSubscribed, 0, true);
+        //     if (isSubscribed) {
+        //         OneSignal.getUserId((userId) => {
+        //             log("player_id of the subscribed user is : " + userId, 0, true);
+        //             // Make a POST call to your server with the user ID
+        //             axios.post(`/registerOneSignalUserId`, { userId: userId });
+        //         });
+        //     }
+        // });
+
+        // OneSignal.isPushNotificationsEnabled((isEnabled) => {
+        //     log("isPusnNotificationsEnabled, value:" + isEnabled, 0, true);
+        //     if (isEnabled) {
+        //         // user has subscribed
+        //         OneSignal.getUserId((userId) => {
+        //             log("player_id of the subscribed user is : " + userId, 0, true);
+        //             // Make a POST call to your server with the user ID
+        //             axios.post(`/registerOneSignalUserId`, { userId: userId });
+        //         });
+        //     }
+        // });
+
+        // initialize onesignal
+        log("**** initializing onesignal ****", 0, true);
+        OneSignal.init({ appId: config.oneSignalAppId }).then(() => {
+            log("OneSignal initialized", 0, true);
+            setIsInitialized(true);
+        });
+    }, [signInStatus?.signedIn, toast, setMessageToken, uid, isInitialized]);
+
+    useEffect(() => {
+        if (isUserIdReported) return;
+
+        OneSignal.isPushNotificationsEnabled((isEnabled) => {
+            log("isPusnNotificationsEnabled, value:" + isEnabled, 0, true);
+            if (isEnabled) {
+                // user has subscribed
+                OneSignal.getUserId((userId) => {
+                    log("player_id of the subscribed user is : " + userId, 0, true);
+                    // Make a POST call to your server with the user ID
+                    axios.post(`/registerOneSignalUserId`, { userId: userId });
+                    setIsUserIdReported(true);
+                });
+            }
+        });
+    }, [location, isUserIdReported]);
 
     //#endregion
 

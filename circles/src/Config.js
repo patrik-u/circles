@@ -16,7 +16,8 @@ const configs = {
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",
-        alwaysShowGuide: true,
+        alwaysShowGuide: false,
+        oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
     },
     staging: {
         environment: "staging",
@@ -35,6 +36,7 @@ const configs = {
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",
+        oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
     },
     prod: {
         environment: "prod",
@@ -53,6 +55,7 @@ const configs = {
         algoliaId: "DMKZGLF95G",
         algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
         algoliaCirclesIndex: "circles",
+        oneSignalAppId: "--- insert prod app id ---",
     },
     devprod: {
         environment: "devprod",
@@ -71,6 +74,7 @@ const configs = {
         algoliaId: "DMKZGLF95G",
         algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
         algoliaCirclesIndex: "circles",
+        oneSignalAppId: "--- insert prod app id ---",
     },
 };
 
