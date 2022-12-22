@@ -499,19 +499,6 @@ export const CircleChat = () => {
                                                                     maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
                                                                     overflow="hidden"
                                                                 >
-                                                                    {/* {item.user.id !== user.id && item.isFirst && (
-                                                        <Box marginRight="auto">
-                                                            <Text
-                                                                className="circle-list-title"
-                                                                paddingLeft="7px"
-                                                                lineHeight="14px"
-                                                                fontSize="14px"
-                                                                fontWeight="700"
-                                                            >
-                                                                {item.user.name}
-                                                            </Text>
-                                                        </Box>
-                                                    )} */}
                                                                     <Box
                                                                         borderRadius={`${item.isFirst ? "10px" : "0px"} 10px 10px ${
                                                                             item.isLast ? "10px" : "0px"
@@ -542,19 +529,40 @@ export const CircleChat = () => {
                                                                         )}
 
                                                                         <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
-                                                                            <Box
-                                                                                className="circle-list-title"
-                                                                                paddingRight="10px"
-                                                                                lineHeight="20px"
-                                                                                fontSize="14px"
-                                                                            >
-                                                                                <div
-                                                                                    className="embedChatHtmlContent"
-                                                                                    dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                                                />
-                                                                            </Box>
+                                                                            {!item.is_ai_prompt && (
+                                                                                <Box
+                                                                                    className="circle-list-title"
+                                                                                    paddingRight="10px"
+                                                                                    lineHeight="20px"
+                                                                                    fontSize="14px"
+                                                                                >
+                                                                                    <div
+                                                                                        className="embedChatHtmlContent"
+                                                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
+                                                                                    />
+                                                                                </Box>
+                                                                            )}
 
                                                                             {item.meta_data?.map((meta, i) => renderMetaData(meta, i))}
+
+                                                                            {item.is_ai_prompt && (
+                                                                                <Box paddingRight="10px" lineHeight="20px" fontSize="14px">
+                                                                                    <Text>
+                                                                                        <b>/ai</b> {item.message}
+                                                                                    </Text>
+
+                                                                                    {item.openai_response?.choices?.[0]?.text && (
+                                                                                        <Box fontSize="14px" borderLeft="3px solid #f15bee" paddingLeft="5px">
+                                                                                            <div
+                                                                                                className="embedChatHtmlContent"
+                                                                                                dangerouslySetInnerHTML={{
+                                                                                                    __html: item.openai_response?.choices?.[0]?.text,
+                                                                                                }}
+                                                                                            />
+                                                                                        </Box>
+                                                                                    )}
+                                                                                </Box>
+                                                                            )}
 
                                                                             {item.isLast && (
                                                                                 <Box paddingBottom="4px" paddingTop="2px">
