@@ -25,6 +25,8 @@ app.use(cors());
 
 const db = admin.firestore();
 
+const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+
 //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
 // const oneSignalApiKeyProvider = {
 //     getToken() {
@@ -500,7 +502,7 @@ const getUserCircleSettings = async (userId, circleId) => {
     return data?.circle_settings?.[circleId];
 };
 
-const sendMessageNotification = async (target, circle, message, bigPicture) => {
+const sendMessageNotification = async (target, circle, message, bigPicture, category) => {
     // const newMessage = {
     //     circle_id: circleId,
     //     user,
@@ -540,7 +542,7 @@ const sendMessageNotification = async (target, circle, message, bigPicture) => {
     await notificationRef.set(newNotification, { merge: true });
 
     // send push notification
-    await sendPushNotification(message.user, target, message.message, circle, bigPicture);
+    await sendPushNotification(message.user, target, message.message, circle, bigPicture, category);
 };
 
 // returns true if source is administrator of target
@@ -1477,6 +1479,12 @@ app.post("/chat_messages", auth, async (req, res) => {
             newMessage.reply_to = replyToMessage;
         }
 
+        // is the message an AI prompt?
+        if (message.startsWith("/ai")) {
+            newMessage.message = message.substring(3).trim();
+            newMessage.is_ai_prompt = true;
+        }
+
         // does message contain links?
         let links = linkify.find(message);
         if (links?.length > 0) {
@@ -1485,39 +1493,6 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         const chatMessageRef = db.collection("chat_messages").doc();
         await chatMessageRef.set(newMessage);
-
-        // if (roomId === "public") {
-        //     // TODO check if user is member of circle
-        //     // if (circleId !== "earth") {
-        //     //     const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
-        //     //     const circleMembersData = circleMembersDocs.docs[0].data();
-        //     //     if (circleMembersData?.member_ids?.includes(authCallerId)) {
-        //     //         newMessage.from_member = true;
-        //     //     }
-        //     // }
-
-        //     // add message to public room
-        //     await chatMessageRef.set(newMessage);
-        // } else if (roomId === "members") {
-        //     //return res.json({ error: "Not implemented" });
-        //     // TODO implement sending chat to members
-        //     // message sent to members
-        //     // make sure user is member of circle
-        //     // const circleMembersDocs = await db.collection("circle_members").where("circle_id", "==", circleId).get();
-        //     // const circleMembersData = circleMembersDocs.docs[0].data();
-        //     // if (!circleMembersData?.member_ids?.includes(authCallerId)) {
-        //     //     return res.status(403).json({ error: "unauthorized" });
-        //     // }
-
-        //     // newMessage.circle_members_id = circleMembersDocs.docs[0].id;
-        //     // newMessage.from_member = true;
-
-        //     // // add message to members room
-        //     await chatMessageRef.set(newMessage);
-        // } else {
-        //     // TODO make sure room exists and user is allowed to post in it
-        //     return res.json({ error: "Not implemented" });
-        // }
 
         // add update to circle that new chat message has been sent
         let updatedCircle = {
@@ -1532,6 +1507,17 @@ app.post("/chat_messages", auth, async (req, res) => {
         // update user that chat message has been seen
         setUserSeen(authCallerId, circleId, "chat");
 
+        if (newMessage.is_ai_prompt) {
+            // initiate AI prompt
+            sendOpenAIPrompt(newMessage.message, 0.7, 500).then((x) => {
+                console.log("AI response: " + x.choices[0].text);
+                if (x.choices?.[0]) {
+                    x.choices[0].text = DOMPurify.sanitize(x.choices[0].text)?.trim();
+                }
+                // update message with AI response
+                chatMessageRef.update({ openai_response: x });
+            });
+        }
         // check if message contains link and add preview image
         addPreviewImages(chatMessageRef, links).then((previewImage) => {
             // send notification to all users connected to circle
@@ -1541,10 +1527,11 @@ app.post("/chat_messages", auth, async (req, res) => {
                         // ignore notifying sender and non-users
                         continue;
                     }
-                    sendMessageNotification(memberConnection.target, circle, newMessage, previewImage);
+                    sendMessageNotification(memberConnection.target, circle, newMessage, previewImage, "Chat");
                 }
             });
         });
+
         return res.json({ message: "Message sent" });
     } catch (error) {
         functions.logger.error("Error while trying to send chat message:", error);
@@ -1734,7 +1721,7 @@ app.put("/notifications", auth, async (req, res) => {
 
 //#region admin
 
-const sendPushNotification = async (sender, receiver, message, circle, bigPicture) => {
+const sendPushNotification = async (sender, receiver, message, circle, bigPicture, category) => {
     if (typeof sender === "string") {
         sender = await getCircle(sender);
     }
@@ -1752,7 +1739,7 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
     const config = await getConfig();
     let hostUrl = config.host_url;
     hostUrl += hostUrl.endsWith("/") ? "" : "/";
-    const url = `${hostUrl}/circle/${circle.id}`;
+    const url = `${hostUrl}/circle/${circle.id}/chat`;
 
     const notification = {
         //included_segments: ["Subscribed Users"], // can be used instead of include_player_ids to send to every user in a segment
@@ -1760,7 +1747,7 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
             en: sender.name + ": " + message,
         },
         headings: {
-            en: circle.name,
+            en: circle.name + (category ? ` (${category})` : ""),
         },
         url: url,
         // web_buttons: [
@@ -1792,13 +1779,11 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
         notification.huawei_large_icon = circle.picture;
     }
 
-    functions.logger.log("attempting to send notification, click_action:" + url);
-
     try {
-        functions.logger.log("onesignal-app-id: " + process.env.ONESIGNAL_APP_ID);
-        functions.logger.log("onesignal-api-key: " + process.env.ONESIGNAL_API_KEY?.substring(0, 5));
+        // functions.logger.log("onesignal-app-id: " + process.env.ONESIGNAL_APP_ID);
+        // functions.logger.log("onesignal-api-key: " + process.env.ONESIGNAL_API_KEY?.substring(0, 5));
 
-        const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+        //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
         const res = await oneSignalClient.createNotification(notification);
         console.log("push notification sent, response: ", res);
     } catch (error) {
@@ -1807,6 +1792,22 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
             console.log(error.body);
         }
     }
+};
+
+const sendOpenAIPrompt = async (prompt, temperature, max_tokens) => {
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    const response = await openai.createCompletion({
+        model: "text-davinci-003", // model
+        prompt: prompt, // prompt,
+        temperature: temperature, //0,
+        max_tokens: max_tokens,
+    });
+
+    return response.data;
 };
 
 app.post("/openai", auth, async (req, res) => {
@@ -1876,7 +1877,108 @@ app.post("/update", auth, async (req, res) => {
         } else if (commandArgs[0] === "send_test_message") {
             const circleId = commandArgs[1];
             const message = commandArgs.slice(2).join(" ");
-            await sendPushNotification(authCallerId, circleId, message, authCallerId);
+            //await sendPushNotification(authCallerId, circleId, message, authCallerId);
+
+            // test the onesignal integration
+            const sender = await getCircle(authCallerId);
+            const circle = await getCircle(authCallerId);
+            const receiverData = await getCircleData(circleId);
+            if (!receiverData.onesignal_ids || receiverData.onesignal_ids.length === 0) {
+                return res.json({ message: "Receiver has no OneSignal subscription" });
+            }
+
+            const config = await getConfig();
+            let hostUrl = config.host_url;
+            hostUrl += hostUrl.endsWith("/") ? "" : "/";
+            const url = `${hostUrl}/circle/${circleId}`;
+
+            // test one, send simple message to all users
+            const notification2 = {
+                contents: {
+                    en: "test message 2",
+                },
+                headings: {
+                    en: "test message 2",
+                },
+                url: url,
+                include_player_ids: receiverData.onesignal_ids.map((x) => x.user_id),
+            };
+            const notification3 = {
+                contents: {
+                    en: "test message 3",
+                },
+                headings: {
+                    en: "test message 3",
+                },
+                url: url,
+                include_player_ids: [receiverData.onesignal_ids?.[0]?.user_id],
+            };
+            const notification4 = {
+                contents: {
+                    en: "test message 4",
+                },
+                headings: {
+                    en: "test message 4",
+                },
+                url: url,
+                include_player_ids: [receiverData.onesignal_ids?.[1]?.user_id],
+            };
+            const notification5 = {
+                contents: {
+                    en: "test message 5",
+                },
+                headings: {
+                    en: "test message 5",
+                },
+                url: url,
+                include_player_ids: [receiverData.onesignal_ids?.[2]?.user_id],
+            };
+
+            const notification6 = {
+                contents: {
+                    en: "test message 6",
+                },
+                headings: {
+                    en: "test message 6",
+                },
+                url: url,
+                include_player_ids: receiverData.onesignal_ids.map((x) => x.user_id),
+                android_group: circle.id,
+                collapse_id: circle.id + sender.id,
+                thread_id: circle.id,
+                priority: 10,
+            };
+
+            if (circle.cover) {
+                notification6.big_picture = circle.cover;
+                notification6.huawei_big_picture = circle.cover;
+                notification6.chrome_web_image = circle.cover;
+            }
+            if (circle.picture) {
+                notification6.large_icon = circle.picture;
+                notification6.chrome_web_icon = circle.picture;
+                notification6.firefox_icon = circle.picture;
+                notification6.huawei_large_icon = circle.picture;
+            }
+
+            try {
+                //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+                let res = await oneSignalClient.createNotification(notification2);
+                console.log("push notification sent, response: ", res);
+                res = await oneSignalClient.createNotification(notification3);
+                console.log("push notification sent, response: ", res);
+                res = await oneSignalClient.createNotification(notification4);
+                console.log("push notification sent, response: ", res);
+                res = await oneSignalClient.createNotification(notification5);
+                console.log("push notification sent, response: ", res);
+                res = await oneSignalClient.createNotification(notification6);
+                console.log("push notification sent, response: ", res);
+            } catch (error) {
+                if (error instanceof OneSignal.HTTPError) {
+                    console.log(error.statusCode);
+                    console.log(error.body);
+                }
+            }
         } else if (commandArgs[0] === "update_circle_connections") {
             // this temporary command only needs to be run once
             // go through every connection and add it to source's list of connections

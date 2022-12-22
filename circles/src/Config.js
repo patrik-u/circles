@@ -55,7 +55,7 @@ const configs = {
         algoliaId: "DMKZGLF95G",
         algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
         algoliaCirclesIndex: "circles",
-        oneSignalAppId: "--- insert prod app id ---",
+        oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
     },
     devprod: {
         environment: "devprod",
@@ -74,7 +74,7 @@ const configs = {
         algoliaId: "DMKZGLF95G",
         algoliaSearchKey: "c591d5d39ac865fccecc9daa2f639fa9",
         algoliaCirclesIndex: "circles",
-        oneSignalAppId: "--- insert prod app id ---",
+        oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
     },
 };
 
