@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.0.17",
+    "version": "1.0.18",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",

@@ -53,6 +53,8 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
         setSelectedParentCircle(e);
     };
 
+    useEffect(() => {}, [circle.id]);
+
     const { Option } = components;
     const CircleOption = ({ ...props }) => {
         return (
@@ -96,6 +98,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
 
     return (
         <Formik
+            enableReinitialize={true}
             initialValues={{
                 name: circle.name ?? "",
                 description: circle.description ?? "",

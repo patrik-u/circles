@@ -54,6 +54,7 @@ export const Circle = () => {
     useEffect(() => {
         if (!circleId) return;
 
+        log("Circle.useEffect");
         let unsubscribeGetCircle = null;
 
         // subscribe to circle
