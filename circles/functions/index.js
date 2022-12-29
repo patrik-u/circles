@@ -1480,7 +1480,7 @@ app.post("/chat_messages", auth, async (req, res) => {
         }
 
         // is the message an AI prompt?
-        if (message.startsWith("/ai")) {
+        if (message.startsWith("/ai") || message.startsWith("/AI")) {
             newMessage.message = message.substring(3).trim();
             newMessage.is_ai_prompt = true;
         }

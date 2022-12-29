@@ -84,33 +84,42 @@ export const PushNotificationsManager = () => {
 
         // initialize onesignal
         log("**** initializing onesignal ****", 0, true);
-        OneSignal.init({ appId: config.oneSignalAppId }).then(() => {
-            log("OneSignal initialized", 0, true);
-
-            OneSignal.on("subscriptionChange", function (isSubscribed) {
-                log("The user's subscription state is now:" + isSubscribed, 0, true);
-            });
-
-            OneSignal.showSlidedownPrompt().then(() => {
-                // do other stuff
-                log("showing slidedown prompt", 0, true);
-            });
-
-            OneSignal.isPushNotificationsEnabled((isEnabled) => {
-                log("isPusnNotificationsEnabled, value:" + isEnabled, 0, true);
-                if (isEnabled) {
-                    // user has subscribed
-                    OneSignal.getUserId((userId) => {
-                        log("player_id of the subscribed user is : " + userId, 0, true);
-                        // Make a POST call to your server with the user ID
-                        axios.post(`/registerOneSignalUserId`, { userId: userId });
-                        setIsUserIdReported(true);
-                    });
-                }
-            });
-
+        if (config.environment === "dev") {
             setIsInitialized(true);
-        });
+            return;
+        }
+
+        OneSignal.init({ appId: config.oneSignalAppId })
+            .then(() => {
+                log("OneSignal initialized", 0, true);
+
+                OneSignal.on("subscriptionChange", function (isSubscribed) {
+                    log("The user's subscription state is now:" + isSubscribed, 0, true);
+                });
+
+                OneSignal.showSlidedownPrompt().then(() => {
+                    // do other stuff
+                    log("showing slidedown prompt", 0, true);
+                });
+
+                OneSignal.isPushNotificationsEnabled((isEnabled) => {
+                    log("isPusnNotificationsEnabled, value:" + isEnabled, 0, true);
+                    if (isEnabled) {
+                        // user has subscribed
+                        OneSignal.getUserId((userId) => {
+                            log("player_id of the subscribed user is : " + userId, 0, true);
+                            // Make a POST call to your server with the user ID
+                            axios.post(`/registerOneSignalUserId`, { userId: userId });
+                            setIsUserIdReported(true);
+                        });
+                    }
+                });
+
+                setIsInitialized(true);
+            })
+            .catch((err) => {
+                log("Unable to intitialize OneSignal, " + err, 2);
+            });
     }, [signInStatus?.signedIn, toast, setMessageToken, uid, isInitialized]);
 
     useEffect(() => {
@@ -127,6 +136,8 @@ export const PushNotificationsManager = () => {
                     setIsUserIdReported(true);
                 });
             }
+        }).catch((err) => {
+            log("OneSignal.isPushNotificationsEnabled error" + err, 2);
         });
     }, [location, isUserIdReported, isInitialized]);
 
