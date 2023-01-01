@@ -9,3 +9,6 @@ We receive contributions from a number of different people and networks. We will
 This is an early version of the platform, we have a lot of ideas about where we want to take this next. If you’d like to join our team and volunteer network or contribute in any other way, please get in touch.
 
 ### [DEMO](https://circles-325718.web.app/)
+
+[Instructions on how to set up your own instance](New Instance Guide.md)
+
