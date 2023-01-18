@@ -1,0 +1,11 @@
+All indexes have Query scope = Collection
+
+List of indexes in the format:
+Collection ID | Fields indexed
+
+1. connections | source.type Ascending, target.id Ascending, source.starts_at Ascending, __name__ Ascending
+2. notifications | user_id Ascending, date Descending, __name__ Descending
+3. chat_messages | circle_id Ascending, sent_at Descending, __name__ Descending
+4. circles | type Ascending, created_at Ascending, __name__ Ascending
+5. chat_notifications | user_id Ascending, date Descending, __name__ Descending
+

@@ -12,7 +12,7 @@ const PrivacyPolicy = () => {
                         <Text className="ppHeader">Om integritetspolicyn</Text>
                         <br />
                         <Text>
-                            När du använder appen Circles så anförtror du oss dina uppgifter. Denna integritetspolicyn förklarar vilken data vi samlar in, i
+                            När du använder appen co:do så anförtror du oss dina uppgifter. Denna integritetspolicyn förklarar vilken data vi samlar in, i
                             vilket syfte och vilka rättigheter du har som användare.
                         </Text>
                         <br />
@@ -50,9 +50,9 @@ const PrivacyPolicy = () => {
                         <br />
                         <Text>
                             Vi kan dela dina uppgifter med företag som är personuppgiftsbiträden för oss. Personuppgiftsbiträden behandlar informationen för vår
-                            räkning och enligt våra instruktioner för att hjälpa oss tillhandahålla Circles tjänster. Detta görs till företag som lämnar
-                            garantier gällande säkerhet och sekretess för personuppgifter. Vi säljer och byter aldrig dina personuppgifter med tredje part. Vi
-                            kan vidarebefordra dina personuppgifter till tredje-part, föreningar och cirklar via tjänstens funktioner, men endast efter du
+                            räkning och enligt våra instruktioner för att hjälpa oss tillhandahålla co:do tjänster. Detta görs till företag som lämnar garantier
+                            gällande säkerhet och sekretess för personuppgifter. Vi säljer och byter aldrig dina personuppgifter med tredje part. Vi kan
+                            vidarebefordra dina personuppgifter till tredje-part, föreningar och cirklar via tjänstens funktioner, men endast efter du
                             informerats om vilken information som lämnas ut och efter du lämnat samtycke till det. Andra användare i tjänsten kan se den
                             personliga informationen som ingår i din offentliga profil och information du själv väljer att publicera genom t.ex. inlägg, chat
                             och uppladdningar.
@@ -62,8 +62,8 @@ const PrivacyPolicy = () => {
                         <Text className="ppHeader">Hur skyddar vi dina uppgifter?</Text>
                         <br />
                         <Text>
-                            Circles nyttjar Firebase services för autentisering och lagring av data. Kommunikation med dessa tjänster sker krypterat via HTTPS
-                            och vilande data lagras krypterat.
+                            co:do nyttjar Firebase services för autentisering och lagring av data. Kommunikation med dessa tjänster sker krypterat via HTTPS och
+                            vilande data lagras krypterat.
                         </Text>
                         <br />
                         <br />
@@ -78,7 +78,7 @@ const PrivacyPolicy = () => {
                         <Text className="ppHeader">About this privacy policy</Text>
                         <br />
                         <Text>
-                            When you use the Circles app, you entrust us with your information. This privacy policy explains what data we collect, for what
+                            When you use the co:do app, you entrust us with your information. This privacy policy explains what data we collect, for what
                             purpose and what rights you have as a user
                         </Text>
                         <br />
@@ -116,7 +116,7 @@ const PrivacyPolicy = () => {
                         <br />
                         <Text>
                             We can share your information with companies that are personal data assistants for us. Personal data assistants process the
-                            information for our account and according to our instructions to help us provide Circles services. This is done to companies that
+                            information for our account and according to our instructions to help us provide co:do services. This is done to companies that
                             leave guarantees regarding security and confidentiality of personal data. We never sell and exchange your personal information with
                             third parties. We may pass on your personal information to third parties, associations and circles through the functions of the
                             service, but only after you're informed about the information provided and after you have given your consent. Other users of the
@@ -128,8 +128,8 @@ const PrivacyPolicy = () => {
                         <Text className="ppHeader">How do we protect your information?</Text>
                         <br />
                         <Text>
-                            Circles uses Firebase services for authentication and storage of data. Communication with these services is encrypted using HTTPS
-                            and resting data is stored encrypted.
+                            co:do uses Firebase services for authentication and storage of data. Communication with these services is encrypted using HTTPS and
+                            resting data is stored encrypted.
                         </Text>
                         <br />
                         <br />

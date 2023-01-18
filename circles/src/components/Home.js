@@ -39,12 +39,12 @@ export const Home = () => {
     return (
         <Flex backgroundColor="#ffffff" justifyContent="center">
             <Flex flexDirection="column" alignItems="center" width="100%">
-                <Box width="313px" height="114px">
-                    <Image src={getImageKitUrl("/circles.png", 313, 114)} width="313px" height="114px" />
+                <Box width="356px" height="356px">
+                    <Image src={getImageKitUrl("/icon-512x512.png", 356, 356)} width="356px" height="356px" />
                 </Box>
 
                 <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">
-                    <CircleSearchBox marginTop="35px" marginBottom="0px" />
+                    <CircleSearchBox marginBottom="0px" />
                     {!searchResultsShown && (
                         <Flex marginBottom="200px" marginTop="35px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
                             <SimpleGrid

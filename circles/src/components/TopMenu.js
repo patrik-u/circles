@@ -22,9 +22,9 @@ export const TopMenu = () => {
     const [showNetworkLogo] = useAtom(showNetworkLogoAtom);
     const navigate = useNavigateNoUpdates();
     const height = isMobile ? "40px" : "90px";
-    const logoHeight = isMobile ? 30 : 53; //68;
+    const logoHeight = isMobile ? 30 : 60; //68;
     const logoHeightPx = `${logoHeight}px`;
-    const logoWidth = isMobile ? 69 : 123; //157;
+    const logoWidth = isMobile ? 69 : 65; //157;
     const logoWidthPx = `${logoWidth}px`;
 
     const onNetworkLogoClick = () => {
@@ -54,7 +54,7 @@ export const TopMenu = () => {
                         onClick={onNetworkLogoClick}
                         cursor="pointer"
                     >
-                        <Image src={getImageKitUrl("/circles-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
+                        <Image src={getImageKitUrl("/logo-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
                     </Box>
                 )}
 

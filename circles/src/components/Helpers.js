@@ -119,7 +119,7 @@ export const getImageKitUrl = (url, width, height) => {
 
     const firebaseStorageUrl = "https://firebasestorage.googleapis.com/";
     let imageKitUrl = "";
-    let imageKitEndpoint = "https://ik.imagekit.io/circles/";
+    let imageKitEndpoint = config.imageKitEndpoint;
     if (url.startsWith("/")) {
         switch (config.environment) {
             default:
@@ -138,6 +138,8 @@ export const getImageKitUrl = (url, width, height) => {
     } else if (url.startsWith(firebaseStorageUrl)) {
         imageKitEndpoint += "storage/";
         imageKitUrl = url.replace(firebaseStorageUrl, imageKitEndpoint);
+    } else {
+        return url;
     }
 
     let imageKitParams = "";

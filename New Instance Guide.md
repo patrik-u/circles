@@ -91,49 +91,45 @@ In the Firebase console, change the billing plan on your account by clicking on 
 2. In the source modify `circles\src\Config.js` to use your project backend:
 
    ```
+   const globalConfigs = {
+       firebase: {
+           apiKey: "*****",
+           authDomain: "yourproject.firebaseapp.com",
+           projectId: "yourproject",
+           storageBucket: "yourproject.appspot.com",
+           messagingSenderId: "*****",
+           appId: "*****",
+           measurementId: "*****",
+       },
+       googleId: "****",
+       imageKitEndpoint: "***",
+       algoliaId: "****",
+       algoliaSearchKey: "****",
+       algoliaCirclesIndex: "circles",
+       oneSignalAppId: "****",
+       mapBoxToken: "****",
+   }
+   
    const configs = {
        dev: {
+           ...globalConfigs,
            environment: "dev",
            apiUrl: "http://localhost:5001/yourproject/europe-west1/api",
-           firebase: {
-               apiKey: "*****",
-               authDomain: "yourproject.firebaseapp.com",
-               projectId: "yourproject",
-               storageBucket: "yourproject.appspot.com",
-               messagingSenderId: "*****",
-               appId: "*****",
-               measurementId: "*****",
-           },
-           googleId: "****",
-           imageKitEndpoint: "***",
            logLevel: 0,
-           algoliaId: "****",
-           algoliaSearchKey: "****",
-           algoliaCirclesIndex: "circles",
            alwaysShowGuide: false,
-           oneSignalAppId: "****",
+       },
+       devprod: {
+           ...globalConfigs,
+           environment: "devprod",
+           apiUrl: "http://localhost:5001/yourproject/europe-west1/api",
+           logLevel: 0,
        },
        prod: {
+           ...globalConfigs,
            environment: "prod",
            apiUrl: "https://europe-west1-yourproject.cloudfunctions.net/api",
-           firebase: {
-               apiKey: "*****",
-               authDomain: "yourproject.firebaseapp.com",
-               projectId: "yourproject",
-               storageBucket: "yourproject.appspot.com",
-               messagingSenderId: "*****",
-               appId: "*****",
-               measurementId: "*****",
-           },
-           googleId: "****",
-           imageKitEndpoint: "***",
-           logLevel: 0,
-           algoliaId: "****",
-           algoliaSearchKey: "****",
-           algoliaCirclesIndex: "circles",
-           alwaysShowGuide: false,
-           oneSignalAppId: "****",
-       },,
+           logLevel: 2,
+       },
    };
    
    const getConfig = () => {
@@ -145,15 +141,17 @@ In the Firebase console, change the billing plan on your account by clicking on 
                return configs.prod;
            case "prod":
                return configs.prod;
+           case "devprod":
+               return configs.devprod;
        }
    };
    
    const config = getConfig();
    
-export default config;
+   export default config;
    ```
    
-   Replace the "firebase" field in the config objects with the one you saved in the previous step. The rest of the settings, the Google ID, Algolia settings (search)  and OneSignal (push notifications) will be set in later steps in this guide as those services are set up.
+   Replace the "firebase" field in the config objects with the one you saved in the previous step. The rest of the settings, the Google ID, Algolia settings (search) , OneSignal (push notifications) and MapBox (map) will be set in later steps in this guide as those services are set up.
 
 
 
@@ -183,6 +181,25 @@ The following steps are to initiate hosting and to make sure your custom domain 
 4. Set Collection ID to "config" and click Next.
 5. Set Document ID to "config"
 6. Add field with name "host_url" type "string" and as value set your project url (https://yourproject.com), if you set up a custom domain in Configuring Hosting then use that one otherwise use the url to firebase host url. Click save.
+
+#### Adding firebase rules
+
+1. Click on the Rules tab in the Firestore Database section.
+2. Copy the contents of `Firebase Database Rules.txt` that resides in the repository. Paste and replace the contents in the rules text box.
+3. Click on the Publish button to save the changes.
+
+#### Adding indexes
+
+1. Click on the Indexes tab and create the indexes mentioned in `Firebase Database Indexes.txt` that resides in the repository. 
+
+Note that any missing indexes will show up as warnings in the developer console in the browser where you'll also get a convenient link to build them. Note that these links only show up when the specific database queries are made so don't rely on it to give all the indexes you need to build. 
+
+#### Configuring storage
+
+Storage is used to store content like circle pictures and cover images.
+
+1. Click on "Storage" in the firestore console menu and click on "Get started". Click next  and then done in the popup.
+2. Click on the Rules tab and add the rules in `Firebase Storage Rules.txt` that resides in the respository.
 
 
 
@@ -308,7 +325,7 @@ User authentication allows the user to sign into the app using username & passwo
 
 
 
-If you have a custom domain as added in the "Configuring Hosting", you need to add it to allowed origins: 
+Configure allowed origins. 
 
 1. Go to https://console.cloud.google.com/apis/
 
@@ -321,6 +338,65 @@ If you have a custom domain as added in the "Configuring Hosting", you need to a
    `https://yourdomain.com`
 
    `https://www.yourdomain.com`
+   
+   `http://localhost:3000` (for local testing)
+   
+   
+
+
+
+## Configuring ImageKit
+
+ImageKit is used to optimize images by caching them and serving them in the right size. 
+
+1. Create account at imagekit.io and choose a Imagekit ID (e.g. your project name) pick a region, we are using Frankfurt (Europe) in this example.
+
+2. Click on "URL endpoints", copy the Default URL endpoint and add it to `Config.js`:
+
+   `imageKitEndpoint: "https://ik.imagekit.io/<your_imagekit_id>/"`
+
+#### Add external storage
+
+1. Click on "External storage" in the menu at the left
+
+2. Click on "+ Add new" button
+
+3. Set origin name to "Firebase Storage"
+
+4. Set origin type to "Web Folder - HTTP(S) server..."
+
+5. Set base URL to: https://firebasestorage.googleapis.com and click save
+
+6. Create another origin and set its name to your project name
+
+7. Set origin type to "Web Folder .." and the base URL to your firebase host url, e.g: 
+
+   https://<your-project-name>.web.app
+
+   (you can find it in the firebase console Hosting section)
+
+   Click on save.
+
+#### Setup endpoints
+
+1. Click on URL endpoints in the left menu
+2. Click on "+ Add new"
+3. Set identifier to "storage", description to "Firebase Storage" and add the Firebase Storage origin.
+4. Add another endpoint with identifier "web-prod", description "<Your project name> Prod", and add the <your project name> origin. Click save.
+
+
+
+## Configuring MapBox
+
+MapBox is used to display the map.
+
+1. Sign up on https://www.mapbox.com/
+
+2. Click on "tokens" tab and copy the default public token. 
+
+3. Add the token to `Config.js`: 
+
+   `mapBoxToken: "<your mapbox token>"`
 
 
 

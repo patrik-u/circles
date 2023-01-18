@@ -2313,9 +2313,9 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
     // <meta property="og:article:section" content="Motion" />
     // {motion.published_at && <meta property="og:article:published_time" content={fromFsDate(motion.published_at)} />}
 
-    let description = "Circles";
+    let description = "co:do";
     let type = "website";
-    let title = "Circles";
+    let title = "co:do";
     let imageUrl = path[0] + "/default-cover.png";
     let resourceId = null;
     let article = null;
@@ -2331,7 +2331,7 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
         }
     }
     // load information about resource
-    let appName = "Circles";
+    let appName = "co:do";
 
     if (resourceId) {
         let circle = await getCircle(resourceId);

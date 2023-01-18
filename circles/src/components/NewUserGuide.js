@@ -168,7 +168,7 @@ export const NewUserGuide = ({ onClose }) => {
                                 I agree to the Terms and Conditions and Privacy Policy
                             </Checkbox>
                             <Checkbox isChecked={agreedToEmailUpdates} onChange={(e) => setAgreedToEmailUpdates(e.target.checked)}>
-                                I agree to be sent email updates from Circles (optional)
+                                I agree to be sent email updates from co:do (optional)
                             </Checkbox>
                         </VStack>
                         <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">

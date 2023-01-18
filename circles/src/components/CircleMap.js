@@ -8,6 +8,7 @@ import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker } from "components/MapMarkers";
 import mapboxgl from "mapbox-gl";
+import config from "Config";
 //#endregion
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -15,7 +16,7 @@ mapboxgl.workerClass = require("worker-loader!mapbox-gl/dist/mapbox-gl-csp-worke
 
 export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const satelliteMode = true;
-    const mapboxToken = "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA";
+    const mapboxToken = config.mapBoxToken;
     const [isMobile] = useAtom(isMobileAtom);
     const defaultViewport = {
         width: "100%",

@@ -636,7 +636,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                         objectFit="cover"
                         onClick={onClick}
                         cursor={!disableClick ? "pointer" : "inherit"}
-                        fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                        // fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                         {...props}
                     />
                 </PopoverTrigger>
