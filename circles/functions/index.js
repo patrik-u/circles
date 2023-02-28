@@ -1513,7 +1513,7 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
-        if (!circle.is_public) {
+        if (!circle?.is_public) {
             let isAuthorized = await isMemberOf(authCallerId, circleId);
             if (!isAuthorized) {
                 return res.status(403).json({ error: "unauthorized" });

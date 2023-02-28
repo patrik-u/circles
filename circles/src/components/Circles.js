@@ -54,7 +54,7 @@ const CreateNewCircleForm = ({ type }) => {
         }
     };
 
-    if (!user?.id || (!circle.is_public && !isAdmin(circle, userData)) || type === "user") return null;
+    if (!user?.id || (!circle?.is_public && !isAdmin(circle, userData)) || type === "user") return null;
 
     return (
         <Flex flexDirection="column">
@@ -121,6 +121,10 @@ export const Circles = ({ type }) => {
 
         let newFilter = { ...circlesFilter };
         newFilter.types = [type];
+        if (type !== "event") {
+            newFilter.sortBy = "newest";
+        }
+
         setCirclesFilter(newFilter);
     }, [circlesFilter, setCirclesFilter, type]);
 

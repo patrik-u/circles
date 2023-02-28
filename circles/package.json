@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.0.20",
+    "version": "1.0.21",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -77,7 +77,7 @@
         "build:codo_prod": "env-cmd -f .env.codo_prod npm run build",
         "deploy:circles_staging": "npm run build:circles_staging && firebase deploy -P circles_staging",
         "deploy:circles_prod": "npm run build:circles_prod && firebase deploy -P circles_prod",
-        "deploy:codo_prod": "npm run build:circles_prod && firebase deploy -P codo_prod",
+        "deploy:codo_prod": "npm run build:codo_prod && firebase deploy -P codo_prod",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },

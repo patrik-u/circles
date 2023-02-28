@@ -2,6 +2,7 @@ import { atom, useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { signInStatusValues, displayModes, circleSubSections } from "./Constants";
 import { isMobile as detectIsMobile } from "react-device-detect";
+import { fromFsDate } from "components/Helpers";
 
 // misc
 export const isMobileAtom = atom(detectIsMobile);
@@ -39,8 +40,15 @@ export const filteredCirclesAtom = atom((get) => {
 
     // TODO filter by location, tags, date, etc.
 
-    if (!filter?.types) return circles;
-    return circles.filter((circle) => filter.types.includes(circle.type));
+    let retCircles = filter?.types ? circles.filter((circle) => filter.types.includes(circle.type)) : circles;
+
+    if (filter?.sortBy === "newest") {
+        retCircles.sort((a, b) => fromFsDate(b.created_at) - fromFsDate(a.created_at));
+    } else if (filter.sortBy === "proximity") {
+        // TODO
+    }
+
+    return retCircles;
 });
 
 // location picker atoms
