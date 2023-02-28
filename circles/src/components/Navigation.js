@@ -1,7 +1,7 @@
 //#region imports
 import { AiFillHome, AiOutlineGlobal } from "react-icons/ai";
 import { RiAdminLine } from "react-icons/ri";
-import { MdSettings } from "react-icons/md";
+import { MdSettings, MdFeed } from "react-icons/md";
 import { FaCalendarAlt } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
 import { BsChatText } from "react-icons/bs";
@@ -20,6 +20,7 @@ export const routes = {
         circles: `/circle/${id}/circles`,
         events: `/circle/${id}/events`,
         links: `/circle/${id}/links`,
+        posts: `/circle/${id}/posts`,
         new: `/circle/${id}/new`,
         settings: {
             home: `/circle/${id}/settings`,
@@ -48,6 +49,14 @@ export const getNavigationItems = (circleId, isAdmin) => {
     let navigationItems = [];
     navigationItems.push({ route: routes.circle(id).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
 
+    navigationItems.push({
+        route: routes.circle(id).posts,
+        name: i18n.t("Posts"),
+        icon: MdFeed,
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "posts",
+    });
     navigationItems.push({
         route: routes.circle(id).chat,
         name: i18n.t("Chat"),

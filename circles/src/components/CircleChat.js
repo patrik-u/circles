@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     Box,
     Textarea,
@@ -32,7 +32,7 @@ import db from "components/Firebase";
 import axios from "axios";
 import { getDayAndMonth, datesAreOnSameDay, log, isConnected } from "components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
-import { CirclePicture } from "components/CircleElements";
+import { CirclePicture, MetaData } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { BsReplyFill } from "react-icons/bs";
@@ -45,11 +45,12 @@ import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom } from "components/Atoms";
 //#endregion
 
-export const CircleChat = () => {
+export const CircleChat = ({ item, embeddedChatHeight }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const [circle] = useAtom(circleAtom);
+    const [currentCircle] = useAtom(circleAtom);
+    const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
 
     const [, setChatCircle] = useAtom(chatCircleAtom);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
@@ -71,7 +72,9 @@ export const CircleChat = () => {
     useEffect(() => {
         log("Chat.useEffect 1", -1);
         setScrollToLastSmooth(false);
-        window.scrollTo(0, document.body.scrollHeight);
+        if (!item) {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
     }, []);
 
     useEffect(() => {
@@ -127,13 +130,13 @@ export const CircleChat = () => {
         }
 
         // check if user is authorized to view chat
-        if (!circle.chat_is_public && !isConnected(userData, circleId, ["connected_mutually_to"])) {
+        if (!circle.is_public && !isConnected(userData, circleId, ["connected_mutually_to"])) {
             setIsAuthorized(false);
             return;
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, setIsAuthorized, circle?.chat_is_public, userData]);
+    }, [circle?.id, setIsAuthorized, circle?.is_public, userData]);
 
     useEffect(() => {
         log("Chat.useEffect 3", -1);
@@ -317,43 +320,6 @@ export const CircleChat = () => {
         //textAreaRef.current.setSelectionRange(cursorPosition, cursorPosition)}
     };
 
-    const renderMetaData = (meta, i) => {
-        switch (meta.type) {
-            case "image":
-                return (
-                    <Box key={i} marginBottom="2px">
-                        <Image src={meta.url} />
-                    </Box>
-                );
-            default:
-                return meta.title || meta.description ? (
-                    <Box key={i} marginBottom="2px">
-                        <Box fontSize="14px" borderLeft="3px solid #f15bee" paddingLeft="5px">
-                            {meta.site_name &&
-                                (!isMobile ? (
-                                    <Link href={meta.url} target="_blank">
-                                        <Text fontSize="12px" fontWeight="700" color="#872985">
-                                            {meta.site_name}
-                                        </Text>
-                                    </Link>
-                                ) : (
-                                    <Text fontSize="12px" fontWeight="700" color="#872985">
-                                        {meta.site_name}
-                                    </Text>
-                                ))}
-                            <Text fontWeight="700">{meta.title}</Text>
-                            <Text>{meta.description}</Text>
-                            {meta.images?.map((img, j) => (
-                                <Link key={j} href={meta.url} target="_blank">
-                                    <Image src={img} />
-                                </Link>
-                            ))}
-                        </Box>
-                    </Box>
-                ) : null;
-        }
-    };
-
     const [messageToDelete, setMessageToDelete] = useState(null);
     const deleteChatMessage = (item) => {
         if (!item.isSelf) return;
@@ -417,7 +383,14 @@ export const CircleChat = () => {
     };
 
     // top bar + cover image + header
-    const chatHeight = isMobile ? windowHeight - (40 + 250 + 123) : 900;
+    const getChatHeight = () => {
+        if (embeddedChatHeight) {
+            return !isAuthorized ? 60 : embeddedChatHeight;
+        }
+
+        return isMobile ? windowHeight - (40 + 250 + 123) : 900;
+    };
+
     const selfMessageBg = "#c3f5bf"; //"#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
     const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
     const chatBackgroundColor = "#f9f9f9";
@@ -428,7 +401,7 @@ export const CircleChat = () => {
         <Flex
             flexGrow="1"
             width="100%"
-            height={`${chatHeight}px`}
+            height={`${getChatHeight()}px`}
             maxHeight={isMobile ? "none" : `${windowHeight - 325}px`}
             position="relative"
             left="0px"
@@ -543,7 +516,7 @@ export const CircleChat = () => {
                                                                                 </Box>
                                                                             )}
 
-                                                                            {item.meta_data?.map((meta, i) => renderMetaData(meta, i))}
+                                                                            <MetaData data={item.meta_data} />
 
                                                                             {item.is_ai_prompt && (
                                                                                 <Box paddingRight="10px" lineHeight="20px" fontSize="14px">
@@ -777,7 +750,7 @@ export const CircleChat = () => {
                                 )}
                             </Box>
 
-                            {circle?.chat_is_public && (
+                            {circle?.is_public && (
                                 <Box alignSelf="center" position="absolute">
                                     <Box backgroundColor="#8580ff" borderRadius="20px" marginTop="10px">
                                         <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">

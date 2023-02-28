@@ -102,6 +102,8 @@ const auth = async (req, res, next) => {
 
 //#region helper functions
 
+const circleTypes = ["circle", "event", "tag", "room", "link", "post"];
+
 const getCircle = async (circleId) => {
     let circleDoc = await db.collection("circles").doc(circleId).get();
     if (!circleDoc.exists) return null;
@@ -278,6 +280,28 @@ const updateCircle = async (id, circle) => {
     }
 
     batchArray.forEach(async (batch) => await batch.commit());
+
+    // update circles with this circle as creator
+    const creatorDocs = await db.collection("circles").where("creator.id", "==", id).get();
+    batchArray = [db.batch()];
+    operationCounter = 0;
+    batchIndex = 0;
+
+    // loop through circles and update creator
+    for (var i = 0; i < creatorDocs.docs.length; ++i) {
+        let creatorCircleRef = db.collection("circles").doc(creatorDocs.docs[i].id);
+
+        batchArray[batchIndex].set(creatorCircleRef, { creator: circleData }, { merge: true });
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
+
     return circleData;
 };
 
@@ -671,33 +695,31 @@ app.post("/circles", auth, async (req, res) => {
     if (!req.body.name || req.body.name.length > 50) {
         errors.name = "Name must be between 1 and 50 characters";
     }
-    if (req.body.type !== "circle" && req.body.type !== "event" && req.body.type !== "tag" && req.body.type !== "room" && req.body.type !== "link") {
+
+    if (!circleTypes.includes(req.body.type)) {
         errors.type = "Invalid circle type";
     }
 
     let description = req.body.description;
-    if (req.body.type === "circle" || req.body.type === "tag" || req.body.type === "room" || req.body.type === "link") {
-        if (req.body.description && req.body.description > 200) {
-            errors.description = "Description needs to be between 0 and 200 characters";
-        }
-    } else if (req.body.type === "event") {
-        if (!req.body.content || req.body.content > 10000) {
-            errors.content = "Event content needs to be between 0 and 10000 characters";
-        } else {
-            description = req.body.content.substring(0, 150);
-            if (description.length >= 150) {
-                description += "...";
-            }
-        }
+    if (req.body.description && req.body.description > 200) {
+        errors.description = "Description needs to be between 0 and 200 characters";
+    }
+
+    if (req.body.content && req.body.content > 10000) {
+        errors.content = "Event content needs to be between 0 and 10000 characters";
     }
 
     // verify user is admin of parent circle
     let parentId = req.body.parentCircle?.id;
+    let parent = null;
     if (parentId) {
-        // check if user is owner or admin and allowed to set circle parent
-        const isAuthorized = await isAdminOf(authCallerId, parentId);
-        if (!isAuthorized) {
-            errors.parentCircle = "User is not authorized to set parent circle";
+        parent = await getCircle(parentId);
+        if (!parent?.is_public) {
+            // check if user is owner or admin and allowed to set circle parent
+            const isAuthorized = await isAdminOf(authCallerId, parentId);
+            if (!isAuthorized) {
+                errors.parentCircle = "User is not authorized to set parent circle";
+            }
         }
     }
 
@@ -727,22 +749,35 @@ app.post("/circles", auth, async (req, res) => {
             created_by: authCallerId,
             created_at: date,
             type: req.body.type,
-            chat_is_public: req.body.chatIsPublic === true,
+            is_public: req.body.isPublic === true,
+            creator: user,
         };
 
-        let parent = null;
         if (parentId) {
-            parent = await getCircle(parentId);
             newCircle.parent_circle = parent;
         }
 
-        if (req.body.type === "event") {
+        if (req.body.content) {
             newCircle.content = req.body.content;
+        }
+        if (req.body.content_text) {
+            newCircle.content_text = req.body.content_text;
+        }
+        if (req.body.type === "event") {
             newCircle.time = req.body.time;
             newCircle.starts_at = new Date(req.body.startsAt);
             newCircle.is_all_day = req.body.isAllDay;
         } else if (req.body.type === "tag") {
             newCircle.text = "#" + newCircle.name;
+        }
+
+        // does circle content contain links?
+        let links = null;
+        if (newCircle.type === "post") {
+            links = linkify.find(newCircle.content_text);
+            if (links?.length > 0) {
+                newCircle.has_links = true;
+            }
         }
 
         batch.set(circleRes, newCircle);
@@ -758,6 +793,9 @@ app.post("/circles", auth, async (req, res) => {
         const activityRes = db.collection("activities").doc();
         batch.set(activityRes, newActivity);
         await batch.commit();
+
+        // add preview images to circle
+        await addPreviewImages(circleRes, links);
 
         // add connections to circle
         let circle = await getCircle(circleRes.id);
@@ -777,7 +815,7 @@ app.post("/circles", auth, async (req, res) => {
             await createConnection(circle, parent, "parented_by", false, null, false);
         }
 
-        return res.json({ message: "Circle created", circle: { id: circleRes.id, ...newCircle } });
+        return res.json({ message: "Circle created", circle: { id: circleRes.id, ...circle } });
     } catch (error) {
         functions.logger.error("Error while creating circle:", error);
         return res.json({ error: error });
@@ -824,16 +862,10 @@ app.put("/circles/:id", auth, async (req, res) => {
             circleData.description = req.body.circleData.description;
         }
         if (req.body.circleData?.content) {
-            if (type === "event") {
-                circleData.content = req.body.circleData.content;
-                let description = circleData.content.substring(0, 150);
-                if (description.length >= 150) {
-                    description += "...";
-                }
-                circleData.description = description;
-            } else {
-                circleData.content = req.body.circleData.content;
-            }
+            circleData.content = req.body.circleData.content;
+        }
+        if (req.body.circleData?.content_text) {
+            circleData.content_text = req.body.circleData.content_text;
         }
         if (req.body.circleData?.language) {
             circleData.language = req.body.circleData.language;
@@ -885,8 +917,8 @@ app.put("/circles/:id", auth, async (req, res) => {
             }
         }
 
-        if (req.body.circleData?.chatIsPublic !== undefined) {
-            circleData.chat_is_public = req.body.circleData?.chatIsPublic === true;
+        if (req.body.circleData?.isPublic !== undefined) {
+            circleData.is_public = req.body.circleData?.isPublic === true;
         }
 
         // verify user is admin of parent circle
@@ -899,13 +931,15 @@ app.put("/circles/:id", auth, async (req, res) => {
                 hasNewParent = true;
                 if (parentId) {
                     // check if user is owner or admin and allowed to set circle parent
-                    const isAuthorized = await isAdminOf(authCallerId, parentId);
-                    if (!isAuthorized) {
-                        errors.parentCircle = "User is not authorized to set parent circle";
-                    }
                     parent = await getCircle(parentId);
+                    if (!parent.is_public) {
+                        const isAuthorized = await isAdminOf(authCallerId, parentId);
+                        if (!isAuthorized) {
+                            errors.parentCircle = "User is not authorized to set parent circle";
+                        }
+                    }
                 }
-                circleData.parent_circle = parent ?? {};
+                circleData.parent_circle = parent ?? false;
             }
         }
 
@@ -1093,12 +1127,7 @@ app.post("/circles/:id/connections", auth, async (req, res) => {
                 let targetCircle = await getCircle(targetId);
 
                 // TODO for now auto approve event, link and tag connections
-                if (
-                    targetCircleData?.auto_approve_connections ||
-                    targetCircle?.type === "event" ||
-                    targetCircle?.type === "tag" ||
-                    targetCircle?.type === "link"
-                ) {
+                if (targetCircleData?.is_public || targetCircle?.type === "event" || targetCircle?.type === "tag" || targetCircle?.type === "link") {
                     await createConnection(sourceId, targetId, "connected_mutually_to", true, authCallerId);
                     await createConnection(targetId, sourceId, "connected_mutually_to");
                     await updateTags(sourceId, targetId, "add");
@@ -1271,6 +1300,8 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
     const circleId = req.params.id;
     const targetCircleId = req.body.circleId;
     const settings = req.body.settings;
+    let favoriteSet = false;
+    let likedSet = false;
 
     if (!circleId || !targetCircleId) {
         return res.json({ error: "Invalid input" });
@@ -1282,20 +1313,36 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
     }
     if (typeof settings.favorite === "boolean") {
         newSettings.favorite = settings.favorite;
+        favoriteSet = true;
     }
+    if (typeof settings.liked === "boolean") {
+        newSettings.liked = settings.liked;
+        likedSet = true;
+    }
+
+    console.log(JSON.stringify(newSettings, null, 2));
 
     if (Object.keys(newSettings).length === 0) {
         return res.json({ error: "Invalid input" });
     }
 
     let circle = await getCircle(targetCircleId);
-    newSettings.circle = { id: circle.id, name: circle.name, picture: circle.picture }; // store basic info about circle
+    newSettings.circle = { id: circle.id, name: circle.name }; // store basic info about circle
+    if (circle.picture) {
+        newSettings.circle.picture = circle.picture;
+    }
+    if (circle.cover) {
+        newSettings.circle.cover = circle.cover;
+    }
 
     // verify user is authorized to change settings
     const isAuthorized = await isAdminOf(authCallerId, circleId);
     if (!isAuthorized) {
         return res.status(403).json({ error: "unauthorized" });
     }
+
+    // get circle data
+    let circleData = await getCircleData(circleId);
 
     // update setting for circle, this could be turning notifications on/off, adding circle as favorite, etc.
     const userDataRef = db.collection("circle_data").doc(circleId);
@@ -1310,6 +1357,28 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
         },
         { merge: true }
     );
+
+    // update target circle like and favorite count
+    let likeFavoriteData = {};
+    if (favoriteSet) {
+        let previousFavorite = circleData?.circle_settings?.[targetCircleId]?.favorite;
+        if (previousFavorite !== settings.favorite) {
+            likeFavoriteData.favorites = settings.favorite ? admin.firestore.FieldValue.increment(1) : admin.firestore.FieldValue.increment(-1);
+        }
+    }
+    if (likedSet) {
+        let previousLiked = circleData?.circle_settings?.[targetCircleId]?.liked;
+        if (previousLiked !== settings.liked) {
+            likeFavoriteData.likes = settings.liked ? admin.firestore.FieldValue.increment(1) : admin.firestore.FieldValue.increment(-1);
+        }
+    }
+
+    if (Object.keys(newSettings).length > 0) {
+        // update target circle like and favorite count
+        // const targetCircleRef = db.collection("circles").doc(targetCircleId);
+        // await targetCircleRef.set(likeFavoriteData, { merge: true });
+        await updateCircle(targetCircleId, likeFavoriteData);
+    }
 
     return res.json({ message: "Ok" });
 });
@@ -1405,18 +1474,7 @@ app.post("/seen", auth, async (req, res) => {
     const circleId = req.body.circleId;
     const category = req.body.category;
 
-    if (
-        !circleId ||
-        (category !== "any" &&
-            category !== "users" &&
-            category !== "circles" &&
-            category !== "tags" &&
-            category !== "chat" &&
-            category !== "events" &&
-            category !== "home" &&
-            category !== "settings" &&
-            category !== "rooms")
-    ) {
+    if (!circleId) {
         return res.json({ error: "Invalid input" });
     }
 
@@ -1455,7 +1513,7 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
-        if (!circle.chat_is_public) {
+        if (!circle.is_public) {
             let isAuthorized = await isMemberOf(authCallerId, circleId);
             if (!isAuthorized) {
                 return res.status(403).json({ error: "unauthorized" });
@@ -1500,6 +1558,7 @@ app.post("/chat_messages", auth, async (req, res) => {
                 any: date,
                 chat: date,
             },
+            messages: admin.firestore.FieldValue.increment(1),
         };
         // update circle and propagate changes
         updateCircle(circleId, updatedCircle);
@@ -1605,6 +1664,13 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
         // delete chat message
         await deleteChatMessage(messageId);
 
+        // add update to circle that new chat message has been sent
+        let updatedCircle = {
+            messages: admin.firestore.FieldValue.increment(-1),
+        };
+        // update circle and propagate changes
+        updateCircle(message.circle_id, updatedCircle);
+
         return res.json({ message: "message deleted" });
     } catch (error) {
         functions.logger.error("Error while deleting chat message:", error);
@@ -1613,7 +1679,7 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
 });
 
 // check if message contains link and adds preview image
-const addPreviewImages = async (chatMessageRef, links) => {
+const addPreviewImages = async (docRef, links) => {
     let previewImage = null;
     // add preview images
     const metaData = [];
@@ -1642,7 +1708,7 @@ const addPreviewImages = async (chatMessageRef, links) => {
     }
 
     if (metaData.length > 0) {
-        await chatMessageRef.update({ meta_data: metaData });
+        await docRef.update({ meta_data: metaData });
     }
 
     return previewImage;
@@ -1785,7 +1851,7 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
 
         //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
         const res = await oneSignalClient.createNotification(notification);
-        console.log("push notification sent, response: ", res);
+        //console.log("push notification sent, response: ", res);
     } catch (error) {
         if (error instanceof OneSignal.HTTPError) {
             console.log(error.statusCode);

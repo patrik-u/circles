@@ -5,9 +5,7 @@ import { components } from "react-select";
 import Select from "react-select";
 import {
     Box,
-    Tooltip,
     FormControl,
-    Icon,
     FormLabel,
     InputRightElement,
     Input,
@@ -20,7 +18,6 @@ import {
     Text,
     Checkbox,
     Button,
-    IconButton,
     Select as ChakraSelect,
     useToast,
 } from "@chakra-ui/react";
@@ -37,15 +34,13 @@ import { userAtom, requestUserConnectionsAtom, userConnectionsAtom } from "compo
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
 import CircleListItem from "components/CircleListItem";
-import { IoInformationCircleSharp } from "react-icons/io5";
 //#endregion
 
-export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
+export const CircleLinkForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const [user] = useAtom(userAtom);
     const toast = useToast();
     const createCircleInitialRef = useRef();
     const [richContent, setRichContent] = useState(circle?.content ?? "");
-    const [contentText, setContentText] = useState(circle?.content_text ?? "");
     const [richContentCharCount, setRichContentCharCount] = useState(0);
     const [isPublicSetting, setIsPublicSetting] = useState(circle?.is_public === true);
     const [pickedDate, setPickedDate] = useState(fromFsDate(circle.starts_at) ?? new Date());
@@ -54,11 +49,13 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     const [userConnections] = useAtom(userConnectionsAtom);
     const [parentCircles, setParentCircles] = useState([]);
     const [selectedParentCircle, setSelectedParentCircle] = useState();
-    const [isInitialized, setIsInitialized] = useState(false);
     const handleChange = (e) => {
-        log("handleChange: " + JSON.stringify(e));
         setSelectedParentCircle(e);
     };
+
+    log("pickedDate" + JSON.stringify(pickedDate), 0, true);
+
+    useEffect(() => {}, [circle.id]);
 
     const { Option } = components;
     const CircleOption = ({ ...props }) => {
@@ -71,7 +68,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
 
     const onRichContentChange = (richText, delta, source, editor) => {
         let text = editor.getText();
-        setContentText(text);
         setRichContent(richText);
         setRichContentCharCount(text ? text.trim().length : 0);
     };
@@ -81,7 +77,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     }, [setRequestUserConnections]);
 
     useEffect(() => {
-        if (selectedParentCircle || !userConnections || isInitialized) {
+        if (selectedParentCircle || !userConnections) {
             return;
         }
 
@@ -98,10 +94,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 ? { ...parentCircle, value: parentCircle.id, label: parentCircle.name }
                 : null
         );
-        setIsInitialized(true);
-    }, [user, userConnections, setSelectedParentCircle, selectedParentCircle, circle?.parent_circle, isInitialized, isUpdateForm]);
-
-    const contentDescriptionLength = 150;
+    }, [user, userConnections, setSelectedParentCircle, selectedParentCircle, circle?.parent_circle]);
 
     if (!circle) return null;
 
@@ -131,22 +124,11 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         updatedCircleData.isAllDay = isAllDay;
                     }
 
-                    updatedCircleData.content = richContent;
-                    if (contentText) {
-                        updatedCircleData.content_text = contentText;
-                        if (!updatedCircleData.description) {
-                            // if no description, use first part of content
-                            updatedCircleData.description = contentText.substring(0, contentDescriptionLength);
-                            if (updatedCircleData.description.length >= contentDescriptionLength) {
-                                updatedCircleData.description += "...";
-                            }
-                        }
-                    }
-
                     if (!isGuideForm) {
+                        updatedCircleData.content = richContent;
                         updatedCircleData.language = values.language;
                     } else {
-                        if (circle.name === values.name && circle.content === values.content) {
+                        if (circle.name === values.name && circle.description === values.description) {
                             // nothing changed
                             actions.setSubmitting(false);
                             // proceed to next step
@@ -209,18 +191,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                     newCircleData.startsAt = combineDateAndTime(pickedDate, values.time);
                     newCircleData.time = values.time;
                     newCircleData.isAllDay = isAllDay;
-                }
-
-                newCircleData.content = richContent;
-                if (contentText) {
-                    newCircleData.content_text = contentText;
-                    if (!newCircleData.description) {
-                        // if no description, use first part of content
-                        newCircleData.description = contentText.substring(0, contentDescriptionLength);
-                        if (newCircleData.description.length >= contentDescriptionLength) {
-                            newCircleData.description += "...";
-                        }
-                    }
+                    newCircleData.content = richContent;
                 }
 
                 let putCircleResult = await axios.post(`/circles`, newCircleData);
@@ -242,7 +213,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         onUpdate(putCircleResult.data.circle);
                     }
                 } else {
-                    log(JSON.stringify(putCircleResult.data.error, null, 2), 0, true);
                     toast({
                         title: i18n.t("Unable to create circle"),
                         status: "error",
@@ -295,141 +265,36 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                             <Field name="name">
                                 {({ field, form }) => (
                                     <FormControl isInvalid={form.errors.name && form.touched.name}>
-                                        <FormLabel>{i18n.t(`Name of [${circle.type}]`)}</FormLabel>
+                                        <FormLabel>{i18n.t(`Link URL`)}</FormLabel>
                                         <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                            {form?.values?.name ? form.values.name.length : 0} / 50
+                                            {form?.values?.url ? form.values.url.length : 0} / 2048
                                         </Text>
                                         <InputGroup>
-                                            <Input {...field} id="name" ref={createCircleInitialRef} type="text" maxLength="50" />
-                                            {!form.errors.name && form.touched.name && <InputRightElement children={<CheckIcon color="green.500" />} />}
+                                            <Input
+                                                {...field}
+                                                id="name"
+                                                ref={createCircleInitialRef}
+                                                type="text"
+                                                maxLength="2048"
+                                                placeholder="e.g. https://www.example.com"
+                                            />
+                                            {!form.errors.url && form.touched.url && <InputRightElement children={<CheckIcon color="green.500" />} />}
                                         </InputGroup>
-                                        <FormErrorMessage>{form.errors.name}</FormErrorMessage>
+                                        <FormErrorMessage>{form.errors.url}</FormErrorMessage>
                                     </FormControl>
                                 )}
                             </Field>
 
-                            {circle.type === "event" && (
-                                <Flex width="100%">
-                                    <VStack align="left" flexGrow="1" marginRight="10px">
-                                        <Text textAlign="left">{i18n.t("Date")}</Text>
-                                        <DatePicker selected={pickedDate} onChange={(d) => setPickedDate(d)} customInput={<DatePickerInput />} />
-                                    </VStack>
-                                    <Field name="time">
-                                        {({ field, form }) => (
-                                            <VStack align="left" flexGrow="1">
-                                                <Text textAlign="left">{i18n.t("Time")}</Text>
-                                                <ChakraSelect {...field} name="time" id="time" placeholder={i18n.t("Specify time")} isDisabled={isAllDay}>
-                                                    {Array.prototype.concat
-                                                        .apply(
-                                                            [],
-                                                            [...Array(24).keys()].map((x) => [
-                                                                ("00" + x).slice(-2) + ":00",
-                                                                ("00" + x).slice(-2) + ":15",
-                                                                ("00" + x).slice(-2) + ":30",
-                                                                ("00" + x).slice(-2) + ":45",
-                                                            ])
-                                                        )
-                                                        .map((y) => (
-                                                            <option key={y} value={y}>
-                                                                {y}
-                                                            </option>
-                                                        ))}
-                                                </ChakraSelect>
-                                                <Checkbox isChecked={isAllDay} onChange={(e) => setIsAllDay(e.target.checked)}>
-                                                    {i18n.t("All day")}
-                                                </Checkbox>
-                                                <FormControl isInvalid={form.errors.time && form.touched.time && !isAllDay}>
-                                                    <FormErrorMessage>{form.errors.time}</FormErrorMessage>
-                                                </FormControl>
-                                            </VStack>
-                                        )}
-                                    </Field>
-                                </Flex>
-                            )}
-
-                            {isUpdateForm && (
-                                <Field name="description">
-                                    {({ field, form }) => (
-                                        <FormControl isInvalid={form.errors.description && form.touched.description}>
-                                            <FormLabel>{i18n.t(`Description of [${circle.type}]`)}</FormLabel>
-                                            <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                                {form?.values?.description ? form.values.description.length : 0} / 200
-                                            </Text>
-                                            <InputGroup>
-                                                <Textarea {...field} id="description" resize="none" maxLength="200" />
-                                                {!form.errors.description && form.touched.description && (
-                                                    <InputRightElement children={<CheckIcon color="green.500" />} />
-                                                )}
-                                            </InputGroup>
-                                            <FormErrorMessage>{form.errors.description}</FormErrorMessage>
-                                        </FormControl>
-                                    )}
-                                </Field>
-                            )}
-
-                            <Field name="content">
-                                {({ field, form }) => (
-                                    <FormControl isInvalid={form.errors.content && form.touched.content}>
-                                        <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
-                                        <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                            {richContentCharCount} / 100 000
-                                        </Text>
-                                        <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="135px" maxWidth="100%" />
-                                        <FormErrorMessage>{form.errors.content}</FormErrorMessage>
-                                    </FormControl>
-                                )}
-                            </Field>
-
-                            {parentCircles && (
-                                <Flex flexDirection="column" width="100%">
-                                    <Text textAlign="start">{i18n.t(`Parent circle`)}</Text>
-                                    <Select
-                                        options={parentCircles}
-                                        components={{ Option: CircleOption }}
-                                        value={selectedParentCircle}
-                                        onChange={handleChange}
-                                        textAlign="start"
-                                        isClearable={true}
-                                    />
-                                </Flex>
-                            )}
-
-                            {!isGuideForm && (
-                                <Flex flexDirection="row" alignSelf="start">
-                                    <Field name="isPublic">
-                                        {({ field, form }) => (
-                                            <FormControl isInvalid={form.errors.isPublic && form.touched.isPublic}>
-                                                <Checkbox isChecked={isPublicSetting} id="isPublic" onChange={(e) => setIsPublicSetting(e.target.checked)}>
-                                                    {i18n.t(`Public ${circle?.type}`)}
-                                                </Checkbox>
-                                            </FormControl>
-                                        )}
-                                    </Field>
-                                    <Tooltip
-                                        label={`If public anyone can connect the ${circle?.type} and chat without approval from admins.`}
-                                        aria-label="A tooltip"
-                                    >
-                                        <Flex flexDirection="row" align="center" marginLeft="10px">
-                                            <Icon as={IoInformationCircleSharp} color="#3182ce" />
-                                        </Flex>
-                                    </Tooltip>
-                                </Flex>
-                            )}
-
-                            {!isGuideForm && (
-                                <Flex flexDirection="row" width="100%">
-                                    <Box flexGrow="1" flexShrink="0">
-                                        <Field name="language">
-                                            {({ field, form }) => (
-                                                <FormControl isInvalid={form.errors.language && form.touched.language}>
-                                                    <FormLabel>{i18n.t("Language")}</FormLabel>
-                                                    <LanguagePicker field={field} />
-                                                </FormControl>
-                                            )}
-                                        </Field>
-                                    </Box>
-                                </Flex>
-                            )}
+                            <Flex flexDirection="column" width="100%">
+                                <Text textAlign="start">{i18n.t(`Connect link to circle`)}</Text>
+                                <Select
+                                    options={parentCircles}
+                                    components={{ Option: CircleOption }}
+                                    value={selectedParentCircle}
+                                    onChange={handleChange}
+                                    textAlign="start"
+                                />
+                            </Flex>
                         </VStack>
                         <Box>
                             <HStack align="center" marginTop="10px">
@@ -462,4 +327,4 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     );
 };
 
-export default CircleContentForm;
+export default CircleLinkForm;

@@ -15,6 +15,8 @@ export const getDefaultCirclePicture = (type) => {
             return "/default-tag-picture.png";
         case "link":
             return "/default-link-picture.png";
+        case "post":
+            return "/default-user-picture.png";
     }
 };
 
@@ -421,6 +423,13 @@ export const toastSuccess = (toast, title, description) => {
         duration: 4500,
         isClosable: true,
     });
+};
+
+export const getMetaImage = (meta_data) => {
+    if (!meta_data) return null;
+    let item = meta_data.find((x) => x.images?.length > 0);
+    if (item) return item.images[0];
+    return null;
 };
 
 export const isAdmin = (circle, userData) => {

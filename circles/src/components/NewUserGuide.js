@@ -7,7 +7,7 @@ import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
 import PrivacyPolicy from "components/PrivacyPolicy";
-import { userAtom } from "components/Atoms";
+import { userAtom, userDataAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 //#endregion
 
@@ -18,6 +18,7 @@ const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestio
 
 export const NewUserGuide = ({ onClose }) => {
     const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
     const allSteps = useMemo(
         () => ({
             default: { id: "default", label: "Default" },
@@ -47,11 +48,11 @@ export const NewUserGuide = ({ onClose }) => {
         setHasBeenInitialized(true);
         let ignoreCheck = config.alwaysShowGuide;
         let profileSteps = [];
-        if (!user.agreed_to_tnc || ignoreCheck) {
+        if (!userData?.agreed_to_tnc || ignoreCheck) {
             // user hasn't agreed to terms and conditions
             profileSteps.push(allSteps.tnc);
         }
-        if (!user.completed_guide || ignoreCheck) {
+        if (!userData?.completed_guide || ignoreCheck) {
             profileSteps.push(allSteps.welcome);
             if (!user.description || ignoreCheck) {
                 profileSteps.push(allSteps.about);
@@ -80,8 +81,8 @@ export const NewUserGuide = ({ onClose }) => {
         // if profile has no picture or cover prompt them to choose
     }, [
         user?.id,
-        user?.agreed_to_tnc,
-        user?.completed_guide,
+        userData?.agreed_to_tnc,
+        userData?.completed_guide,
         user?.description,
         user?.picture,
         user?.cover,

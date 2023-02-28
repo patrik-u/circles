@@ -184,7 +184,9 @@ export const Circle = () => {
         <Flex flexDirection="column">
             {/* Cover image */}
             <Box width="100%" height={`${coverHeight}px`} position="relative">
-                {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} coverHeight={coverHeight} />}
+                {displayMode === displayModes.default && (
+                    <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />
+                )}
                 {displayMode === displayModes.map && <CircleMap height={coverHeight} />}
                 <DisplayModeButtons />
             </Box>
@@ -213,6 +215,7 @@ export const Circle = () => {
                     {/* Section content */}
                     <Routes>
                         <Route path="/" element={<CircleHome />} />
+                        <Route path="/posts" element={<Circles type="post" />} />
                         <Route path="/chat" element={<CircleChat />} />
                         <Route path="/circles" element={<Circles type="circle" />} />
                         <Route path="/events" element={<Circles type="event" />} />
@@ -239,6 +242,7 @@ export const Circle = () => {
                 {/* Right panel */}
                 <Routes>
                     <Route path="/" element={<CircleRightPanel section="home" />} />
+                    <Route path="/posts" element={<CircleRightPanel section="circles" type="post" />} />
                     <Route path="/chat" element={<CircleRightPanel section="chat" />} />
                     <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
                     <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />

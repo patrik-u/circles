@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.0.19",
+    "version": "1.0.20",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -66,14 +66,18 @@
     },
     "scripts": {
         "start": "react-scripts start",
-        "start:staging": "env-cmd -f .env.staging npm start",
-        "start:prod": "env-cmd -f .env.prod npm start",
-        "start:devprod": "env-cmd -f .env.devprod npm start",
+        "start:circles_staging": "env-cmd -f .env.circles_staging npm start",
+        "start:circles_prod": "env-cmd -f .env.circles_prod npm start",
+        "start:circles_devprod": "env-cmd -f .env.circles_devprod npm start",
+        "start:codo_prod": "env-cmd -f .env.codo_prod npm start",
+        "start:codo_devprod": "env-cmd -f .env.codo_devprod npm start",
         "build": "react-scripts build && copy build\\index.html functions\\hosting\\index.html && del build\\index.html",
-        "build:staging": "env-cmd -f .env.staging npm run build",
-        "build:prod": "env-cmd -f .env.prod npm run build",
-        "deploy:staging": "npm run build:staging && firebase deploy -P staging",
-        "deploy:prod": "npm run build:prod && firebase deploy -P prod",
+        "build:circles_staging": "env-cmd -f .env.circles_staging npm run build",
+        "build:circles_prod": "env-cmd -f .env.circles_prod npm run build",
+        "build:codo_prod": "env-cmd -f .env.codo_prod npm run build",
+        "deploy:circles_staging": "npm run build:circles_staging && firebase deploy -P circles_staging",
+        "deploy:circles_prod": "npm run build:circles_prod && firebase deploy -P circles_prod",
+        "deploy:codo_prod": "npm run build:circles_prod && firebase deploy -P codo_prod",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },

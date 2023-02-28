@@ -8,6 +8,7 @@ export const isMobileAtom = atom(detectIsMobile);
 export const displayModeAtom = atom(displayModes.default);
 export const searchResultsShownAtom = atom(false);
 export const newUserPopupAtom = atom(null);
+export const newCirclePopupAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);
@@ -22,6 +23,7 @@ export const signInStatusAtom = atom(signInStatusValues.signingIn);
 export const userLocationAtom = atom({ latitude: undefined, longitude: undefined });
 export const requestUserConnectionsAtom = atom(false);
 export const messageTokenAtom = atom(null);
+export const circleSettingsAtom = atomWithStorage({});
 
 // circle atoms
 export const circleAtom = atom(null);

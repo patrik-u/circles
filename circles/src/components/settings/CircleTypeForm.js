@@ -19,7 +19,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
             onSubmit={async (values, actions) => {
                 console.log("Submitting");
                 actions.setSubmitting(false);
-                let newCircle = { type: values.type, language: i18n.language, chat_is_public: true };
+                let newCircle = { type: values.type, language: i18n.language, is_public: true };
                 if (circle) {
                     newCircle.parent_circle = circle;
                 }
@@ -37,7 +37,14 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                     errors.type = i18n.t("Choose type of circle");
                 } else if (values.type === "tag" && !user?.is_admin) {
                     errors.type = "unauthorized";
-                } else if (values.type !== "tag" && values.type !== "circle" && values.type !== "event" && values.type !== "room" && values.type !== "link") {
+                } else if (
+                    values.type !== "tag" &&
+                    values.type !== "circle" &&
+                    values.type !== "event" &&
+                    values.type !== "room" &&
+                    values.type !== "link" &&
+                    values.type !== "post"
+                ) {
                     errors.type = i18n.t("Choose valid circle type");
                 }
                 return errors;
@@ -80,6 +87,16 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             <VStack align="start" spacing="0px">
                                                                 <Text fontWeight="700">{i18n.t("Room")}</Text>
                                                                 <Text textAlign="left">{i18n.t("Room description")}</Text>
+                                                            </VStack>
+                                                        </HStack>
+                                                    </Radio>
+
+                                                    <Radio onChange={onChange} value="post">
+                                                        <HStack spacing="10px">
+                                                            <Image src="/circle-post-option.png" width="100px" height="100px" />
+                                                            <VStack align="start" spacing="0px">
+                                                                <Text fontWeight="700">{i18n.t("Post")}</Text>
+                                                                <Text textAlign="left">{i18n.t("Post description")}</Text>
                                                             </VStack>
                                                         </HStack>
                                                     </Radio>

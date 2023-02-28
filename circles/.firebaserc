@@ -1,8 +1,9 @@
 {
     "projects": {
-        "default": "codo-fab51",
-        "staging": "codo-fab51",
-        "prod": "codo-fab51"
+        "default": "circles-325718",
+        "circles_staging": "circles-325718",
+        "circles_prod": "circles-83729",
+        "codo_prod": "codo-fab51"
     },
     "targets": {}
 }

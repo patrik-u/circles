@@ -73,7 +73,7 @@ export const CircleBaseForm = ({ circle, isUpdateForm, onCancel, onNext, onUpdat
             <Box>
                 <HStack align="center" marginTop="10px">
                     <Button colorScheme="blue" mr={3} borderRadius="25px" lineHeight="0" isLoading={isSavingLocation} onClick={onSaveBase}>
-                        {isUpdateForm ? i18n.t("Save") : i18n.t("Save and go to circle")}
+                        {isUpdateForm ? i18n.t("Save") : i18n.t(`Save and go to ${circle.type}`)}
                     </Button>
                     {!isUpdateForm && (
                         <Button variant="ghost" borderRadius="25px" onClick={onCancel} lineHeight="0" isDisabled={isSavingLocation}>

@@ -32,6 +32,7 @@ const CircleSettings = () => {
             case "link":
             case "room":
             case "circle":
+            case "post":
             case "event":
                 return [
                     { route: routes.circle(circle.id).settings.about, name: i18n.t("circleadmin_about") },

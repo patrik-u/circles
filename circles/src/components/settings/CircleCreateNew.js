@@ -10,6 +10,7 @@ import { useAtom } from "jotai";
 //#endregion
 
 const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
+const CircleLinkForm = lazy(() => import("components/settings/CircleLinkForm"));
 const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
 const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
 const CircleBaseForm = lazy(() => import("components/settings/CircleBaseForm"));
@@ -22,14 +23,6 @@ export const CircleCreateNew = () => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const navigate = useNavigateNoUpdates();
     const [step, setStep] = useState(0);
-
-    // const createCircleSteps = [
-    //     { label: i18n.t("Type") },
-    //     { label: i18n.t("about") },
-    //     { label: i18n.t("images") },
-    //     { label: i18n.t("Tags") },
-    //     { label: i18n.t("base") },
-    // ];
 
     useEffect(() => {
         setStep(0);
@@ -79,8 +72,17 @@ export const CircleCreateNew = () => {
                 )}
 
                 {/* Create circle step 1 - set name and description */}
-                {step === 1 && (
+                {step === 1 && createdCircle?.type !== "link" && (
                     <CircleContentForm
+                        circle={createdCircle}
+                        isUpdateform={false}
+                        onCancel={onCreateCircleCloseClick}
+                        onNext={onCreateCircleNextStep}
+                        onUpdate={onCreateCircleUpdated}
+                    />
+                )}
+                {step === 1 && createdCircle?.type === "link" && (
+                    <CircleLinkForm
                         circle={createdCircle}
                         isUpdateform={false}
                         onCancel={onCreateCircleCloseClick}

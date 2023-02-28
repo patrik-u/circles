@@ -24,7 +24,7 @@ export const TopMenu = () => {
     const height = isMobile ? "40px" : "90px";
     const logoHeight = isMobile ? 30 : 60; //68;
     const logoHeightPx = `${logoHeight}px`;
-    const logoWidth = isMobile ? 69 : 65; //157;
+    const logoWidth = isMobile ? 33 : 65; //157;
     const logoWidthPx = `${logoWidth}px`;
 
     const onNetworkLogoClick = () => {
@@ -54,7 +54,7 @@ export const TopMenu = () => {
                         onClick={onNetworkLogoClick}
                         cursor="pointer"
                     >
-                        <Image src={getImageKitUrl("/logo-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
+                        <Image src={getImageKitUrl("/network-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
                     </Box>
                 )}
 

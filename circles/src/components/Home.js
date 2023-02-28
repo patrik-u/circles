@@ -40,7 +40,7 @@ export const Home = () => {
         <Flex backgroundColor="#ffffff" justifyContent="center">
             <Flex flexDirection="column" alignItems="center" width="100%">
                 <Box width="356px" height="356px">
-                    <Image src={getImageKitUrl("/icon-512x512.png", 356, 356)} width="356px" height="356px" />
+                    <Image src={getImageKitUrl("/network.png", 356, 356)} width="356px" height="356px" />
                 </Box>
 
                 <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">

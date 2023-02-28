@@ -11,6 +11,7 @@ import LocationManager from "components/LocationManager";
 import TopMenu from "components/TopMenu";
 import ConnectPopup from "components/ConnectPopup";
 import NewUserPopup from "components/NewUserPopup";
+import CreateNewCirclePopup from "components/CreateNewCirclePopup";
 import PushNotificationsManager from "components/PushNotificationsManager";
 //#endregion
 
@@ -60,6 +61,7 @@ const App = () => {
             </Flex>
             <ConnectPopup />
             <NewUserPopup />
+            <CreateNewCirclePopup />
         </>
     );
 };

@@ -6,7 +6,7 @@ import { CheckIcon } from "@chakra-ui/icons";
 import { FiFile } from "react-icons/fi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "components/Firebase";
-
+import { getMetaImage } from "components/Helpers";
 import axios from "axios";
 import { i18n } from "i18n/Localization";
 import "react-datepicker/dist/react-datepicker.css";
@@ -147,28 +147,39 @@ export const CircleImagesForm = ({ circle, isUpdateForm, onCancel, onNext, onUpd
                                         <Image className="circle-overview-cover" src={circleCoverPreview} objectFit="cover" width="100%" height="100%" />
                                     )}
 
+                                    {!circle.cover && !circleCoverPreview && getMetaImage(circle.meta_data) && (
+                                        <Image
+                                            className="circle-overview-cover"
+                                            src={getMetaImage(circle.meta_data)}
+                                            objectFit="cover"
+                                            width="100%"
+                                            height="100%"
+                                        />
+                                    )}
                                     {isUpdateForm && !circleCoverPreview && circle.cover && (
                                         <Image className="circle-overview-cover" src={circle.cover} objectFit="cover" width="100%" height="100%" />
                                     )}
                                 </Box>
-                                <Box height="76px" position="relative" top="-38px">
-                                    {!isUpdateForm && circlePicturePreview && (
-                                        <Image marginTop="3.5px" className="circle-list-picture" src={circlePicturePreview} />
-                                    )}
+                                {circle?.type !== "post" && (
+                                    <Box height="76px" position="relative" top="-38px">
+                                        {!isUpdateForm && circlePicturePreview && (
+                                            <Image marginTop="3.5px" className="circle-list-picture" src={circlePicturePreview} />
+                                        )}
 
-                                    {isUpdateForm && circlePicturePreview && (
-                                        <Image marginTop="3.5px" className="circle-list-picture" src={circlePicturePreview} />
-                                    )}
-                                    {isUpdateForm && !circlePicturePreview && circle.picture && (
-                                        <Image marginTop="3.5px" className="circle-list-picture" src={circle.picture} />
-                                    )}
+                                        {isUpdateForm && circlePicturePreview && (
+                                            <Image marginTop="3.5px" className="circle-list-picture" src={circlePicturePreview} />
+                                        )}
+                                        {isUpdateForm && !circlePicturePreview && circle.picture && (
+                                            <Image marginTop="3.5px" className="circle-list-picture" src={circle.picture} />
+                                        )}
 
-                                    {!circlePicturePreview && !circle.picture && (
-                                        <Box marginTop="3.5px" className="circle-list-picture" backgroundColor="#999" />
-                                    )}
-                                </Box>
+                                        {!circlePicturePreview && !circle.picture && (
+                                            <Box marginTop="3.5px" className="circle-list-picture" backgroundColor="#999" />
+                                        )}
+                                    </Box>
+                                )}
 
-                                <VStack align="center" spacing="12px" marginTop="-28px">
+                                <VStack align="center" spacing="12px" marginTop={circle?.type === "post" ? "0px" : "-28px"}>
                                     <Text className="circle-list-title" fontSize="18px" fontWeight="500">
                                         {circle.name}
                                     </Text>
@@ -183,39 +194,41 @@ export const CircleImagesForm = ({ circle, isUpdateForm, onCancel, onNext, onUpd
                             </Box>
 
                             <VStack align="center" spacing="25px" marginLeft="25px" marginRight="25px" marginTop="10px">
-                                <Field name="picture">
-                                    {({ field, form }) => (
-                                        <FormControl isInvalid={form.errors.picture && form.touched.picture}>
-                                            <FormLabel>{i18n.t("Logo")}</FormLabel>
-                                            <InputGroup>
-                                                <input
-                                                    name="picture"
-                                                    ref={circlePictureUploadRef}
-                                                    type="file"
-                                                    multiple={false}
-                                                    accept="image/*"
-                                                    hidden
-                                                    onChange={(event) => {
-                                                        let selectedFile = event.currentTarget.files[0];
-                                                        setFieldValue("picture", selectedFile);
+                                {circle?.type !== "post" && (
+                                    <Field name="picture">
+                                        {({ field, form }) => (
+                                            <FormControl isInvalid={form.errors.picture && form.touched.picture}>
+                                                <FormLabel>{i18n.t("Logo")}</FormLabel>
+                                                <InputGroup>
+                                                    <input
+                                                        name="picture"
+                                                        ref={circlePictureUploadRef}
+                                                        type="file"
+                                                        multiple={false}
+                                                        accept="image/*"
+                                                        hidden
+                                                        onChange={(event) => {
+                                                            let selectedFile = event.currentTarget.files[0];
+                                                            setFieldValue("picture", selectedFile);
 
-                                                        let newPictureUrl = URL.createObjectURL(selectedFile);
-                                                        setCirclePicturePreview(newPictureUrl);
-                                                        form.touched.picture = true;
-                                                    }}
-                                                />
-                                            </InputGroup>
-                                            <HStack align="center" spacing="15px">
-                                                <Button leftIcon={<Icon as={FiFile} />} onClick={handleCirclePictureUploadClick}>
-                                                    {i18n.t("Choose logo")}
-                                                </Button>
-                                                {!form.errors.picture && form.touched.picture && <CheckIcon color="green.500" />}
-                                            </HStack>
-                                            <Text>{values?.file?.name}</Text>
-                                            <FormErrorMessage>{form.errors.picture}</FormErrorMessage>
-                                        </FormControl>
-                                    )}
-                                </Field>
+                                                            let newPictureUrl = URL.createObjectURL(selectedFile);
+                                                            setCirclePicturePreview(newPictureUrl);
+                                                            form.touched.picture = true;
+                                                        }}
+                                                    />
+                                                </InputGroup>
+                                                <HStack align="center" spacing="15px">
+                                                    <Button leftIcon={<Icon as={FiFile} />} onClick={handleCirclePictureUploadClick}>
+                                                        {i18n.t("Choose logo")}
+                                                    </Button>
+                                                    {!form.errors.picture && form.touched.picture && <CheckIcon color="green.500" />}
+                                                </HStack>
+                                                <Text>{values?.file?.name}</Text>
+                                                <FormErrorMessage>{form.errors.picture}</FormErrorMessage>
+                                            </FormControl>
+                                        )}
+                                    </Field>
+                                )}
 
                                 <Field name="cover">
                                     {({ field, form }) => (

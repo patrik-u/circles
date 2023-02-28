@@ -44,6 +44,13 @@ export const CircleQuestionsForm = ({ isUpdateForm, circle, isGuideForm, onNext,
     const onSaveQuestions = () => {
         let circleData = { questions };
 
+        if (isGuideForm && !anyQuestionsAnswered()) {
+            if (onNext) {
+                onNext();
+            }
+            return;
+        }
+
         setIsSavingQuestions(true);
 
         // update circle data
@@ -289,12 +296,17 @@ export const CircleQuestionsForm = ({ isUpdateForm, circle, isGuideForm, onNext,
                         mr={3}
                         borderRadius="25px"
                         isLoading={isSavingQuestions}
-                        isDisabled={isGuideForm && !anyQuestionsAnswered()}
                         lineHeight="0"
                         onClick={onSaveQuestions}
                         width={isGuideForm ? "150px" : "auto"}
                     >
-                        {isUpdateForm === true ? (isGuideForm ? i18n.t("Continue") : i18n.t("Save")) : i18n.t("Save and continue")}
+                        {isUpdateForm === true
+                            ? isGuideForm
+                                ? !anyQuestionsAnswered()
+                                    ? i18n.t("Skip")
+                                    : i18n.t("Continue")
+                                : i18n.t("Save")
+                            : i18n.t("Save and continue")}
                     </Button>
                     {isUpdateForm !== true && (
                         <Button variant="ghost" borderRadius="25px" onClick={onCancel} isDisabled={isSavingQuestions} lineHeight="0">

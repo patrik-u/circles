@@ -38,6 +38,7 @@ import {
     getCircleTypes,
     toastInfo,
     log,
+    getMetaImage,
 } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
@@ -490,6 +491,51 @@ export const CircleMembersPanel = () => {
     );
 };
 
+export const MetaData = ({ data }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
+    const renderMetaData = (meta, i) => {
+        switch (meta.type) {
+            case "image":
+                return (
+                    <Box key={i} marginBottom="2px">
+                        <Image src={meta.url} />
+                    </Box>
+                );
+            default:
+                return meta.title || meta.description ? (
+                    <Box key={i} marginBottom="2px">
+                        <Box fontSize="14px" borderLeft="3px solid #f15bee" paddingLeft="5px">
+                            {meta.site_name &&
+                                (!isMobile ? (
+                                    <Link href={meta.url} target="_blank">
+                                        <Text fontSize="12px" fontWeight="700" color="#872985">
+                                            {meta.site_name}
+                                        </Text>
+                                    </Link>
+                                ) : (
+                                    <Text fontSize="12px" fontWeight="700" color="#872985">
+                                        {meta.site_name}
+                                    </Text>
+                                ))}
+                            <Text fontWeight="700">{meta.title}</Text>
+                            <Text>{meta.description}</Text>
+                            {meta.images?.map((img, j) => (
+                                <Link key={j} href={meta.url} target="_blank">
+                                    <Image src={img} />
+                                </Link>
+                            ))}
+                        </Box>
+                    </Box>
+                ) : null;
+        }
+    };
+
+    if (!data) return null;
+
+    return data.map((meta, i) => renderMetaData(meta, i));
+};
+
 export const CircleRightPanel = ({ section }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
@@ -562,7 +608,7 @@ export const DisplayModeButtons = ({ ...props }) => {
     );
 };
 
-export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) => {
+export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nullIfMissing, ...props }) => {
     const getDefaultCircleCover = () => {
         switch (type) {
             default:
@@ -575,11 +621,20 @@ export const CircleCover = ({ type, cover, coverWidth, coverHeight, ...props }) 
         }
     };
 
+    const getCover = () => {
+        if (cover) return cover;
+        let metaImage = getMetaImage(metaData);
+        if (metaImage) return metaImage;
+        return getDefaultCircleCover();
+    };
+
+    if (nullIfMissing && !getCover()) return null;
+
     return (
         <Image
             width={coverWidth ? `${coverWidth}px` : "100%"}
             height={`${coverHeight}px`}
-            src={getImageKitUrl(cover ?? getDefaultCircleCover(), coverWidth, coverHeight)}
+            src={getImageKitUrl(getCover(), coverWidth, coverHeight)}
             backgroundColor="white"
             objectFit="cover"
             {...props}
@@ -593,7 +648,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
     const [isMobile] = useAtom(isMobileAtom);
 
     const getDefaultCirclePicture = () => {
-        switch (circle.type) {
+        switch (circle?.type) {
             case "event":
                 return "/default-event-picture.png";
             default:
@@ -605,6 +660,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                 return "/default-tag-picture.png";
             case "link":
                 return "/default-link-picture.png";
+            case "post":
+                return "/default-user-picture.png";
         }
     };
 
@@ -652,21 +709,20 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
         </Box>
     ) : (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            {circle && (
-                <Image
-                    width={`${size}px`}
-                    height={`${size}px`}
-                    src={getCirclePicture(circle?.picture)}
-                    flexShrink="0"
-                    flexGrow="0"
-                    borderRadius="50%"
-                    objectFit="cover"
-                    onClick={onClick}
-                    cursor={!disableClick ? "pointer" : "inherit"}
-                    fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                    {...props}
-                />
-            )}
+            <Image
+                width={`${size}px`}
+                height={`${size}px`}
+                src={getCirclePicture(circle?.picture)}
+                flexShrink="0"
+                flexGrow="0"
+                borderRadius="50%"
+                objectFit="cover"
+                onClick={circle ? onClick : undefined}
+                cursor={!disableClick ? "pointer" : "inherit"}
+                fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                {...props}
+            />
+
             {circle?.parent_circle && (
                 <Image
                     position="absolute"
@@ -901,7 +957,7 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, ...props }) => {
+export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, hoverFadeColor = "#ddd8db", ...props }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
@@ -955,7 +1011,7 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
                                 position="absolute"
                                 left="-15px"
                                 _groupHover={{
-                                    backgroundImage: "linear-gradient(to right, transparent, #ddd8db);",
+                                    backgroundImage: `linear-gradient(to right, transparent, ${hoverFadeColor});`,
                                 }}
                             ></Box>
                             <Box
@@ -965,7 +1021,7 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
                                 position="absolute"
                                 left="-5px"
                                 _groupHover={{
-                                    backgroundColor: "#ddd8db",
+                                    backgroundColor: hoverFadeColor,
                                 }}
                             ></Box>
                         </>
