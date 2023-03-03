@@ -795,7 +795,9 @@ app.post("/circles", auth, async (req, res) => {
         await batch.commit();
 
         // add preview images to circle
-        await addPreviewImages(circleRes, links);
+        if (links?.length > 0 && newCircle.type === "post") {
+            await addPreviewImages(circleRes, links);
+        }
 
         // add connections to circle
         let circle = await getCircle(circleRes.id);

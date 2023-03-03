@@ -12,6 +12,7 @@ import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BsChatText, BsChatTextFill, BsChatFill, BsChat, BsLockFill } from "react-icons/bs";
 import { CircleChat } from "components/CircleChat";
 import axios from "axios";
+import linkifyHtml from "linkify-html";
 //#endregion
 
 export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
@@ -304,6 +305,19 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
+    const [formattedContent, setFormattedContent] = useState(item?.content);
+
+    useEffect(() => {
+        if (!item?.content) return;
+
+        if (item.type === "post" && item.has_links) {
+            const options = { target: "_blank" };
+            let formattedText = linkifyHtml(item.content, options);
+            setFormattedContent(formattedText);
+        } else {
+            setFormattedContent(item.content);
+        }
+    }, [item?.content, item?.type, item?.has_links]);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -386,7 +400,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         >
                             <div
                                 className="embedHtmlContent"
-                                dangerouslySetInnerHTML={{ __html: item.content }}
+                                dangerouslySetInnerHTML={{ __html: formattedContent }}
                                 style={{ marginBottom: isExpanded ? "30px" : "0px" }}
                             />
                             {/* Add fade out gradient */}
@@ -398,6 +412,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                 top="0px"
                                 left="0px"
                                 right="0px"
+                                pointerEvents="none"
                             >
                                 {!isExpanded && (
                                     <>
@@ -420,6 +435,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                     right="0px"
                                     fontSize="12px"
                                     fontWeight="400"
+                                    pointerEvents="auto"
                                 >
                                     {isExpanded ? "Show less" : "Show more"}
                                 </Link>

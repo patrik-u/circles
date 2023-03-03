@@ -78,8 +78,18 @@ const CreateNewCircleForm = ({ type }) => {
                         onKeyDown={handleMessageKeyDown}
                     />
                     {isMobile && (
-                        <Box position="absolute" top="18px" right="20px" width="26px" height="26px" flexShrink="0" cursor="pointer">
-                            <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
+                        <Box
+                            position="absolute"
+                            top="18px"
+                            right="20px"
+                            width="26px"
+                            height="26px"
+                            flexShrink="0"
+                            cursor="pointer"
+                            onClick={sendMessage}
+                            zIndex="20"
+                        >
+                            <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} />
                         </Box>
                     )}
 

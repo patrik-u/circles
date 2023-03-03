@@ -3,7 +3,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { log } from "components/Helpers";
 import { useAtom } from "jotai";
 import { ModalPopup } from "components/CircleElements";
-import { newCirclePopupAtom } from "components/Atoms";
+import { newCirclePopupAtom, isMobileAtom } from "components/Atoms";
 //#endregion
 
 const NewCircleGuide = lazy(() => import("components/NewCircleGuide"));
@@ -12,6 +12,7 @@ export const CreateNewCirclePopup = () => {
     log("ConnectPopup.render", -1);
 
     const [newCirclePopup, setNewCirclePopup] = useAtom(newCirclePopupAtom);
+    const [isMobile] = useAtom(isMobileAtom);
 
     //#region useEffects
 
@@ -36,7 +37,7 @@ export const CreateNewCirclePopup = () => {
     if (!newCirclePopup) return null;
 
     return (
-        <ModalPopup onClose={onClose}>
+        <ModalPopup onClose={onClose} fullscreen={isMobile}>
             <Suspense fallback={<div></div>}>
                 <NewCircleGuide onClose={onClose} type={newCirclePopup?.type} circle={newCirclePopup?.circle} message={newCirclePopup?.message} />
             </Suspense>

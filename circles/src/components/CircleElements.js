@@ -332,8 +332,13 @@ export const NotificationsBell = () => {
     );
 };
 
-export const ModalPopup = ({ children, onClose, ...props }) => {
-    return (
+export const ModalPopup = ({ children, fullscreen, onClose, ...props }) => {
+    return fullscreen ? (
+        <Box position="fixed" width="100vw" height="100vh" backgroundColor="white" zIndex="99" top="0" overflow="auto" padding="10px">
+            {children}
+            <CloseButton position="absolute" top="10px" right="10px" onClick={onClose} />
+        </Box>
+    ) : (
         <>
             <Box position="fixed" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" top="0" />
             <Flex position="fixed" width="100vw" zIndex="100" justifyContent="center" top="0">
@@ -625,7 +630,7 @@ export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nu
         if (cover) return cover;
         let metaImage = getMetaImage(metaData);
         if (metaImage) return metaImage;
-        return getDefaultCircleCover();
+        return null;
     };
 
     if (nullIfMissing && !getCover()) return null;
@@ -634,7 +639,7 @@ export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nu
         <Image
             width={coverWidth ? `${coverWidth}px` : "100%"}
             height={`${coverHeight}px`}
-            src={getImageKitUrl(getCover(), coverWidth, coverHeight)}
+            src={getImageKitUrl(getCover() ?? getDefaultCircleCover(), coverWidth, coverHeight)}
             backgroundColor="white"
             objectFit="cover"
             {...props}
