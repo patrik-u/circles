@@ -49,7 +49,7 @@ export const AccountManager = () => {
                 Sentry.addBreadcrumb({
                     category: "auth",
                     message: "User authenticated in firebase",
-                    level: Sentry.Severity.Info,
+                    level: "info",
                 });
 
                 // set user data
@@ -67,7 +67,7 @@ export const AccountManager = () => {
                 Sentry.addBreadcrumb({
                     category: "auth",
                     message: "User not authenticated in firebase",
-                    level: Sentry.Severity.Info,
+                    level: "info",
                 });
 
                 setUid(null);
