@@ -219,7 +219,7 @@ export const CircleImagesForm = ({ circle, isUpdateForm, onCancel, onNext, onUpd
                                                 </InputGroup>
                                                 <HStack align="center" spacing="15px">
                                                     <Button leftIcon={<Icon as={FiFile} />} onClick={handleCirclePictureUploadClick}>
-                                                        {i18n.t("Choose logo")}
+                                                        {circle.type === "user" ? i18n.t(`Choose profile picture`) : i18n.t(`Choose logo`)}
                                                     </Button>
                                                     {!form.errors.picture && form.touched.picture && <CheckIcon color="green.500" />}
                                                 </HStack>

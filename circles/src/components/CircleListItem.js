@@ -7,7 +7,7 @@ import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, userDataAtom, userAtom } from "components/Atoms";
+import { isMobileAtom, userDataAtom, userAtom, focusOnMapItemAtom } from "components/Atoms";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BsChatText, BsChatTextFill, BsChatFill, BsChat, BsLockFill } from "react-icons/bs";
 import { CircleChat } from "components/CircleChat";
@@ -18,6 +18,7 @@ import linkifyHtml from "linkify-html";
 export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -44,24 +45,9 @@ export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
                 <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
             </Box>
 
-            <VStack
-                flexGrow="1"
-                align="left"
-                justifyContent="left"
-                spacing="0px"
-                marginLeft="5px"
-                marginRight="15px"
-                marginTop={item.type === "event" ? "0px" : "10px"}
-            >
+            <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" marginLeft="5px" marginRight="15px" marginTop={item.type === "event" ? "0px" : "10px"}>
                 {item.type === "event" && (
-                    <Text
-                        textAlign="left"
-                        fontSize="12px"
-                        fontWeight="700"
-                        color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                        href={location?.pathname}
-                        marginTop="0px"
-                    >
+                    <Text textAlign="left" fontSize="12px" fontWeight="700" color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
                         {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                     </Text>
                 )}
@@ -119,7 +105,7 @@ export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
                             if (inSelect) return;
 
                             event.stopPropagation();
-                            //focusItem(item); // PWA123 figure out how to send events
+                            setFocusOnMapItem({ item });
                         }}
                     >
                         <Icon width="14px" height="14px" color="#929292" as={HiClock} cursor="pointer" marginRight="2px" />
@@ -144,7 +130,7 @@ export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
                             if (inSelect) return;
 
                             event.stopPropagation();
-                            //focusItem(item); // PWA123 figure out how to send events
+                            setFocusOnMapItem({ item });
                         }}
                     >
                         <Icon width="14px" height="14px" color="#929292" as={RiMapPinFill} cursor="pointer" marginRight="2px" />
@@ -306,6 +292,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
     const [formattedContent, setFormattedContent] = useState(item?.content);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     useEffect(() => {
         if (!item?.content) return;
@@ -352,24 +339,9 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                     <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
                 </Box>
 
-                <VStack
-                    flexGrow="1"
-                    align="left"
-                    justifyContent="left"
-                    spacing="0px"
-                    marginLeft="5px"
-                    marginRight="15px"
-                    marginTop={item.type === "event" ? "0px" : "10px"}
-                >
+                <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" marginLeft="5px" marginRight="15px" marginTop={item.type === "event" ? "0px" : "10px"}>
                     {item.type === "event" && (
-                        <Text
-                            textAlign="left"
-                            fontSize="12px"
-                            fontWeight="700"
-                            color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                            href={location?.pathname}
-                            marginTop="0px"
-                        >
+                        <Text textAlign="left" fontSize="12px" fontWeight="700" color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
                             {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                         </Text>
                     )}
@@ -398,11 +370,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             maxHeight={isExpanded ? "none" : "150px"}
                             position="relative"
                         >
-                            <div
-                                className="embedHtmlContent"
-                                dangerouslySetInnerHTML={{ __html: formattedContent }}
-                                style={{ marginBottom: isExpanded ? "30px" : "0px" }}
-                            />
+                            <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: formattedContent }} style={{ marginBottom: isExpanded ? "30px" : "0px" }} />
                             {/* Add fade out gradient */}
                             <Box
                                 position="absolute"
@@ -416,27 +384,11 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             >
                                 {!isExpanded && (
                                     <>
-                                        <Box
-                                            position="absolute"
-                                            bottom="10px"
-                                            left="0px"
-                                            right="0px"
-                                            height="50px"
-                                            background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
-                                        />
+                                        <Box position="absolute" bottom="10px" left="0px" right="0px" height="50px" background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))" />
                                         <Box position="absolute" bottom="0px" left="0px" right="0px" height="10px" background="#ffffff" />
                                     </>
                                 )}
-                                <Link
-                                    onClick={() => setIsExpanded(!isExpanded)}
-                                    position="absolute"
-                                    bottom="0px"
-                                    left="0px"
-                                    right="0px"
-                                    fontSize="12px"
-                                    fontWeight="400"
-                                    pointerEvents="auto"
-                                >
+                                <Link onClick={() => setIsExpanded(!isExpanded)} position="absolute" bottom="0px" left="0px" right="0px" fontSize="12px" fontWeight="400" pointerEvents="auto">
                                     {isExpanded ? "Show less" : "Show more"}
                                 </Link>
                             </Box>
@@ -480,7 +432,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                 if (inSelect) return;
 
                                 event.stopPropagation();
-                                //focusItem(item); // PWA123 figure out how to send events
+                                setFocusOnMapItem({ item });
                             }}
                         >
                             <Icon width="14px" height="14px" color="#929292" as={HiClock} cursor="pointer" marginRight="2px" />
@@ -505,7 +457,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                 if (inSelect) return;
 
                                 event.stopPropagation();
-                                //focusItem(item); // PWA123 figure out how to send events
+                                setFocusOnMapItem({ item });
                             }}
                         >
                             <Icon width="14px" height="14px" color="#929292" as={RiMapPinFill} cursor="pointer" marginRight="2px" />

@@ -1,13 +1,13 @@
 //#region imports
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, getLngLatArray, getImageKitUrl } from "components/Helpers";
+import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes } from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { userAtom } from "components/Atoms";
+import { userAtom, circleConnectionsAtom, filteredCirclesAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
 
@@ -23,19 +23,29 @@ export const LocationPickerMarker = ({ position }) => {
     );
 };
 
-export const CircleMapEdges = ({ circle, circles }) => {
-    if (!circle?.base) return null;
+export const ConnectionsEdges = () => {
+    const [circleConnections] = useAtom(circleConnectionsAtom);
+    const [filteredCircles] = useAtom(filteredCirclesAtom);
 
     const getFeatures = () => {
-        return circles
-            .filter((x) => x.base)
+        return circleConnections
+            .filter((x) => {
+                if (!x?.source || !x?.target) {
+                    //log(JSON.stringify(x, null, 2), 2, true);
+                    return false;
+                }
+                if (x.source.base && x.target.base && filteredCircles.some((a) => a.id === x.source.id) && filteredCircles.some((a) => a.id === x.target.id)) {
+                    return true;
+                }
+                return false;
+            })
             .map((x) => {
                 return {
                     type: "Feature",
-                    properties: {},
+                    properties: { circle_types: x.circle_types },
                     geometry: {
                         type: "LineString",
-                        coordinates: [getLngLatArray(circle.base), getLngLatArray(x.base)],
+                        coordinates: [getLngLatArray(x.source.base), getLngLatArray(x.target.base)],
                     },
                 };
             });
@@ -57,8 +67,52 @@ export const CircleMapEdges = ({ circle, circles }) => {
                     "line-cap": "round",
                 }}
                 paint={{
+                    "line-color": ["match", ["get", "circle_types"], "user_user", "rgba(106, 129, 255, 1)", "rgba(255, 255, 255, 1)"],
+                    "line-width": 1,
+                }}
+            />
+        </Source>
+    );
+};
+
+export const CircleMapEdges = ({ circle, circles }) => {
+    if (!circle?.base) return null;
+
+    const getFeatures = () => {
+        return circles
+            .filter((x) => x.base)
+            .map((x) => {
+                return {
+                    type: "Feature",
+                    properties: { circle_types: getCircleTypes(circle.type, x.type) },
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [getLngLatArray(circle.base), getLngLatArray(x.base)],
+                    },
+                };
+            });
+    };
+
+    const lineFeatures = {
+        type: "FeatureCollection",
+        features: getFeatures(),
+    };
+
+    log(JSON.stringify(lineFeatures, null, 2), 2, true);
+
+    return (
+        <Source id="polylineLayer" type="geojson" data={lineFeatures}>
+            <Layer
+                id="lineLayer"
+                type="line"
+                source="my-data"
+                layout={{
+                    "line-join": "round",
+                    "line-cap": "round",
+                }}
+                paint={{
                     //"line-color": "rgba(91, 115, 255, 1)",
-                    "line-color": "rgba(255, 255, 255, 1)",
+                    "line-color": ["match", ["get", "circle_types"], "user_user", "rgba(106, 129, 255, 1)", "rgba(255, 255, 255, 1)"],
                     //"line-color": "rgba(63, 71, 121, 1)",
                     //"line-color": "rgba(97, 97, 97, 1)",
                     //"line-color": "rgba(116, 89, 41, 1)",
@@ -93,26 +147,9 @@ export const CircleMapMarker = ({ circle }) => {
 
     return (
         circle?.base && (
-            <Marker
-                key={circle.id}
-                offset={[0, -24]}
-                latitude={lat(circle.base)}
-                longitude={lng(circle.base)}
-                className="circle-marker"
-                onClick={() => openCircle(navigate, circle.id)}
-            >
+            <Marker key={circle.id} offset={[0, -24]} latitude={lat(circle.base)} longitude={lng(circle.base)} className="circle-marker" onClick={() => openCircle(navigate, circle.id)}>
                 <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" />
-                <Box
-                    top="3px"
-                    left="9px"
-                    width="30px"
-                    height="30px"
-                    overflow="hidden"
-                    flexShrink="0"
-                    borderRadius="50%"
-                    backgroundColor="white"
-                    position="absolute"
-                >
+                <Box top="3px" left="9px" width="30px" height="30px" overflow="hidden" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
                     <CirclePicture circle={circle} size={30} disableClick={true} />
                 </Box>
 

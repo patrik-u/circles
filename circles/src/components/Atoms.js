@@ -6,10 +6,12 @@ import { fromFsDate } from "components/Helpers";
 
 // misc
 export const isMobileAtom = atom(detectIsMobile);
-export const displayModeAtom = atom(displayModes.default);
+export const displayModeAtom = atom(displayModes.map);
 export const searchResultsShownAtom = atom(false);
 export const newUserPopupAtom = atom(null);
 export const newCirclePopupAtom = atom(null);
+export const mapStyleAtom = atom("satellite");
+export const focusOnMapItemAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);
@@ -30,7 +32,7 @@ export const circleSettingsAtom = atomWithStorage({});
 export const circleAtom = atom(null);
 export const circlesAtom = atom([]);
 export const circleConnectionsAtom = atom([]);
-export const showNetworkLogoAtom = atom(false);
+export const homeExpandedAtom = atom(false);
 export const chatCircleAtom = atom(null);
 export const circlesFilterAtom = atom({});
 export const circleSubSectionAtom = atom(circleSubSections.default);

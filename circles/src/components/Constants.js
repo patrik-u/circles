@@ -15,7 +15,7 @@ export const circleSubSections = {
     circles: { showMembers: true, showTags: true },
     chat: { showMembers: true, showTags: true },
 };
-export const displayModes = { default: "default", map: "map" };
+export const displayModes = { default: "default", map: "map", map_only: "map_only" };
 export const defaultUserPicture = "/default-user-picture.png";
 export const allQuestions = [
     {

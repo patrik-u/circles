@@ -22,17 +22,6 @@ const CircleHome = () => {
     }, [circlesFilter, setCirclesFilter]);
 
     // useEffect(() => {
-    //     log("CircleHome.useEffect 1", 0);
-    //     if (!circle?.type || !circleConnections) {
-    //         setUnfilteredCircles([]);
-    //         return;
-    //     }
-
-    //     // filter connections
-    //     setUnfilteredCircles(circleConnections.map((x) => x.display_circle));
-    // }, [circleConnections, circle?.id, circle?.type]);
-
-    // useEffect(() => {
     //     log("CircleHome.useEffect 2", 0);
     //     let listCircles = unfilteredCircles; //!filterConnected ? unfilteredCircles : unfilteredCircles.filter((x) => user?.connections?.some((y) => y.target.id === x.id));
 

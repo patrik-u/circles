@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.0.25",
+    "version": "1.1.1",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -11,6 +11,7 @@
         "@fontsource/roboto": "^4.5.3",
         "@sentry/react": "^7.41.0",
         "@sentry/tracing": "^7.41.0",
+        "@use-gesture/react": "^10.2.24",
         "algoliasearch": "^4.14.2",
         "axios": "^0.23.0",
         "emoji-mart": "^5.1.0",
@@ -45,6 +46,7 @@
         "react-scripts": "^5.0.0",
         "react-select": "^5.4.0",
         "react-share": "^4.4.1",
+        "react-spring": "^9.7.1",
         "react-tag-input": "^6.8.1",
         "reactflow": "^11.2.0",
         "serve": "^14.1.2",

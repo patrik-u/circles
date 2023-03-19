@@ -6,7 +6,7 @@ import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers
 import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, showNetworkLogoAtom, searchResultsShownAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, homeExpandedAtom, searchResultsShownAtom } from "components/Atoms";
 import CircleSearchBox from "components/CircleSearch";
 // #endregion
 
@@ -16,7 +16,6 @@ export const Home = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const [, setShowNetworkLogo] = useAtom(showNetworkLogoAtom);
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
 
@@ -32,29 +31,21 @@ export const Home = () => {
         return favoriteCircles;
     };
 
-    useEffect(() => {
-        setShowNetworkLogo(false);
-    });
+    const logoSize = isMobile ? 256 : 356;
+    const logoSizePx = logoSize + "px";
 
     return (
         <Flex backgroundColor="#ffffff" justifyContent="center">
             <Flex flexDirection="column" alignItems="center" width="100%">
-                <Box width="356px" height="356px">
-                    <Image src={getImageKitUrl("/network.png", 356, 356)} width="356px" height="356px" />
+                <Box width={logoSizePx} height={logoSizePx} marginTop="50px">
+                    <Image src={getImageKitUrl("/codo-logotype.svg", logoSize, logoSize)} width={logoSizePx} height={logoSizePx} />
                 </Box>
 
-                <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column">
-                    <CircleSearchBox marginBottom="0px" />
+                <Flex width="100%" maxWidth="580px" marginBottom="40px" flexDirection="column" position="relative">
+                    {/* <CircleSearchBox marginBottom="0px" popover={true} /> */}
                     {!searchResultsShown && (
                         <Flex marginBottom="200px" marginTop="35px" height={isMobile ? "271px" : "212px"} alignItems="center" justifyContent="center">
-                            <SimpleGrid
-                                columns={isMobile ? 4 : 5}
-                                spacing={isMobile ? 5 : 10}
-                                maxWidth="500px"
-                                marginLeft="15px"
-                                marginRight="15px"
-                                alignSelf="start"
-                            >
+                            <SimpleGrid columns={isMobile ? 4 : 5} spacing={isMobile ? 5 : 10} maxWidth="500px" marginLeft="15px" marginRight="15px" alignSelf="start">
                                 {getFavoriteCircles(userData)?.map((item) => (
                                     <Box
                                         key={item.id}
@@ -83,7 +74,7 @@ export const Home = () => {
                     )}
                 </Flex>
             </Flex>
-            <Box position="absolute" bottom="5px" right="10px" color={process.env.REACT_APP_ENVIRONMENT === "prod" ? "#f3f3f3" : "#a9a9a9"}>
+            <Box position="absolute" top="15px" left="20px" color={process.env.REACT_APP_ENVIRONMENT === "prod" ? "#ffffff" : "#a9a9a9"}>
                 <Text>
                     {process.env.REACT_APP_NAME} {process.env.REACT_APP_VERSION} ({process.env.REACT_APP_ENVIRONMENT})
                 </Text>

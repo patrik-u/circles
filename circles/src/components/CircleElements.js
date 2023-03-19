@@ -28,18 +28,7 @@ import {
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
-import {
-    getImageKitUrl,
-    isConnectedOrPending,
-    isConnected,
-    hasUpdates,
-    singleLineEllipsisStyle,
-    twoLineEllipsisStyle,
-    getCircleTypes,
-    toastInfo,
-    log,
-    getMetaImage,
-} from "components/Helpers";
+import { getImageKitUrl, isConnectedOrPending, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle, getCircleTypes, toastInfo, log, getMetaImage } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine, RiShareLine } from "react-icons/ri";
@@ -48,7 +37,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { GrGallery } from "react-icons/gr";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circlesAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import axios from "axios";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
@@ -57,7 +46,7 @@ import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 //#endregion
 
-const buttonHighlight = "#1fff50dd";
+export const buttonHighlight = "#59ff81dd";
 
 export const ShareButtonMenu = ({ children, referrer }) => {
     const location = useLocationNoUpdates();
@@ -399,7 +388,7 @@ export const QuickLinks = ({ circle }) => {
     if (!circle?.social_media) return null;
 
     return (
-        <HStack spacing="10px" alignSelf="start">
+        <Flex flexDirection="row" flexWrap="wrap" gap="6px">
             {circle.social_media.facebook && (
                 <Link href={circle.social_media.facebook} target="_blank">
                     <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
@@ -453,7 +442,7 @@ export const QuickLinks = ({ circle }) => {
             <Link href={location.pathname} target="_blank">
                 <Image src={"/social_codo26x26.png"} className="social-media-icon" />
             </Link>
-        </HStack>
+        </Flex>
     );
 };
 
@@ -470,12 +459,17 @@ export const QuickLinksPanel = () => {
 
 export const CircleMembersPanel = () => {
     const [circle] = useAtom(circleAtom);
+    const [circles] = useAtom(circlesAtom);
     const [circleConnections] = useAtom(circleConnectionsAtom);
     if (!circle?.id) return null;
 
-    const circleTypes = getCircleTypes(circle.type, "user");
-    const members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle.picture).map((x) => x.display_circle);
-
+    let members = [];
+    if (circle.id === "global") {
+        members = circles.filter((x) => x.type === "user" && x.picture);
+    } else {
+        const circleTypes = getCircleTypes(circle.type, "user");
+        members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle?.picture).map((x) => x.display_circle);
+    }
     if (members.length <= 0) return null;
 
     const size = 44;
@@ -547,12 +541,7 @@ export const CircleRightPanel = ({ section }) => {
     switch (section) {
         case "home":
             return (
-                <Box
-                    flex={isMobile ? "initial" : "1"}
-                    order={isMobile ? "0" : "3"}
-                    maxWidth={isMobile ? "none" : "270px"}
-                    paddingTop={isMobile ? "0px" : "10px"}
-                >
+                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
@@ -563,12 +552,7 @@ export const CircleRightPanel = ({ section }) => {
         case "chat":
         case "circles":
             return isMobile ? null : (
-                <Box
-                    flex={isMobile ? "initial" : "1"}
-                    order={isMobile ? "0" : "3"}
-                    maxWidth={isMobile ? "none" : "270px"}
-                    paddingTop={isMobile ? "0px" : "10px"}
-                >
+                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
@@ -601,13 +585,7 @@ export const DisplayModeButtons = ({ ...props }) => {
                 justifyContent="center"
                 onClick={() => setDisplayMode(displayMode === displayModes.default ? displayModes.map : displayModes.default)}
             >
-                <Icon
-                    width={iconSize}
-                    height={iconSize}
-                    color="black"
-                    as={displayMode === displayModes.default ? FaMapMarkedAlt : GrGallery}
-                    cursor="pointer"
-                />
+                <Icon width={iconSize} height={iconSize} color="black" as={displayMode === displayModes.default ? FaMapMarkedAlt : GrGallery} cursor="pointer" />
             </Flex>
         </VStack>
     );
@@ -671,6 +649,9 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
     };
 
     const getCirclePicture = (picture) => {
+        if (circle?.id === "global") {
+            return picture ?? getDefaultCirclePicture();
+        }
         return getImageKitUrl(picture ?? getDefaultCirclePicture(), size, size);
     };
 
@@ -748,15 +729,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
             )}
 
             {hasUpdates(userData, circle, "any") && (
-                <Box
-                    width={`${size / 7}px`}
-                    height={`${size / 7}px`}
-                    backgroundColor="#ff6499"
-                    borderRadius="50%"
-                    position="absolute"
-                    bottom="0px"
-                    right="0px"
-                ></Box>
+                <Box width={`${size / 7}px`} height={`${size / 7}px`} backgroundColor="#ff6499" borderRadius="50%" position="absolute" bottom="0px" right="0px"></Box>
             )}
         </Box>
     );
@@ -832,7 +805,7 @@ export const CircleHeader = ({ circle }) => {
                         <FavoriteButton />
                         {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
                         <ShareButtonMenu />
-                        <ConnectButton circle={circle} inHeader={isMobile ? false : true} fadeBackground={!isMobile} />
+                        {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={isMobile ? false : true} fadeBackground={!isMobile} />}
                     </HStack>
                 </Flex>
             </Flex>

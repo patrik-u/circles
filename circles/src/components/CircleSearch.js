@@ -61,7 +61,7 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
         setSearchResultsShown(query.length > 0);
     }, [query, setSearchResultsShown, refine]);
 
-    useEffect(() => {}, []);
+    useEffect(() => { }, []);
 
     const handleChange = (e) => {
         setQuery(e.target.value);
@@ -77,26 +77,28 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
     return (
         <InputGroup {...props}>
             <InputLeftElement
-                color="gray.300"
+                color="#333"
                 pointerEvents="none"
                 children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
-                height={isSmall ? "30px" : "50px"}
+                height={isSmall ? "30px" : "38px"}
                 marginLeft={isSmall ? "12px" : "20px"}
             />
             <Input
                 paddingLeft={isSmall ? "35px" : "65px"}
                 borderRadius="50px"
-                height={isSmall ? "30px" : "50px"}
+                height={isSmall ? "30px" : "38px"}
+                backgroundColor="#f4f4f4dd"
                 width="100%"
                 marginLeft="15px"
                 marginRight="15px"
                 value={query}
                 onChange={handleChange}
                 focusBorderColor="pink.400"
+                color="#333"
                 placeholder={hidePlaceholder ? "" : i18n.t("Type search terms or enter URL")}
                 _placeholder={{
                     fontSize: isSmall ? "10px" : isMobile ? "16px" : "22px",
-                    height: isSmall ? "30px" : "50px",
+                    height: isSmall ? "30px" : "38px",
                     textAlign: "center",
                     paddingRight: "32px",
                 }}
@@ -104,9 +106,9 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
             />
             {(query || (isMobile && size === "sm")) && (
                 <InputRightElement
-                    color="gray.300"
+                    color="#333"
                     children={<MdOutlineClose size={isSmall ? 20 : 28} />}
-                    height={isSmall ? "30px" : "50px"}
+                    height={isSmall ? "30px" : "38px"}
                     marginRight={isSmall ? "12px" : "20px"}
                     onClick={closeClick}
                     cursor="pointer"
@@ -155,7 +157,8 @@ export const MobileSearchBox = (props) => {
                 />
             </Box>
             {searchIsOpen && (
-                <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px" backgroundColor="white">
+                <Box>
+                <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
                     <CircleSearchBox
                         size="sm"
                         hidePlaceholder={true}
@@ -165,6 +168,7 @@ export const MobileSearchBox = (props) => {
                         onHitClick={onHitClick}
                         autofocus={true}
                     />
+                </Box>
                 </Box>
             )}
         </>
@@ -200,7 +204,6 @@ export const CircleSearchBox = ({
                         <Flex
                             position="absolute"
                             top="55px"
-                            width="100%"
                             justifyContent="center"
                             alignItems="center"
                             borderRadius="20px"
@@ -219,7 +222,8 @@ export const CircleSearchBox = ({
 
             {popover && isMobile && (
                 <EmptyQueryBoundary fallback={fallback}>
-                    <Box position="absolute" width="100%" top="40px" left="0px" height="calc(100vh - 40px)" overflowY="scroll">
+                    <Box position="absolute" width="100%" top="40px" left="0px" height="calc(100vh - 40px)" overflowY="scroll"
+                    backgroundColor="white">
                         <SearchHits onClick={onHitClick} />
                     </Box>
                 </EmptyQueryBoundary>

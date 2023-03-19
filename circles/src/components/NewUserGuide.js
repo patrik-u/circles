@@ -15,6 +15,7 @@ const CircleContentForm = lazy(() => import("components/settings/CircleContentFo
 const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
 const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
 const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
+const CircleBasePopupForm = lazy(() => import("components/settings/CircleBasePopupForm"));
 
 export const NewUserGuide = ({ onClose }) => {
     const [user] = useAtom(userAtom);
@@ -63,11 +64,11 @@ export const NewUserGuide = ({ onClose }) => {
             if (!user.tags || user.tags?.length <= 0 || ignoreCheck) {
                 profileSteps.push(allSteps.tags);
             }
+            if (!user.base || ignoreCheck) {
+                profileSteps.push(allSteps.location);
+            }
             if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
                 profileSteps.push(allSteps.questions);
-            }
-            if (!user.base || ignoreCheck) {
-                //profileSteps.push(allSteps.location);
             }
         }
         profileSteps.push(allSteps.complete);
@@ -78,21 +79,7 @@ export const NewUserGuide = ({ onClose }) => {
 
         setSteps(profileSteps);
         setActiveStep(profileSteps[0]);
-        // if profile has no picture or cover prompt them to choose
-    }, [
-        user?.id,
-        userData?.agreed_to_tnc,
-        userData?.completed_guide,
-        user?.description,
-        user?.picture,
-        user?.cover,
-        user?.tags,
-        user?.questions,
-        user?.base,
-        hasBeenInitialized,
-        allSteps,
-        onClose,
-    ]);
+    }, [user?.id, userData?.agreed_to_tnc, userData?.completed_guide, user?.description, user?.picture, user?.cover, user?.tags, user?.questions, user?.base, hasBeenInitialized, allSteps, onClose]);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
@@ -153,14 +140,7 @@ export const NewUserGuide = ({ onClose }) => {
                             <Text className="screenHeader" alignSelf="center">
                                 {i18n.t(`Terms  and conditions`)}
                             </Text>
-                            <Box
-                                width="100%"
-                                height="300px"
-                                borderRadius="5px"
-                                border="1px solid"
-                                borderColor="var(--chakra-colors-gray-200)"
-                                backgroundColor="#f7f7f7"
-                            >
+                            <Box width="100%" height="300px" borderRadius="5px" border="1px solid" borderColor="var(--chakra-colors-gray-200)" backgroundColor="#f7f7f7">
                                 <Scrollbars>
                                     <PrivacyPolicy omitHeader={true} />
                                 </Scrollbars>
@@ -260,6 +240,17 @@ export const NewUserGuide = ({ onClose }) => {
                     </Box>
                 );
 
+            case allSteps.location.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleBasePopupForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
             case allSteps.complete.id:
                 return (
                     <Box>
@@ -295,13 +286,7 @@ export const NewUserGuide = ({ onClose }) => {
             <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
                 <HStack align="center">
                     {steps.map((x, i) => (
-                        <Box
-                            key={x.id}
-                            width="10px"
-                            height="10px"
-                            borderRadius="50%"
-                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
-                        ></Box>
+                        <Box key={x.id} width="10px" height="10px" borderRadius="50%" backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}></Box>
                     ))}
                 </HStack>
             </Flex>

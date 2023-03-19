@@ -8,7 +8,7 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { AiOutlineMessage } from "react-icons/ai";
 import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "components/Helpers";
 import { openCircle } from "components/Navigation";
-import { CirclePicture } from "components/CircleElements";
+import { CirclePicture, buttonHighlight } from "components/CircleElements";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, chatCircleAtom } from "components/Atoms";
 import db from "components/Firebase";
@@ -31,9 +31,9 @@ export const MessageNotification = ({ notification, onClick }) => {
                 _hover={
                     onClick
                         ? {
-                              bg: "#f5f4f8",
-                              color: "black",
-                          }
+                            bg: "#f5f4f8",
+                            color: "black",
+                        }
                         : {}
                 }
                 onClick={() => onClick()}
@@ -95,7 +95,8 @@ const Messages = () => {
     const navigate = useNavigateNoUpdates();
     const [messages, setMessages] = useState([]);
     const { isOpen: messagesIsOpen, onOpen: messagesOnOpen, onClose: messagesOnClose } = useDisclosure();
-    const iconSize = { base: "24px", md: "30px" };
+    const iconSize = isMobile ? 24 : 30;
+    const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
 
     useOutsideClick({
@@ -161,17 +162,27 @@ const Messages = () => {
     return (
         user?.id && (
             <>
-                <Box position="relative" height={iconSize}>
-                    <Icon
-                        width={iconSize}
-                        height={iconSize}
-                        color={"#333"}
-                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                        _active={{ transform: "scale(0.98)" }}
-                        as={AiOutlineMessage}
+                <Box position="relative">
+                    <Flex
+                        position="relative"
+                        width={iconSize + 8 + "px"}
+                        height={iconSize + 8 + "px"}
+                        backgroundColor="#f4f4f4dd"
+                        _hover={{ backgroundColor: buttonHighlight }}
+                        borderRadius="50%"
+                        justifyContent="center"
+                        alignItems="center"
                         onClick={openMessages}
                         cursor="pointer"
-                    />
+                    >
+                        <Icon
+                            width={iconSizePx}
+                            height={iconSizePx}
+                            color={"#333"}
+                            as={AiOutlineMessage}
+                            cursor="pointer"
+                        />
+                    </Flex>
                     {hasUnreadMessages(messages) && (
                         <Box
                             backgroundColor="#ff6499"

@@ -8,78 +8,47 @@ import ProfileMenu from "components/ProfileMenu";
 import { routes } from "components/Navigation";
 import { LoginRegisterMenu } from "components/LoginForms";
 import { useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom, showNetworkLogoAtom } from "components/Atoms";
+import { isMobileAtom, signInStatusAtom, homeExpandedAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleSearchBox, MobileSearchBox } from "components/CircleSearch";
 import { Routes, Route } from "react-router-dom";
 //#endregion
 
-export const TopMenu = () => {
+export const TopMenu = ({ onLogoClick }) => {
     log("TopMenu.render", -1);
 
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [showNetworkLogo] = useAtom(showNetworkLogoAtom);
+    const [homeExpanded] = useAtom(homeExpandedAtom);
     const navigate = useNavigateNoUpdates();
     const height = isMobile ? "40px" : "90px";
     const logoHeight = isMobile ? 30 : 60; //68;
     const logoHeightPx = `${logoHeight}px`;
-    const logoWidth = isMobile ? 33 : 65; //157;
+    const logoWidth = isMobile ? 30 : 60; //157;
     const logoWidthPx = `${logoWidth}px`;
 
     const onNetworkLogoClick = () => {
-        navigate(routes.home);
+        if (onLogoClick) {
+            onLogoClick();
+        }
     };
 
     return (
         <>
-            <Flex
-                className="fixedSize"
-                align="center"
-                flexBasis={height}
-                height={height}
-                maxHeight={height}
-                width="100%"
-                position="fixed"
-                zIndex="4"
-                backgroundColor="white"
-            >
+            <Flex className="fixedSize" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" position="fixed" zIndex="4" pointerEvents="none">
                 {/* TODO show network circle */}
-                {showNetworkLogo && (
-                    <Box
-                        className="fixedSize"
-                        width={logoWidthPx}
-                        height={logoHeightPx}
-                        marginLeft={isMobile ? "12px" : "25px"}
-                        onClick={onNetworkLogoClick}
-                        cursor="pointer"
-                    >
-                        <Image src={getImageKitUrl("/network-small.png", logoWidth, logoHeight)} width={logoWidthPx} height={logoHeightPx} />
+                {!homeExpanded && (
+                    <Box className="fixedSize" width={logoWidthPx} height={logoHeightPx} marginLeft={isMobile ? "12px" : "25px"} onClick={onNetworkLogoClick} cursor="pointer" pointerEvents="auto">
+                        <Image src="/codo-logo.svg" width={logoWidthPx} height={logoHeightPx} />
                     </Box>
                 )}
 
                 <Box flex="1" />
-                {!isMobile && (
-                    <>
-                        <Routes>
-                            <Route path="/" element={null} />
-                            <Route
-                                path="*"
-                                element={<CircleSearchBox size={isMobile ? "sm" : "md"} hidePlaceholder={true} popover={true} maxWidth="450px" />}
-                            />
-                        </Routes>
-                        <Box flex="1" />
-                    </>
-                )}
-
-                {isMobile && (
-                    <Routes>
-                        <Route path="/" element={null} />
-                        <Route path="*" element={<MobileSearchBox marginRight="12px" />} />
-                    </Routes>
-                )}
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">
-                    <HStack spacing={isMobile ? "20px" : "50px"} align="center" height={height}>
+                    <HStack spacing={isMobile ? "20px" : "20px"} align="center" height={height}>
+                        {!homeExpanded &&
+                            (isMobile ? <MobileSearchBox marginRight="12px" /> : <CircleSearchBox size={isMobile ? "sm" : "md"} hidePlaceholder={true} popover={true} maxWidth="450px" />)}
+
                         {signInStatus.signedIn && (
                             <>
                                 <Messages />
@@ -96,7 +65,6 @@ export const TopMenu = () => {
                     </HStack>
                 </Box>
             </Flex>
-            <Box className="fixedSize" height={height} />
         </>
     );
 };

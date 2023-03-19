@@ -5,10 +5,10 @@ import { log } from "components/Helpers";
 import { Routes, Route } from "react-router-dom";
 import { useAtom } from "jotai";
 import { isMobileAtom } from "components/Atoms";
+import LandingPage from "components/LandingPage";
 import Home from "components/Home";
 import AccountManager from "components/AccountManager";
 import LocationManager from "components/LocationManager";
-import TopMenu from "components/TopMenu";
 import ConnectPopup from "components/ConnectPopup";
 import NewUserPopup from "components/NewUserPopup";
 import CreateNewCirclePopup from "components/CreateNewCirclePopup";
@@ -51,11 +51,11 @@ const App = () => {
             <PushNotificationsManager />
 
             <Flex width="100%" height="100%" flexDirection="column">
-                <TopMenu />
                 <Suspense fallback={<Box></Box>}>
                     <Routes>
-                        <Route path="/" element={<Home />} />
+                        <Route path="/landing" element={<LandingPage />} />
                         <Route path="/circle/:circleId/*" element={<Circle />} />
+                        <Route path="/*" element={<Circle isGlobal={true} />} />
                     </Routes>
                 </Suspense>
             </Flex>

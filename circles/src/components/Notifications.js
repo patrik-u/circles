@@ -6,14 +6,15 @@ import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import i18n from "i18n/Localization";
-import { FaRegBell } from "react-icons/fa";
+import { FaBell, FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
 import { HiCheck, HiX } from "react-icons/hi";
 import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, log, getImageKitUrl, getDefaultCirclePicture } from "components/Helpers";
 import { openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
-import { userAtom } from "components/Atoms";
+import { userAtom, isMobileAtom } from "components/Atoms";
+import { buttonHighlight } from "components/CircleElements"
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {
@@ -319,9 +320,9 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                 _hover={
                     onClick
                         ? {
-                              bg: "#f5f4f8",
-                              color: "black",
-                          }
+                            bg: "#f5f4f8",
+                            color: "black",
+                        }
                         : {}
                 }
                 onClick={() => onClick()}
@@ -364,10 +365,13 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
 
 const Notifications = () => {
     const [user] = useAtom(userAtom);
+    const [isMobile] = useAtom(isMobileAtom);
     const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
-    const iconSize = { base: "24px", md: "30px" };
+    const iconSize = isMobile ? 24 : 30;
+    const iconSizePx = iconSize + "px";
+
     const notificationsBoxRef = useRef(null);
 
     useOutsideClick({
@@ -444,17 +448,27 @@ const Notifications = () => {
     return (
         user?.id && (
             <>
-                <Box position="relative" height={iconSize}>
-                    <Icon
-                        width={iconSize}
-                        height={iconSize}
-                        color={"#333"}
-                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                        _active={{ transform: "scale(0.98)" }}
-                        as={FaRegBell}
+                <Box position="relative">
+                    <Flex
+                        position="relative"
+                        width={iconSize + 8 + "px"}
+                        height={iconSize + 8 + "px"}
+                        backgroundColor="#f4f4f4dd"
+                        _hover={{ backgroundColor: buttonHighlight }}
+                        borderRadius="50%"
+                        justifyContent="center"
+                        alignItems="center"
                         onClick={openNotifications}
                         cursor="pointer"
-                    />
+                    >
+                        <Icon
+                            width={iconSizePx}
+                            height={iconSizePx}
+                            color={"#333"}
+                            as={FaRegBell}
+                            cursor="pointer"
+                        />
+                    </Flex>
                     {hasUnreadNotifications(notifications) && (
                         <Box
                             backgroundColor="#ff6499"

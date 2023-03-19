@@ -17,7 +17,7 @@ const configs = {
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",
-        alwaysShowGuide: false,
+        alwaysShowGuide: true,
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
     },

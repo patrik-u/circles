@@ -12,26 +12,30 @@ import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
 //#endregion
 
-export const CircleBaseForm = ({ circle, isUpdateForm, onCancel, onNext, onUpdate }) => {
+export const CircleBasePopupForm = ({ circle, isUpdateForm, isGuideForm, onCancel, onNext, onUpdate }) => {
     const [isSavingLocation, setIsSavingLocation] = useState(false);
-    const [, setDisplayMode] = useAtom(displayModeAtom);
+    const [displayMode, setDisplayMode] = useAtom(displayModeAtom);
     const [locationPickerActive, setLocationPickerActive] = useAtom(locationPickerActiveAtom);
     const [locationPickerPosition] = useAtom(locationPickerPositionAtom);
     const toast = useToast();
+    const [isMobile] = useAtom(isMobileAtom);
 
     useEffect(() => {
-        setDisplayMode(displayModes.map);
+        setDisplayMode(displayModes.map_only);
         setLocationPickerActive(true);
 
         return () => {
             setLocationPickerActive(false);
+            setDisplayMode(displayModes.map);
         };
     }, [setDisplayMode, setLocationPickerActive]);
 
-    log("locationPickerActive: " + locationPickerActive);
+    const hasSetLocation = () => {
+        return locationPickerPosition && typeof locationPickerPosition[0] === "number" && typeof locationPickerPosition[1] === "number";
+    };
 
     const onSaveBase = async () => {
-        if (locationPickerPosition && typeof locationPickerPosition[0] === "number" && typeof locationPickerPosition[1] === "number") {
+        if (hasSetLocation()) {
             // save location
             setIsSavingLocation(true);
 
@@ -73,7 +77,7 @@ export const CircleBaseForm = ({ circle, isUpdateForm, onCancel, onNext, onUpdat
             <Box>
                 <HStack align="center" marginTop="10px">
                     <Button colorScheme="blue" mr={3} borderRadius="25px" lineHeight="0" isLoading={isSavingLocation} onClick={onSaveBase}>
-                        {isUpdateForm ? i18n.t("Save") : i18n.t(`Save and go to ${circle.type}`)}
+                        {isUpdateForm ? (isGuideForm ? (!hasSetLocation() ? i18n.t("Skip") : i18n.t("Continue")) : i18n.t("Save")) : i18n.t(`Save and go to ${circle.type}`)}
                     </Button>
                     {!isUpdateForm && (
                         <Button variant="ghost" borderRadius="25px" onClick={onCancel} lineHeight="0" isDisabled={isSavingLocation}>
@@ -86,4 +90,4 @@ export const CircleBaseForm = ({ circle, isUpdateForm, onCancel, onNext, onUpdat
     );
 };
 
-export default CircleBaseForm;
+export default CircleBasePopupForm;
