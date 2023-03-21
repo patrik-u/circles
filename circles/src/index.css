@@ -109,8 +109,10 @@ code {
     aspect-ratio: 1 / 1.389;
 }
 
+/* React quill */
+
 .ql-editor {
-    min-height: 200px;
+    min-height: 100px;
     font-size: var(--chakra-fontSizes-md);
 }
 

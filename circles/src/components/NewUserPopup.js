@@ -1,9 +1,9 @@
 //#region imports
-import { useEffect, lazy } from "react";
+import { useEffect, lazy, useState } from "react";
 import { log } from "components/Helpers";
 import { useAtom } from "jotai";
 import { ModalPopup } from "components/CircleElements";
-import { newUserPopupAtom } from "components/Atoms";
+import { newUserPopupAtom, isMobileAtom } from "components/Atoms";
 //#endregion
 
 const NewUserGuide = lazy(() => import("components/NewUserGuide"));
@@ -13,6 +13,8 @@ export const NewUserPopup = () => {
     log("ConnectPopup.render", -1);
 
     const [newUserPopup, setNewUserPopup] = useAtom(newUserPopupAtom);
+    const [mapInteract, setMapInteract] = useState(false);
+    const [isMobile] = useAtom(isMobileAtom);
 
     //#region useEffects
 
@@ -34,11 +36,15 @@ export const NewUserPopup = () => {
         setNewUserPopup(null);
     };
 
+    const toggleMapInteract = (value) => {
+        setMapInteract(value);
+    };
+
     if (!newUserPopup) return null;
 
     return (
-        <ModalPopup onClose={onClose}>
-            <NewUserGuide onClose={onClose} />
+        <ModalPopup onClose={onClose} mapInteract={mapInteract} fullscreen={isMobile}>
+            <NewUserGuide onClose={onClose} toggleMapInteract={toggleMapInteract} />
         </ModalPopup>
     );
 };

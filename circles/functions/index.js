@@ -192,11 +192,7 @@ const getConnection = async (sourceId, targetId) => {
 };
 
 const getConnectionWithType = async (sourceId, targetId, type) => {
-    let connectionsRef = db
-        .collection("connections")
-        .where("source.id", "==", sourceId)
-        .where("target.id", "==", targetId)
-        .where("types", "array-contains", type);
+    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId).where("types", "array-contains", type);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -1013,6 +1009,9 @@ app.put("/circles/:id", auth, async (req, res) => {
             if (req.body.circlePrivateData.completed_guide) {
                 circlePrivateData.completed_guide = new Date();
             }
+            if (req.body.circlePrivateData.skipped_setting_location !== undefined) {
+                circlePrivateData.skipped_setting_location = req.body.circlePrivateData.skipped_setting_location;
+            }
 
             if (Object.keys(circlePrivateData).length > 0) {
                 const circleDataRef = db.collection("circle_data");
@@ -1229,11 +1228,7 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "approved", request_updated_at: date });
@@ -1277,11 +1272,7 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
@@ -1735,11 +1726,7 @@ app.put("/chat_notifications", auth, async (req, res) => {
         } else if (circle_id) {
             // set specific chat notification as read
             let notificationRef = null;
-            const notificationsSnapshot = await db
-                .collection("chat_notifications")
-                .where("user_id", "==", authCallerId)
-                .where("circle_id", "==", circle_id)
-                .get();
+            const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("circle_id", "==", circle_id).get();
             if (notificationsSnapshot.docs.length > 0) {
                 notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
                 await notificationRef.update({ is_seen: true, unread_messages: 0 });

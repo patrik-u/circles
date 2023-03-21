@@ -6,7 +6,7 @@ import axios from "axios";
 import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams } from "react-router-dom";
-
+import { defaultCoverHeight } from "components/Constants";
 import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import HorizontalNavigator from "components/HorizontalNavigator";
@@ -71,122 +71,6 @@ export const Circle = ({ isGlobal }) => {
     const { windowWidth, windowHeight } = useWindowDimensions();
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
-
-    // const expandableBoxRef = useRef();
-    // const circleRef = useRef();
-    // const scrollSensitivity = 20;
-    // const scrollThreshold = 20;
-    // const expandedHeight = windowHeight * 0.9;
-    // const scrollDirection = useRef(0);
-
-    // const [springProps, setSpringProps] = useSpring(() => ({
-    //     height: 0,
-    //     config: { tension: 300, friction: 30 },
-    // }));
-
-    // const toggleExpand = useCallback(() => {
-    //     const currentHeight = springProps.height.get();
-    //     const shouldExpand = currentHeight < scrollThreshold;
-    //     setHomeExpanded(shouldExpand);
-
-    //     setSpringProps.start({
-    //         to: { height: shouldExpand ? expandedHeight : 0 },
-    //         immediate: false,
-    //         // onRest: () => {
-
-    //         // },
-    //     });
-    // }, [expandedHeight, scrollThreshold, setHomeExpanded, setSpringProps, springProps?.height]);
-
-    // const handleWheel = useCallback(
-    //     ({ event, direction: [, dy] }) => {
-    //         let ddy = dy * scrollSensitivity;
-    //         let currentHeight = springProps.height.get();
-    //         let targetHeight = currentHeight;
-    //         if (ddy < 0) {
-    //             // scrolling up
-    //             return;
-    //             // if (window.scrollY > 0) return; // not at top of page
-    //             // targetHeight = Math.min(currentHeight - ddy, expandedHeight);
-    //         }
-    //         if (ddy > 0) {
-    //             // scrolling down
-    //             if (targetHeight <= 0) return; // already collapsed
-    //             targetHeight = Math.max(currentHeight - window.scrollY, 0);
-    //             window.scrollTo(0, 0);
-    //         }
-    //         scrollDirection.current = ddy;
-
-    //         setSpringProps.start({
-    //             to: { height: targetHeight },
-    //             immediate: true,
-    //             onRest: () => {
-    //                 const currentHeight = springProps.height.get();
-    //                 if (scrollDirection.current < 0) {
-    //                     // scrolling up
-    //                     const newExpandedState = currentHeight >= scrollThreshold;
-    //                     setSpringProps.start({ to: { height: newExpandedState ? expandedHeight : 0 }, immediate: false });
-    //                     setHomeExpanded(newExpandedState);
-    //                 } else if (scrollDirection.current > 0) {
-    //                     // scrolling down
-    //                     const newExpandedState = currentHeight > expandedHeight - scrollThreshold;
-    //                     setSpringProps.start({ to: { height: newExpandedState ? expandedHeight : 0 }, immediate: false });
-    //                     setHomeExpanded(newExpandedState);
-    //                 }
-    //             },
-    //         });
-    //     },
-    //     [expandedHeight, scrollSensitivity, scrollThreshold, setHomeExpanded, setSpringProps, springProps?.height]
-    // );
-
-    // const initialTouchY = useRef(0);
-    // const touchMoveThreshold = useRef(0);
-
-    // const handleTouchStart = useCallback((event) => {
-    //     initialTouchY.current = event.touches[0].clientY;
-    // }, []);
-
-    // const handleTouchMove = useCallback((event) => {
-    //     const deltaY = initialTouchY.current - event.touches[0].clientY;
-    //     touchMoveThreshold.current = deltaY;
-    // }, []);
-
-    // const handleTouchEnd = useCallback(() => {
-    //     if (searchResultsShown) return;
-
-    //     if (homeExpanded) {
-    //         if (touchMoveThreshold.current > scrollThreshold) {
-    //             toggleExpand();
-    //         }
-    //     } else {
-    //         return;
-    //         // if (touchMoveThreshold.current < -scrollThreshold && window.scrollY <= 0) {
-    //         //     toggleExpand();
-    //         // }
-    //     }
-    // }, [toggleExpand, homeExpanded, searchResultsShown]);
-
-    // useEffect(() => {
-    //     window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    //     window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    //     window.addEventListener("touchend", handleTouchEnd, { passive: false });
-
-    //     return () => {
-    //         window.removeEventListener("touchstart", handleTouchStart);
-    //         window.removeEventListener("touchmove", handleTouchMove);
-    //         window.removeEventListener("touchend", handleTouchEnd);
-    //     };
-    // }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-    // useGesture(
-    //     {
-    //         onWheel: handleWheel,
-    //     },
-    //     {
-    //         target: circleRef,
-    //         wheel: { eventOptions: { passive: false } },
-    //     }
-    // );
 
     const onLogoClick = () => {
         navigate(routes.circle("global").home);
@@ -374,11 +258,11 @@ export const Circle = ({ isGlobal }) => {
     const circlePictureSize = isMobile ? 120 : 160;
 
     const debugBg = false;
-    const coverHeight = isMobile ? 250 : 464;
+    const coverHeight = isMobile ? defaultCoverHeight.mobile : defaultCoverHeight.default;
 
     return (
         <>
-            <TopMenu onLogoClick={onLogoClick} />
+            {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
             <Flex flexDirection="column">
                 {/* ref={circleRef} */}
                 {/* <animated.div ref={expandableBoxRef} id="expandableBox" style={{ height: springProps.height, overflow: "hidden" }}>
@@ -391,66 +275,75 @@ export const Circle = ({ isGlobal }) => {
                 {/* <Box width="100%" height="90px" backgroundColor="blue" /> */}
                 <Box width="100%" height={`${coverHeight}px`} position="relative">
                     {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />}
-                    {displayMode === displayModes.map && <CircleMap height={coverHeight} />}
+                    {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
                     <DisplayModeButtons />
                 </Box>
 
                 {/* Main Content */}
-                <Flex width="100%" flexDirection={isMobile ? "column" : "row"} flexWrap={isMobile ? "nowrap" : "wrap"} justifyContent="center" zIndex="2" backgroundColor="white">
-                    <Box
-                        flex={isMobile ? "initial" : "2"}
-                        order={isMobile ? "0" : "2"}
-                        maxWidth={isMobile ? "none" : "800px"}
-                        backgroundColor={debugBg ? "lightgreen" : "transparent"}
-                        position="relative"
-                    >
-                        <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
-                        {/* Header */}
-                        <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
-                            <CircleHeader circle={circle} />
-                        </Box>
-                        {isMobile && circle?.id !== "global" && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
-                            <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
-                                <ConnectButton circle={circle} inHeader={true} />
-                            </Flex>
-                        )}
-                        {isMobile && <HorizontalNavigator />}
+                {displayMode !== displayModes.map_only && (
+                    <>
+                        <Flex width="100%" flexDirection={isMobile ? "column" : "row"} flexWrap={isMobile ? "nowrap" : "wrap"} justifyContent="center" zIndex="2" backgroundColor="white">
+                            <Box
+                                flex={isMobile ? "initial" : "2"}
+                                order={isMobile ? "0" : "2"}
+                                maxWidth={isMobile ? "none" : "800px"}
+                                backgroundColor={debugBg ? "lightgreen" : "transparent"}
+                                position="relative"
+                            >
+                                <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
+                                {/* Header */}
+                                <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
+                                    <CircleHeader circle={circle} />
+                                </Box>
+                                {isMobile && circle?.id !== "global" && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
+                                    <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
+                                        <ConnectButton circle={circle} inHeader={true} />
+                                    </Flex>
+                                )}
+                                {isMobile && <HorizontalNavigator />}
 
-                        {/* Section content */}
-                        <Routes>
-                            <Route path="/" element={<CircleHome />} />
-                            <Route path="/posts" element={<Circles type="post" />} />
-                            <Route path="/chat" element={<CircleChat />} />
-                            <Route path="/circles" element={<Circles type="circle" />} />
-                            <Route path="/events" element={<Circles type="event" />} />
-                            <Route path="/rooms" element={<Circles type="room" />} />
-                            <Route path="/users" element={<Circles type="user" />} />
-                            <Route path="/links" element={<Circles type="link" />} />
-                            <Route path="/settings/*" element={<CircleSettings />} />
-                            <Route path="/admin" element={<CircleAdmin />} />
-                            <Route path="/new" element={<CircleCreateNew />} />
-                        </Routes>
-                    </Box>
-                    {/* Left panel */}
-                    {!isMobile && (
-                        <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "1"} align="right" backgroundColor={debugBg ? "orange" : "transparent"} maxWidth={isMobile ? "none" : "270px"}>
-                            <LeftMenu marginRight="40px" marginLeft="10px" paddingTop="140px" paddingBottom="60px" />
-                        </Box>
-                    )}
-                    {/* Right panel */}
-                    <Routes>
-                        <Route path="/" element={<CircleRightPanel section="home" />} />
-                        <Route path="/posts" element={<CircleRightPanel section="circles" type="post" />} />
-                        <Route path="/chat" element={<CircleRightPanel section="chat" />} />
-                        <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
-                        <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
-                        <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
-                        <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
-                        <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
-                    </Routes>
-                </Flex>
-
-                {!homeExpanded && <FloatingAddButton />}
+                                {/* Section content */}
+                                <Routes>
+                                    <Route path="/" element={<CircleHome />} />
+                                    <Route path="/posts" element={<Circles type="post" />} />
+                                    <Route path="/chat" element={<CircleChat />} />
+                                    <Route path="/circles" element={<Circles type="circle" />} />
+                                    <Route path="/events" element={<Circles type="event" />} />
+                                    <Route path="/rooms" element={<Circles type="room" />} />
+                                    <Route path="/users" element={<Circles type="user" />} />
+                                    <Route path="/links" element={<Circles type="link" />} />
+                                    <Route path="/settings/*" element={<CircleSettings />} />
+                                    <Route path="/admin" element={<CircleAdmin />} />
+                                    <Route path="/new" element={<CircleCreateNew />} />
+                                </Routes>
+                            </Box>
+                            {/* Left panel */}
+                            {!isMobile && (
+                                <Box
+                                    flex={isMobile ? "initial" : "1"}
+                                    order={isMobile ? "0" : "1"}
+                                    align="right"
+                                    backgroundColor={debugBg ? "orange" : "transparent"}
+                                    maxWidth={isMobile ? "none" : "270px"}
+                                >
+                                    <LeftMenu marginRight="40px" marginLeft="10px" paddingTop="140px" paddingBottom="60px" />
+                                </Box>
+                            )}
+                            {/* Right panel */}
+                            <Routes>
+                                <Route path="/" element={<CircleRightPanel section="home" />} />
+                                <Route path="/posts" element={<CircleRightPanel section="circles" type="post" />} />
+                                <Route path="/chat" element={<CircleRightPanel section="chat" />} />
+                                <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
+                                <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
+                                <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
+                                <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
+                                <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
+                            </Routes>
+                        </Flex>
+                        <FloatingAddButton />
+                    </>
+                )}
             </Flex>
         </>
     );

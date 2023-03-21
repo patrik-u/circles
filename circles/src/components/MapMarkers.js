@@ -98,8 +98,6 @@ export const CircleMapEdges = ({ circle, circles }) => {
         features: getFeatures(),
     };
 
-    log(JSON.stringify(lineFeatures, null, 2), 2, true);
-
     return (
         <Source id="polylineLayer" type="geojson" data={lineFeatures}>
             <Layer

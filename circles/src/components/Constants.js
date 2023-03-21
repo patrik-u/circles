@@ -1,6 +1,7 @@
 import i18n from "i18n/Localization";
 
 export const defaultContentWidth = "435px";
+export const defaultCoverHeight = { default: 464, mobile: 250 };
 export const signInStatusValues = {
     signedIn: { signedIn: true, fbAuth: true, signingIn: false },
     firebaseSignedOut: { signedIn: false, fbAuth: false, signingIn: false },

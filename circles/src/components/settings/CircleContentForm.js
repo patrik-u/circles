@@ -342,7 +342,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                 </Flex>
                             )}
 
-                            {isUpdateForm && (
+                            {!isGuideForm && isUpdateForm && (
                                 <Field name="description">
                                     {({ field, form }) => (
                                         <FormControl isInvalid={form.errors.description && form.touched.description}>
@@ -367,7 +367,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                         <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
                                             {richContentCharCount} / 100 000
                                         </Text>
-                                        <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="135px" maxWidth="100%" />
+                                        <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="100px" maxWidth="100%" />
                                         <FormErrorMessage>{form.errors.content}</FormErrorMessage>
                                     </FormControl>
                                 )}

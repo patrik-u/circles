@@ -167,7 +167,7 @@ export const AccountManager = () => {
                 let alwaysShowGuide = config.alwaysShowGuide;
 
                 // show new profile guide
-                if (!data.userData.agreed_to_tnc || !data.userData.completed_guide || alwaysShowGuide) {
+                if (!data.userData.agreed_to_tnc || !data.userData.completed_guide || (!data.user.base && !data.userData.skipped_setting_location) || alwaysShowGuide) {
                     setNewUserPopup(true);
                 }
 

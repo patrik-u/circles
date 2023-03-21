@@ -38,7 +38,7 @@ import { GrGallery } from "react-icons/gr";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circlesAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
-import { displayModes } from "components/Constants";
+import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
@@ -321,16 +321,26 @@ export const NotificationsBell = () => {
     );
 };
 
-export const ModalPopup = ({ children, fullscreen, onClose, ...props }) => {
+export const ModalPopup = ({ children, fullscreen, onClose, mapInteract = false, ...props }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
     return fullscreen ? (
-        <Box position="fixed" width="100vw" height="100vh" backgroundColor="white" zIndex="99" top="0" overflow="auto" padding="10px">
+        <Box
+            position="fixed"
+            width="100vw"
+            height={mapInteract ? "auto" : "100vh"}
+            backgroundColor="white"
+            zIndex="99"
+            top={mapInteract ? defaultCoverHeight.mobile : "0"}
+            overflow="auto"
+            padding="10px"
+        >
             {children}
-            <CloseButton position="absolute" top="10px" right="10px" onClick={onClose} />
         </Box>
     ) : (
         <>
-            <Box position="fixed" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" top="0" />
-            <Flex position="fixed" width="100vw" zIndex="100" justifyContent="center" top="0">
+            {!mapInteract && <Box position="fixed" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" top="0" />}
+            <Flex position="fixed" width="100vw" zIndex="100" justifyContent="center" top={mapInteract ? "auto" : "0"} bottom={mapInteract ? "20px" : "auto"}>
                 <Box
                     position="relative"
                     backgroundColor="white"
@@ -342,6 +352,7 @@ export const ModalPopup = ({ children, fullscreen, onClose, ...props }) => {
                     paddingRight="25px"
                     paddingTop="15px"
                     paddingBottom="15px"
+                    boxShadow="2px 3px 5px #999"
                     {...props}
                 >
                     {children}
@@ -679,7 +690,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                         objectFit="cover"
                         onClick={onClick}
                         cursor={!disableClick ? "pointer" : "inherit"}
-                        // fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                        fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                         {...props}
                     />
                 </PopoverTrigger>

@@ -17,7 +17,7 @@ const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
 const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
 const CircleBasePopupForm = lazy(() => import("components/settings/CircleBasePopupForm"));
 
-export const NewUserGuide = ({ onClose }) => {
+export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const allSteps = useMemo(
@@ -53,24 +53,24 @@ export const NewUserGuide = ({ onClose }) => {
             // user hasn't agreed to terms and conditions
             profileSteps.push(allSteps.tnc);
         }
-        if (!userData?.completed_guide || ignoreCheck) {
-            profileSteps.push(allSteps.welcome);
-            if (!user.description || ignoreCheck) {
-                profileSteps.push(allSteps.about);
-            }
-            if ((!user.picture && !user.cover) || ignoreCheck) {
-                profileSteps.push(allSteps.images);
-            }
-            if (!user.tags || user.tags?.length <= 0 || ignoreCheck) {
-                profileSteps.push(allSteps.tags);
-            }
-            if (!user.base || ignoreCheck) {
-                profileSteps.push(allSteps.location);
-            }
-            if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
-                profileSteps.push(allSteps.questions);
-            }
+
+        profileSteps.push(allSteps.welcome);
+        if (!user.description || ignoreCheck) {
+            profileSteps.push(allSteps.about);
         }
+        if ((!user.picture && !user.cover) || ignoreCheck) {
+            profileSteps.push(allSteps.images);
+        }
+        if (!user.tags || user.tags?.length <= 0 || ignoreCheck) {
+            profileSteps.push(allSteps.tags);
+        }
+        if (!user.base || ignoreCheck) {
+            profileSteps.push(allSteps.location);
+        }
+        if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
+            profileSteps.push(allSteps.questions);
+        }
+
         profileSteps.push(allSteps.complete);
 
         if (profileSteps.length <= 0) {
@@ -177,7 +177,7 @@ export const NewUserGuide = ({ onClose }) => {
                         <Text className="screenHeader" alignSelf="center" textAlign="center">
                             {i18n.t(`Welcome`)}
                         </Text>
-                        <Text>Welcome to Circles, please take a few minutes to fill out your change maker profile. </Text>
+                        <Text>Welcome to co:do, please take a few minutes to fill out your change maker profile. </Text>
                         <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
                             <Button
                                 width="150px"
@@ -229,23 +229,23 @@ export const NewUserGuide = ({ onClose }) => {
                     </Box>
                 );
 
+            case allSteps.location.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleBasePopupForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} toggleMapInteract={toggleMapInteract} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
             case allSteps.questions.id:
                 return (
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleQuestionsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
-                            </Suspense>
-                        </VStack>
-                    </Box>
-                );
-
-            case allSteps.location.id:
-                return (
-                    <Box>
-                        <VStack align="start">
-                            <Suspense fallback={<Spinner />}>
-                                <CircleBasePopupForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
                             </Suspense>
                         </VStack>
                     </Box>

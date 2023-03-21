@@ -33,6 +33,7 @@ const configs = {
             appId: "1:174159362871:web:f7429a0fa3bffc00deb8b2",
             measurementId: "G-T9FZSFRD99",
         },
+        alwaysShowGuide: false,
         imageKitEndpoint: "https://ik.imagekit.io/circles/",
         googleId: "174159362871-juqvepnc0ej66ggdmfpbrt2483jtbkjj.apps.googleusercontent.com",
         logLevel: 0,
