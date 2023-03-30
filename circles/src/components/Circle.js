@@ -112,6 +112,7 @@ export const Circle = ({ isGlobal }) => {
             }
             newCircle.id = doc.id;
             setCircle((currentCircle) => newCircle);
+            console.log(JSON.stringify(newCircle, null, 2));
         });
 
         return () => {
