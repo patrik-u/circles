@@ -18,7 +18,7 @@ import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
 import { useSpring, animated } from "react-spring";
 import useWindowDimensions from "components/useWindowDimensions";
 import { Home } from "components/Home";
-import { useNavigateNoUpdates } from "components/RouterUtils";
+import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "components/Navigation";
 //#endregion
 
@@ -73,6 +73,9 @@ export const Circle = ({ isGlobal }) => {
     const { windowWidth, windowHeight } = useWindowDimensions();
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
+    const location = useLocationNoUpdates();
+    const hashValue = location.hash.substr(1); // Remove the '#' character
+    //const [sourceType, circleId] = hashValue.split("/");
 
     const onLogoClick = () => {
         navigate(routes.circle("global").home);
@@ -103,6 +106,7 @@ export const Circle = ({ isGlobal }) => {
         if (!circleId) return;
 
         log("Circle.useEffect");
+
         let unsubscribeGetCircle = null;
         if (circleAddress) {
             axios.get(circleAddress).then((response) => {
@@ -115,8 +119,7 @@ export const Circle = ({ isGlobal }) => {
                     }
                 }
             });
-        }
-        else {
+        } else {
             // subscribe to circle
             unsubscribeGetCircle = onSnapshot(doc(db, "circles", circleId), (doc) => {
                 var newCircle = doc.data();
@@ -158,50 +161,50 @@ export const Circle = ({ isGlobal }) => {
                 let seen = {};
                 connections = everything
                     ? circleConnections?.filter((entry) => {
-                        if (!entry.source || !entry.target) {
-                            //log(entry.id, 2, true); // due to some unknown bug there was a couple of connections missing source or target
-                            return false;
-                        }
-                        let id = entry.source.id > entry.target.id ? entry.source.id + entry.target.id : entry.target.id + entry.source.id;
-                        if (seen.hasOwnProperty(id)) {
-                            // yes, grab it and add this data to it
-                            let previous = seen[id];
-                            previous.type.push(entry.type);
-                            // don't keep this entry, we've merged it into the previous one
-                            return false;
-                        }
-                        // entry.type probably isn't an array; make it one for consistency
-                        if (!Array.isArray(entry.type)) {
-                            entry.type = [entry.type];
-                        }
+                          if (!entry.source || !entry.target) {
+                              //log(entry.id, 2, true); // due to some unknown bug there was a couple of connections missing source or target
+                              return false;
+                          }
+                          let id = entry.source.id > entry.target.id ? entry.source.id + entry.target.id : entry.target.id + entry.source.id;
+                          if (seen.hasOwnProperty(id)) {
+                              // yes, grab it and add this data to it
+                              let previous = seen[id];
+                              previous.type.push(entry.type);
+                              // don't keep this entry, we've merged it into the previous one
+                              return false;
+                          }
+                          // entry.type probably isn't an array; make it one for consistency
+                          if (!Array.isArray(entry.type)) {
+                              entry.type = [entry.type];
+                          }
 
-                        // remember that we've seen it
-                        seen[id] = entry;
+                          // remember that we've seen it
+                          seen[id] = entry;
 
-                        return true;
-                    })
+                          return true;
+                      })
                     : circleConnections?.filter((entry) => {
-                        var previous;
-                        // wether to use source or target depends
-                        let parentCircleIsSource = entry.source.id === circleId;
-                        let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
-                        // have we seen this label before?
-                        if (seen.hasOwnProperty(mergeId)) {
-                            // yes, grab it and add this data to it
-                            previous = seen[mergeId];
-                            previous.type.push(entry.type);
-                            // don't keep this entry, we've merged it into the previous one
-                            return false;
-                        }
-                        // entry.type probably isn't an array; make it one for consistency
-                        if (!Array.isArray(entry.type)) {
-                            entry.type = [entry.type];
-                        }
-                        entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
-                        // remember that we've seen it
-                        seen[mergeId] = entry;
-                        return true;
-                    });
+                          var previous;
+                          // wether to use source or target depends
+                          let parentCircleIsSource = entry.source.id === circleId;
+                          let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
+                          // have we seen this label before?
+                          if (seen.hasOwnProperty(mergeId)) {
+                              // yes, grab it and add this data to it
+                              previous = seen[mergeId];
+                              previous.type.push(entry.type);
+                              // don't keep this entry, we've merged it into the previous one
+                              return false;
+                          }
+                          // entry.type probably isn't an array; make it one for consistency
+                          if (!Array.isArray(entry.type)) {
+                              entry.type = [entry.type];
+                          }
+                          entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
+                          // remember that we've seen it
+                          seen[mergeId] = entry;
+                          return true;
+                      });
             }
 
             setCircleConnections(connections);
@@ -266,8 +269,8 @@ export const Circle = ({ isGlobal }) => {
                 category: "any",
                 circleId: circleId,
             })
-            .then((x) => { })
-            .catch((error) => { });
+            .then((x) => {})
+            .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
 
     const circlePictureSize = isMobile ? 120 : 160;
