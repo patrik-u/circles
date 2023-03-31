@@ -64,7 +64,7 @@ export const Home = () => {
                                         filter="grayscale(0.05)"
                                     >
                                         <CirclePicture size={48} circle={item} />
-                                        <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px" onClick={() => openCircle(navigate, item.id)}>
+                                        <Text style={singleLineEllipsisStyle} fontSize="12px" marginTop="5px" onClick={() => openCircle(navigate, item)}>
                                             {item.name}
                                         </Text>
                                     </Box>

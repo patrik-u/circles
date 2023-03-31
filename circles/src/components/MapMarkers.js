@@ -145,7 +145,7 @@ export const CircleMapMarker = ({ circle }) => {
 
     return (
         circle?.base && (
-            <Marker key={circle.id} offset={[0, -24]} latitude={lat(circle.base)} longitude={lng(circle.base)} className="circle-marker" onClick={() => openCircle(navigate, circle.id)}>
+            <Marker key={circle.id} offset={[0, -24]} latitude={lat(circle.base)} longitude={lng(circle.base)} className="circle-marker" onClick={() => openCircle(navigate, circle)}>
                 <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" />
                 <Box top="3px" left="9px" width="30px" height="30px" overflow="hidden" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
                     <CirclePicture circle={circle} size={30} disableClick={true} />

@@ -1,4 +1,4 @@
-import FirebaseDataProvider from "services/FirebaseDataProvider";
+import CirclesDataProvider from "services/CirclesDataProvider";
 import GitHubDataProvider from "services/GitHubDataProvider";
 import HolonsDataProvider from "services/HolonsDataProvider";
 
@@ -6,15 +6,13 @@ import HolonsDataProvider from "services/HolonsDataProvider";
 export class DataProviderFactory {
     static createDataProvider(sourceType) {
         switch (sourceType) {
-            case "firebase":
-                return new FirebaseDataProvider();
+            default:
+            case "circles":
+                return new CirclesDataProvider();
             case "github":
                 return new GitHubDataProvider();
             case "holons":
                 return new HolonsDataProvider();
-            default:
-                console.log("Unsupported data source: " + sourceType);
-            //throw new Error(`Unsupported data source: ${sourceType}`);
         }
     }
 }

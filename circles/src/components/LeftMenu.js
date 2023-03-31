@@ -16,7 +16,7 @@ export const LeftMenu = ({ ...props }) => {
 
     const navigate = useNavigateNoUpdates();
     const location = useLocationNoUpdates();
-    const isMatch = getNavigationItems(circle?.id, user?.is_admin)
+    const isMatch = getNavigationItems(circle, user?.is_admin)
         .filter((x) => shouldShowNavItem(x, circle, userData))
         .map((navItem) => matchPath(navItem.matchSubPaths ? navItem.route + "/*" : navItem.route, location.pathname) != null);
     const [isExpanded] = useState(true);
@@ -52,7 +52,7 @@ export const LeftMenu = ({ ...props }) => {
             {...props}
         >
             <VStack align="center" marginTop="0px" width={isExpanded ? expandedSize : "50px"} spacing={isExpanded ? "5px" : "5px"}>
-                {getNavigationItems(circle?.id, user?.is_admin)
+                {getNavigationItems(circle, user?.is_admin)
                     .filter((x) => shouldShowNavItem(x, circle, userData))
                     .map((navItem, i) => (
                         <Flex

@@ -9,17 +9,7 @@ import { CircleListItem, CircleListItemNormal } from "components/CircleListItem"
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CirclePicture, CircleTags, ConnectButton } from "components/CircleElements";
 import { useAtom } from "jotai";
-import {
-    userAtom,
-    signInStatusAtom,
-    circleAtom,
-    circlesFilterAtom,
-    filteredCirclesAtom,
-    userDataAtom,
-    isMobileAtom,
-    newCirclePopupAtom,
-    circleSettingsAtom,
-} from "components/Atoms";
+import { userAtom, signInStatusAtom, circleAtom, circlesFilterAtom, filteredCirclesAtom, userDataAtom, isMobileAtom, newCirclePopupAtom, circleSettingsAtom } from "components/Atoms";
 import { IoMdSend } from "react-icons/io";
 import { MdOutlineList, MdDns, MdPictureInPicture, MdViewAgenda } from "react-icons/md";
 import { TbLayoutRows } from "react-icons/tb";
@@ -78,17 +68,7 @@ const CreateNewCircleForm = ({ type }) => {
                         onKeyDown={handleMessageKeyDown}
                     />
                     {isMobile && (
-                        <Box
-                            position="absolute"
-                            top="18px"
-                            right="20px"
-                            width="26px"
-                            height="26px"
-                            flexShrink="0"
-                            cursor="pointer"
-                            onClick={sendMessage}
-                            zIndex="20"
-                        >
+                        <Box position="absolute" top="18px" right="20px" width="26px" height="26px" flexShrink="0" cursor="pointer" onClick={sendMessage} zIndex="20">
                             <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} />
                         </Box>
                     )}
@@ -215,9 +195,9 @@ export const Circles = ({ type }) => {
 
                 {filteredCircles?.map((item) =>
                     view === "compact" ? (
-                        <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item.id)} />
+                        <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
                     ) : (
-                        <CircleListItemNormal key={item.id} item={item} onClick={() => openCircle(navigate, item.id)} />
+                        <CircleListItemNormal key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
                     )
                 )}
 

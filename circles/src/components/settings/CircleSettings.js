@@ -35,23 +35,23 @@ const CircleSettings = () => {
             case "post":
             case "event":
                 return [
-                    { route: routes.circle(circle.id).settings.about, name: i18n.t("circleadmin_about") },
-                    { route: routes.circle(circle.id).settings.images, name: i18n.t("circleadmin_images") },
-                    { route: routes.circle(circle.id).settings.tags, name: i18n.t("Tags") },
-                    { route: routes.circle(circle.id).settings.base, name: i18n.t("circleadmin_base") },
-                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Quick Links") },
-                    { route: routes.circle(circle.id).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle.id).settings.misc, name: i18n.t("Misc") },
+                    { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
+                    { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
+                    { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
+                    { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
+                    { route: routes.circle(circle).settings.misc, name: i18n.t("Misc") },
                 ];
             case "user":
                 return [
-                    { route: routes.circle(circle.id).settings.about, name: i18n.t("circleadmin_about") },
-                    { route: routes.circle(circle.id).settings.images, name: i18n.t("circleadmin_images") },
-                    { route: routes.circle(circle.id).settings.tags, name: i18n.t("Tags") },
-                    { route: routes.circle(circle.id).settings.questions, name: i18n.t("Questions") },
-                    { route: routes.circle(circle.id).settings.base, name: i18n.t("circleadmin_base") },
-                    { route: routes.circle(circle.id).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle.id).settings.socialmedia, name: i18n.t("Quick Links") },
+                    { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
+                    { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
+                    { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
+                    { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
+                    { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
                 ];
         }
     };
@@ -87,13 +87,7 @@ const CircleSettings = () => {
                 order="-1"
             >
                 <Scrollbars autoHide height={isMobile ? "50px" : "100%"} width="100%">
-                    <Flex
-                        height={isMobile ? "50px" : "auto"}
-                        marginLeft={isMobile ? "10px" : "0px"}
-                        flexDirection={isMobile ? "row" : "column"}
-                        marginTop={isMobile ? "0px" : "15px"}
-                        align="center"
-                    >
+                    <Flex height={isMobile ? "50px" : "auto"} marginLeft={isMobile ? "10px" : "0px"} flexDirection={isMobile ? "row" : "column"} marginTop={isMobile ? "0px" : "15px"} align="center">
                         {adminNavigationItems().map((navItem, i) => (
                             <Flex
                                 key={navItem.route}

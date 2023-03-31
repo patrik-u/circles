@@ -48,6 +48,31 @@ import { ImQrcode } from "react-icons/im";
 
 export const buttonHighlight = "#59ff81dd";
 
+export const CircleProfilePicture = ({ circle, size, ...props }) => {
+    const borderWidth = 3;
+    const sizePx = `${size}px`;
+    const sizeWithoutBorder = size - borderWidth * 2 - (circle?.id === "global" ? 5 : 0);
+
+    return (
+        <Flex
+            backgroundColor="white"
+            borderRadius="50%"
+            width={sizePx}
+            height={sizePx}
+            flexShrink="0"
+            flexGrow="0"
+            alignItems="center"
+            justifyContent="center"
+            position="absolute"
+            top={`-${size / 3}px`}
+            {...props}
+            zIndex="200"
+        >
+            <CirclePicture circle={circle} size={sizeWithoutBorder} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
+        </Flex>
+    );
+};
+
 export const ShareButtonMenu = ({ children, referrer }) => {
     const location = useLocationNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
@@ -198,7 +223,7 @@ export const FloatingAddButton = () => {
                 cursor="pointer"
                 alignItems="center"
                 justifyContent="center"
-                onClick={() => navigate(routes.circle(circle?.id).new)}
+                onClick={() => navigate(routes.circle(circle).new)}
             >
                 <Icon width="28px" height="28px" color="white" as={IoAdd} />
             </Flex>
@@ -668,12 +693,12 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
 
     const onClick = () => {
         if (disableClick) return;
-        openCircle(navigate, circle?.id);
+        openCircle(navigate, circle);
     };
 
     const onParentClick = () => {
         if (disableClick) return;
-        openCircle(navigate, circle?.parent_circle?.id);
+        openCircle(navigate, circle?.parent_circle);
     };
 
     return hasPopover && !isMobile ? (
@@ -903,7 +928,7 @@ export const CircleTags = ({ circle, inSelect, showAll = false, size = "md", wra
                                       if (inSelect) return;
 
                                       event.stopPropagation();
-                                      openCircle(navigate, tag.id);
+                                      openCircle(navigate, { id: tag.id, host: "circles" });
                                   }
                         }
                     >

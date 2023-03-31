@@ -7,7 +7,7 @@ import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Hel
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
 import { defaultCoverHeight } from "components/Constants";
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton } from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton, CircleProfilePicture } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import HorizontalNavigator from "components/HorizontalNavigator";
 import { useAtom } from "jotai";
@@ -20,6 +20,7 @@ import useWindowDimensions from "components/useWindowDimensions";
 import { Home } from "components/Home";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "components/Navigation";
+import { DataProviderFactory } from "services/DataProviderFactory";
 //#endregion
 
 const CircleHome = lazy(() => import("components/CircleHome"));
@@ -30,37 +31,11 @@ const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
 const CircleAdmin = lazy(() => import("components/CircleAdmin"));
 const CircleCreateNew = lazy(() => import("components/settings/CircleCreateNew"));
 
-const CircleProfilePicture = ({ circle, size, ...props }) => {
-    const borderWidth = 3;
-    const sizePx = `${size}px`;
-    const sizeWithoutBorder = size - borderWidth * 2 - (circle?.id === "global" ? 5 : 0);
-
-    return (
-        <Flex
-            backgroundColor="white"
-            borderRadius="50%"
-            width={sizePx}
-            height={sizePx}
-            flexShrink="0"
-            flexGrow="0"
-            alignItems="center"
-            justifyContent="center"
-            position="absolute"
-            top={`-${size / 3}px`}
-            {...props}
-            zIndex="200"
-        >
-            <CirclePicture circle={circle} size={sizeWithoutBorder} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
-        </Flex>
-    );
-};
-
 export const Circle = ({ isGlobal }) => {
     log("Circle.render", -1);
 
-    const { circleId } = useParams();
+    const { hostId, circleId } = useParams();
     let [searchParams] = useSearchParams();
-    const circleAddress = searchParams.get("address");
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [homeExpanded, setHomeExpanded] = useAtom(homeExpandedAtom);
@@ -78,7 +53,7 @@ export const Circle = ({ isGlobal }) => {
     //const [sourceType, circleId] = hashValue.split("/");
 
     const onLogoClick = () => {
-        navigate(routes.circle("global").home);
+        navigate(routes.circle({ id: "global", host: "circles" }).home);
         //toggleExpand();
     };
 
@@ -107,37 +82,26 @@ export const Circle = ({ isGlobal }) => {
 
         log("Circle.useEffect");
 
-        let unsubscribeGetCircle = null;
-        if (circleAddress) {
-            axios.get(circleAddress).then((response) => {
-                console.log("Circle address response : ", response);
-                if (response.status === 200) {
-                    const circle = response.data;
-                    if (circle) {
-                        setCircle((currentCircle) => circle);
-                        console.log("Logging circle : ", JSON.stringify(circle, null, 2));
-                    }
-                }
-            });
-        } else {
-            // subscribe to circle
-            unsubscribeGetCircle = onSnapshot(doc(db, "circles", circleId), (doc) => {
-                var newCircle = doc.data();
-                if (!doc.exists) {
-                    // TODO display something about circle not existing
-                    return;
-                }
-                newCircle.id = doc.id;
-                setCircle((currentCircle) => newCircle);
+        const dataProvider = DataProviderFactory.createDataProvider(hostId);
+        console.log("dataProvider", dataProvider);
+        if (dataProvider.supportsSubscription()) {
+            let unsubscribe = dataProvider.subscribeToCircle(circleId, (newCircle) => {
+                setCircle(newCircle);
                 console.log("Logging circle : ", JSON.stringify(newCircle, null, 2));
             });
+
+            return () => {
+                if (unsubscribe) {
+                    unsubscribe();
+                }
+            };
+        } else {
+            dataProvider.getCircle(circleId).then((fetchedCircle) => {
+                setCircle(fetchedCircle);
+                console.log("Logging circle : ", JSON.stringify(fetchedCircle, null, 2));
+            });
         }
-        return () => {
-            if (unsubscribeGetCircle) {
-                unsubscribeGetCircle();
-            }
-        };
-    }, [circleId, setCircle, isGlobal]);
+    }, [hostId, circleId, setCircle, isGlobal]);
 
     useEffect(() => {
         if (!circleId && !isGlobal) return;

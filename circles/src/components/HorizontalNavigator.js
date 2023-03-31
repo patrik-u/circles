@@ -15,7 +15,7 @@ export const HorizontalNavigator = () => {
     const [circle] = useAtom(circleAtom);
     const navigate = useNavigateNoUpdates();
     const location = useLocationNoUpdates();
-    const isMatch = getNavigationItems(circle?.id, user?.id_admin)
+    const isMatch = getNavigationItems(circle, user?.id_admin)
         .filter((x) => shouldShowNavItem(x, circle, user))
         .map((navItem) => matchPath(navItem.matchSubPaths ? navItem.route + "/*" : navItem.route, location.pathname) != null);
 
@@ -29,7 +29,7 @@ export const HorizontalNavigator = () => {
         <Box height="40px" overflowY="hidden" overflowX="auto">
             <Flex flex="0 0 40px" color="black" flexDirection="row" align="center" justifyContent="flex-start" overflowY="hidden">
                 <Flex height={navHeight} overflowX="auto" overflowY="hidden" flexDirection="row" align="center" paddingLeft="10px">
-                    {getNavigationItems(circle?.id, user?.is_admin)
+                    {getNavigationItems(circle, user?.is_admin)
                         .filter((x) => shouldShowNavItem(x, circle, user))
                         .map((navItem, i) => (
                             <Flex
@@ -48,15 +48,7 @@ export const HorizontalNavigator = () => {
                             >
                                 <Text>{navItem.name}</Text>
                                 {!isMatch[i] && hasUpdates(user, circle, navItem.category) && (
-                                    <Box
-                                        width="8.5px"
-                                        height="8.5px"
-                                        backgroundColor="#ff6499"
-                                        borderRadius="50%"
-                                        position="absolute"
-                                        top="5px"
-                                        right="0px"
-                                    ></Box>
+                                    <Box width="8.5px" height="8.5px" backgroundColor="#ff6499" borderRadius="50%" position="absolute" top="5px" right="0px"></Box>
                                 )}
                             </Flex>
                         ))}

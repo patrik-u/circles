@@ -2,7 +2,7 @@
 import React, { useEffect, lazy, Suspense, useCallback } from "react";
 import { Flex, Box } from "@chakra-ui/react";
 import { log } from "components/Helpers";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAtom } from "jotai";
 import { isMobileAtom } from "components/Atoms";
 import LandingPage from "components/LandingPage";
@@ -53,9 +53,8 @@ const App = () => {
             <Flex width="100%" height="100%" flexDirection="column">
                 <Suspense fallback={<Box></Box>}>
                     <Routes>
-                        <Route path="/landing" element={<LandingPage />} />
-                        <Route path="/circle/:circleId/*" element={<Circle />} />
-                        <Route path="/*" element={<Circle isGlobal={true} />} />
+                        <Route path="/:hostId/:circleId/*" element={<Circle />} />
+                        <Route path="*" element={<Navigate to="/circles/global" replace />} />
                     </Routes>
                 </Suspense>
             </Flex>

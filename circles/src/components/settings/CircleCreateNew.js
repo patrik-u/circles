@@ -35,7 +35,7 @@ export const CircleCreateNew = () => {
         // if active circle step is 1 at this point we're moving on to the third step - setting circle base, we activate the location picker
         if (step === 4) {
             // we're finishing last step so switch to created circle
-            navigate(routes.circle(createdCircle.id).home);
+            navigate(routes.circle(createdCircle).home);
         }
     };
 
@@ -43,7 +43,7 @@ export const CircleCreateNew = () => {
         setStep(0);
         setCreatedCircle(null);
         if (circle?.id) {
-            openCircle(navigate, circle.id);
+            openCircle(navigate, circle);
         }
     };
 
@@ -67,62 +67,24 @@ export const CircleCreateNew = () => {
                         )} */}
 
                 {/* Create circle step 0 - set circle type */}
-                {step === 0 && (
-                    <CircleTypeForm isUpdateForm={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />
-                )}
+                {step === 0 && <CircleTypeForm isUpdateForm={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />}
 
                 {/* Create circle step 1 - set name and description */}
                 {step === 1 && createdCircle?.type !== "link" && (
-                    <CircleContentForm
-                        circle={createdCircle}
-                        isUpdateform={false}
-                        onCancel={onCreateCircleCloseClick}
-                        onNext={onCreateCircleNextStep}
-                        onUpdate={onCreateCircleUpdated}
-                    />
+                    <CircleContentForm circle={createdCircle} isUpdateform={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />
                 )}
                 {step === 1 && createdCircle?.type === "link" && (
-                    <CircleLinkForm
-                        circle={createdCircle}
-                        isUpdateform={false}
-                        onCancel={onCreateCircleCloseClick}
-                        onNext={onCreateCircleNextStep}
-                        onUpdate={onCreateCircleUpdated}
-                    />
+                    <CircleLinkForm circle={createdCircle} isUpdateform={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />
                 )}
 
                 {/* Create circle step 2 - set picture and cover images */}
-                {step === 2 && (
-                    <CircleImagesForm
-                        circle={createdCircle}
-                        isUpdateform={false}
-                        onCancel={onCreateCircleCloseClick}
-                        onNext={onCreateCircleNextStep}
-                        onUpdate={onCreateCircleUpdated}
-                    />
-                )}
+                {step === 2 && <CircleImagesForm circle={createdCircle} isUpdateform={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />}
 
                 {/* Create circle step 3 - choose tags */}
-                {step === 3 && (
-                    <CircleTagsForm
-                        circle={createdCircle}
-                        isUpdateform={false}
-                        onCancel={onCreateCircleCloseClick}
-                        onNext={onCreateCircleNextStep}
-                        onUpdate={onCreateCircleUpdated}
-                    />
-                )}
+                {step === 3 && <CircleTagsForm circle={createdCircle} isUpdateform={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />}
 
                 {/* Create circle step 4 - set base */}
-                {step === 4 && (
-                    <CircleBaseForm
-                        circle={createdCircle}
-                        isUpdateForm={false}
-                        onCancel={onCreateCircleCloseClick}
-                        onNext={onCreateCircleNextStep}
-                        onUpdate={onCreateCircleUpdated}
-                    />
-                )}
+                {step === 4 && <CircleBaseForm circle={createdCircle} isUpdateForm={false} onCancel={onCreateCircleCloseClick} onNext={onCreateCircleNextStep} onUpdate={onCreateCircleUpdated} />}
             </Box>
         </Flex>
     );

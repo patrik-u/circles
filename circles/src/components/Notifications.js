@@ -14,7 +14,7 @@ import { timeSince, fromFsDate, toastError, toastSuccess, getDateAndTimeLong, lo
 import { openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
 import { userAtom, isMobileAtom } from "components/Atoms";
-import { buttonHighlight } from "components/CircleElements"
+import { buttonHighlight } from "components/CircleElements";
 //#endregion
 
 export const ConnectionNotification = ({ date, onClick, connectionId, connectionType, source, target, requestStatus, requestUpdatedAt, isSentRequests }) => {
@@ -260,8 +260,7 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                         return (
                             <>
                                 <Text className="circle-list-title" lineHeight="20px" fontSize="16px" align="left">
-                                    <strong>{source.name}</strong> {i18n.t(`has invited`)} <strong>{target.name}</strong> {i18n.t("to [do]")}{" "}
-                                    {i18n.t(`connect [${target.type}]`)}
+                                    <strong>{source.name}</strong> {i18n.t(`has invited`)} <strong>{target.name}</strong> {i18n.t("to [do]")} {i18n.t(`connect [${target.type}]`)}
                                 </Text>
                                 <ApproveDenyButtons />
                             </>
@@ -320,9 +319,9 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                 _hover={
                     onClick
                         ? {
-                            bg: "#f5f4f8",
-                            color: "black",
-                        }
+                              bg: "#f5f4f8",
+                              color: "black",
+                          }
                         : {}
                 }
                 onClick={() => onClick()}
@@ -334,20 +333,10 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
             >
                 <Box position="relative" width="64px" height="70px" minWidth="64px" minHeight="70px">
                     {source.picture && (
-                        <Image
-                            className="notification-picture1"
-                            src={getImageKitUrl(source.picture, 38, 38)}
-                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(source.type), 38, 38)}
-                            alt="Logo"
-                        />
+                        <Image className="notification-picture1" src={getImageKitUrl(source.picture, 38, 38)} fallbackSrc={getImageKitUrl(getDefaultCirclePicture(source.type), 38, 38)} alt="Logo" />
                     )}
                     {target.picture && (
-                        <Image
-                            className="notification-picture2"
-                            src={getImageKitUrl(target.picture, 38, 38)}
-                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(target.type), 38, 38)}
-                            alt="Logo"
-                        />
+                        <Image className="notification-picture2" src={getImageKitUrl(target.picture, 38, 38)} fallbackSrc={getImageKitUrl(getDefaultCirclePicture(target.type), 38, 38)} alt="Logo" />
                     )}
                     <Image as={IoPersonAdd} width="16px" height="16px" position="absolute" color="#5bcf7f" top="13px" left="42px" />
                 </Box>
@@ -436,7 +425,7 @@ const Notifications = () => {
                         requestUpdatedAt={notification.request_updated_at}
                         onClick={() => {
                             notificationsOnClose();
-                            openCircle(navigate, notification.source.id);
+                            openCircle(navigate, notification.source);
                         }}
                     />
                 );
@@ -461,33 +450,11 @@ const Notifications = () => {
                         onClick={openNotifications}
                         cursor="pointer"
                     >
-                        <Icon
-                            width={iconSizePx}
-                            height={iconSizePx}
-                            color={"#333"}
-                            as={FaRegBell}
-                            cursor="pointer"
-                        />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={FaRegBell} cursor="pointer" />
                     </Flex>
                     {hasUnreadNotifications(notifications) && (
-                        <Box
-                            backgroundColor="#ff6499"
-                            borderRadius="20px"
-                            position="absolute"
-                            right="-5px"
-                            top={{ base: "-4px", md: "-5px" }}
-                            cursor="pointer"
-                            pointerEvents="none"
-                            minWidth="17px"
-                        >
-                            <Text
-                                fontWeight="500"
-                                color="white"
-                                fontSize={{ base: "12px", md: "16px" }}
-                                lineHeight={{ base: "18px", md: "20px" }}
-                                marginLeft="4px"
-                                marginRight="4px"
-                            >
+                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
+                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
                                 {unreadNotificationsCount(notifications)}
                             </Text>
                         </Box>

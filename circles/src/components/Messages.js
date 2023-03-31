@@ -31,9 +31,9 @@ export const MessageNotification = ({ notification, onClick }) => {
                 _hover={
                     onClick
                         ? {
-                            bg: "#f5f4f8",
-                            color: "black",
-                        }
+                              bg: "#f5f4f8",
+                              color: "black",
+                          }
                         : {}
                 }
                 onClick={() => onClick()}
@@ -47,24 +47,8 @@ export const MessageNotification = ({ notification, onClick }) => {
                     <CirclePicture circle={notification.circle} size={50} disableClick={true} />
 
                     {notification.unread_messages > 0 && (
-                        <Box
-                            backgroundColor="#ff6499"
-                            borderRadius="20px"
-                            position="absolute"
-                            right="-5px"
-                            top={{ base: "-4px", md: "-5px" }}
-                            cursor="pointer"
-                            pointerEvents="none"
-                            minWidth="17px"
-                        >
-                            <Text
-                                fontWeight="500"
-                                color="white"
-                                fontSize={{ base: "12px", md: "16px" }}
-                                lineHeight={{ base: "18px", md: "20px" }}
-                                marginLeft="4px"
-                                marginRight="4px"
-                            >
+                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
+                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
                                 {notification.unread_messages}
                             </Text>
                         </Box>
@@ -175,33 +159,11 @@ const Messages = () => {
                         onClick={openMessages}
                         cursor="pointer"
                     >
-                        <Icon
-                            width={iconSizePx}
-                            height={iconSizePx}
-                            color={"#333"}
-                            as={AiOutlineMessage}
-                            cursor="pointer"
-                        />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={AiOutlineMessage} cursor="pointer" />
                     </Flex>
                     {hasUnreadMessages(messages) && (
-                        <Box
-                            backgroundColor="#ff6499"
-                            borderRadius="20px"
-                            position="absolute"
-                            right="-5px"
-                            top={{ base: "-4px", md: "-5px" }}
-                            cursor="pointer"
-                            pointerEvents="none"
-                            minWidth="17px"
-                        >
-                            <Text
-                                fontWeight="500"
-                                color="white"
-                                fontSize={{ base: "12px", md: "16px" }}
-                                lineHeight={{ base: "18px", md: "20px" }}
-                                marginLeft="4px"
-                                marginRight="4px"
-                            >
+                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
+                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
                                 {unreadMessagesCount(messages)}
                             </Text>
                         </Box>
@@ -240,7 +202,7 @@ const Messages = () => {
                                                 notification={message}
                                                 onClick={() => {
                                                     messagesOnClose();
-                                                    openCircle(navigate, message.circle_id, "chat");
+                                                    openCircle(navigate, { id: message.circle_id, host: "circles" }, "chat");
                                                 }}
                                             />
                                         ))}

@@ -41,7 +41,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
         let nextIndex = steps.indexOf(activeStep) + 1;
         if (nextIndex >= steps.length) {
             onClose();
-            navigate(routes.circle(createdCircle.id).home);
+            navigate(routes.circle(createdCircle).home);
         } else {
             setActiveStep(steps[nextIndex]);
         }
@@ -58,14 +58,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleContentForm
-                                    isUpdateForm={false}
-                                    circle={createdCircle}
-                                    isGuideForm={false}
-                                    onNext={next}
-                                    onUpdate={onUpdate}
-                                    onCancel={onClose}
-                                />
+                                <CircleContentForm isUpdateForm={false} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -76,14 +69,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleImagesForm
-                                    isUpdateForm={true}
-                                    circle={createdCircle}
-                                    isGuideForm={false}
-                                    onNext={next}
-                                    onUpdate={onUpdate}
-                                    onCancel={onClose}
-                                />
+                                <CircleImagesForm isUpdateForm={true} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -94,14 +80,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleTagsForm
-                                    isUpdateForm={true}
-                                    circle={createdCircle}
-                                    isGuideForm={false}
-                                    onNext={next}
-                                    onUpdate={onUpdate}
-                                    onCancel={onClose}
-                                />
+                                <CircleTagsForm isUpdateForm={true} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -118,13 +97,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
             <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
                 <HStack align="center">
                     {steps.map((x, i) => (
-                        <Box
-                            key={x.id}
-                            width="10px"
-                            height="10px"
-                            borderRadius="50%"
-                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
-                        ></Box>
+                        <Box key={x.id} width="10px" height="10px" borderRadius="50%" backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}></Box>
                     ))}
                 </HStack>
             </Flex>

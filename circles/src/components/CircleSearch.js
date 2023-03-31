@@ -22,7 +22,7 @@ const SearchHit = ({ hit, onClick }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
     const onHitClick = () => {
-        openCircle(navigate, hit.objectID);
+        openCircle(navigate, { id: hit.objectID, host: "circles" });
         if (onClick) {
             onClick();
         }
@@ -61,7 +61,7 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
         setSearchResultsShown(query.length > 0);
     }, [query, setSearchResultsShown, refine]);
 
-    useEffect(() => { }, []);
+    useEffect(() => {}, []);
 
     const handleChange = (e) => {
         setQuery(e.target.value);
@@ -76,13 +76,7 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
 
     return (
         <InputGroup {...props}>
-            <InputLeftElement
-                color="#333"
-                pointerEvents="none"
-                children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
-                height={isSmall ? "30px" : "38px"}
-                marginLeft={isSmall ? "12px" : "20px"}
-            />
+            <InputLeftElement color="#333" pointerEvents="none" children={<HiOutlineSearch size={isMobile ? 20 : 28} />} height={isSmall ? "30px" : "38px"} marginLeft={isSmall ? "12px" : "20px"} />
             <Input
                 paddingLeft={isSmall ? "35px" : "65px"}
                 borderRadius="50px"
@@ -158,35 +152,16 @@ export const MobileSearchBox = (props) => {
             </Box>
             {searchIsOpen && (
                 <Box>
-                <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
-                    <CircleSearchBox
-                        size="sm"
-                        hidePlaceholder={true}
-                        popover={true}
-                        maxWidth="450px"
-                        setSearchIsOpen={setSearchIsOpen}
-                        onHitClick={onHitClick}
-                        autofocus={true}
-                    />
-                </Box>
+                    <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
+                        <CircleSearchBox size="sm" hidePlaceholder={true} popover={true} maxWidth="450px" setSearchIsOpen={setSearchIsOpen} onHitClick={onHitClick} autofocus={true} />
+                    </Box>
                 </Box>
             )}
         </>
     );
 };
 
-export const CircleSearchBox = ({
-    children,
-    size = "md",
-    popover,
-    hidePlaceholder,
-    searchActive,
-    onHitClick,
-    setSearchActive,
-    autofocus = false,
-    fallback = null,
-    ...props
-}) => {
+export const CircleSearchBox = ({ children, size = "md", popover, hidePlaceholder, searchActive, onHitClick, setSearchActive, autofocus = false, fallback = null, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [query, setQuery] = useState("");
     const hitClick = () => {
@@ -222,8 +197,7 @@ export const CircleSearchBox = ({
 
             {popover && isMobile && (
                 <EmptyQueryBoundary fallback={fallback}>
-                    <Box position="absolute" width="100%" top="40px" left="0px" height="calc(100vh - 40px)" overflowY="scroll"
-                    backgroundColor="white">
+                    <Box position="absolute" width="100%" top="40px" left="0px" height="calc(100vh - 40px)" overflowY="scroll" backgroundColor="white">
                         <SearchHits onClick={onHitClick} />
                     </Box>
                 </EmptyQueryBoundary>

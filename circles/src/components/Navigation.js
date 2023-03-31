@@ -12,45 +12,45 @@ import { isAdmin, isConnected } from "components/Helpers";
 
 export const routes = {
     home: "/",
-    circle: (id) => ({
-        home: `/circle/${id}`,
-        chat: `/circle/${id}/chat`,
-        users: `/circle/${id}/users`,
-        rooms: `/circle/${id}/rooms`,
-        circles: `/circle/${id}/circles`,
-        events: `/circle/${id}/events`,
-        links: `/circle/${id}/links`,
-        posts: `/circle/${id}/posts`,
-        new: `/circle/${id}/new`,
+    circle: (circle) => ({
+        home: `/${circle?.host ?? "circles"}/${circle?.id}`,
+        chat: `/${circle?.host ?? "circles"}/${circle?.id}/chat`,
+        users: `/${circle?.host ?? "circles"}/${circle?.id}/users`,
+        rooms: `/${circle?.host ?? "circles"}/${circle?.id}/rooms`,
+        circles: `/${circle?.host ?? "circles"}/${circle?.id}/circles`,
+        events: `/${circle?.host ?? "circles"}/${circle?.id}/events`,
+        links: `/${circle?.host ?? "circles"}/${circle?.id}/links`,
+        posts: `/${circle?.host ?? "circles"}/${circle?.id}/posts`,
+        new: `/${circle?.host ?? "circles"}/${circle?.id}/new`,
         settings: {
-            home: `/circle/${id}/settings`,
-            about: `/circle/${id}/settings`,
-            images: `/circle/${id}/settings/images`,
-            tags: `/circle/${id}/settings/tags`,
-            questions: `/circle/${id}/settings/questions`,
-            base: `/circle/${id}/settings/base`,
-            socialmedia: `/circle/${id}/settings/socialmedia`,
-            connections: `/circle/${id}/settings/connections`,
-            misc: `/circle/${id}/settings/misc`,
+            home: `/${circle?.host ?? "circles"}/${circle?.id}/settings`,
+            about: `/${circle?.host ?? "circles"}/${circle?.id}/settings`,
+            images: `/${circle?.host ?? "circles"}/${circle?.id}/settings/images`,
+            tags: `/${circle?.host ?? "circles"}/${circle?.id}/settings/tags`,
+            questions: `/${circle?.host ?? "circles"}/${circle?.id}/settings/questions`,
+            base: `/${circle?.host ?? "circles"}/${circle?.id}/settings/base`,
+            socialmedia: `/${circle?.host ?? "circles"}/${circle?.id}/settings/socialmedia`,
+            connections: `/${circle?.host ?? "circles"}/${circle?.id}/settings/connections`,
+            misc: `/${circle?.host ?? "circles"}/${circle?.id}/settings/misc`,
         },
-        admin: `/circle/${id}/admin`,
+        admin: `/${circle?.host ?? "circles"}/${circle?.id}/admin`,
     }),
     // graph: "/graph",
 };
 
-export const openCircle = (navigate, circleId, section) => {
-    if (!circleId) return;
-    let path = routes.circle(circleId);
+export const openCircle = (navigate, circle, section) => {
+    if (!circle?.id) return;
+    let path = routes.circle(circle);
     navigate(section ? path[section] : path.home);
 };
 
-export const getNavigationItems = (circleId, isAdmin) => {
-    let id = circleId;
+export const getNavigationItems = (circle, isAdmin) => {
+    let id = circle?.id;
     let navigationItems = [];
-    navigationItems.push({ route: routes.circle(id).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
+    navigationItems.push({ route: routes.circle(circle).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
 
     navigationItems.push({
-        route: routes.circle(id).posts,
+        route: routes.circle(circle).posts,
         name: i18n.t("Posts"),
         icon: MdFeed,
         switchOffMap: true,
@@ -58,7 +58,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
         category: "posts",
     });
     navigationItems.push({
-        route: routes.circle(id).chat,
+        route: routes.circle(circle).chat,
         name: i18n.t("Chat"),
         icon: BsChatText,
         switchOffMap: true,
@@ -66,7 +66,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
         category: "chat",
     });
     navigationItems.push({
-        route: routes.circle(id).circles,
+        route: routes.circle(circle).circles,
         name: i18n.t("Circles"),
         icon: BiNetworkChart,
         switchOffMap: true,
@@ -74,7 +74,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
         category: "circles",
     });
     navigationItems.push({
-        route: routes.circle(id).events,
+        route: routes.circle(circle).events,
         name: i18n.t("Events"),
         icon: FaCalendarAlt,
         switchOffMap: true,
@@ -82,7 +82,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
         category: "events",
     });
     navigationItems.push({
-        route: routes.circle(id).rooms,
+        route: routes.circle(circle).rooms,
         name: i18n.t("Rooms"),
         switchOffMap: true,
         matchSubPaths: true,
@@ -91,7 +91,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
     });
     if (isAdmin) {
         navigationItems.push({
-            route: routes.circle(id).links,
+            route: routes.circle(circle).links,
             name: i18n.t("Links"),
             icon: AiOutlineGlobal,
             switchOffMap: true,
@@ -99,9 +99,9 @@ export const getNavigationItems = (circleId, isAdmin) => {
             category: "links",
         });
     }
-    navigationItems.push({ route: routes.circle(id).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
+    navigationItems.push({ route: routes.circle(circle).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
     navigationItems.push({
-        route: routes.circle(id).settings.home,
+        route: routes.circle(circle).settings.home,
         name: i18n.t("Settings"),
         icon: MdSettings,
         requireAdmin: true,
@@ -111,7 +111,7 @@ export const getNavigationItems = (circleId, isAdmin) => {
     });
 
     if (isAdmin) {
-        navigationItems.push({ route: routes.circle(id).admin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
+        navigationItems.push({ route: routes.circle(circle).admin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
     }
 
     return navigationItems;

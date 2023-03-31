@@ -1,4 +1,4 @@
-import { CircleDataProvider } from "services/CircleDataProvider";
+import { DataProvider } from "services/DataProvider";
 
 // fetches and saves circle data from GitHub respositories
-export default class GitHubDataProvider extends CircleDataProvider {}
+export default class GitHubDataProvider extends DataProvider {}

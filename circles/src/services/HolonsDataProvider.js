@@ -1,8 +1,8 @@
-import { CircleDataProvider } from "services/CircleDataProvider";
+import { DataProvider } from "services/DataProvider";
 import axios from "axios";
 
 // fetches and saves circle data from Holons
-export default class HolonsDataProvider extends CircleDataProvider {
+export default class HolonsDataProvider extends DataProvider {
     async getCircle(circleId) {
         let response = await axios.get(circleId);
         if (response.status === 200) {

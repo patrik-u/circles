@@ -30,26 +30,8 @@ export const ProfileMenu = () => {
 
     return (
         displayProfile && (
-            <Menu
-                closeOnBlur="true"
-                onClose={profileMenuOnClose}
-                onOpen={profileMenuOnOpen}
-                isOpen={profileMenuIsOpen}
-                margin="0px"
-                padding="0px"
-                width={circlePictureSize}
-                height={circlePictureSize}
-            >
-                <MenuButton
-                    as={Button}
-                    rounded={"full"}
-                    variant={"link"}
-                    cursor={"pointer"}
-                    width={circlePictureSize}
-                    height={circlePictureSize}
-                    margin="0px"
-                    padding="0px"
-                >
+            <Menu closeOnBlur="true" onClose={profileMenuOnClose} onOpen={profileMenuOnOpen} isOpen={profileMenuIsOpen} margin="0px" padding="0px" width={circlePictureSize} height={circlePictureSize}>
+                <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} width={circlePictureSize} height={circlePictureSize} margin="0px" padding="0px">
                     <Image
                         src={getImageKitUrl(user?.picture ?? defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
                         width={circlePictureSize}
@@ -68,7 +50,7 @@ export const ProfileMenu = () => {
                             src={getImageKitUrl(user?.picture ?? defaultUserPicture, 128, 128)}
                             onClick={() => {
                                 profileMenuOnClose();
-                                openCircle(navigate, user?.id);
+                                openCircle(navigate, user);
                             }}
                         />
                     </Center>
@@ -77,27 +59,18 @@ export const ProfileMenu = () => {
                         cursor="pointer"
                         onClick={() => {
                             profileMenuOnClose();
-                            openCircle(navigate, user?.id);
+                            openCircle(navigate, user);
                         }}
                     >
                         <strong>{user?.name}</strong>
                     </Center>
                     <br />
                     <MenuDivider />
-                    <MenuItem onClick={() => openCircle(navigate, user?.id)}>{i18n.t("my profile")}</MenuItem>
-                    <MenuItem onClick={() => navigate(routes.circle(user?.id).settings.home)}>{i18n.t("my settings")}</MenuItem>
+                    <MenuItem onClick={() => openCircle(navigate, user)}>{i18n.t("my profile")}</MenuItem>
+                    <MenuItem onClick={() => navigate(routes.circle(user).settings.home)}>{i18n.t("my settings")}</MenuItem>
                     <MenuDivider />
                     <Center>
-                        <Button
-                            onClick={onSignOutClick}
-                            display="inline-flex"
-                            fontSize={"sm"}
-                            fontWeight={600}
-                            color={"#333"}
-                            href={"#"}
-                            variant="outline"
-                            borderRadius="full"
-                        >
+                        <Button onClick={onSignOutClick} display="inline-flex" fontSize={"sm"} fontWeight={600} color={"#333"} href={"#"} variant="outline" borderRadius="full">
                             {i18n.t("log out")}
                         </Button>
                     </Center>

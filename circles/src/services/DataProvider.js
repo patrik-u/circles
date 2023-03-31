@@ -1,5 +1,5 @@
 // fetches and saves circle data
-export class CircleDataProvider {
+export class DataProvider {
     async getCircle(circleId) {
         throw new Error("Not implemented");
     }
