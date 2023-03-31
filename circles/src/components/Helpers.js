@@ -30,16 +30,7 @@ export const isConnected = (userData, circleId, types) => {
     if (userData.id === circleId) return true;
 
     if (!types) {
-        types = [
-            "connected_mutually_to",
-            "connected_to",
-            "owner_of",
-            "admin_of",
-            "moderator_of",
-            "creator_of",
-            "connected_mutually_to_request",
-            "admin_of_request",
-        ];
+        types = ["connected_mutually_to", "connected_to", "owner_of", "admin_of", "moderator_of", "creator_of", "connected_mutually_to_request", "admin_of_request"];
     }
 
     for (let type of types) {
@@ -219,9 +210,7 @@ export const datesAreOnSameDay = (first, second) => {
     let secondDate = fromFsDate(second);
     if (!firstDate || !secondDate) return false;
 
-    return (
-        firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate()
-    );
+    return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate();
 };
 
 export const combineDateAndTime = (date, time) => {
@@ -243,9 +232,10 @@ export const getDayAndMonth = (date = new Date()) => {
 };
 
 export const getDateAndTimeLong = (date) => {
-    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
-        date
-    )?.toLocaleTimeString?.(i18n.language, { hour: "2-digit", minute: "2-digit" })}`;
+    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(date)?.toLocaleTimeString?.(i18n.language, {
+        hour: "2-digit",
+        minute: "2-digit",
+    })}`;
 };
 
 export const getDateLong = (date) => {
@@ -316,7 +306,7 @@ export const timeSince = (date, timeUntil) => {
 };
 
 export const validateEmail = (email) => {
-    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
+    return /^[\w-.]+@([\w-]+.)+[\w-]{2,}$/.test(email);
 };
 
 export const validatePassword = (password) => {
