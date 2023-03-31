@@ -1,6 +1,6 @@
-import FirebaseDataProvider from "/services/FirebaseDataProvider";
-import GithubDataProvider from "/services/GithubDataProvider";
-import HolonsDataProvider from "/services/HolonsDataProvider";
+import FirebaseDataProvider from "services/FirebaseDataProvider";
+import GitHubDataProvider from "services/GitHubDataProvider";
+import HolonsDataProvider from "services/HolonsDataProvider";
 
 // returns a data provider based on the source type
 export class DataProviderFactory {
@@ -9,11 +9,12 @@ export class DataProviderFactory {
             case "firebase":
                 return new FirebaseDataProvider();
             case "github":
-                return new GithubDataProvider();
+                return new GitHubDataProvider();
             case "holons":
                 return new HolonsDataProvider();
             default:
-                throw new Error(`Unsupported data source: ${sourceType}`);
+                console.log("Unsupported data source: " + sourceType);
+            //throw new Error(`Unsupported data source: ${sourceType}`);
         }
     }
 }
