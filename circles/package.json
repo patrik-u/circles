@@ -52,6 +52,7 @@
         "serve": "^14.1.2",
         "threebox-plugin": "^2.2.5",
         "web-vitals": "^1.1.2",
+        "web3": "^1.9.0",
         "workbox-background-sync": "^6.5.4",
         "workbox-broadcast-update": "^6.5.4",
         "workbox-cacheable-response": "^6.5.4",

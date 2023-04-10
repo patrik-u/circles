@@ -21,6 +21,7 @@ import { Home } from "components/Home";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
+import Holon from "./Holons";
 //#endregion
 
 const CircleHome = lazy(() => import("components/CircleHome"));
@@ -283,6 +284,8 @@ export const Circle = ({ isGlobal }) => {
                                     </Flex>
                                 )}
                                 {isMobile && <HorizontalNavigator />}
+
+                                <Holon />
 
                                 {/* Section content */}
                                 <Routes>
