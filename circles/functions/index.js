@@ -902,6 +902,9 @@ app.put("/circles/:id", auth, async (req, res) => {
                 circleData.questions.question2 = admin.firestore.FieldValue.delete();
             }
         }
+        if (req.body.circleData?.funding) {
+            circleData.funding = req.body.circleData.funding;
+        }
 
         if (type === "event") {
             if (req.body.circleData?.startsAt) {

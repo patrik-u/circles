@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Web3 from "web3";
-import HolonContract from "./contract/Holon";
+import HolonContract from "./contracts/Holon";
 import { Button } from "@chakra-ui/react";
 
 const Holon = () => {

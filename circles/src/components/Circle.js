@@ -21,7 +21,7 @@ import { Home } from "components/Home";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
-import Holon from "./Holons";
+import Appreciative from "./contracts/Appreciative";
 //#endregion
 
 const CircleHome = lazy(() => import("components/CircleHome"));
@@ -58,6 +58,29 @@ export const Circle = ({ isGlobal }) => {
         //toggleExpand();
     };
 
+    // const connectToWeb3 = async () => {
+    //     // read holon from circle and display...
+
+    //     if (window.ethereum) {
+    //         const web3 = new Web3(window.ethereum);
+    //         try {
+    //             await window.ethereum.enable();
+    //             setWeb3(web3);
+    //             const networkId = await web3.eth.net.getId();
+    //             const deployedNetwork = Appreciative.networks[networkId];
+    //             console.log("deployedNetwork", deployedNetwork && deployedNetwork.address);
+    //             const contract = new web3.eth.Contract(Appreciative.abi, deployedNetwork && deployedNetwork.address);
+    //             setContract(contract);
+    //         } catch (error) {
+    //             console.error(error);
+    //         }
+    //     } else {
+    //         // Load web using infura (readonly)
+    //         //new Web3.providers.HttpProvider('https://sepolia.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
+    //         console.error("No Ethereum wallet detected");
+    //     }
+    // };
+
     useEffect(() => {
         if (isGlobal || circleId === "global") {
             setCircle({
@@ -84,11 +107,9 @@ export const Circle = ({ isGlobal }) => {
         log("Circle.useEffect");
 
         const dataProvider = DataProviderFactory.createDataProvider(hostId);
-        console.log("dataProvider", dataProvider);
         if (dataProvider.supportsSubscription()) {
             let unsubscribe = dataProvider.subscribeToCircle(circleId, (newCircle) => {
                 setCircle(newCircle);
-                console.log("Logging circle : ", JSON.stringify(newCircle, null, 2));
             });
 
             return () => {
@@ -99,7 +120,6 @@ export const Circle = ({ isGlobal }) => {
         } else {
             dataProvider.getCircle(circleId).then((fetchedCircle) => {
                 setCircle(fetchedCircle);
-                console.log("Logging circle : ", JSON.stringify(fetchedCircle, null, 2));
             });
         }
     }, [hostId, circleId, setCircle, isGlobal]);
@@ -285,7 +305,7 @@ export const Circle = ({ isGlobal }) => {
                                 )}
                                 {isMobile && <HorizontalNavigator />}
 
-                                <Holon />
+                                {/* <Holon /> */}
 
                                 {/* Section content */}
                                 <Routes>
