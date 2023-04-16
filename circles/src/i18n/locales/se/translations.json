@@ -503,6 +503,7 @@
     "Click on map to place your location. Users nearby will easier be able to discover you.": "Klicka på kartan för att ange din plats. Användare i närheten kommer ha lättare att upptäcka dig.",
     "Link can't contain more than 200 characters": "Länk får inte innehålla mer än 200 tecken",
     "Social media links": "Social media länkar",
+    "OpenCollective example": "t.ex. https://opencollective.com/<mittkonto>/donate",
     "Facebook example": "t.ex. https://www.facebook.com/<mittkonto>/",
     "Twitter example": "t.ex. https://www.twitter.com/<mittkonto>",
     "Instagram example": "t.ex. https://www.instagram.com/<mittkonto>",

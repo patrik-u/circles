@@ -493,6 +493,23 @@ export const QuickLinksPanel = () => {
     );
 };
 
+export const CircleFundingPanel = () => {
+    const [circle] = useAtom(circleAtom);
+    if (!circle?.funding) return null;
+
+    if (!circle?.funding?.open_collective) return null; // TODO remove when other funding options besides open collective is implemented
+
+    return (
+        <CirclePanel title={i18n.t("Funding")}>
+            {circle?.funding?.open_collective && (
+                <a href={`https://opencollective.com/${circle?.funding?.open_collective}/donate`} target="_blank">
+                    <Image src={`https://opencollective.com/${circle?.funding?.open_collective}/donate/button@2x.png?color=blue`} width="300px" />
+                </a>
+            )}
+        </CirclePanel>
+    );
+};
+
 export const CircleMembersPanel = () => {
     const [circle] = useAtom(circleAtom);
     const [circles] = useAtom(circlesAtom);
@@ -579,6 +596,7 @@ export const CircleRightPanel = ({ section }) => {
             return (
                 <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
+                    <CircleFundingPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
                 </Box>
@@ -590,6 +608,7 @@ export const CircleRightPanel = ({ section }) => {
             return isMobile ? null : (
                 <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
+                    <CircleFundingPanel />
                     <CircleTagsPanel />
                     <CircleMembersPanel />
                 </Box>
