@@ -22,6 +22,7 @@ import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUti
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
 import Appreciative from "./contracts/Appreciative";
+import CircleHolon from "components/CircleHolon";
 //#endregion
 
 const CircleHome = lazy(() => import("components/CircleHome"));
@@ -279,6 +280,7 @@ export const Circle = ({ isGlobal }) => {
                 <Box width="100%" height={`${coverHeight}px`} position="relative">
                     {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />}
                     {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
+                    {displayMode === displayModes.holon && <CircleHolon height={coverHeight} />}
                     <DisplayModeButtons />
                 </Box>
 

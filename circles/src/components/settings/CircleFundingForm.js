@@ -64,6 +64,7 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 await window.ethereum.enable();
                 setWeb3(web3);
                 const networkId = await web3.eth.net.getId();
+                console.log("networkId", networkId);
                 const deployedNetwork = Holons.networks[networkId];
                 console.log("deployedNetwork", deployedNetwork && deployedNetwork.address);
                 const contract = new web3.eth.Contract(Holons.abi, deployedNetwork && deployedNetwork.address);
@@ -83,6 +84,7 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
         setIsCreatingHolon(true);
         let { web3, contract } = await connectToWeb3();
         console.log("createHolon");
+
         const accounts = await web3.eth.getAccounts();
         await contract.methods.newHolon("Appreciative", circle.id, 0).send({ from: accounts[0] });
         const addr = await contract.methods.newHolon("Appreciative", circle.id, 0).call({ from: accounts[0] });

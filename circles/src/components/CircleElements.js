@@ -44,6 +44,7 @@ import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
+import { TbChartCircles } from "react-icons/tb";
 //#endregion
 
 export const buttonHighlight = "#59ff81dd";
@@ -638,9 +639,35 @@ export const DisplayModeButtons = ({ ...props }) => {
                 cursor="pointer"
                 alignItems="center"
                 justifyContent="center"
-                onClick={() => setDisplayMode(displayMode === displayModes.default ? displayModes.map : displayModes.default)}
+                onClick={() => setDisplayMode(displayModes.default)}
             >
-                <Icon width={iconSize} height={iconSize} color="black" as={displayMode === displayModes.default ? FaMapMarkedAlt : GrGallery} cursor="pointer" />
+                <Icon width={iconSize} height={iconSize} color="black" as={GrGallery} cursor="pointer" />
+            </Flex>
+            <Flex
+                backgroundColor="#f4f4f4dd"
+                _hover={{ backgroundColor: buttonHighlight }}
+                width={iconCircleSize}
+                height={iconCircleSize}
+                borderRadius="50%"
+                cursor="pointer"
+                alignItems="center"
+                justifyContent="center"
+                onClick={() => setDisplayMode(displayModes.map)}
+            >
+                <Icon width={iconSize} height={iconSize} color="black" as={FaMapMarkedAlt} cursor="pointer" />
+            </Flex>
+            <Flex
+                backgroundColor="#f4f4f4dd"
+                _hover={{ backgroundColor: buttonHighlight }}
+                width={iconCircleSize}
+                height={iconCircleSize}
+                borderRadius="50%"
+                cursor="pointer"
+                alignItems="center"
+                justifyContent="center"
+                onClick={() => setDisplayMode(displayModes.holon)}
+            >
+                <Icon width={iconSize} height={iconSize} color="black" as={TbChartCircles} cursor="pointer" />
             </Flex>
         </VStack>
     );
