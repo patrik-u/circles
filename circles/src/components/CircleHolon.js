@@ -21,7 +21,7 @@ import { Home } from "components/Home";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
-import Appreciative from "./contracts/Appreciative";
+import Appreciative from "components/contracts/Appreciative";
 import Web3 from "web3";
 //#endregion
 
@@ -30,6 +30,7 @@ const MembraneInterface = () => {
 
     const [circle] = useAtom(circleAtom);
     const [holon, setHolon] = useState(null);
+    const [web3, setWeb3] = useState(null);
 
     const loadHolon = async () => {
         // let web3 = null;
@@ -88,10 +89,12 @@ const MembraneInterface = () => {
         json.name = await holon.methods.name().call();
         var members = await holon.methods.listMembers().call();
         if (members) {
-            json.holons = members.map((member, index) => {
-                var name = holon.methods.toName(member).call();
-                return { id: member, label: name };
-            });
+            json.holons = await Promise.all(
+                members.map(async (member, index) => {
+                    var name = await holon.methods.toName(member).call();
+                    return { id: member, label: name };
+                })
+            );
         }
         //}
         setHolon(json);
@@ -101,6 +104,24 @@ const MembraneInterface = () => {
         if (!circle?.funding?.holon) return;
         loadHolon();
     }, [circle?.funding?.holon]);
+
+    const connectToWeb3 = async () => {
+        if (window.ethereum) {
+            const web3 = new Web3(window.ethereum);
+            try {
+                await window.ethereum.enable();
+                const contract = new web3.eth.Contract(Appreciative.abi, circle?.funding?.holon);
+
+                return { web3, contract };
+            } catch (error) {
+                console.error(error);
+            }
+        } else {
+            // Load web using infura
+            //new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
+            console.error("No Ethereum wallet detected");
+        }
+    };
 
     // useEffect(() => {
     //     if(!web3 || !contract) return;
@@ -141,9 +162,17 @@ const MembraneInterface = () => {
     //     console.log("Manifest set:", result);
     // };
 
+    const addMember = async () => {
+        let { web3, contract } = await connectToWeb3();
+        const accounts = await web3.eth.getAccounts();
+        const result = await contract.methods.addMember("0xE2E97679de1a07E46d7166DEe87E91Aefcea459C", "Roberto").send({ from: accounts[0] });
+        console.log("Member added:", result);
+    };
+
     return (
         <Box>
             <Text fontSize="36px">{JSON.stringify(holon, null, 2)}</Text>
+            <Button onClick={addMember}>Add member</Button>
             {/* <Heading mb={6}>Membrane Smart Contract Interface</Heading>
             <VStack spacing={4}>
                 <FormControl>
