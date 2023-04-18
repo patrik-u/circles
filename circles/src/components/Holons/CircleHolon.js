@@ -33,38 +33,6 @@ const MembraneInterface = () => {
     const [web3, setWeb3] = useState(null);
 
     const loadHolon = async () => {
-        // let web3 = null;
-        // let contract = null;
-        // let address = null;
-        // if (window.ethereum) {
-        //     const web3 = new Web3(window.ethereum);
-        //     try {
-        //         await window.ethereum.enable();
-
-        //         const networkId = await web3.eth.net.getId();
-        //         const deployedNetwork = Appreciative.networks[networkId];
-        //         const contract = new web3.eth.Contract(Appreciative.abi, deployedNetwork && deployedNetwork.address);
-        //     } catch (error) {
-        //         console.error(error);
-        //     }
-        // } else {
-        //     // Load web using infura
-        //     const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/966b62ed84c84715bc5970a1afecad29"));
-        //     try {
-        //         const networkId = await web3.eth.net.getId();
-        //         const deployedNetwork = Appreciative.networks[networkId];
-        //         const contract = new web3.eth.Contract(Appreciative.abi, deployedNetwork && deployedNetwork.address);
-        //     } catch (error) {
-        //         console.error(error);
-        //     }
-        // }
-
-        // setWeb3(web3);
-        // setContract(contract);
-
-        // const name = await contract.methods.name("Appreciative", circle.id, 0).call({ from: accounts[0] });
-        // setName(name);
-
         var json = {};
         let address = circle.funding.holon;
 
@@ -73,30 +41,26 @@ const MembraneInterface = () => {
         // check if it is an holon
         const code = await web3.eth.getCode(address);
         console.log(address);
-        // if (code === "0x") {
-        //     console.log(address + "is NOT an holon");
-        //     json.id = address;
-        //     json.name = address; // check ens
-        //     json.description = address;
-        //     // json.image = 'https://ipfs.3box.io/profile?address=' + address // check 3box
-        // } else {
-        let holon = new web3.eth.Contract(Appreciative.abi, address);
-        // const totalappreciation = await holon.methods.totalappreciation().call()
-        // console.log(totalappreciation)
-        // var name = holon.methods.toName(address).call()
-        // console.log(name)
-        json.id = address;
-        json.name = await holon.methods.name().call();
-        var members = await holon.methods.listMembers().call();
-        if (members) {
-            json.holons = await Promise.all(
-                members.map(async (member, index) => {
-                    var name = await holon.methods.toName(member).call();
-                    return { id: member, label: name };
-                })
-            );
+        if (code === "0x") {
+            console.log(address + "is NOT an holon");
+            json.id = address;
+            json.name = address; // check ens
+            json.description = address;
+            json.image = "https://ipfs.3box.io/profile?address=" + address; // check 3box
+        } else {
+            let holon = new web3.eth.Contract(Appreciative.abi, address);
+            json.id = address;
+            json.name = await holon.methods.name().call();
+            var members = await holon.methods.listMembers().call();
+            if (members) {
+                json.holons = await Promise.all(
+                    members.map(async (member, index) => {
+                        var name = await holon.methods.toName(member).call();
+                        return { id: member, label: name };
+                    })
+                );
+            }
         }
-        //}
         setHolon(json);
     };
 
@@ -165,7 +129,7 @@ const MembraneInterface = () => {
     const addMember = async () => {
         let { web3, contract } = await connectToWeb3();
         const accounts = await web3.eth.getAccounts();
-        const result = await contract.methods.addMember("0xE2E97679de1a07E46d7166DEe87E91Aefcea459C", "Roberto").send({ from: accounts[0] });
+        const result = await contract.methods.addMember("0xdCb057BD7F5EB2264dD2238E874B48Cf9F70566B", "Patrik").send({ from: accounts[0] });
         console.log("Member added:", result);
     };
 

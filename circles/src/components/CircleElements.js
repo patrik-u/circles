@@ -45,6 +45,7 @@ import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { TbChartCircles } from "react-icons/tb";
+import DonateToHolon from "components/Holons/DonateToHolon";
 //#endregion
 
 export const buttonHighlight = "#59ff81dd";
@@ -498,14 +499,20 @@ export const CircleFundingPanel = () => {
     const [circle] = useAtom(circleAtom);
     if (!circle?.funding) return null;
 
-    if (!circle?.funding?.open_collective) return null; // TODO remove when other funding options besides open collective is implemented
-
     return (
         <CirclePanel title={i18n.t("Funding")}>
             {circle?.funding?.open_collective && (
-                <a href={`https://opencollective.com/${circle?.funding?.open_collective}/donate`} target="_blank">
-                    <Image src={`https://opencollective.com/${circle?.funding?.open_collective}/donate/button@2x.png?color=blue`} width="300px" />
-                </a>
+                <Box marginBottom="10px">
+                    <a href={`https://opencollective.com/${circle?.funding?.open_collective}/donate`} target="_blank">
+                        <Image src={`https://opencollective.com/${circle?.funding?.open_collective}/donate/button@2x.png?color=blue`} width="300px" />
+                    </a>
+                </Box>
+            )}
+            {circle?.funding?.holon && (
+                <>
+                    <Button leftIcon={<Image src="/holonsicon.png" width="14px" height="14px" />}>Donate to Circle</Button>
+                    <DonateToHolon />
+                </>
             )}
         </CirclePanel>
     );

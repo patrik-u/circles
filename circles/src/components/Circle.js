@@ -22,7 +22,7 @@ import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUti
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
 import Appreciative from "./contracts/Appreciative";
-import CircleHolon from "components/CircleHolon";
+import CircleHolon from "components/Holons/CircleHolon";
 //#endregion
 
 const CircleHome = lazy(() => import("components/CircleHome"));
@@ -52,35 +52,10 @@ export const Circle = ({ isGlobal }) => {
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
     const location = useLocationNoUpdates();
     const hashValue = location.hash.substr(1); // Remove the '#' character
-    //const [sourceType, circleId] = hashValue.split("/");
 
     const onLogoClick = () => {
         navigate(routes.circle({ id: "global", host: "circles" }).home);
-        //toggleExpand();
     };
-
-    // const connectToWeb3 = async () => {
-    //     // read holon from circle and display...
-
-    //     if (window.ethereum) {
-    //         const web3 = new Web3(window.ethereum);
-    //         try {
-    //             await window.ethereum.enable();
-    //             setWeb3(web3);
-    //             const networkId = await web3.eth.net.getId();
-    //             const deployedNetwork = Appreciative.networks[networkId];
-    //             console.log("deployedNetwork", deployedNetwork && deployedNetwork.address);
-    //             const contract = new web3.eth.Contract(Appreciative.abi, deployedNetwork && deployedNetwork.address);
-    //             setContract(contract);
-    //         } catch (error) {
-    //             console.error(error);
-    //         }
-    //     } else {
-    //         // Load web using infura (readonly)
-    //         //new Web3.providers.HttpProvider('https://sepolia.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
-    //         console.error("No Ethereum wallet detected");
-    //     }
-    // };
 
     useEffect(() => {
         if (isGlobal || circleId === "global") {

@@ -40,95 +40,13 @@ import CircleListItem from "components/CircleListItem";
 import { IoInformationCircleSharp } from "react-icons/io5";
 import Holons from "components/contracts/Holons";
 import Web3 from "web3";
+import CreateHolon from "components/Holons/CreateHolon";
 //#endregion
 
 export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const toast = useToast();
-    const [web3, setWeb3] = useState(null);
-    const [contract, setContract] = useState(null);
-    const [holonId, setHolonId] = useState(circle.funding?.holon);
-    const [isCreatingHolon, setIsCreatingHolon] = useState(false);
 
     if (!circle) return null;
-
-    // OpenCollective
-    // Paypal
-    // Connect Wallet Address
-    // InputField (readonly) + button Create Holon
-    // *Connect Wallet(s) (WalletConnect / MetaMask)
-
-    const connectToWeb3 = async () => {
-        if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            try {
-                await window.ethereum.enable();
-                setWeb3(web3);
-                const networkId = await web3.eth.net.getId();
-                console.log("networkId", networkId);
-                const deployedNetwork = Holons.networks[networkId];
-                console.log("deployedNetwork", deployedNetwork && deployedNetwork.address);
-                const contract = new web3.eth.Contract(Holons.abi, deployedNetwork && deployedNetwork.address);
-                setContract(contract);
-                return { web3, contract };
-            } catch (error) {
-                console.error(error);
-            }
-        } else {
-            // Load web using infura
-            //new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
-            console.error("No Ethereum wallet detected");
-        }
-    };
-
-    const createHolon = async () => {
-        setIsCreatingHolon(true);
-        let { web3, contract } = await connectToWeb3();
-        console.log("createHolon");
-
-        const accounts = await web3.eth.getAccounts();
-        await contract.methods.newHolon("Appreciative", circle.id, 0).send({ from: accounts[0] });
-        const addr = await contract.methods.newHolon("Appreciative", circle.id, 0).call({ from: accounts[0] });
-        //const addr = await contract.methods.newHolon.call("Appreciative", circle.id, 0, { from: accounts[0] });
-        //console.log("result:", JSON.stringify(result, null, 2));
-        //console.log("addr: ", result.events.NewHolon.returnValues.addr);
-        //console.log("addr: ", addr);
-
-        // save addr to circle
-        let new_funding = {
-            ...circle.funding,
-            holon: addr,
-        };
-
-        let updatedCircleData = { funding: new_funding };
-
-        //console.log("updating user data", updatedUserData);
-
-        // update user data
-        let putCircleResult = await axios.put(`/circles/${circle.id}`, {
-            circleData: updatedCircleData,
-        });
-
-        if (!putCircleResult.data?.error) {
-            toast({
-                title: i18n.t("Circle updated"),
-                status: "success",
-                position: "top",
-                duration: 4500,
-                isClosable: true,
-            });
-        } else {
-            toast({
-                title: i18n.t("Unable to update circle"),
-                description: putCircleResult.data.error,
-                status: "error",
-                position: "top",
-                duration: 4500,
-                isClosable: true,
-            });
-        }
-        setHolonId(addr);
-        setIsCreatingHolon(false);
-    };
 
     return (
         <Box width="100%">
@@ -225,15 +143,7 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                     )}
                                 </Field> */}
 
-                                <FormControl>
-                                    <FormLabel>Holon</FormLabel>
-                                    <InputGroup>
-                                        <Input id="holon" type="text" maxLength="200" readOnly={true} value={holonId} backgroundColor="#e1e1e1" />
-                                        <Button colorScheme="blue" borderRadius="25px" lineHeight="0" marginLeft="10px" onClick={createHolon} isLoading={isCreatingHolon} minWidth="150px">
-                                            Create Holon
-                                        </Button>
-                                    </InputGroup>
-                                </FormControl>
+                                <CreateHolon />
                             </VStack>
                             <Box>
                                 <HStack align="center" marginTop="10px">
