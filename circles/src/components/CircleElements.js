@@ -510,7 +510,6 @@ export const CircleFundingPanel = () => {
             )}
             {circle?.funding?.holon && (
                 <>
-                    <Button leftIcon={<Image src="/holonsicon.png" width="14px" height="14px" />}>Donate to Circle</Button>
                     <DonateToHolon />
                 </>
             )}
