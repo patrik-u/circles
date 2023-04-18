@@ -28,7 +28,6 @@ import ERC20Token from "components/contracts/TestToken";
 const DonateToHolon = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [circle] = useAtom(circleAtom);
-    const [recipient, setRecipient] = useState(circle?.funding?.holon);
     const [amount, setAmount] = useState("");
     const [tokenAddress, setTokenAddress] = useState("");
     const [tokens, setTokens] = useState([]);
@@ -55,7 +54,7 @@ const DonateToHolon = () => {
         getTokens();
     }, []);
 
-    const handleSend = async () => {
+    const handleSend = async (recipient) => {
         const accounts = await web3.eth.getAccounts();
         const sender = accounts[0];
 
@@ -87,7 +86,7 @@ const DonateToHolon = () => {
                     <ModalBody>
                         <FormControl>
                             <FormLabel>Recipient Address</FormLabel>
-                            <Input placeholder="Recipient Address" value={recipient} isReadOnly={true} />
+                            <Input placeholder="Recipient Address" value={circle?.funding?.holon} isReadOnly={true} />
                         </FormControl>
 
                         <FormControl mt={4}>
@@ -142,7 +141,7 @@ const DonateToHolon = () => {
                     </ModalBody>
 
                     <ModalFooter>
-                        <Button colorScheme="blue" mr={3} onClick={handleSend}>
+                        <Button colorScheme="blue" mr={3} onClick={() => handleSend(circle?.funding?.holon)}>
                             Send
                         </Button>
                         <Button variant="ghost" onClick={onClose}>
