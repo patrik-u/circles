@@ -2,7 +2,7 @@
 import { AiFillHome, AiOutlineGlobal } from "react-icons/ai";
 import { RiAdminLine } from "react-icons/ri";
 import { MdSettings, MdFeed } from "react-icons/md";
-import { FaCalendarAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaVideo } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
 import { BsChatText } from "react-icons/bs";
 import { BiNetworkChart } from "react-icons/bi";
@@ -15,6 +15,7 @@ export const routes = {
     circle: (id) => ({
         home: `/circle/${id}`,
         chat: `/circle/${id}/chat`,
+        video: `circle/${id}/video`,
         users: `/circle/${id}/users`,
         rooms: `/circle/${id}/rooms`,
         circles: `/circle/${id}/circles`,
@@ -61,6 +62,14 @@ export const getNavigationItems = (circleId, isAdmin) => {
         route: routes.circle(id).chat,
         name: i18n.t("Chat"),
         icon: BsChatText,
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "chat",
+    });
+    navigationItems.push({
+        route: routes.circle(id).video,
+        name: i18n.t("Video"),
+        icon: FaVideo,
         switchOffMap: true,
         matchSubPaths: true,
         category: "chat",
