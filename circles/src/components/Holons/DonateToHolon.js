@@ -24,6 +24,7 @@ import Web3 from "web3";
 import { useAtom } from "jotai";
 import { circleAtom } from "components/Atoms";
 import ERC20Token from "components/contracts/TestToken";
+import Appreciative from "components/contracts/Appreciative";
 
 const DonateToHolon = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -67,8 +68,10 @@ const DonateToHolon = () => {
             const tokenContract = new web3.eth.Contract(ERC20Token.abi, tokenAddress);
             const decimals = await tokenContract.methods.decimals().call();
             const tokenAmount = web3.utils.toBN(amount * 10 ** decimals);
-
             await tokenContract.methods.transfer(recipient, tokenAmount).send({ from: sender });
+
+            const holonContract = new web3.eth.Contract(Appreciative.abi, circle?.funding?.holon);
+            await holonContract.methods.reward(recipient, tokenAmount).send({ from: sender });
         }
 
         onClose();

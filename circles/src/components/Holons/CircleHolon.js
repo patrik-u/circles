@@ -1,6 +1,30 @@
 //#region imports
 import React, { useEffect, lazy, useRef, useState, useCallback } from "react";
-import { Flex, Box, VStack, HStack, Input, Button, Text, FormControl, FormLabel, Heading, useToast } from "@chakra-ui/react";
+import {
+    Flex,
+    InputGroup,
+    Box,
+    VStack,
+    HStack,
+    InputRightElement,
+    Input,
+    Button,
+    FormErrorMessage,
+    Text,
+    FormControl,
+    FormLabel,
+    Heading,
+    useToast,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    useDisclosure,
+} from "@chakra-ui/react";
+import { Form, Field, Formik } from "formik";
 import db from "components/Firebase";
 import axios from "axios";
 import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Helpers";
@@ -24,7 +48,131 @@ import { DataProviderFactory } from "services/DataProviderFactory";
 import Appreciative from "components/contracts/Appreciative";
 import Web3 from "web3";
 import HolonMap from "components/Holons/HolonMap";
+import { i18n, LanguagePicker } from "i18n/Localization";
+import { CheckIcon } from "@chakra-ui/icons";
 //#endregion
+
+export const AddHolonMember = () => {
+    const [circle] = useAtom(circleAtom);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+    const connectToWeb3 = async () => {
+        if (window.ethereum) {
+            const web3 = new Web3(window.ethereum);
+            try {
+                await window.ethereum.enable();
+                const contract = new web3.eth.Contract(Appreciative.abi, circle?.funding?.holon);
+
+                return { web3, contract };
+            } catch (error) {
+                console.error(error);
+            }
+        } else {
+            // Load web using infura
+            //new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
+            console.error("No Ethereum wallet detected");
+        }
+    };
+
+    const addMember = async (memberName, memberAddress) => {
+        let { web3, contract } = await connectToWeb3();
+        const accounts = await web3.eth.getAccounts();
+        const result = await contract.methods.addMember(memberAddress, memberName).send({ from: accounts[0] });
+        console.log("Member added:", result);
+    };
+
+    if (!circle) return null;
+
+    return (
+        <>
+            <Button onClick={onOpen}>Add Holon Member</Button>
+
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Add Holon Member</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Formik
+                            enableReinitialize={true}
+                            initialValues={{
+                                name: "",
+                                address: "",
+                            }}
+                            onSubmit={async (values, actions) => {
+                                await addMember(values.name, values.address);
+                                onClose();
+                            }}
+                            validate={(values) => {
+                                const errors = {};
+                                // TODO validate
+                                return errors;
+                            }}
+                        >
+                            {({ values, errors, touched, isSubmitting }) => (
+                                <Form style={{ width: "100%" }}>
+                                    <VStack align="center">
+                                        <VStack align="center" spacing="25px" width="100%" marginLeft="25px" marginRight="25px">
+                                            <Field name="name">
+                                                {({ field, form }) => (
+                                                    <FormControl isInvalid={form.errors.name && form.touched.name}>
+                                                        <FormLabel>Name</FormLabel>
+                                                        <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
+                                                            {form?.values?.name ? form.values.name.length : 0} / 50
+                                                        </Text>
+                                                        <InputGroup>
+                                                            <Input {...field} id="name" type="text" maxLength="50" />
+                                                            {!form.errors.name && form.touched.name && <InputRightElement children={<CheckIcon color="green.500" />} />}
+                                                        </InputGroup>
+                                                        <FormErrorMessage>{form.errors.name}</FormErrorMessage>
+                                                    </FormControl>
+                                                )}
+                                            </Field>
+                                            <Field name="address">
+                                                {({ field, form }) => (
+                                                    <FormControl isInvalid={form.errors.address && form.touched.address}>
+                                                        <FormLabel>Address</FormLabel>
+                                                        <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
+                                                            {form?.values?.address ? form.values.address.length : 0} / 50
+                                                        </Text>
+                                                        <InputGroup>
+                                                            <Input {...field} id="name" type="text" maxLength="50" />
+                                                            {!form.errors.address && form.touched.address && <InputRightElement children={<CheckIcon color="green.500" />} />}
+                                                        </InputGroup>
+                                                        <FormErrorMessage>{form.errors.address}</FormErrorMessage>
+                                                    </FormControl>
+                                                )}
+                                            </Field>
+                                        </VStack>
+                                        <Box>
+                                            <HStack align="center" marginTop="10px">
+                                                <Button colorScheme="blue" mr={3} borderRadius="25px" isLoading={isSubmitting} type="submit" lineHeight="0" width={"auto"}>
+                                                    Add Member
+                                                </Button>
+                                                <Button variant="ghost" borderRadius="25px" onClick={onClose} isDisabled={isSubmitting} lineHeight="0">
+                                                    {i18n.t("Cancel")}
+                                                </Button>
+                                            </HStack>
+                                        </Box>
+                                    </VStack>
+                                </Form>
+                            )}
+                        </Formik>
+                    </ModalBody>
+
+                    {/* <ModalFooter>
+                        <Button colorScheme="blue" mr={3} type="submit">
+                            Add Member
+                        </Button>
+                        <Button variant="ghost" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    </ModalFooter> */}
+                </ModalContent>
+            </Modal>
+        </>
+    );
+};
 
 const MembraneInterface = () => {
     // State variables and useEffect hook as previously defined
@@ -32,6 +180,7 @@ const MembraneInterface = () => {
     const [circle] = useAtom(circleAtom);
     const [holon, setHolon] = useState(null);
     const [web3, setWeb3] = useState(null);
+    const [memberAddress, setMemberAddress] = useState(null);
 
     const loadHolon = async () => {
         var json = {};
@@ -70,109 +219,10 @@ const MembraneInterface = () => {
         loadHolon();
     }, [circle?.funding?.holon]);
 
-    const connectToWeb3 = async () => {
-        if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            try {
-                await window.ethereum.enable();
-                const contract = new web3.eth.Contract(Appreciative.abi, circle?.funding?.holon);
-
-                return { web3, contract };
-            } catch (error) {
-                console.error(error);
-            }
-        } else {
-            // Load web using infura
-            //new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/966b62ed84c84715bc5970a1afecad29'))
-            console.error("No Ethereum wallet detected");
-        }
-    };
-
-    // useEffect(() => {
-    //     if(!web3 || !contract) return;
-
-    //     console.log("load holon");
-
-    //     const accounts = await web3.eth.getAccounts();
-    //     await contract.methods.newHolon("Appreciative", circle.id, 0).send({ from: accounts[0] });
-    //     const addr = await contract.methods.newHolon("Appreciative", circle.id, 0).call({ from: accounts[0] });
-    // }, [web3, contract])
-
-    // const toast = useToast();
-
-    // // Functions to interact with the smart contract as previously defined
-
-    // const handleAddParent = async () => {
-    //     const result = await contractInstance.methods.addParent(parentAddress).send({ from: account });
-    //     console.log("Parent added:", result);
-    // };
-
-    // const handleAddMember = async () => {
-    //     const result = await contractInstance.methods.addMember(parentAddress).send({ from: account });
-    //     console.log("Parent added:", result);
-    // };
-
-    // const handleRemoveMember = async () => {
-    //     const result = await contractInstance.methods.removeMember(memberAddressToRemove).send({ from: account });
-    //     console.log("Member removed:", result);
-    // };
-
-    // const handleChangeName = async () => {
-    //     const result = await contractInstance.methods.changeName(addressToChangeName, newName).send({ from: account });
-    //     console.log("Name changed:", result);
-    // };
-
-    // const handleSetManifest = async () => {
-    //     const result = await contractInstance.methods.setManifest(manifestHash).send({ from: account });
-    //     console.log("Manifest set:", result);
-    // };
-
-    const addMember = async () => {
-        let { web3, contract } = await connectToWeb3();
-        const accounts = await web3.eth.getAccounts();
-        const result = await contract.methods.addMember("0xdCb057BD7F5EB2264dD2238E874B48Cf9F70566B", "Patrik").send({ from: accounts[0] });
-        console.log("Member added:", result);
-    };
-
     return (
         <Box>
             <Text fontSize="36px">{JSON.stringify(holon, null, 2)}</Text>
-            <Button onClick={addMember}>Add member</Button>
-            {/* <Heading mb={6}>Membrane Smart Contract Interface</Heading>
-            <VStack spacing={4}>
-                <FormControl>
-                    <FormLabel>Contract Address</FormLabel>
-                    <Input type="text" value={contractAddress} onChange={(e) => setContractAddress(e.target.value)} />
-                </FormControl>
-
-                <FormControl>
-                    <FormLabel>Member Address</FormLabel>
-                    <Input type="text" value={memberAddress} onChange={(e) => setMemberAddress(e.target.value)} />
-                </FormControl>
-
-                <FormControl>
-                    <FormLabel>Member Name</FormLabel>
-                    <Input type="text" value={memberName} onChange={(e) => setMemberName(e.target.value)} />
-                </FormControl>
-
-                <HStack spacing={4}>
-                    <Button onClick={handleAddMember} colorScheme="green">
-                        Add Member
-                    </Button>
-                    <Button onClick={handleAddParent} colorScheme="blue">
-                        Add Parent
-                    </Button>
-                    <Button onClick={handleRemoveMember} colorScheme="red">
-                        Remove Member
-                    </Button>
-                    <Button onClick={handleChangeName} colorScheme="purple">
-                        Change Name
-                    </Button>
-                    <Button onClick={handleSetManifest} colorScheme="orange">
-                        Set Manifest
-                    </Button>
-                </HStack>
-            </VStack> */}
+            <AddHolonMember />
         </Box>
     );
 };
@@ -203,8 +253,8 @@ export const CircleHolon = () => {
         { name: "t", value: 200 },
     ];
 
-    return <HolonMap data={data} />;
-    // <MembraneInterface />;
+    // return <HolonMap data={data} />;
+    return <MembraneInterface />;
 };
 
 export default CircleHolon;
