@@ -23,6 +23,7 @@ import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
 import Appreciative from "components/contracts/Appreciative";
 import Web3 from "web3";
+import HolonMap from "components/Holons/HolonMap";
 //#endregion
 
 const MembraneInterface = () => {
@@ -179,7 +180,31 @@ const MembraneInterface = () => {
 export const CircleHolon = () => {
     log("CircleHolon.render", -1);
 
-    return <MembraneInterface />;
+    const data = [
+        { name: "a", value: 10 },
+        { name: "b", value: 20 },
+        { name: "c", value: 30 },
+        { name: "d", value: 40 },
+        { name: "e", value: 50 },
+        { name: "f", value: 60 },
+        { name: "g", value: 70 },
+        { name: "h", value: 80 },
+        { name: "i", value: 90 },
+        { name: "j", value: 100 },
+        { name: "k", value: 110 },
+        { name: "l", value: 120 },
+        { name: "m", value: 130 },
+        { name: "n", value: 140 },
+        { name: "o", value: 150 },
+        { name: "p", value: 160 },
+        { name: "q", value: 170 },
+        { name: "r", value: 180 },
+        { name: "s", value: 190 },
+        { name: "t", value: 200 },
+    ];
+
+    return <HolonMap data={data} />;
+    // <MembraneInterface />;
 };
 
 export default CircleHolon;
