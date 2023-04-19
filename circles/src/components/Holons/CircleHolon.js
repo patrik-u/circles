@@ -253,8 +253,8 @@ export const CircleHolon = () => {
         { name: "t", value: 200 },
     ];
 
-    // return <HolonMap data={data} />;
-    return <MembraneInterface />;
+    return <HolonMap data={data} />;
+    //return <MembraneInterface />;
 };
 
 export default CircleHolon;
