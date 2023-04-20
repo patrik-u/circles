@@ -255,7 +255,7 @@ export const Circle = ({ isGlobal }) => {
                 <Box width="100%" height={`${coverHeight}px`} position="relative">
                     {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />}
                     {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
-                    {displayMode === displayModes.holon && <CircleHolon height={coverHeight} />}
+                    {displayMode === displayModes.holon && <CircleHolon width={windowWidth} height={coverHeight} />}
                     <DisplayModeButtons />
                 </Box>
 
