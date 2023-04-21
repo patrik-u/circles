@@ -23,15 +23,24 @@ import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
 import Appreciative from "./contracts/Appreciative";
 import CircleHolon from "components/Holons/CircleHolon";
+import CircleHome from "components/CircleHome";
+import CircleChat from "components/CircleChat";
+import CircleMap from "components/CircleMap";
+import Circles from "components/Circles";
+import CircleSettings from "components/settings/CircleSettings";
+import CircleAdmin from "components/CircleAdmin";
+import CircleCreateNew from "components/settings/CircleCreateNew";
+import CircleVideo from "components/CircleVideo";
 //#endregion
 
-const CircleHome = lazy(() => import("components/CircleHome"));
-const CircleChat = lazy(() => import("components/CircleChat"));
-const CircleMap = lazy(() => import("components/CircleMap"));
-const Circles = lazy(() => import("components/Circles"));
-const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
-const CircleAdmin = lazy(() => import("components/CircleAdmin"));
-const CircleCreateNew = lazy(() => import("components/settings/CircleCreateNew"));
+// const CircleHome = lazy(() => import("components/CircleHome"));
+// const CircleChat = lazy(() => import("components/CircleChat"));
+// const CircleMap = lazy(() => import("components/CircleMap"));
+// const Circles = lazy(() => import("components/Circles"));
+// const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
+// const CircleAdmin = lazy(() => import("components/CircleAdmin"));
+// const CircleCreateNew = lazy(() => import("components/settings/CircleCreateNew"));
+// const CircleVideo = lazy(() => import("components/CircleVideo"));
 
 export const Circle = ({ isGlobal }) => {
     log("Circle.render", -1);
@@ -289,6 +298,7 @@ export const Circle = ({ isGlobal }) => {
                                     <Route path="/" element={<CircleHome />} />
                                     <Route path="/posts" element={<Circles type="post" />} />
                                     <Route path="/chat" element={<CircleChat />} />
+                                    <Route path="/video" element={<CircleVideo />} />
                                     <Route path="/circles" element={<Circles type="circle" />} />
                                     <Route path="/events" element={<Circles type="event" />} />
                                     <Route path="/rooms" element={<Circles type="room" />} />

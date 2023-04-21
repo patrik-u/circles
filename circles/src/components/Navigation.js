@@ -2,7 +2,7 @@
 import { AiFillHome, AiOutlineGlobal } from "react-icons/ai";
 import { RiAdminLine } from "react-icons/ri";
 import { MdSettings, MdFeed } from "react-icons/md";
-import { FaCalendarAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaVideo } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
 import { BsChatText } from "react-icons/bs";
 import { BiNetworkChart } from "react-icons/bi";
