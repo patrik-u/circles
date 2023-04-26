@@ -46,7 +46,7 @@ import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom } from
 import { JitsiMeeting } from "@jitsi/react-sdk";
 //#endregion
 
-export const CircleVideo = () => {
+export const CircleVideo = ({width, height}) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -55,15 +55,39 @@ export const CircleVideo = () => {
 
     // top bar + cover image + header
     const getVideoHeight = () => {
-        return isMobile ? windowHeight - (40 + 250 + 123) : 900;
+        return isMobile ? height - (40 + 250 + 123) : height;
     };
 
     if (!circle) return null;
 
     return (
-        <Flex height={`${getVideoHeight()}px`}>
+        <Flex width = {`${windowWidth}`} height={`${getVideoHeight()}px`}>
             <JitsiMeeting
-                roomName={circle.id === "global" ? "circles-global-2f5077c8-dd4b-11ed-b5ea-0242ac120002" : `circle-${circle.id}`}
+                configOverwrite = {{
+                    startWithAudioMuted: true,
+                    disableModeratorIndicator: true,
+                    startScreenSharing: true,
+                    enableEmailInStats: false
+                }}
+                interfaceConfigOverwrite = {{
+                    DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                    SHOW_CHROME_EXTENSION_BANNER: false,
+                    DISPLAY_WELCOME_PAGE_CONTENT: false,
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_BRAND_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen'
+                        , 'recording',
+                         'sharedvideo', 'settings', 'raisehand',
+                        'filmstrip', 'invite', 'stats', 'shortcuts',
+                        'tileview'
+                    ],
+                }}
+                userInfo = {{
+                    displayName:"TODO:load me from account"
+                }}
+                roomName={circle.id === "global" ? "circles-global-2f5077c8-dd4b-11ed-b5ea-0242ac120002" : `${circle.id}`}
                 getIFrameRef={(node) => {
                     node.style.height = "100%";
                     node.style.width = "100%";

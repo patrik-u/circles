@@ -35,7 +35,7 @@ import { RiLinksLine, RiShareLine } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { QRCodeCanvas } from "qrcode.react";
 import { GrGallery } from "react-icons/gr";
-import { FaMapMarkedAlt } from "react-icons/fa";
+import { FaMapMarkedAlt, FaVideo} from "react-icons/fa";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circlesAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
@@ -661,6 +661,19 @@ export const DisplayModeButtons = ({ ...props }) => {
                 onClick={() => setDisplayMode(displayModes.map)}
             >
                 <Icon width={iconSize} height={iconSize} color="black" as={FaMapMarkedAlt} cursor="pointer" />
+            </Flex>
+            <Flex
+                backgroundColor="#f4f4f4dd"
+                _hover={{ backgroundColor: buttonHighlight }}
+                width={iconCircleSize}
+                height={iconCircleSize}
+                borderRadius="50%"
+                cursor="pointer"
+                alignItems="center"
+                justifyContent="center"
+                onClick={() => setDisplayMode(displayModes.video)}
+            >
+                <Icon width={iconSize} height={iconSize} color="black" as={FaVideo} cursor="pointer" />
             </Flex>
             <Flex
                 backgroundColor="#f4f4f4dd"

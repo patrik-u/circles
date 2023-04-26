@@ -265,6 +265,7 @@ export const Circle = ({ isGlobal }) => {
                     {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />}
                     {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
                     {displayMode === displayModes.holon && <CircleHolon width={windowWidth} height={coverHeight} />}
+                    {displayMode === displayModes.video && <CircleVideo width={windowWidth} height={coverHeight} />}
                     <DisplayModeButtons />
                 </Box>
 
