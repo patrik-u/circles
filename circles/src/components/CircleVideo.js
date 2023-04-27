@@ -52,22 +52,57 @@ export const CircleVideo = ({ width, height }) => {
     const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
+    const [roomName, setRoomName] = useState("");
+    const [hasJoined, setHasJoined] = useState(false);
 
     // top bar + cover image + header
     const getVideoHeight = () => {
         return isMobile ? height - (40 + 250 + 123) : height;
     };
 
-    if (!circle) return null;
+    useEffect(() => {
+        if (!hasJoined && circle?.id) {
+            setRoomName(circle.id === "global" ? "Global | 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`);
+        }
+    }, [circle?.id, circle?.name, hasJoined]);
+
+    const handleOnApiReady = (externalApi) => {
+        // here you can attach custom event listeners to the Jitsi Meet External API
+        log("On api ready!", 1, true);
+
+        // listen for the participantJoined event
+        externalApi.addListener("videoConferenceJoined", (event) => {
+            log("On joined!", 1, true);
+            setHasJoined(true);
+        });
+
+        // listen for the participantLeft event
+        externalApi.addListener("videoConferenceLeft", (event) => {
+            log("On leave!", 1, true);
+            setHasJoined(false);
+        });
+
+        // vlean up event listeners when component is unmounted
+        return () => {
+            externalApi.removeListener("videoConferenceJoined");
+            externalApi.removeListener("videoConferenceLeft");
+        };
+    };
+
+    if (!circle || !roomName) return null;
 
     return (
         <Flex width={`${windowWidth}`} height={`${getVideoHeight()}px`}>
             <JitsiMeeting
+                key={roomName}
                 configOverwrite={{
                     startWithAudioMuted: true,
                     disableModeratorIndicator: true,
                     startScreenSharing: true,
                     enableEmailInStats: false,
+                    logging: {
+                        defaultLogLevel: "error",
+                    },
                 }}
                 interfaceConfigOverwrite={{
                     DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
@@ -92,16 +127,18 @@ export const CircleVideo = ({ width, height }) => {
                         "shortcuts",
                         "tileview",
                         "hangup",
+                        "participants-pane",
                     ],
                 }}
                 userInfo={{
                     displayName: user?.name,
                 }}
-                roomName={circle.id === "global" ? "circles-global-2f5077c8-dd4b-11ed-b5ea-0242ac120002" : `${circle.id}`}
+                roomName={roomName}
                 getIFrameRef={(node) => {
                     node.style.height = "100%";
                     node.style.width = "100%";
                 }}
+                onApiReady={handleOnApiReady}
             />
         </Flex>
     );
