@@ -7,11 +7,31 @@ import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Hel
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
 import { defaultCoverHeight } from "components/Constants";
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton, CircleProfilePicture } from "components/CircleElements";
+import {
+    CircleHeader,
+    CircleCover,
+    DisplayModeButtons,
+    CircleRightPanel,
+    ConnectButton,
+    CirclePicture,
+    FloatingAddButton,
+    CircleProfilePicture,
+} from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import HorizontalNavigator from "components/HorizontalNavigator";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, homeExpandedAtom, signInStatusAtom, circleAtom, circlesAtom, circleConnectionsAtom, searchResultsShownAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    homeExpandedAtom,
+    signInStatusAtom,
+    circleAtom,
+    circlesAtom,
+    circleConnectionsAtom,
+    searchResultsShownAtom,
+} from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
 import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
@@ -31,6 +51,7 @@ import CircleSettings from "components/settings/CircleSettings";
 import CircleAdmin from "components/CircleAdmin";
 import CircleCreateNew from "components/settings/CircleCreateNew";
 import CircleVideo from "components/CircleVideo";
+import WidgetController from "components/WidgetController";
 //#endregion
 
 // const CircleHome = lazy(() => import("components/CircleHome"));
@@ -246,33 +267,39 @@ export const Circle = ({ isGlobal }) => {
     const circlePictureSize = isMobile ? 120 : 160;
 
     const debugBg = false;
-    const coverHeight = isMobile ? defaultCoverHeight.mobile : defaultCoverHeight.default;
+    const coverHeight = windowHeight;
 
     return (
         <>
             {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
             <Flex flexDirection="column">
-                {/* ref={circleRef} */}
-                {/* <animated.div ref={expandableBoxRef} id="expandableBox" style={{ height: springProps.height, overflow: "hidden" }}>
-                    <Home />
-                </animated.div> */}
-
-                {/* <Box ref={expandableBoxRef} id="expandableBox" backgroundColor="blue" height="0px" width="100%"></Box> */}
-
                 {/* Cover image */}
                 {/* <Box width="100%" height="90px" backgroundColor="blue" /> */}
-                <Box width="100%" height={`${coverHeight}px`} position="relative">
-                    {displayMode === displayModes.default && <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />}
+                <Box width="100%" height={coverHeight + "px"} position="relative">
+                    {/* {displayMode === displayModes.default && (
+                        <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />
+                    )} */}
                     {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
-                    {displayMode === displayModes.holon && <CircleHolon width={windowWidth} height={coverHeight} />}
-                    {displayMode === displayModes.video && <CircleVideo width={windowWidth} height={coverHeight} />}
-                    <DisplayModeButtons />
+                    {/* {displayMode === displayModes.holon && <CircleHolon width={windowWidth} height={coverHeight} />} */}
+                    {/* {displayMode === displayModes.video && <CircleVideo width={windowWidth} height={coverHeight} />} */}
+                    {/* <DisplayModeButtons /> */}
                 </Box>
 
+                <WidgetController />
+
                 {/* Main Content */}
-                {displayMode !== displayModes.map_only && (
+                {false && displayMode !== displayModes.map_only && (
                     <>
-                        <Flex width="100%" flexDirection={isMobile ? "column" : "row"} flexWrap={isMobile ? "nowrap" : "wrap"} justifyContent="center" zIndex="2" backgroundColor="white">
+                        <Flex
+                            width="100%"
+                            height="100%"
+                            flexDirection={isMobile ? "column" : "row"}
+                            flexWrap={isMobile ? "nowrap" : "wrap"}
+                            justifyContent="center"
+                            zIndex="2"
+                            backgroundColor="white"
+                            position="absolute"
+                        >
                             <Box
                                 flex={isMobile ? "initial" : "2"}
                                 order={isMobile ? "0" : "2"}
@@ -290,7 +317,7 @@ export const Circle = ({ isGlobal }) => {
                                         <ConnectButton circle={circle} inHeader={true} />
                                     </Flex>
                                 )}
-                                {isMobile && <HorizontalNavigator />}
+                                {/* {isMobile && <HorizontalNavigator />} */}
 
                                 {/* <Holon /> */}
 
@@ -311,7 +338,7 @@ export const Circle = ({ isGlobal }) => {
                                 </Routes>
                             </Box>
                             {/* Left panel */}
-                            {!isMobile && (
+                            {/* {!isMobile && (
                                 <Box
                                     flex={isMobile ? "initial" : "1"}
                                     order={isMobile ? "0" : "1"}
@@ -321,9 +348,9 @@ export const Circle = ({ isGlobal }) => {
                                 >
                                     <LeftMenu marginRight="40px" marginLeft="10px" paddingTop="140px" paddingBottom="60px" />
                                 </Box>
-                            )}
+                            )} */}
                             {/* Right panel */}
-                            <Routes>
+                            {/* <Routes>
                                 <Route path="/" element={<CircleRightPanel section="home" />} />
                                 <Route path="/posts" element={<CircleRightPanel section="circles" type="post" />} />
                                 <Route path="/chat" element={<CircleRightPanel section="chat" />} />
@@ -332,7 +359,7 @@ export const Circle = ({ isGlobal }) => {
                                 <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
                                 <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
                                 <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
-                            </Routes>
+                            </Routes> */}
                         </Flex>
                         <FloatingAddButton />
                     </>

@@ -37,6 +37,9 @@ const App = () => {
         log("App2.useEffect 1", -1);
         window.addEventListener("resize", onWindowResize);
 
+        // use dark theme by default
+        document.documentElement.classList.add("dark");
+
         return () => {
             window.removeEventListener("resize", onWindowResize);
         };

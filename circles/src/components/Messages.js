@@ -47,8 +47,24 @@ export const MessageNotification = ({ notification, onClick }) => {
                     <CirclePicture circle={notification.circle} size={50} disableClick={true} />
 
                     {notification.unread_messages > 0 && (
-                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
-                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
+                        <Box
+                            backgroundColor="#ff6499"
+                            borderRadius="20px"
+                            position="absolute"
+                            right="-5px"
+                            top={{ base: "-4px", md: "-5px" }}
+                            cursor="pointer"
+                            pointerEvents="none"
+                            minWidth="17px"
+                        >
+                            <Text
+                                fontWeight="500"
+                                color="white"
+                                fontSize={{ base: "12px", md: "16px" }}
+                                lineHeight={{ base: "18px", md: "20px" }}
+                                marginLeft="4px"
+                                marginRight="4px"
+                            >
                                 {notification.unread_messages}
                             </Text>
                         </Box>
@@ -79,7 +95,7 @@ const Messages = () => {
     const navigate = useNavigateNoUpdates();
     const [messages, setMessages] = useState([]);
     const { isOpen: messagesIsOpen, onOpen: messagesOnOpen, onClose: messagesOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 30;
+    const iconSize = isMobile ? 24 : 24;
     const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
 
@@ -151,19 +167,36 @@ const Messages = () => {
                         position="relative"
                         width={iconSize + 8 + "px"}
                         height={iconSize + 8 + "px"}
-                        backgroundColor="#f4f4f4dd"
-                        _hover={{ backgroundColor: buttonHighlight }}
+                        // _hover={{ backgroundColor: buttonHighlight }}
+                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                        _active={{ transform: "scale(0.98)" }}
                         borderRadius="50%"
                         justifyContent="center"
                         alignItems="center"
                         onClick={openMessages}
                         cursor="pointer"
                     >
-                        <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={AiOutlineMessage} cursor="pointer" />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={AiOutlineMessage} cursor="pointer" />
                     </Flex>
                     {hasUnreadMessages(messages) && (
-                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
-                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
+                        <Box
+                            backgroundColor="#ff6499"
+                            borderRadius="20px"
+                            position="absolute"
+                            right="-5px"
+                            top={{ base: "-4px", md: "-5px" }}
+                            cursor="pointer"
+                            pointerEvents="none"
+                            minWidth="17px"
+                        >
+                            <Text
+                                fontWeight="500"
+                                color="white"
+                                fontSize={{ base: "12px", md: "16px" }}
+                                lineHeight={{ base: "18px", md: "20px" }}
+                                marginLeft="4px"
+                                marginRight="4px"
+                            >
                                 {unreadMessagesCount(messages)}
                             </Text>
                         </Box>

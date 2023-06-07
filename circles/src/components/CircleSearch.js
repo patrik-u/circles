@@ -76,7 +76,13 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
 
     return (
         <InputGroup {...props}>
-            <InputLeftElement color="#333" pointerEvents="none" children={<HiOutlineSearch size={isMobile ? 20 : 28} />} height={isSmall ? "30px" : "38px"} marginLeft={isSmall ? "12px" : "20px"} />
+            <InputLeftElement
+                color="#333"
+                pointerEvents="none"
+                children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
+                height={isSmall ? "30px" : "38px"}
+                marginLeft={isSmall ? "12px" : "20px"}
+            />
             <Input
                 paddingLeft={isSmall ? "35px" : "65px"}
                 borderRadius="50px"
@@ -142,7 +148,7 @@ export const MobileSearchBox = (props) => {
                 <Icon
                     width={iconSize}
                     height={iconSize}
-                    color={"#333"}
+                    color={"white"}
                     _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
                     _active={{ transform: "scale(0.98)" }}
                     as={HiOutlineSearch}
@@ -153,7 +159,15 @@ export const MobileSearchBox = (props) => {
             {searchIsOpen && (
                 <Box>
                     <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
-                        <CircleSearchBox size="sm" hidePlaceholder={true} popover={true} maxWidth="450px" setSearchIsOpen={setSearchIsOpen} onHitClick={onHitClick} autofocus={true} />
+                        <CircleSearchBox
+                            size="sm"
+                            hidePlaceholder={true}
+                            popover={true}
+                            maxWidth="450px"
+                            setSearchIsOpen={setSearchIsOpen}
+                            onHitClick={onHitClick}
+                            autofocus={true}
+                        />
                     </Box>
                 </Box>
             )}
@@ -161,7 +175,18 @@ export const MobileSearchBox = (props) => {
     );
 };
 
-export const CircleSearchBox = ({ children, size = "md", popover, hidePlaceholder, searchActive, onHitClick, setSearchActive, autofocus = false, fallback = null, ...props }) => {
+export const CircleSearchBox = ({
+    children,
+    size = "md",
+    popover,
+    hidePlaceholder,
+    searchActive,
+    onHitClick,
+    setSearchActive,
+    autofocus = false,
+    fallback = null,
+    ...props
+}) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [query, setQuery] = useState("");
     const hitClick = () => {

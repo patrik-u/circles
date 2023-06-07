@@ -28,16 +28,37 @@ import {
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
 import i18n from "i18n/Localization";
-import { getImageKitUrl, isConnectedOrPending, isConnected, hasUpdates, singleLineEllipsisStyle, twoLineEllipsisStyle, getCircleTypes, toastInfo, log, getMetaImage } from "components/Helpers";
+import {
+    getImageKitUrl,
+    isConnectedOrPending,
+    isConnected,
+    hasUpdates,
+    singleLineEllipsisStyle,
+    twoLineEllipsisStyle,
+    getCircleTypes,
+    toastInfo,
+    log,
+    getMetaImage,
+} from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine, RiShareLine } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { QRCodeCanvas } from "qrcode.react";
 import { GrGallery } from "react-icons/gr";
-import { FaMapMarkedAlt, FaVideo} from "react-icons/fa";
+import { FaMapMarkedAlt, FaVideo } from "react-icons/fa";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, displayModeAtom, circleAtom, circlesAtom, circleConnectionsAtom, connectPopupAtom, isConnectingAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    displayModeAtom,
+    circleAtom,
+    circlesAtom,
+    circleConnectionsAtom,
+    connectPopupAtom,
+    isConnectingAtom,
+} from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
 import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
@@ -48,7 +69,7 @@ import { TbChartCircles } from "react-icons/tb";
 import DonateToHolon from "components/Holons/DonateToHolon";
 //#endregion
 
-export const buttonHighlight = "#59ff81dd";
+export const buttonHighlight = "#bdbdbddd";
 
 export const CircleProfilePicture = ({ circle, size, ...props }) => {
     const borderWidth = 3;
@@ -601,7 +622,12 @@ export const CircleRightPanel = ({ section }) => {
     switch (section) {
         case "home":
             return (
-                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -613,7 +639,12 @@ export const CircleRightPanel = ({ section }) => {
         case "chat":
         case "circles":
             return isMobile ? null : (
-                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -825,12 +856,19 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                     onClick={onParentClick}
                     cursor={!disableClick ? "pointer" : "inherit"}
                     fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                    {...props}
                 />
             )}
 
             {hasUpdates(userData, circle, "any") && (
-                <Box width={`${size / 7}px`} height={`${size / 7}px`} backgroundColor="#ff6499" borderRadius="50%" position="absolute" bottom="0px" right="0px"></Box>
+                <Box
+                    width={`${size / 7}px`}
+                    height={`${size / 7}px`}
+                    backgroundColor="#ff6499"
+                    borderRadius="50%"
+                    position="absolute"
+                    bottom="0px"
+                    right="0px"
+                ></Box>
             )}
         </Box>
     );

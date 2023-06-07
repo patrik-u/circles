@@ -401,16 +401,18 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         <Flex
             flexGrow="1"
             width="100%"
-            height={`${getChatHeight()}px`}
-            maxHeight={isMobile ? "none" : `${windowHeight - 325}px`}
+            height="100%"
             position="relative"
             left="0px"
             flexDirection={isMobile ? "column" : "row"}
             top="0px"
             borderRadius={isMobile ? "0px" : "5px"}
             overflow="hidden"
-            backgroundColor={chatBackgroundColor}
+            pointerEvents="auto"
         >
+            <Box height="5px" position="absolute" width="100%" bgGradient="linear(to-b, #000000, #00000000)" zIndex="10" />
+            <Box height="1px" backgroundColor="#000000" position="absolute" width="100%" zIndex="10" bottom="60px" />
+
             {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
@@ -428,7 +430,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                         {chatMessages?.map((item) => (
                                             <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
                                                 {item.type === "date" && (
-                                                    <Box backgroundColor="#848499" borderRadius="20px" marginTop="10px">
+                                                    <Box backgroundColor="#3c3d42" borderRadius="20px" marginTop="10px">
                                                         <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
                                                             {item.date}
                                                         </Text>
@@ -473,10 +475,12 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                     overflow="hidden"
                                                                 >
                                                                     <Box
-                                                                        borderRadius={`${item.isFirst ? "10px" : "0px"} 10px 10px ${
-                                                                            item.isLast ? "10px" : "0px"
+                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
+                                                                            item.isLast ? "10px" : "2px"
                                                                         }`}
-                                                                        backgroundColor={!item.isSelf ? otherMessageBg : selfMessageBg}
+                                                                        bgGradient={
+                                                                            item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"
+                                                                        }
                                                                         color={item.user.id !== user?.id ? "black" : "black"}
                                                                         marginRight="auto"
                                                                         overflow="hidden"
@@ -488,15 +492,13 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                                     align="left"
                                                                                     spacing="0px"
                                                                                     flexGrow="1"
-                                                                                    borderLeft="3px solid #f15bee"
+                                                                                    borderLeft="3px solid #7179a9"
                                                                                     paddingLeft="5px"
                                                                                 >
                                                                                     <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                                                         {item.reply_to.user.name}
                                                                                     </Text>
-                                                                                    <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
-                                                                                        {item.reply_to.message}
-                                                                                    </Text>
+                                                                                    <Text isTruncated>{item.reply_to.message}</Text>
                                                                                 </VStack>
                                                                             </Box>
                                                                         )}
@@ -504,10 +506,11 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                         <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
                                                                             {!item.is_ai_prompt && (
                                                                                 <Box
-                                                                                    className="circle-list-title"
-                                                                                    paddingRight="10px"
+                                                                                    // className="circle-list-title"
+                                                                                    // paddingRight="10px"
                                                                                     lineHeight="20px"
                                                                                     fontSize="14px"
+                                                                                    maxWidth="290px"
                                                                                 >
                                                                                     <div
                                                                                         className="embedChatHtmlContent"
@@ -525,7 +528,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                                     </Text>
 
                                                                                     {item.openai_response?.choices?.[0]?.text && (
-                                                                                        <Box fontSize="14px" borderLeft="3px solid #f15bee" paddingLeft="5px">
+                                                                                        <Box fontSize="14px" borderLeft="3px solid #7179a9" paddingLeft="5px">
                                                                                             <div
                                                                                                 className="embedChatHtmlContent"
                                                                                                 dangerouslySetInnerHTML={{
@@ -700,12 +703,11 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 align="flex-end"
                                 boxSizing="border-box"
                                 height="60px"
-                                paddingTop="10px"
-                                paddingLeft="10px"
+                                paddingTop="15px"
+                                paddingLeft="5px"
                                 paddingRight="10px"
                                 marginTop="auto"
                                 position="relative"
-                                backgroundColor="#ffffffcc"
                             >
                                 <Textarea
                                     ref={textAreaRef}
@@ -722,12 +724,13 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                     placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}
                                     onBlur={onMessageBlur}
                                     disabled={user?.id ? false : true}
+                                    backgroundColor="white"
                                 />
                                 <Popover trigger="click" gutter="0" enabled={false}>
                                     {user && (
                                         <PopoverTrigger>
                                             <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
-                                                <HiOutlineEmojiHappy size="30px" color={user ? "#7880f8" : "#e6e6e6"} />
+                                                <HiOutlineEmojiHappy size="30px" color={user ? "#ffffff" : "#e6e6e6"} />
                                             </Box>
                                         </PopoverTrigger>
                                     )}

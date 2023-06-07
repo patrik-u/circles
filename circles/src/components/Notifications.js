@@ -260,7 +260,8 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
                         return (
                             <>
                                 <Text className="circle-list-title" lineHeight="20px" fontSize="16px" align="left">
-                                    <strong>{source.name}</strong> {i18n.t(`has invited`)} <strong>{target.name}</strong> {i18n.t("to [do]")} {i18n.t(`connect [${target.type}]`)}
+                                    <strong>{source.name}</strong> {i18n.t(`has invited`)} <strong>{target.name}</strong> {i18n.t("to [do]")}{" "}
+                                    {i18n.t(`connect [${target.type}]`)}
                                 </Text>
                                 <ApproveDenyButtons />
                             </>
@@ -333,10 +334,20 @@ export const ConnectionNotification = ({ date, onClick, connectionId, connection
             >
                 <Box position="relative" width="64px" height="70px" minWidth="64px" minHeight="70px">
                     {source.picture && (
-                        <Image className="notification-picture1" src={getImageKitUrl(source.picture, 38, 38)} fallbackSrc={getImageKitUrl(getDefaultCirclePicture(source.type), 38, 38)} alt="Logo" />
+                        <Image
+                            className="notification-picture1"
+                            src={getImageKitUrl(source.picture, 38, 38)}
+                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(source.type), 38, 38)}
+                            alt="Logo"
+                        />
                     )}
                     {target.picture && (
-                        <Image className="notification-picture2" src={getImageKitUrl(target.picture, 38, 38)} fallbackSrc={getImageKitUrl(getDefaultCirclePicture(target.type), 38, 38)} alt="Logo" />
+                        <Image
+                            className="notification-picture2"
+                            src={getImageKitUrl(target.picture, 38, 38)}
+                            fallbackSrc={getImageKitUrl(getDefaultCirclePicture(target.type), 38, 38)}
+                            alt="Logo"
+                        />
                     )}
                     <Image as={IoPersonAdd} width="16px" height="16px" position="absolute" color="#5bcf7f" top="13px" left="42px" />
                 </Box>
@@ -358,7 +369,7 @@ const Notifications = () => {
     const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 30;
+    const iconSize = isMobile ? 24 : 24;
     const iconSizePx = iconSize + "px";
 
     const notificationsBoxRef = useRef(null);
@@ -442,19 +453,35 @@ const Notifications = () => {
                         position="relative"
                         width={iconSize + 8 + "px"}
                         height={iconSize + 8 + "px"}
-                        backgroundColor="#f4f4f4dd"
-                        _hover={{ backgroundColor: buttonHighlight }}
+                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                        _active={{ transform: "scale(0.98)" }}
                         borderRadius="50%"
                         justifyContent="center"
                         alignItems="center"
                         onClick={openNotifications}
                         cursor="pointer"
                     >
-                        <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={FaRegBell} cursor="pointer" />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={FaRegBell} cursor="pointer" />
                     </Flex>
                     {hasUnreadNotifications(notifications) && (
-                        <Box backgroundColor="#ff6499" borderRadius="20px" position="absolute" right="-5px" top={{ base: "-4px", md: "-5px" }} cursor="pointer" pointerEvents="none" minWidth="17px">
-                            <Text fontWeight="500" color="white" fontSize={{ base: "12px", md: "16px" }} lineHeight={{ base: "18px", md: "20px" }} marginLeft="4px" marginRight="4px">
+                        <Box
+                            backgroundColor="#ff6499"
+                            borderRadius="20px"
+                            position="absolute"
+                            right="-5px"
+                            top={{ base: "-4px", md: "-5px" }}
+                            cursor="pointer"
+                            pointerEvents="none"
+                            minWidth="17px"
+                        >
+                            <Text
+                                fontWeight="500"
+                                color="white"
+                                fontSize={{ base: "12px", md: "16px" }}
+                                lineHeight={{ base: "18px", md: "20px" }}
+                                marginLeft="4px"
+                                marginRight="4px"
+                            >
                                 {unreadNotificationsCount(notifications)}
                             </Text>
                         </Box>

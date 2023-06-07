@@ -3,7 +3,15 @@ import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } f
 import { Flex } from "@chakra-ui/react";
 import { getLatlng, log } from "components/Helpers";
 import { useAtom } from "jotai";
-import { isMobileAtom, circleAtom, locationPickerActiveAtom, locationPickerPositionAtom, focusOnMapItemAtom, filteredCirclesAtom, mapStyleAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    circleAtom,
+    locationPickerActiveAtom,
+    locationPickerPositionAtom,
+    focusOnMapItemAtom,
+    filteredCirclesAtom,
+    mapStyleAtom,
+} from "components/Atoms";
 import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
 import { CircleMapEdges, CircleMarker, CirclesMapMarkers, LocationPickerMarker, ConnectionsEdges } from "components/MapMarkers";
@@ -24,7 +32,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         height: "100%",
         // longitude: 10.4035224563641,
         // latitude: 11.393780175539534,
-        zoom: 1.2,
+        zoom: 1.8,
         bearing: 0,
     };
     const [, setIsMapInitialized] = useState(false);
@@ -38,12 +46,12 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
 
     //const { current: mapbox } = useMap();
     const fog = {
-        color: "rgb(186, 210, 235)", // Lower atmosphere
+        color: "rgb(117, 164, 214)", // Lower atmosphere
         "high-color": "rgb(36, 92, 223)", // Upper atmosphere
         "horizon-blend": 0.02, // Atmosphere thickness (default 0.2 at low zooms)
         //"space-color": "rgba(0, 0, 0, 0)",
         "space-color": mapStyle !== "street" ? "rgb(6, 9, 14)" : "rgb(242, 247, 255)", // Background color
-        "star-intensity": mapStyle !== "street" ? 0.2 : 0.0, // Background star brightness (default 0.35 at low zoooms )
+        "star-intensity": mapStyle !== "street" ? 0.1 : 0.0, // Background star brightness (default 0.35 at low zoooms )
     };
     const geolocateControlStyle = {
         left: 10,
@@ -95,7 +103,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         switch (mapStyle) {
             default:
             case "satellite":
-                return "mapbox://styles/mapbox/satellite-streets-v11";
+                return "mapbox://styles/timaolsson/clfe29gyd000o01o3ray8f97m";
+            //return "mapbox://styles/mapbox/satellite-streets-v11";
             case "streets":
                 return "mapbox://styles/exmakina-admin/ckur9npyof1t318rzrisvj2n2";
             case "satellite-no-labels":
@@ -120,7 +129,13 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 projection="globe"
                 fog={fog}
             >
-                <GeolocateControl style={geolocateControlStyle} position={isMobile ? "bottom-left" : "bottom-left"} positionOptions={{ enableHighAccuracy: true }} trackUserLocation={true} auto />
+                <GeolocateControl
+                    style={geolocateControlStyle}
+                    position={isMobile ? "bottom-right" : "bottom-right"}
+                    positionOptions={{ enableHighAccuracy: true }}
+                    trackUserLocation={true}
+                    auto
+                />
 
                 {/* <NavigationControl /> */}
 
