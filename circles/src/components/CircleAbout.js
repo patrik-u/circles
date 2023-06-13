@@ -9,7 +9,7 @@ import { CircleCover, CirclePicture, CircleHeader } from "components/CircleEleme
 import { Scrollbars } from "react-custom-scrollbars-2";
 //#endregion
 
-const CircleAbout = () => {
+const CircleAbout = ({ onClose }) => {
     log("CircleHome.render", -1);
 
     const [isMobile] = useAtom(isMobileAtom);
@@ -99,7 +99,7 @@ const CircleAbout = () => {
                     overflow="hidden"
                     height="100%"
                 >
-                    <CircleHeader circle={circle} />
+                    <CircleHeader circle={circle} onClose={onClose} />
                     <Scrollbars autoHide>
                         <CircleCover type={circle.type} cover={circle.cover} metaData={circle?.meta_data} coverHeight={184} borderRadius="7px" />
 

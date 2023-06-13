@@ -1,7 +1,7 @@
 //#region imports
 import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes } from "components/Helpers";
+import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes } from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle, previewCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
@@ -145,6 +145,10 @@ export const CircleMapMarker = ({ circle }) => {
         }
     };
 
+    const isOnline = () => {
+        return isWithinMinutes(circle.last_online, 5);
+    };
+
     return (
         circle?.base && (
             <Marker
@@ -155,7 +159,13 @@ export const CircleMapMarker = ({ circle }) => {
                 className="circle-marker"
                 onClick={() => previewCircle(circle, setToggleAbout)}
             >
-                <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" />
+                <Image
+                    src={getImageKitUrl(getMarkerBackground(), 48, 48)}
+                    width="48px"
+                    height="48px"
+                    filter={isOnline() ? "" : "grayscale(1)"}
+                    opacity={isOnline() ? "1" : "0.5"}
+                />
                 <Box
                     top="3px"
                     left="9px"
@@ -167,7 +177,7 @@ export const CircleMapMarker = ({ circle }) => {
                     backgroundColor="white"
                     position="absolute"
                 >
-                    <CirclePicture circle={circle} size={30} disableClick={true} />
+                    <CirclePicture circle={circle} size={30} disableClick={true} isActive={isOnline()} />
                 </Box>
 
                 <Popover trigger="hover" gutter="0" isLazy>

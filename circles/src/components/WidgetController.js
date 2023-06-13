@@ -165,6 +165,10 @@ const WidgetController = () => {
         return `flex flex-col ${fixedSize ? "min-w-96 w-96 flex-shrink-0" : "flex-grow"} order-${index + 1}`;
     };
 
+    const onAboutClose = () => {
+        toggleWidget("about", false);
+    };
+
     // useEffect(() => {
     //     console.log("previewing circle", previewCircleId);
     //     if (!previewCircleId) {
@@ -209,7 +213,7 @@ const WidgetController = () => {
             <Box className="flex flex-grow" marginTop="90px" zIndex="10">
                 {toggledWidgets.includes("about") && (
                     <div class={getWidgetClass("about")}>
-                        <CircleAbout />
+                        <CircleAbout onClose={onAboutClose} />
                     </div>
                 )}
                 {toggledWidgets.includes("activity") && (

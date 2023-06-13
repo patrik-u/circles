@@ -19,6 +19,8 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     const view = "compact";
 
     useEffect(() => {
+        if (!userData?.circle_settings) return;
+
         let newFavoriteCircles = [];
         for (var circleId in userData.circle_settings) {
             let favorite = userData.circle_settings[circleId].favorite;

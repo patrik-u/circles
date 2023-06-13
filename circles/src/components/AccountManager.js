@@ -27,7 +27,7 @@ export const AccountManager = () => {
 
     const [uid, setUid] = useAtom(uidAtom);
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
-    const [, setUser] = useAtom(userAtom);
+    const [user, setUser] = useAtom(userAtom);
     const [, setUserData] = useAtom(userDataAtom);
     const [, setUserConnections] = useAtom(userConnectionsAtom);
     const [, setNewUserPopup] = useAtom(newUserPopupAtom);
@@ -36,6 +36,7 @@ export const AccountManager = () => {
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";
     const [googleOneTapDone, setGoogleOneTapDone] = useState(false);
+    const [lastOnlineUpdate, setLastOnlineUpdate] = useState(Date.now());
 
     // //#region useEffects
     //initialize firebase sign in
@@ -167,7 +168,12 @@ export const AccountManager = () => {
                 let alwaysShowGuide = config.alwaysShowGuide;
 
                 // show new profile guide
-                if (!data.userData.agreed_to_tnc || !data.userData.completed_guide || (!data.user.base && !data.userData.skipped_setting_location) || alwaysShowGuide) {
+                if (
+                    !data.userData.agreed_to_tnc ||
+                    !data.userData.completed_guide ||
+                    (!data.user.base && !data.userData.skipped_setting_location) ||
+                    alwaysShowGuide
+                ) {
                     setNewUserPopup(true);
                 }
 
@@ -235,6 +241,29 @@ export const AccountManager = () => {
             };
         }
     }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
+
+    useEffect(() => {
+        if (!signInStatus.signedIn && user?.id) return;
+
+        try {
+            axios.put(`/circles/${user.id}`, {
+                circleData: { lastOnline: new Date() },
+            });
+        } catch (err) {
+            console.error(err);
+        }
+
+        const intervalId = setInterval(async () => {
+            try {
+                axios.put(`/circles/${user.id}`, {
+                    circleData: { lastOnline: new Date() },
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }, 60000);
+        return () => clearInterval(intervalId);
+    }, [signInStatus?.signedIn, user?.id]);
 
     // get user connections
     useEffect(() => {

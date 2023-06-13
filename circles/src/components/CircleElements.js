@@ -68,6 +68,7 @@ import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { TbChartCircles } from "react-icons/tb";
 import DonateToHolon from "components/Holons/DonateToHolon";
+import { MdOutlineClose } from "react-icons/md";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -760,7 +761,17 @@ export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nu
     );
 };
 
-export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disableClick, parentCircleSizeRatio = 3, parentCircleOffset = 0, ...props }) => {
+export const CirclePicture = ({
+    circle,
+    size,
+    hasPopover,
+    popoverPlacement,
+    disableClick,
+    parentCircleSizeRatio = 3,
+    parentCircleOffset = 0,
+    isActive = true,
+    ...props
+}) => {
     const navigate = useNavigateNoUpdates();
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
@@ -804,6 +815,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
         //openCircle(navigate, circle?.parent_circle);
     };
 
+    const inActiveOpacity = 0.5;
+
     return hasPopover && !isMobile ? (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
             <Popover isLazy trigger="hover" gutter="0">
@@ -819,6 +832,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                         onClick={onClick}
                         cursor={!disableClick ? "pointer" : "inherit"}
                         fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                        // filter={isActive ? "" : "grayscale(1)"}
+                        opacity={isActive ? "1" : inActiveOpacity}
                         {...props}
                     />
                 </PopoverTrigger>
@@ -845,6 +860,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                 onClick={circle ? onClick : undefined}
                 cursor={!disableClick ? "pointer" : "inherit"}
                 fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                // filter={isActive ? "" : "grayscale(1)"}
+                opacity={isActive ? "1" : inActiveOpacity}
                 {...props}
             />
 
@@ -863,6 +880,8 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
                     onClick={onParentClick}
                     cursor={!disableClick ? "pointer" : "inherit"}
                     fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                    // filter={isActive ? "" : "grayscale(1)"}
+                    opacity={isActive ? "1" : inActiveOpacity}
                 />
             )}
 
@@ -915,7 +934,7 @@ export const LargeConnectButton = ({ circle }) => {
     );
 };
 
-export const CircleHeader = ({ circle }) => {
+export const CircleHeader = ({ circle, onClose }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [userData] = useAtom(userDataAtom);
 
@@ -930,17 +949,34 @@ export const CircleHeader = ({ circle }) => {
         return "19px";
     };
 
+    const iconSize = 12;
+
     if (!circle) return null;
 
     return (
-        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "40px" : "40px"}>
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "32px" : "32px"}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex align="end" flexDirection="column" width="100%" position="relative">
-                    <HStack>
+                    <HStack marginRight="2px">
                         <FavoriteButton circle={circle} />
                         {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} />}
                         {/* <ShareButtonMenu circle={circle} /> */}
                         {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={true} fadeBackground={false} />}
+                        {/* <CloseButton onClick={onClose} /> */}
+
+                        <Flex
+                            width={iconSize + 8 + "px"}
+                            height={iconSize + 8 + "px"}
+                            _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                            _active={{ transform: "scale(0.98)" }}
+                            borderRadius="50%"
+                            justifyContent="center"
+                            alignItems="center"
+                            onClick={onClose}
+                            cursor="pointer"
+                        >
+                            <Icon width={iconSize + 8 + "px"} height={iconSize + 8 + "px"} color={"#333"} as={MdOutlineClose} cursor="pointer" />
+                        </Flex>
                     </HStack>
                 </Flex>
             </Flex>
@@ -1076,7 +1112,7 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
     const [isMobile] = useAtom(isMobileAtom);
     const [, setConnectPopup] = useAtom(connectPopupAtom);
     //const height = inHeader && !isMobile ? "40px" : "19px";
-    const height = "22px";
+    const height = "28px";
 
     const getConnectionStatus = () => {
         if (!circle?.id) return i18n.t("Connected");
@@ -1156,18 +1192,17 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
                         }}
                         position="relative"
                     >
-                        <HStack spacing={inHeader ? "8px" : "4px"} marginRight={inHeader ? "5px" : "0px"} marginLeft={inHeader ? "10px" : "0px"}>
-                            <Text fontSize={inHeader ? "14px" : "11px"} fontWeight="700">
+                        <HStack spacing={inHeader ? "8px" : "4px"}>
+                            <Text fontSize={inHeader ? "13px" : "11px"} fontWeight="700">
                                 {getConnectionStatus()}
                             </Text>
-                            <RiLinksLine size={inHeader ? "18px" : "12px"} />
+                            <RiLinksLine size={inHeader ? "16px" : "12px"} />
                         </HStack>
                     </Button>
                 </Flex>
             ) : (
                 <Box>
                     <Flex
-                        width={inHeader ? "150px" : height}
                         height={height}
                         borderRadius={inHeader ? "25px" : "50%"}
                         lineHeight="0"
@@ -1193,8 +1228,12 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
                         cursor="pointer"
                     >
                         <HStack marginRight={inHeader ? "13px" : "0px"} marginLeft={inHeader ? "13px" : "0px"}>
-                            <RiLinksLine size={inHeader ? "18px" : "12px"} />
-                            {inHeader && <Text fontWeight="700">{i18n.t(`Default connect [${circle?.type}]`)}</Text>}
+                            <RiLinksLine size={inHeader ? "16px" : "12px"} />
+                            {inHeader && (
+                                <Text fontSize="14px" fontWeight="400">
+                                    {i18n.t(`Default connect [${circle?.type}]`)}
+                                </Text>
+                            )}
                         </HStack>
                     </Flex>
                 </Box>
