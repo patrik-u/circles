@@ -410,7 +410,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
             overflow="hidden"
             pointerEvents="auto"
         >
-            <Box height="5px" position="absolute" width="100%" bgGradient="linear(to-b, #000000, #00000000)" zIndex="10" />
+            {/* <Box height="5px" position="absolute" width="100%" bgGradient="linear(to-b, #000000, #00000000)" zIndex="10" /> */}
             <Box height="1px" backgroundColor="#000000" position="absolute" width="100%" zIndex="10" bottom="60px" />
 
             {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
@@ -753,9 +753,9 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 )}
                             </Box>
 
-                            {circle?.is_public && (
+                            {circle?.is_public && false && (
                                 <Box alignSelf="center" position="absolute">
-                                    <Box backgroundColor="#8580ff" borderRadius="20px" marginTop="10px">
+                                    <Box backgroundColor="#50505d" borderRadius="20px" marginTop="10px">
                                         <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
                                             {i18n.t("This is a public chat, messages can be read by all")}
                                         </Text>

@@ -1,5 +1,5 @@
 //#region imports
-import React, { forwardRef, useState, useEffect, useRef } from "react";
+import React, { forwardRef, useState, useEffect, useRef, useCallback } from "react";
 import {
     Flex,
     Box,
@@ -58,6 +58,8 @@ import {
     circleConnectionsAtom,
     connectPopupAtom,
     isConnectingAtom,
+    toggleAboutAtom,
+    previewCircleAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -66,54 +68,112 @@ import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { TbChartCircles } from "react-icons/tb";
+import { useSearchParams } from "react-router-dom";
 import CircleChat from "components/CircleChat";
 import CircleVideo from "components/CircleVideo";
+import CircleAbout from "components/CircleAbout";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
 const WidgetController = () => {
     const [isMobile] = useAtom(isMobileAtom);
+    const [toggleAbout, setToggleAbout] = useAtom(toggleAboutAtom);
+    const [circle] = useAtom(circleAtom);
+    const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
     const menuItems = ["about", "activity", "video", "calendar"];
+    const [searchParams, setSearchParams] = useSearchParams();
+    // get preview circle from search params
+    //const previewCircleId = searchParams.get("preview");
 
-    const toggleWidget = (component, toggleOn) => {
-        if (isMobile) {
-            if (toggledWidgets.includes(component)) {
-                if (toggleOn === undefined || toggleOn === false) {
-                    setToggledWidgets([]);
-                }
-            } else {
-                if (toggleOn === undefined || toggleOn === true) {
-                    setToggledWidgets([component]);
-                }
-            }
-        } else {
-            if (toggledWidgets.includes(component)) {
-                if (toggleOn === undefined || toggleOn === false) {
-                    setToggledWidgets(toggledWidgets.filter((item) => item !== component));
-                }
-            } else {
-                if (toggleOn === undefined || toggleOn === true) {
-                    if (toggledWidgets.length < 3) {
-                        setToggledWidgets([...toggledWidgets, component]);
+    const toggleWidget = useCallback(
+        (component, toggleOn, toggleAboutCircle) => {
+            let newToggledWidgets = [...toggledWidgets];
+            if (isMobile) {
+                if (toggledWidgets.includes(component)) {
+                    if (toggleOn === undefined || toggleOn === false) {
+                        newToggledWidgets = [];
+                    }
+                } else {
+                    if (toggleOn === undefined || toggleOn === true) {
+                        newToggledWidgets = [component];
                     }
                 }
+            } else {
+                if (toggledWidgets.includes(component)) {
+                    if (toggleOn === undefined || toggleOn === false) {
+                        newToggledWidgets = toggledWidgets.filter((item) => item !== component);
+                    }
+                } else {
+                    if (toggleOn === undefined || toggleOn === true) {
+                        if (toggledWidgets.length < 3) {
+                            newToggledWidgets = [...toggledWidgets, component];
+                        }
+                    }
+                }
+                //setToggleResize(true);
             }
-            //setToggleResize(true);
+
+            if (!toggleAboutCircle && component === "about") {
+                setPreviewCircle(null);
+            }
+
+            menuItems.forEach((item) => {
+                if (newToggledWidgets.includes(item)) {
+                    searchParams.set(item, item === "about" ? toggleAboutCircle?.id ?? circle?.id : true);
+                } else {
+                    searchParams.delete(item);
+                }
+            });
+
+            setSearchParams(searchParams);
+            setToggledWidgets((x) => newToggledWidgets);
+        },
+        [isMobile, toggledWidgets, menuItems, searchParams, setSearchParams, circle?.id, setPreviewCircle]
+    );
+
+    useEffect(() => {
+        if (!toggleAbout) {
+            return;
         }
-    };
+        setPreviewCircle(toggleAbout);
+        toggleWidget("about", true, toggleAbout);
+        setToggleAbout(false);
+    }, [toggleAbout, setToggleAbout, toggleWidget, setPreviewCircle]);
 
     const getWidgetClass = (component) => {
+        // activities always on the left
+
+        // about always on the right
+        // video always on the right
+        // calendar always on the right
+
         let index = toggledWidgets.indexOf(component);
         let fixedSize = false;
         if (!isMobile) {
             fixedSize = (toggledWidgets[0] === component || toggledWidgets[2] === component) && toggledWidgets.length !== 1;
             if (component === "activity") {
                 fixedSize = true;
+                index = 0;
+            } else if (component === "about") {
+                fixedSize = true;
+                index = 2;
+            } else if (component === "video") {
+                index = 1;
             }
         }
         return `flex flex-col ${fixedSize ? "min-w-96 w-96 flex-shrink-0" : "flex-grow"} order-${index + 1}`;
     };
+
+    // useEffect(() => {
+    //     console.log("previewing circle", previewCircleId);
+    //     if (!previewCircleId) {
+    //         return;
+    //     }
+
+    //     if (toggledWidgets.includes("about")) return;
+    //     toggleWidget("about", true);
+    // }, [previewCircle, toggleWidget, toggledWidgets]);
 
     // createEffect(() => {
     //     let action = toggleWidgetAction();
@@ -129,11 +189,12 @@ const WidgetController = () => {
     // selected: #1e5785
 
     return (
-        <div class="flex flex-col h-screen w-screen z-1 absolute pointer-events-none">
-            <div class={`p-5 absolute w-screen pointer-events-auto`}>
+        <div class="flex flex-col h-screen w-full z-1 absolute pointer-events-none">
+            <div class={`p-5 absolute w-full pointer-events-auto`}>
                 <div class="flex justify-center" style={{ marginLeft: "5px", marginTop: isMobile ? "30px" : "" }}>
                     {menuItems.map((component) => (
                         <button
+                            key={component}
                             class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
                                 toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
                             }`}
@@ -146,17 +207,18 @@ const WidgetController = () => {
             </div>
 
             <Box className="flex flex-grow" marginTop="90px" zIndex="10">
-                {toggledWidgets.includes("about") && <div class={getWidgetClass("about")}></div>}
+                {toggledWidgets.includes("about") && (
+                    <div class={getWidgetClass("about")}>
+                        <CircleAbout />
+                    </div>
+                )}
                 {toggledWidgets.includes("activity") && (
                     <div class={getWidgetClass("activity")}>
                         <CircleChat />
                     </div>
                 )}
-                {toggledWidgets.includes("video") && (
-                    <div class={getWidgetClass("video")}>
-                        <CircleVideo />
-                    </div>
-                )}
+                <div class="flex flex-col flex-grow order-2">{toggledWidgets.includes("video") && <CircleVideo />}</div>
+
                 {toggledWidgets.includes("calendar") && <div class={getWidgetClass("calendar")}></div>}
             </Box>
         </div>

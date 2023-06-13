@@ -12,6 +12,8 @@ export const newUserPopupAtom = atom(null);
 export const newCirclePopupAtom = atom(null);
 export const mapStyleAtom = atom("satellite");
 export const focusOnMapItemAtom = atom(null);
+export const toggleAboutAtom = atom(null);
+export const previewCircleAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);
@@ -27,6 +29,7 @@ export const userLocationAtom = atom({ latitude: undefined, longitude: undefined
 export const requestUserConnectionsAtom = atom(false);
 export const messageTokenAtom = atom(null);
 export const circleSettingsAtom = atomWithStorage({});
+export const navigationPanelPinnedAtom = atomWithStorage(false);
 
 // circle atoms
 export const circleAtom = atom(null);

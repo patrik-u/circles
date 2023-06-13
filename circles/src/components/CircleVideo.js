@@ -92,7 +92,7 @@ export const CircleVideo = ({ width, height }) => {
     if (!circle || !roomName) return null;
 
     return (
-        <Flex width={`${windowWidth}`} height={`${getVideoHeight()}px`}>
+        <Flex width="100%" height="100%" pointerEvents="auto">
             <JitsiMeeting
                 key={roomName}
                 configOverwrite={{

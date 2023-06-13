@@ -1,6 +1,6 @@
 //#region imports
 import React, { useEffect, lazy, useRef, useState, useCallback } from "react";
-import { Flex, Box } from "@chakra-ui/react";
+import { Flex, Box, Drawer, DrawerBody, DrawerOverlay, DrawerContent, DrawerCloseButton, Button, useDisclosure } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
 import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Helpers";
@@ -31,6 +31,7 @@ import {
     circlesAtom,
     circleConnectionsAtom,
     searchResultsShownAtom,
+    navigationPanelPinnedAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
@@ -52,25 +53,33 @@ import CircleAdmin from "components/CircleAdmin";
 import CircleCreateNew from "components/settings/CircleCreateNew";
 import CircleVideo from "components/CircleVideo";
 import WidgetController from "components/WidgetController";
+import NavigationPanel from "components/NavigationPanel";
 //#endregion
 
-// const CircleHome = lazy(() => import("components/CircleHome"));
-// const CircleChat = lazy(() => import("components/CircleChat"));
-// const CircleMap = lazy(() => import("components/CircleMap"));
-// const Circles = lazy(() => import("components/Circles"));
-// const CircleSettings = lazy(() => import("components/settings/CircleSettings"));
-// const CircleAdmin = lazy(() => import("components/CircleAdmin"));
-// const CircleCreateNew = lazy(() => import("components/settings/CircleCreateNew"));
-// const CircleVideo = lazy(() => import("components/CircleVideo"));
+export const globalCircle = {
+    id: "global",
+    name: "co:do Network",
+    description: "Welcome, this is the global view of our social networking platform for change makers.",
+    content:
+        "Here, you can explore all the communities, users, events, and posts that make up our greater community.<br/><br/>On the map, you'll see pins representing different communities, each with their own unique missions and causes. You’ll also see pins representing people, events, chats and a whole lot more. Every pin is a circle with its own profile. Click on a circle to dive into its profile and connect with like-minded individuals working towards a common goal.<br/><br/>But co:do isn't just about individuals and communities. It's also about the connections between them. Our platform is designed to foster collaboration and cross-pollination between different groups and here is where you can see these connections come to life.<br/><br/>From local grassroots initiatives to global movements, co:do has it all. Whether you're looking to join a community, organize an event, or simply stay up to date on the latest developments in the world of social change, this is a good place to start. So come explore, join the movement and let’s co-create a better world together.",
+    picture: "/codo-logo.svg",
+    cover: "/splash.jpg",
+    type: "circle",
+    created: new Date(),
+    created_by: "global",
+    updated: new Date(),
+    updated_by: "global",
+    connections: [],
+    isGlobal: true,
+    is_public: true,
+};
 
 export const Circle = ({ isGlobal }) => {
     log("Circle.render", -1);
 
     const { hostId, circleId } = useParams();
-    let [searchParams] = useSearchParams();
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [homeExpanded, setHomeExpanded] = useAtom(homeExpandedAtom);
     const [circle, setCircle] = useAtom(circleAtom);
     const [displayMode] = useAtom(displayModeAtom);
     const [, setCircles] = useAtom(circlesAtom);
@@ -79,32 +88,22 @@ export const Circle = ({ isGlobal }) => {
     const [userData] = useAtom(userDataAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const navigate = useNavigateNoUpdates();
-    const [searchResultsShown] = useAtom(searchResultsShownAtom);
-    const location = useLocationNoUpdates();
-    const hashValue = location.hash.substr(1); // Remove the '#' character
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [isPinned, setIsPinned] = useAtom(navigationPanelPinnedAtom);
+
+    const handlePinClick = () => {
+        setIsPinned(!isPinned);
+    };
 
     const onLogoClick = () => {
-        navigate(routes.circle({ id: "global", host: "circles" }).home);
+        // open navigation menu
+        onOpen();
+        log("opening navigation menu");
     };
 
     useEffect(() => {
         if (isGlobal || circleId === "global") {
-            setCircle({
-                id: "global",
-                name: "co:do Network",
-                description: "Welcome, this is the global view of our social networking platform for change makers.",
-                content:
-                    "Here, you can explore all the communities, users, events, and posts that make up our greater community.<br/><br/>On the map, you'll see pins representing different communities, each with their own unique missions and causes. You’ll also see pins representing people, events, chats and a whole lot more. Every pin is a circle with its own profile. Click on a circle to dive into its profile and connect with like-minded individuals working towards a common goal.<br/><br/>But co:do isn't just about individuals and communities. It's also about the connections between them. Our platform is designed to foster collaboration and cross-pollination between different groups and here is where you can see these connections come to life.<br/><br/>From local grassroots initiatives to global movements, co:do has it all. Whether you're looking to join a community, organize an event, or simply stay up to date on the latest developments in the world of social change, this is a good place to start. So come explore, join the movement and let’s co-create a better world together.",
-                picture: "/codo-logo.svg",
-                cover: "/splash.jpg",
-                type: "circle",
-                created: new Date(),
-                created_by: "global",
-                updated: new Date(),
-                updated_by: "global",
-                connections: [],
-                isGlobal: true,
-            });
+            setCircle(globalCircle);
             return;
         }
 
@@ -270,102 +269,83 @@ export const Circle = ({ isGlobal }) => {
     const coverHeight = windowHeight;
 
     return (
-        <>
-            {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
-            <Flex flexDirection="column">
-                {/* Cover image */}
-                {/* <Box width="100%" height="90px" backgroundColor="blue" /> */}
-                <Box width="100%" height={coverHeight + "px"} position="relative">
-                    {/* {displayMode === displayModes.default && (
-                        <CircleCover type={circle?.type} cover={circle?.cover} metaData={circle?.meta_data} coverHeight={coverHeight} />
-                    )} */}
-                    {(displayMode === displayModes.map || displayMode === displayModes.map_only) && <CircleMap height={coverHeight} />}
-                    {/* {displayMode === displayModes.holon && <CircleHolon width={windowWidth} height={coverHeight} />} */}
-                    {/* {displayMode === displayModes.video && <CircleVideo width={windowWidth} height={coverHeight} />} */}
-                    {/* <DisplayModeButtons /> */}
+        <Flex flexDirection="row">
+            {isPinned && !isMobile && (
+                <Box backgroundColor="blue" width="300px" height="100vh">
+                    <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} />
                 </Box>
+            )}
+            <Box flexGrow="1" position="relative">
+                {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
+                <Flex flexDirection="column" position="relative">
+                    {/* Cover image */}
+                    <Box width="100%" height={coverHeight + "px"} position="relative">
+                        <CircleMap height={coverHeight} />
+                    </Box>
 
-                <WidgetController />
+                    <WidgetController />
 
-                {/* Main Content */}
-                {false && displayMode !== displayModes.map_only && (
-                    <>
-                        <Flex
-                            width="100%"
-                            height="100%"
-                            flexDirection={isMobile ? "column" : "row"}
-                            flexWrap={isMobile ? "nowrap" : "wrap"}
-                            justifyContent="center"
-                            zIndex="2"
-                            backgroundColor="white"
-                            position="absolute"
-                        >
-                            <Box
-                                flex={isMobile ? "initial" : "2"}
-                                order={isMobile ? "0" : "2"}
-                                maxWidth={isMobile ? "none" : "800px"}
-                                backgroundColor={debugBg ? "lightgreen" : "transparent"}
-                                position="relative"
+                    {/* Main Content */}
+                    {/* {false && displayMode !== displayModes.map_only && (
+                        <>
+                            <Flex
+                                width="100%"
+                                height="100%"
+                                flexDirection={isMobile ? "column" : "row"}
+                                flexWrap={isMobile ? "nowrap" : "wrap"}
+                                justifyContent="center"
+                                zIndex="2"
+                                backgroundColor="white"
+                                position="absolute"
                             >
-                                <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
-                                {/* Header */}
-                                <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
-                                    <CircleHeader circle={circle} />
-                                </Box>
-                                {isMobile && circle?.id !== "global" && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
-                                    <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
-                                        <ConnectButton circle={circle} inHeader={true} />
-                                    </Flex>
-                                )}
-                                {/* {isMobile && <HorizontalNavigator />} */}
-
-                                {/* <Holon /> */}
-
-                                {/* Section content */}
-                                <Routes>
-                                    <Route path="/" element={<CircleHome />} />
-                                    <Route path="/posts" element={<Circles type="post" />} />
-                                    <Route path="/chat" element={<CircleChat />} />
-                                    <Route path="/video" element={<CircleVideo />} />
-                                    <Route path="/circles" element={<Circles type="circle" />} />
-                                    <Route path="/events" element={<Circles type="event" />} />
-                                    <Route path="/rooms" element={<Circles type="room" />} />
-                                    <Route path="/users" element={<Circles type="user" />} />
-                                    <Route path="/links" element={<Circles type="link" />} />
-                                    <Route path="/settings/*" element={<CircleSettings />} />
-                                    <Route path="/admin" element={<CircleAdmin />} />
-                                    <Route path="/new" element={<CircleCreateNew />} />
-                                </Routes>
-                            </Box>
-                            {/* Left panel */}
-                            {/* {!isMobile && (
                                 <Box
-                                    flex={isMobile ? "initial" : "1"}
-                                    order={isMobile ? "0" : "1"}
-                                    align="right"
-                                    backgroundColor={debugBg ? "orange" : "transparent"}
-                                    maxWidth={isMobile ? "none" : "270px"}
+                                    flex={isMobile ? "initial" : "2"}
+                                    order={isMobile ? "0" : "2"}
+                                    maxWidth={isMobile ? "none" : "800px"}
+                                    backgroundColor={debugBg ? "lightgreen" : "transparent"}
+                                    position="relative"
                                 >
-                                    <LeftMenu marginRight="40px" marginLeft="10px" paddingTop="140px" paddingBottom="60px" />
+                                    <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
+                                    <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
+                                        <CircleHeader circle={circle} />
+                                    </Box>
+                                    {isMobile && circle?.id !== "global" && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
+                                        <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
+                                            <ConnectButton circle={circle} inHeader={true} />
+                                        </Flex>
+                                    )}
+                                    <Routes>
+                                        <Route path="/" element={<CircleHome />} />
+                                        <Route path="/posts" element={<Circles type="post" />} />
+                                        <Route path="/chat" element={<CircleChat />} />
+                                        <Route path="/video" element={<CircleVideo />} />
+                                        <Route path="/circles" element={<Circles type="circle" />} />
+                                        <Route path="/events" element={<Circles type="event" />} />
+                                        <Route path="/rooms" element={<Circles type="room" />} />
+                                        <Route path="/users" element={<Circles type="user" />} />
+                                        <Route path="/links" element={<Circles type="link" />} />
+                                        <Route path="/settings/*" element={<CircleSettings />} />
+                                        <Route path="/admin" element={<CircleAdmin />} />
+                                        <Route path="/new" element={<CircleCreateNew />} />
+                                    </Routes>
                                 </Box>
-                            )} */}
-                            {/* Right panel */}
-                            {/* <Routes>
-                                <Route path="/" element={<CircleRightPanel section="home" />} />
-                                <Route path="/posts" element={<CircleRightPanel section="circles" type="post" />} />
-                                <Route path="/chat" element={<CircleRightPanel section="chat" />} />
-                                <Route path="/circles" element={<CircleRightPanel section="circles" type="circle" />} />
-                                <Route path="/events" element={<CircleRightPanel section="circles" type="event" />} />
-                                <Route path="/rooms" element={<CircleRightPanel section="circles" type="room" />} />
-                                <Route path="/users" element={<CircleRightPanel section="circles" type="user" />} />
-                                <Route path="/links" element={<CircleRightPanel section="circles" type="link" />} />
-                            </Routes> */}
-                        </Flex>
-                        <FloatingAddButton />
-                    </>
+                            </Flex>
+                            <FloatingAddButton />
+                        </>
+                    )} */}
+                </Flex>
+                {(!isPinned || isMobile) && (
+                    <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={isMobile ? "full" : "xs"} closeOnOverlayClick={!isPinned}>
+                        <DrawerOverlay />
+                        <DrawerContent padding="0">
+                            <DrawerBody padding="0">
+                                <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} onClose={onClose} />
+                            </DrawerBody>
+                        </DrawerContent>
+                    </Drawer>
                 )}
-            </Flex>
-        </>
+            </Box>
+        </Flex>
     );
 };
 

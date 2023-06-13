@@ -45,10 +45,22 @@ export const openCircle = (navigate, circle, section) => {
     navigate(section ? path[section] : path.home);
 };
 
+export const previewCircle = (circle, setToggleAbout) => {
+    if (!circle?.id) return;
+    setToggleAbout(circle);
+};
+
 export const getNavigationItems = (circle, isAdmin) => {
     let id = circle?.id;
     let navigationItems = [];
-    navigationItems.push({ route: routes.circle(circle).home, name: i18n.t("Home"), icon: AiFillHome, switchOffMap: true, matchSubPaths: false, category: "home" });
+    navigationItems.push({
+        route: routes.circle(circle).home,
+        name: i18n.t("Home"),
+        icon: AiFillHome,
+        switchOffMap: true,
+        matchSubPaths: false,
+        category: "home",
+    });
 
     navigationItems.push({
         route: routes.circle(circle).posts,
@@ -100,7 +112,14 @@ export const getNavigationItems = (circle, isAdmin) => {
             category: "links",
         });
     }
-    navigationItems.push({ route: routes.circle(circle).users, name: i18n.t("Users"), icon: HiUsers, switchOffMap: true, matchSubPaths: true, category: "users" });
+    navigationItems.push({
+        route: routes.circle(circle).users,
+        name: i18n.t("Users"),
+        icon: HiUsers,
+        switchOffMap: true,
+        matchSubPaths: true,
+        category: "users",
+    });
     navigationItems.push({
         route: routes.circle(circle).settings.home,
         name: i18n.t("Settings"),

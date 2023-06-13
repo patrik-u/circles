@@ -30,31 +30,15 @@ export const TopMenu = ({ onLogoClick }) => {
     const logoWidth = isMobile ? 30 : 48; //157;
     const logoWidthPx = `${logoWidth}px`;
 
-    const onNetworkLogoClick = () => {
-        if (onLogoClick) {
-            onLogoClick();
-        }
-    };
-
     return (
         <>
-            <Flex
-                className="fixedSize"
-                align="center"
-                flexBasis={height}
-                height={height}
-                maxHeight={height}
-                width="100%"
-                position="fixed"
-                zIndex="4"
-                pointerEvents="none"
-            >
-                <Box marginLeft="20px">
+            <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="4" pointerEvents="none">
+                <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
                     <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
-                </Box>
-                <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft="20px">
-                    {circle?.name}
-                </Text>
+                    <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft="20px">
+                        {circle?.name}
+                    </Text>
+                </Flex>
 
                 <Box flex="1" />
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">

@@ -15,7 +15,7 @@ import axios from "axios";
 import linkifyHtml from "linkify-html";
 //#endregion
 
-export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
+export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...props }) => {
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
@@ -31,28 +31,46 @@ export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
             key={item.id}
             align="left"
             role="group"
-            color="black"
-            borderBottom="1px solid #ebebeb"
+            color={isDark ? "white" : "black"}
+            borderBottom={isDark ? "1px solid #333333" : "1px solid #ebebeb"}
             overflow="hidden"
             position="relative"
             flexDirection="row"
             flexGrow="0"
             flexShrink="0"
             paddingBottom="10px"
+            cursor={inSelect ? "pointer" : "default"}
+            onClick={inSelect ? onClick : null}
             {...props}
         >
             <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
                 <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
             </Box>
 
-            <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" marginLeft="5px" marginRight="15px" marginTop={item.type === "event" ? "0px" : "10px"}>
+            <VStack
+                flexGrow="1"
+                align="left"
+                justifyContent={inNav ? "center" : "left"}
+                spacing="0px"
+                marginLeft="5px"
+                marginRight="15px"
+                marginTop={item.type === "event" || inNav ? "0px" : "10px"}
+            >
                 {item.type === "event" && (
-                    <Text textAlign="left" fontSize="12px" fontWeight="700" color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
+                    <Text
+                        textAlign="left"
+                        fontSize="12px"
+                        fontWeight="700"
+                        color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
+                        href={location?.pathname}
+                        marginTop="0px"
+                    >
                         {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                     </Text>
                 )}
                 <HStack>
                     <Text
+                        color={isDark ? "white" : "black"}
                         fontSize="16px"
                         fontWeight="700"
                         textAlign="left"
@@ -66,18 +84,24 @@ export const CircleListItem = ({ item, onClick, inSelect, ...props }) => {
                     </Text>
                 </HStack>
 
-                <Box>
-                    <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
-                        {item.description}
-                    </Text>
-                </Box>
-                <Box paddingTop={item.type === "event" ? "0px" : "4px"}>
-                    <CircleTags circle={item} size="tiny" inSelect={inSelect} />
-                </Box>
+                {!inNav && (
+                    <>
+                        <Box>
+                            <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
+                                {item.description}
+                            </Text>
+                        </Box>
+                        <Box paddingTop={item.type === "event" ? "0px" : "4px"}>
+                            <CircleTags circle={item} size="tiny" inSelect={inSelect} />
+                        </Box>
+                    </>
+                )}
 
-                <Box paddingTop="2px">
-                    <CircleActions circle={item} onChatToggle={onChatToggle} />
-                </Box>
+                {!inSelect && (
+                    <Box paddingTop="2px">
+                        <CircleActions circle={item} onChatToggle={onChatToggle} />
+                    </Box>
+                )}
                 {showChat && (
                     <Box align="start" paddingTop="10px">
                         <CircleChat item={item} embeddedChatHeight={400} />
@@ -339,9 +363,24 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                     <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
                 </Box>
 
-                <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" marginLeft="5px" marginRight="15px" marginTop={item.type === "event" ? "0px" : "10px"}>
+                <VStack
+                    flexGrow="1"
+                    align="left"
+                    justifyContent="left"
+                    spacing="0px"
+                    marginLeft="5px"
+                    marginRight="15px"
+                    marginTop={item.type === "event" ? "0px" : "10px"}
+                >
                     {item.type === "event" && (
-                        <Text textAlign="left" fontSize="12px" fontWeight="700" color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
+                        <Text
+                            textAlign="left"
+                            fontSize="12px"
+                            fontWeight="700"
+                            color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
+                            href={location?.pathname}
+                            marginTop="0px"
+                        >
                             {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                         </Text>
                     )}
@@ -370,7 +409,11 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             maxHeight={isExpanded ? "none" : "150px"}
                             position="relative"
                         >
-                            <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: formattedContent }} style={{ marginBottom: isExpanded ? "30px" : "0px" }} />
+                            <div
+                                className="embedHtmlContent"
+                                dangerouslySetInnerHTML={{ __html: formattedContent }}
+                                style={{ marginBottom: isExpanded ? "30px" : "0px" }}
+                            />
                             {/* Add fade out gradient */}
                             <Box
                                 position="absolute"
@@ -384,11 +427,27 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             >
                                 {!isExpanded && (
                                     <>
-                                        <Box position="absolute" bottom="10px" left="0px" right="0px" height="50px" background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))" />
+                                        <Box
+                                            position="absolute"
+                                            bottom="10px"
+                                            left="0px"
+                                            right="0px"
+                                            height="50px"
+                                            background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
+                                        />
                                         <Box position="absolute" bottom="0px" left="0px" right="0px" height="10px" background="#ffffff" />
                                     </>
                                 )}
-                                <Link onClick={() => setIsExpanded(!isExpanded)} position="absolute" bottom="0px" left="0px" right="0px" fontSize="12px" fontWeight="400" pointerEvents="auto">
+                                <Link
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    position="absolute"
+                                    bottom="0px"
+                                    left="0px"
+                                    right="0px"
+                                    fontSize="12px"
+                                    fontWeight="400"
+                                    pointerEvents="auto"
+                                >
                                     {isExpanded ? "Show less" : "Show more"}
                                 </Link>
                             </Box>

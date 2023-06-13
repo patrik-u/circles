@@ -3,12 +3,13 @@ import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
 import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes } from "components/Helpers";
 import { Marker } from "react-map-gl";
-import { openCircle } from "components/Navigation";
+import { openCircle, previewCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { userAtom, circleConnectionsAtom, filteredCirclesAtom } from "components/Atoms";
-import { useNavigateNoUpdates } from "components/RouterUtils";
+import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom } from "components/Atoms";
+import { useNavigateNoUpdates, useQueryParamsNoUpdates } from "components/RouterUtils";
+import { useSearchParams } from "react-router-dom";
 //#endregion
 
 export const LocationPickerMarker = ({ position }) => {
@@ -131,6 +132,7 @@ const CirclePreview = lazy(() => import("components/CirclePreview"));
 export const CircleMapMarker = ({ circle }) => {
     const [user] = useAtom(userAtom);
     const navigate = useNavigateNoUpdates();
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const getMarkerBackground = () => {
         switch (circle?.type) {
             default:
@@ -145,9 +147,26 @@ export const CircleMapMarker = ({ circle }) => {
 
     return (
         circle?.base && (
-            <Marker key={circle.id} offset={[0, -24]} latitude={lat(circle.base)} longitude={lng(circle.base)} className="circle-marker" onClick={() => openCircle(navigate, circle)}>
+            <Marker
+                key={circle.id}
+                offset={[0, -24]}
+                latitude={lat(circle.base)}
+                longitude={lng(circle.base)}
+                className="circle-marker"
+                onClick={() => previewCircle(circle, setToggleAbout)}
+            >
                 <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" />
-                <Box top="3px" left="9px" width="30px" height="30px" overflow="hidden" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
+                <Box
+                    top="3px"
+                    left="9px"
+                    width="30px"
+                    height="30px"
+                    overflow="hidden"
+                    flexShrink="0"
+                    borderRadius="50%"
+                    backgroundColor="white"
+                    position="absolute"
+                >
                     <CirclePicture circle={circle} size={30} disableClick={true} />
                 </Box>
 

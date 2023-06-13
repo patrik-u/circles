@@ -182,6 +182,16 @@ The following steps are to initiate hosting and to make sure your custom domain 
 5. Set Document ID to "config"
 6. Add field with name "host_url" type "string" and as value set your project url (https://yourproject.com), if you set up a custom domain in Configuring Hosting then use that one otherwise use the url to firebase host url. Click save.
 
+
+
+#### Add Global Circle
+
+The global circle is the default circle users encounter on the platform. Here is to allow users to chat in the global circle:
+
+1. Add Collection "circles"
+2. Add document "global" to the collection
+3. Add field "is_public" and set it to true.
+
 #### Adding firebase rules
 
 1. Click on the Rules tab in the Firestore Database section.

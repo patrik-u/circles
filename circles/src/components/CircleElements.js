@@ -40,7 +40,7 @@ import {
     log,
     getMetaImage,
 } from "components/Helpers";
-import { routes, openCircle } from "components/Navigation";
+import { routes, openCircle, previewCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine, RiShareLine } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
@@ -58,6 +58,7 @@ import {
     circleConnectionsAtom,
     connectPopupAtom,
     isConnectingAtom,
+    toggleAboutAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -96,7 +97,7 @@ export const CircleProfilePicture = ({ circle, size, ...props }) => {
     );
 };
 
-export const ShareButtonMenu = ({ children, referrer }) => {
+export const ShareButtonMenu = ({ circle, children, referrer }) => {
     const location = useLocationNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [absoluteLocation, setAbsoluteLocation] = useState();
@@ -111,7 +112,9 @@ export const ShareButtonMenu = ({ children, referrer }) => {
     });
 
     const toast = useToast();
-    const iconSize = isMobile ? 20 : 26;
+
+    //const iconSize = isMobile ? 20 : 26;
+    const iconSize = 20;
     const iconSizePx = iconSize + "px";
 
     const copyPageLink = () => {
@@ -254,12 +257,12 @@ export const FloatingAddButton = () => {
     );
 };
 
-export const FavoriteButton = () => {
-    const [circle] = useAtom(circleAtom);
+export const FavoriteButton = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const iconSize = isMobile ? 20 : 26;
+    //const iconSize = isMobile ? 20 : 26;
+    const iconSize = 20;
     const iconSizePx = iconSize + "px";
     const [favoriteSetting, setFavoriteSetting] = useState(false);
 
@@ -761,6 +764,7 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
     const navigate = useNavigateNoUpdates();
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
 
     const getDefaultCirclePicture = () => {
         switch (circle?.type) {
@@ -789,12 +793,15 @@ export const CirclePicture = ({ circle, size, hasPopover, popoverPlacement, disa
 
     const onClick = () => {
         if (disableClick) return;
-        openCircle(navigate, circle);
+
+        previewCircle(circle, setToggleAbout);
+        //openCircle(navigate, circle);
     };
 
     const onParentClick = () => {
         if (disableClick) return;
-        openCircle(navigate, circle?.parent_circle);
+        previewCircle(circle?.parent_circle, setToggleAbout);
+        //openCircle(navigate, circle?.parent_circle);
     };
 
     return hasPopover && !isMobile ? (
@@ -926,25 +933,14 @@ export const CircleHeader = ({ circle }) => {
     if (!circle) return null;
 
     return (
-        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "120px" : "140px"}>
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "40px" : "40px"}>
             <Flex flexDirection="row" width="100%" align="center">
-                <Flex align="left" flexDirection="column" width="100%" position="relative">
-                    <Text style={twoLineEllipsisStyle} fontSize={getNameFontSize(circle?.name)} fontWeight="bold" marginTop={isMobile ? "0px" : "5px"}>
-                        {circle?.name}
-                    </Text>
-                    <Box width="fit-content" borderRadius="20px" backgroundColor="gray.100" paddingLeft="10px" paddingRight="10px" marginBottom="10px">
-                        <Text fontSize="14px" fontWeight="500">
-                            {circle?.type}
-                        </Text>
-                    </Box>
-
-                    <Text style={twoLineEllipsisStyle}>{circle?.description}</Text>
-
-                    <HStack position="absolute" top={isMobile ? "-41px" : "5px"} right={isMobile ? "56px" : "0px"}>
-                        <FavoriteButton />
-                        {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
-                        <ShareButtonMenu />
-                        {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={isMobile ? false : true} fadeBackground={!isMobile} />}
+                <Flex align="end" flexDirection="column" width="100%" position="relative">
+                    <HStack>
+                        <FavoriteButton circle={circle} />
+                        {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} />}
+                        {/* <ShareButtonMenu circle={circle} /> */}
+                        {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={true} fadeBackground={false} />}
                     </HStack>
                 </Flex>
             </Flex>
@@ -1079,7 +1075,8 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const [, setConnectPopup] = useAtom(connectPopupAtom);
-    const height = inHeader && !isMobile ? "40px" : "19px";
+    //const height = inHeader && !isMobile ? "40px" : "19px";
+    const height = "22px";
 
     const getConnectionStatus = () => {
         if (!circle?.id) return i18n.t("Connected");
