@@ -23,7 +23,7 @@ export const routes = {
         posts: `/${circle?.host ?? "circles"}/${circle?.id}/posts`,
         new: `/${circle?.host ?? "circles"}/${circle?.id}/new`,
         settings: {
-            home: `/${circle?.host ?? "circles"}/${circle?.id}/settings`,
+            home: `/${circle?.host ?? "circles"}/${circle?.id}?settings`,
             about: `/${circle?.host ?? "circles"}/${circle?.id}/settings`,
             images: `/${circle?.host ?? "circles"}/${circle?.id}/settings/images`,
             tags: `/${circle?.host ?? "circles"}/${circle?.id}/settings/tags`,

@@ -13,6 +13,7 @@ export const newCirclePopupAtom = atom(null);
 export const mapStyleAtom = atom("satellite");
 export const focusOnMapItemAtom = atom(null);
 export const toggleAboutAtom = atom(null);
+export const toggleSettingsAtom = atom(null);
 export const previewCircleAtom = atom(null);
 
 // connection

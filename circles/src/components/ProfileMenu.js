@@ -5,7 +5,7 @@ import { getImageKitUrl, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import { routes, openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom, userAtom } from "components/Atoms";
+import { isMobileAtom, signInStatusAtom, userAtom, toggleSettingsAtom } from "components/Atoms";
 import { defaultUserPicture } from "components/Constants";
 import { userSignOut } from "components/AccountManager";
 import { useNavigateNoUpdates } from "components/RouterUtils";
@@ -18,6 +18,7 @@ export const ProfileMenu = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [user, setUser] = useAtom(userAtom);
+    const [, setToggleSettings] = useAtom(toggleSettingsAtom);
     const circlePictureSizeInt = isMobile ? 30 : 48;
     const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
@@ -30,8 +31,26 @@ export const ProfileMenu = () => {
 
     return (
         displayProfile && (
-            <Menu closeOnBlur="true" onClose={profileMenuOnClose} onOpen={profileMenuOnOpen} isOpen={profileMenuIsOpen} margin="0px" padding="0px" width={circlePictureSize} height={circlePictureSize}>
-                <MenuButton as={Button} rounded={"full"} variant={"link"} cursor={"pointer"} width={circlePictureSize} height={circlePictureSize} margin="0px" padding="0px">
+            <Menu
+                closeOnBlur="true"
+                onClose={profileMenuOnClose}
+                onOpen={profileMenuOnOpen}
+                isOpen={profileMenuIsOpen}
+                margin="0px"
+                padding="0px"
+                width={circlePictureSize}
+                height={circlePictureSize}
+            >
+                <MenuButton
+                    as={Button}
+                    rounded={"full"}
+                    variant={"link"}
+                    cursor={"pointer"}
+                    width={circlePictureSize}
+                    height={circlePictureSize}
+                    margin="0px"
+                    padding="0px"
+                >
                     <Image
                         src={getImageKitUrl(user?.picture ?? defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
                         width={circlePictureSize}
@@ -67,10 +86,27 @@ export const ProfileMenu = () => {
                     <br />
                     <MenuDivider />
                     <MenuItem onClick={() => openCircle(navigate, user)}>{i18n.t("my profile")}</MenuItem>
-                    <MenuItem onClick={() => navigate(routes.circle(user).settings.home)}>{i18n.t("my settings")}</MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            openCircle(navigate, user);
+                            log("toggling settings to true", 0, true);
+                            setToggleSettings(true);
+                        }}
+                    >
+                        {i18n.t("my settings")}
+                    </MenuItem>
                     <MenuDivider />
                     <Center>
-                        <Button onClick={onSignOutClick} display="inline-flex" fontSize={"sm"} fontWeight={600} color={"#333"} href={"#"} variant="outline" borderRadius="full">
+                        <Button
+                            onClick={onSignOutClick}
+                            display="inline-flex"
+                            fontSize={"sm"}
+                            fontWeight={600}
+                            color={"#333"}
+                            href={"#"}
+                            variant="outline"
+                            borderRadius="full"
+                        >
                             {i18n.t("log out")}
                         </Button>
                     </Center>

@@ -32,7 +32,7 @@ export const TopMenu = ({ onLogoClick }) => {
 
     return (
         <>
-            <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="4" pointerEvents="none">
+            <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="154" pointerEvents="none">
                 <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
                     <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
                     <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft="20px">

@@ -1,5 +1,5 @@
 //#region imports
-import React, { forwardRef, useState, useEffect, useRef, useCallback } from "react";
+import React, { forwardRef, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
     Flex,
     Box,
@@ -39,6 +39,7 @@ import {
     toastInfo,
     log,
     getMetaImage,
+    isAdmin,
 } from "components/Helpers";
 import { routes, openCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
@@ -60,6 +61,7 @@ import {
     isConnectingAtom,
     toggleAboutAtom,
     previewCircleAtom,
+    toggleSettingsAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -72,19 +74,26 @@ import { useSearchParams } from "react-router-dom";
 import CircleChat from "components/CircleChat";
 import CircleVideo from "components/CircleVideo";
 import CircleAbout from "components/CircleAbout";
+import CircleSettings from "components/settings/CircleSettings";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
 const WidgetController = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [toggleAbout, setToggleAbout] = useAtom(toggleAboutAtom);
+    const [toggleSettings, setToggleSettings] = useAtom(toggleSettingsAtom);
     const [circle] = useAtom(circleAtom);
+    const [userData] = useAtom(userDataAtom);
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
-    const menuItems = ["about", "activity", "video", "calendar"];
+    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     // get preview circle from search params
     //const previewCircleId = searchParams.get("preview");
+
+    const showSettings = () => {
+        return isAdmin(circle, userData);
+    };
 
     const toggleWidget = useCallback(
         (component, toggleOn, toggleAboutCircle) => {
@@ -141,6 +150,15 @@ const WidgetController = () => {
         setToggleAbout(false);
     }, [toggleAbout, setToggleAbout, toggleWidget, setPreviewCircle]);
 
+    useEffect(() => {
+        log("toggling settings:" + toggleSettings, 0, true);
+        if (!toggleSettings) {
+            return;
+        }
+        toggleWidget("settings", true);
+        setToggleSettings(false);
+    }, [toggleSettings, setToggleSettings, toggleWidget]);
+
     const getWidgetClass = (component) => {
         // activities always on the left
 
@@ -167,6 +185,17 @@ const WidgetController = () => {
 
     const onAboutClose = () => {
         toggleWidget("about", false);
+    };
+
+    const onSettingsClose = () => {
+        toggleWidget("settings", false);
+    };
+
+    const shouldShowMenuItem = (item) => {
+        if (item === "settings") {
+            return showSettings();
+        }
+        return true;
     };
 
     // useEffect(() => {
@@ -196,17 +225,19 @@ const WidgetController = () => {
         <div class="flex flex-col h-screen w-full z-1 absolute pointer-events-none">
             <div class={`p-5 absolute w-full pointer-events-auto`}>
                 <div class="flex justify-center" style={{ marginLeft: "5px", marginTop: isMobile ? "30px" : "" }}>
-                    {menuItems.map((component) => (
-                        <button
-                            key={component}
-                            class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
-                                toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
-                            }`}
-                            onClick={() => toggleWidget(component)}
-                        >
-                            {component.charAt(0).toUpperCase() + component.slice(1)}
-                        </button>
-                    ))}
+                    {menuItems
+                        .filter((x) => shouldShowMenuItem(x))
+                        .map((component) => (
+                            <button
+                                key={component}
+                                class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
+                                    toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
+                                }`}
+                                onClick={() => toggleWidget(component)}
+                            >
+                                {component.charAt(0).toUpperCase() + component.slice(1)}
+                            </button>
+                        ))}
                 </div>
             </div>
 
@@ -221,7 +252,18 @@ const WidgetController = () => {
                         <CircleChat />
                     </div>
                 )}
-                <div class="flex flex-col flex-grow order-2">{toggledWidgets.includes("video") && <CircleVideo />}</div>
+                {toggledWidgets.includes("video") && (
+                    <div class="flex flex-col flex-grow order-2">
+                        <CircleVideo />
+                    </div>
+                )}
+                {!toggledWidgets.includes("video") && <div class="flex flex-col flex-grow order-2"></div>}
+
+                {toggledWidgets.includes("settings") && (
+                    <div class="flex flex-col order-3">
+                        <CircleSettings onClose={onSettingsClose} />
+                    </div>
+                )}
 
                 {toggledWidgets.includes("calendar") && <div class={getWidgetClass("calendar")}></div>}
             </Box>

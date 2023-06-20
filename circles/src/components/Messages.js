@@ -207,7 +207,7 @@ const Messages = () => {
                     <Box
                         className="messagesBoxParent"
                         ref={messagesBoxRef}
-                        zIndex="55"
+                        zIndex="255"
                         position="absolute"
                         display={messagesIsOpen ? "flex" : "none"}
                         borderRadius={{ base: "20px", md: "20px" }}
