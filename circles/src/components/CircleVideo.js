@@ -42,8 +42,9 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom } from "components/Atoms";
-import { JitsiMeeting } from "@jitsi/react-sdk";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, jaasTokenAtom } from "components/Atoms";
+import { JitsiMeeting, JaaSMeeting } from "@jitsi/react-sdk";
+import config from "Config";
 //#endregion
 
 export const CircleVideo = ({ width, height }) => {
@@ -51,6 +52,7 @@ export const CircleVideo = ({ width, height }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
+    const [jaasToken] = useAtom(jaasTokenAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [roomName, setRoomName] = useState("");
     const [hasJoined, setHasJoined] = useState(false);
@@ -62,7 +64,9 @@ export const CircleVideo = ({ width, height }) => {
 
     useEffect(() => {
         if (!hasJoined && circle?.id) {
-            setRoomName(circle.id === "global" ? "Global | 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`);
+            let roomId = circle.id === "global" ? "Global 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`;
+            roomId = roomId.replace(/[^a-z0-9åäö\s]/gi, ""); // remove non-alphanumeric characters
+            setRoomName(roomId);
         }
     }, [circle?.id, circle?.name, hasJoined]);
 
@@ -89,12 +93,16 @@ export const CircleVideo = ({ width, height }) => {
         };
     };
 
-    if (!circle || !roomName) return null;
+    log("RoomName: " + roomName, 1, true);
+
+    if (!circle || !roomName || !jaasToken) return null;
 
     return (
         <Flex width="100%" height="100%" pointerEvents="auto">
-            <JitsiMeeting
-                key={roomName}
+            <JaaSMeeting
+                appId={config.jitsiJaasKey}
+                roomName={roomName}
+                jwt={jaasToken}
                 configOverwrite={{
                     startWithAudioMuted: true,
                     disableModeratorIndicator: true,
@@ -133,7 +141,6 @@ export const CircleVideo = ({ width, height }) => {
                 userInfo={{
                     displayName: user?.name,
                 }}
-                roomName={roomName}
                 getIFrameRef={(node) => {
                     node.style.height = "100%";
                     node.style.width = "100%";

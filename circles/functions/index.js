@@ -11,6 +11,8 @@ const DOMPurify = createDOMPurify(window);
 const linkify = require("linkifyjs");
 const { Configuration, OpenAIApi } = require("openai");
 const OneSignal = require("onesignal-node");
+var jsonwebtoken = require("jsonwebtoken");
+var uuid = require("uuid-random");
 
 admin.initializeApp();
 
@@ -502,6 +504,38 @@ const deleteConnectionByObject = async (connection) => {
     await circleRef.update({
         connections: admin.firestore.FieldValue.increment(-1),
     });
+};
+
+const generateJaasKey = (privateKey, { id, name, email, avatar, appId, kid }) => {
+    const now = new Date();
+    const jwt = jsonwebtoken.sign(
+        {
+            aud: "jitsi",
+            context: {
+                user: {
+                    id,
+                    name,
+                    avatar,
+                    email: email,
+                    moderator: "true",
+                },
+                features: {
+                    livestreaming: "true",
+                    recording: "true",
+                    transcription: "true",
+                    "outbound-call": "true",
+                },
+            },
+            iss: "chat",
+            room: "*",
+            sub: appId,
+            exp: Math.round(now.setHours(now.getHours() + 148) / 1000), // expires in 148 hours
+            nbf: Math.round(new Date().getTime() / 1000) - 10,
+        },
+        privateKey,
+        { algorithm: "RS256", header: { kid } }
+    );
+    return jwt;
 };
 
 // sends notification to user about a new connection made
@@ -1437,6 +1471,19 @@ app.get("/signin", auth, async (req, res) => {
 
         let userData = await getCircleData(authCallerId);
         let userRet = { user: user, userData: userData };
+
+        // generate jwt token for JAAS
+        const token = generateJaasKey(process.env.JAAS_API_KEY, {
+            // Pass your generated private key
+            id: user.id,
+            name: user.name, // Set the user name
+            email: userData.email, // Set the user email
+            avatar: user.picture, // Set the user avatar
+            appId: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2", // Your AppID
+            kid: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2/64618a",
+        });
+        userRet.jaasToken = token;
+
         return res.json(userRet);
     } catch (error) {
         functions.logger.error("Error signing in:", error);
@@ -2359,7 +2406,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY"],
+    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);

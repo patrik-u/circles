@@ -498,7 +498,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                                     <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                                                         {item.reply_to.user.name}
                                                                                     </Text>
-                                                                                    <Text isTruncated>{item.reply_to.message}</Text>
+                                                                                    <Text noOfLines={1}>{item.reply_to.message}</Text>
                                                                                 </VStack>
                                                                             </Box>
                                                                         )}
@@ -659,7 +659,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                         <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                             {i18n.t("Edit message")}
                                         </Text>
-                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
+                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} noOfLines={1}>
                                             {messageToEdit.message}
                                         </Text>
                                     </VStack>
@@ -689,7 +689,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                         <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                             {messageToReply.user.name}
                                         </Text>
-                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} isTruncated>
+                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} noOfLines={1}>
                                             {messageToReply.message}
                                         </Text>
                                     </VStack>

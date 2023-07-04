@@ -20,6 +20,7 @@ const configs = {
         alwaysShowGuide: false,
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
     },
     circles_staging: {
         environment: "staging",
@@ -42,6 +43,7 @@ const configs = {
         algoliaCirclesIndex: "staging_circles",
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
     },
     circles_prod: {
         environment: "prod",
@@ -63,6 +65,7 @@ const configs = {
         algoliaCirclesIndex: "circles",
         oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
     },
     circles_devprod: {
         environment: "devprod",
@@ -84,6 +87,7 @@ const configs = {
         algoliaCirclesIndex: "circles",
         oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
     },
     codo_devprod: {
         firebase: {
@@ -103,6 +107,7 @@ const configs = {
         mapBoxToken: "pk.eyJ1IjoidGltYW9sc3NvbiIsImEiOiJjbGQyMW05M2YwMXVhM3lvYzMweWllbDZtIn0.ar7LH2YZverGDBWGjxQ65w",
         environment: "devprod",
         apiUrl: "http://localhost:5001/codo-fab51/europe-west1/api",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
         logLevel: 0,
     },
     codo_prod: {
@@ -123,6 +128,7 @@ const configs = {
         mapBoxToken: "pk.eyJ1IjoidGltYW9sc3NvbiIsImEiOiJjbGQyMW05M2YwMXVhM3lvYzMweWllbDZtIn0.ar7LH2YZverGDBWGjxQ65w",
         environment: "prod",
         apiUrl: "https://europe-west1-codo-fab51.cloudfunctions.net/api",
+        jitsiJaasKey: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2",
         logLevel: 2,
     },
 };
