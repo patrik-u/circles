@@ -235,7 +235,7 @@ const getCircleTypes = (source, target) => {
 };
 
 // updates circle data
-const updateCircle = async (id, circle) => {
+const updateCircle = async (id, circle, propagateUpdate = true) => {
     const circleRef = db.collection("circles").doc(id);
     let circleDoc = await circleRef.get();
     if (!circleDoc.exists) {
@@ -255,54 +255,56 @@ const updateCircle = async (id, circle) => {
     let circleData = circleDoc?.data();
     if (!circleData) return;
 
-    const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", id).get();
-    circleData.id = circleDoc.id;
+    if (propagateUpdate) {
+        const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", id).get();
+        circleData.id = circleDoc.id;
 
-    // workaround for firestore limit of 500 writes per batch
-    let batchArray = [db.batch()];
-    let operationCounter = 0;
-    let batchIndex = 0;
+        // workaround for firestore limit of 500 writes per batch
+        let batchArray = [db.batch()];
+        let operationCounter = 0;
+        let batchIndex = 0;
 
-    // loop through connections and update them
-    for (var i = 0; i < connectionDocs.docs.length; ++i) {
-        let connection = connectionDocs.docs[i].data();
-        let connectionRef = db.collection("connections").doc(connectionDocs.docs[i].id);
+        // loop through connections and update them
+        for (var i = 0; i < connectionDocs.docs.length; ++i) {
+            let connection = connectionDocs.docs[i].data();
+            let connectionRef = db.collection("connections").doc(connectionDocs.docs[i].id);
 
-        if (connection.source.id === id) {
-            batchArray[batchIndex].set(connectionRef, { source: circleData }, { merge: true });
-        } else if (connection.target.id === id) {
-            batchArray[batchIndex].set(connectionRef, { target: circleData }, { merge: true });
+            if (connection.source.id === id) {
+                batchArray[batchIndex].set(connectionRef, { source: circleData }, { merge: true });
+            } else if (connection.target.id === id) {
+                batchArray[batchIndex].set(connectionRef, { target: circleData }, { merge: true });
+            }
+            ++operationCounter;
+            if (operationCounter >= 499) {
+                batchArray.push(db.batch());
+                ++batchIndex;
+                operationCounter = 0;
+            }
         }
-        ++operationCounter;
-        if (operationCounter >= 499) {
-            batchArray.push(db.batch());
-            ++batchIndex;
-            operationCounter = 0;
+
+        batchArray.forEach(async (batch) => await batch.commit());
+
+        // update circles with this circle as creator
+        const creatorDocs = await db.collection("circles").where("creator.id", "==", id).get();
+        batchArray = [db.batch()];
+        operationCounter = 0;
+        batchIndex = 0;
+
+        // loop through circles and update creator
+        for (var i = 0; i < creatorDocs.docs.length; ++i) {
+            let creatorCircleRef = db.collection("circles").doc(creatorDocs.docs[i].id);
+
+            batchArray[batchIndex].set(creatorCircleRef, { creator: circleData }, { merge: true });
+            ++operationCounter;
+            if (operationCounter >= 499) {
+                batchArray.push(db.batch());
+                ++batchIndex;
+                operationCounter = 0;
+            }
         }
+
+        batchArray.forEach(async (batch) => await batch.commit());
     }
-
-    batchArray.forEach(async (batch) => await batch.commit());
-
-    // update circles with this circle as creator
-    const creatorDocs = await db.collection("circles").where("creator.id", "==", id).get();
-    batchArray = [db.batch()];
-    operationCounter = 0;
-    batchIndex = 0;
-
-    // loop through circles and update creator
-    for (var i = 0; i < creatorDocs.docs.length; ++i) {
-        let creatorCircleRef = db.collection("circles").doc(creatorDocs.docs[i].id);
-
-        batchArray[batchIndex].set(creatorCircleRef, { creator: circleData }, { merge: true });
-        ++operationCounter;
-        if (operationCounter >= 499) {
-            batchArray.push(db.batch());
-            ++batchIndex;
-            operationCounter = 0;
-        }
-    }
-
-    batchArray.forEach(async (batch) => await batch.commit());
 
     return circleData;
 };
@@ -858,6 +860,44 @@ app.post("/circles", auth, async (req, res) => {
     }
 });
 
+// update circle activity status
+app.put("/circles/:id/activity", auth, async (req, res) => {
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+
+    try {
+        const circleRef = db.collection("circles").doc(circleId);
+        const doc = await circleRef.get();
+        if (!doc.exists) {
+            return res.json({ error: "circle not found" });
+        }
+
+        // update circle data
+        var circleData = {};
+        circleData.activity = { last_activity: new Date() };
+
+        if (circleId === authCallerId) {
+            // user is updating their own activity status
+            circleData.activity.last_online = new Date();
+            circleData.activity.active_in_video_conference = req.body.active_in_video_conference ? new Date() : false;
+            circleData.activity.active_in_circle = req.body.active_in_circle ?? false;
+            circleData.activity.location = req.body.location ?? false;
+        } else {
+            // user is visiting a circle and updating its activity status
+            if (req.body.active_in_video_conference) {
+                circleData.activity.active_video_conference = new Date();
+            }
+        }
+
+        // update circle
+        await updateCircle(circleId, circleData, false);
+        return res.json({ message: "circle activity updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating circle activity data:", error);
+        return res.json({ error: error });
+    }
+});
+
 // update circle
 app.put("/circles/:id", auth, async (req, res) => {
     const circleId = req.params.id;
@@ -882,9 +922,6 @@ app.put("/circles/:id", auth, async (req, res) => {
         // update circle data, for now just update cover and logo image
         var circleData = {};
         let errors = {};
-        if (req.body.circleData?.lastOnline) {
-            circleData.last_online = new Date();
-        }
         if (req.body.circleData?.cover) {
             circleData.cover = req.body.circleData.cover;
         }

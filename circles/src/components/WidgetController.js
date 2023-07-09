@@ -62,6 +62,8 @@ import {
     toggleAboutAtom,
     previewCircleAtom,
     toggleSettingsAtom,
+    toggleWidgetEventAtom,
+    inVideoConferenceAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -85,9 +87,14 @@ const WidgetController = () => {
     const [circle] = useAtom(circleAtom);
     const [userData] = useAtom(userDataAtom);
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
+    const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
-    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings"], []);
+    const menuItems = useMemo(() => ["about", "activity", "video", "settings"], []);
     const [searchParams, setSearchParams] = useSearchParams();
+    const [inVideoConference] = useAtom(inVideoConferenceAtom);
+    const videoMinimized = useMemo(() => {
+        return !toggledWidgets.includes("video") && inVideoConference;
+    }, [toggledWidgets, inVideoConference]);
     // get preview circle from search params
     //const previewCircleId = searchParams.get("preview");
 
@@ -158,6 +165,15 @@ const WidgetController = () => {
         toggleWidget("settings", true);
         setToggleSettings(false);
     }, [toggleSettings, setToggleSettings, toggleWidget]);
+
+    useEffect(() => {
+        if (!toggleWidgetEvent) {
+            return;
+        }
+        log("toggling widget:" + toggleWidgetEvent.name + " to " + toggleWidgetEvent.value, 0, true);
+        toggleWidget(toggleWidgetEvent.name, toggleWidgetEvent.value);
+        setToggleWidgetEvent(false);
+    }, [toggleWidgetEvent, setToggleWidgetEvent, toggleWidget]);
 
     const getWidgetClass = (component) => {
         // activities always on the left
@@ -252,12 +268,12 @@ const WidgetController = () => {
                         <CircleChat />
                     </div>
                 )}
-                {toggledWidgets.includes("video") && (
+                {(toggledWidgets.includes("video") || inVideoConference) && (
                     <div class="flex flex-col flex-grow order-2">
-                        <CircleVideo />
+                        <CircleVideo isMinimized={videoMinimized} />
                     </div>
                 )}
-                {!toggledWidgets.includes("video") && <div class="flex flex-col flex-grow order-2"></div>}
+                {!(toggledWidgets.includes("video") || inVideoConference) && <div class="flex flex-col flex-grow order-2"></div>}
 
                 {toggledWidgets.includes("settings") && (
                     <div class="flex flex-col order-3">

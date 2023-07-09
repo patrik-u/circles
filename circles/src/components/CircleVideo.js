@@ -42,12 +42,21 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, jaasTokenAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    circleAtom,
+    chatCircleAtom,
+    jaasTokenAtom,
+    inVideoConferenceAtom,
+    toggleWidgetEventAtom,
+} from "components/Atoms";
 import { JitsiMeeting, JaaSMeeting } from "@jitsi/react-sdk";
 import config from "Config";
 //#endregion
 
-export const CircleVideo = ({ width, height }) => {
+export const CircleVideo = ({ isMinimized, width, height }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -55,7 +64,8 @@ export const CircleVideo = ({ width, height }) => {
     const [jaasToken] = useAtom(jaasTokenAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [roomName, setRoomName] = useState("");
-    const [hasJoined, setHasJoined] = useState(false);
+    const [inVideoConference, setInVideoConference] = useAtom(inVideoConferenceAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     // top bar + cover image + header
     const getVideoHeight = () => {
@@ -63,12 +73,12 @@ export const CircleVideo = ({ width, height }) => {
     };
 
     useEffect(() => {
-        if (!hasJoined && circle?.id) {
+        if (!inVideoConference && circle?.id) {
             let roomId = circle.id === "global" ? "Global 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`;
             roomId = roomId.replace(/[^a-z0-9åäö\s]/gi, ""); // remove non-alphanumeric characters
             setRoomName(roomId);
         }
-    }, [circle?.id, circle?.name, hasJoined]);
+    }, [circle?.id, circle?.name, inVideoConference]);
 
     const handleOnApiReady = (externalApi) => {
         // here you can attach custom event listeners to the Jitsi Meet External API
@@ -77,13 +87,14 @@ export const CircleVideo = ({ width, height }) => {
         // listen for the participantJoined event
         externalApi.addListener("videoConferenceJoined", (event) => {
             log("On joined!", 1, true);
-            setHasJoined(true);
+            setInVideoConference(circle?.id);
         });
 
         // listen for the participantLeft event
         externalApi.addListener("videoConferenceLeft", (event) => {
             log("On leave!", 1, true);
-            setHasJoined(false);
+            setInVideoConference(false);
+            setToggleWidgetEvent({ name: "video", value: false });
         });
 
         // vlean up event listeners when component is unmounted
@@ -98,7 +109,13 @@ export const CircleVideo = ({ width, height }) => {
     if (!circle || !roomName || !jaasToken) return null;
 
     return (
-        <Flex width="100%" height="100%" pointerEvents="auto">
+        <Flex
+            width={isMinimized ? "300px" : "100%"}
+            height={isMinimized ? "300px" : "100%"}
+            marginTop={isMinimized ? "auto" : "0px"}
+            pointerEvents="auto"
+            marginLeft={isMinimized ? "auto" : "0px"}
+        >
             <JaaSMeeting
                 appId={config.jitsiJaasKey}
                 roomName={roomName}

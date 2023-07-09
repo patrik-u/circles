@@ -32,6 +32,8 @@ import {
     circleConnectionsAtom,
     searchResultsShownAtom,
     navigationPanelPinnedAtom,
+    circlesFilterAtom,
+    inVideoConferenceAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
@@ -90,6 +92,8 @@ export const Circle = ({ isGlobal }) => {
     const navigate = useNavigateNoUpdates();
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [isPinned, setIsPinned] = useAtom(navigationPanelPinnedAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
+    const [inVideoConference] = useAtom(inVideoConferenceAtom);
 
     const handlePinClick = () => {
         setIsPinned(!isPinned);
@@ -262,6 +266,40 @@ export const Circle = ({ isGlobal }) => {
             .then((x) => {})
             .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
+
+    useEffect(() => {
+        // set to show only active circles
+        if (!circlesFilter.only_active) {
+            setCirclesFilter({ ...circlesFilter, only_active: true });
+        }
+
+        if (!circlesFilter.types) return;
+        let { types: _, ...newFilter } = circlesFilter;
+        setCirclesFilter(newFilter);
+    }, [circlesFilter, setCirclesFilter]);
+
+    useEffect(() => {
+        if (!signInStatus.signedIn && user?.id) return;
+
+        try {
+            axios.put(`/circles/${circleId}/activity`, {
+                active_in_video_conference: inVideoConference === circleId,
+            });
+        } catch (err) {
+            console.error(err);
+        }
+
+        const intervalId = setInterval(async () => {
+            try {
+                axios.put(`/circles/${circleId}/activity`, {
+                    active_in_video_conference: inVideoConference === circleId,
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }, 60000);
+        return () => clearInterval(intervalId);
+    }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);
 
     const circlePictureSize = isMobile ? 120 : 160;
 

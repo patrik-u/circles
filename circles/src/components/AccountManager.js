@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/react";
 import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
 import { toastError, log } from "components/Helpers";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where, GeoPoint } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
 import { signInStatusValues } from "components/Constants";
@@ -14,11 +14,14 @@ import {
     uidAtom,
     userAtom,
     userDataAtom,
+    userLocationAtom,
     signInStatusAtom,
     userConnectionsAtom,
     requestUserConnectionsAtom,
     newUserPopupAtom,
     jaasTokenAtom,
+    inVideoConferenceAtom,
+    circleAtom,
 } from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
@@ -37,6 +40,8 @@ export const AccountManager = () => {
     const [uid, setUid] = useAtom(uidAtom);
     const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
     const [user, setUser] = useAtom(userAtom);
+    const [circle] = useAtom(circleAtom);
+    const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [, setUserData] = useAtom(userDataAtom);
     const [, setUserConnections] = useAtom(userConnectionsAtom);
     const [, setNewUserPopup] = useAtom(newUserPopupAtom);
@@ -46,7 +51,7 @@ export const AccountManager = () => {
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";
     const [googleOneTapDone, setGoogleOneTapDone] = useState(false);
-    const [lastOnlineUpdate, setLastOnlineUpdate] = useState(Date.now());
+    const [userLocation] = useAtom(userLocationAtom);
 
     // //#region useEffects
     //initialize firebase sign in
@@ -205,7 +210,7 @@ export const AccountManager = () => {
                 unsubscribeGetUserConnections();
             }
         };
-    }, [setSignInStatus, setUid, setUser, setUserData, toast, uid]);
+    }, [setSignInStatus, setUid, setUser, setUserData, toast, uid, setJaasToken, setNewUserPopup]);
 
     // attempt sign in using google one tap
     useEffect(() => {
@@ -254,11 +259,15 @@ export const AccountManager = () => {
     }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
 
     useEffect(() => {
-        if (!signInStatus.signedIn && user?.id) return;
+        if (!signInStatus.signedIn || !user?.id) return;
+
+        let location = userLocation ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
 
         try {
-            axios.put(`/circles/${user.id}`, {
-                circleData: { lastOnline: new Date() },
+            axios.put(`/circles/${user.id}/activity`, {
+                active_in_circle: circle,
+                active_in_video_conference: inVideoConference,
+                location: location,
             });
         } catch (err) {
             console.error(err);
@@ -266,15 +275,17 @@ export const AccountManager = () => {
 
         const intervalId = setInterval(async () => {
             try {
-                axios.put(`/circles/${user.id}`, {
-                    circleData: { lastOnline: new Date() },
+                axios.put(`/circles/${user.id}/activity`, {
+                    active_in_circle: circle,
+                    active_in_video_conference: inVideoConference,
+                    location: location,
                 });
             } catch (err) {
                 console.error(err);
             }
-        }, 60000);
+        }, 60000); // update every minute
         return () => clearInterval(intervalId);
-    }, [signInStatus?.signedIn, user?.id]);
+    }, [signInStatus?.signedIn, user?.id, circle, inVideoConference, userLocation]);
 
     // get user connections
     useEffect(() => {

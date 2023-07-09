@@ -7,6 +7,7 @@ import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom } from "
 import { useLocationNoUpdates } from "components/RouterUtils";
 import { CircleCover, CirclePicture, CircleHeader } from "components/CircleElements";
 import { Scrollbars } from "react-custom-scrollbars-2";
+import { CircleTags } from "components/CircleElements";
 //#endregion
 
 const CircleAbout = ({ onClose }) => {
@@ -20,11 +21,12 @@ const CircleAbout = ({ onClose }) => {
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const location = useLocationNoUpdates();
 
-    useEffect(() => {
-        if (!circlesFilter.types) return;
-        let { types: _, ...newFilter } = circlesFilter;
-        setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter]);
+    // useEffect(() => {
+    //     if (!circlesFilter.types) return;
+    //     let { types: _, ...newFilter } = circlesFilter;
+    //     setCirclesFilter(newFilter);
+    //     log("setting circles filter", 0, true);
+    // }, [circlesFilter, setCirclesFilter]);
 
     // useEffect(() => {
     //     log("CircleHome.useEffect 2", 0);
@@ -170,6 +172,21 @@ const CircleAbout = ({ onClose }) => {
                             </Box>
                         )}
 
+                        {circle.tags && (
+                            <Box
+                                align="left"
+                                marginLeft={isMobile ? "15px" : "0px"}
+                                marginRight={isMobile ? "15px" : "0px"}
+                                marginTop="10px"
+                                backgroundColor="#ffffffaa"
+                                borderRadius="7px"
+                                padding="5px"
+                            >
+                                <Text fontWeight="bold">Tags</Text>
+                                <CircleTags circle={circle} showAll={true} wrap="wrap" />
+                            </Box>
+                        )}
+
                         {circle.content && (
                             <Box
                                 align="left"
@@ -192,6 +209,22 @@ const CircleAbout = ({ onClose }) => {
                                 {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
                             </Box>
                         )}
+
+                        {circle.id === "global" && (
+                            <Box
+                                align="left"
+                                marginLeft={isMobile ? "15px" : "0px"}
+                                marginRight={isMobile ? "15px" : "0px"}
+                                marginTop="10px"
+                                backgroundColor="#ffffffaa"
+                                borderRadius="7px"
+                                padding="5px"
+                            >
+                                <Text fontWeight="bold">Version</Text>
+                                <Text>{process.env.REACT_APP_VERSION}</Text>
+                            </Box>
+                        )}
+                        <Box height="35px"></Box>
                     </Scrollbars>
                 </Box>
             )}

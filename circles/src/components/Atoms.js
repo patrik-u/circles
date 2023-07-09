@@ -1,6 +1,7 @@
 import { atom, useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { signInStatusValues, displayModes, circleSubSections } from "./Constants";
+import { isCircleActive } from "components/Helpers";
 import { isMobile as detectIsMobile } from "react-device-detect";
 import { fromFsDate } from "components/Helpers";
 
@@ -16,6 +17,8 @@ export const toggleAboutAtom = atom(null);
 export const toggleSettingsAtom = atom(null);
 export const previewCircleAtom = atom(null);
 export const jaasTokenAtom = atom(null);
+export const inVideoConferenceAtom = atom(false);
+export const toggleWidgetEventAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);
@@ -45,9 +48,10 @@ export const filteredCirclesAtom = atom((get) => {
     const circles = get(circlesAtom);
     const filter = get(circlesFilterAtom);
 
-    // TODO filter by location, tags, date, etc.
+    // TODO filter by location, tags, date, active, etc.
 
     let retCircles = filter?.types ? circles.filter((circle) => filter.types.includes(circle.type)) : circles;
+    retCircles = filter?.only_active ? retCircles.filter((circle) => isCircleActive(circle)) : retCircles;
 
     if (filter?.sortBy === "newest") {
         retCircles.sort((a, b) => fromFsDate(b.created_at) - fromFsDate(a.created_at));

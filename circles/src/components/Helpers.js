@@ -204,6 +204,22 @@ export const isWithinMinutes = (date, minutes) => {
     return Math.abs(currentDate - compareDate) / 60000 <= minutes;
 };
 
+export const isCircleActive = (circle) => {
+    return isWithinMinutes(circle?.activity?.last_activity, 2);
+};
+
+export const isCircleOnline = (circle) => {
+    return isWithinMinutes(circle?.activity?.last_online, 2);
+};
+
+export const isActiveInCircle = (circle) => {
+    return isCircleActive(circle) && circle?.activity?.active_in_circle;
+};
+
+export const isActiveInVideoConference = (circle) => {
+    return isWithinMinutes(circle?.activity?.active_in_video_conference, 2) || isWithinMinutes(circle?.activity?.active_video_conference, 2);
+};
+
 // converts firestore date to javascript date
 export const fromFsDate = (date) => {
     if (!date) return date;

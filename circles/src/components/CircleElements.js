@@ -39,10 +39,11 @@ import {
     toastInfo,
     log,
     getMetaImage,
+    isActiveInVideoConference,
 } from "components/Helpers";
 import { routes, openCircle, previewCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
-import { RiLinksLine, RiShareLine } from "react-icons/ri";
+import { RiLinksLine, RiShareLine, RiLiveFill } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
 import { QRCodeCanvas } from "qrcode.react";
 import { GrGallery } from "react-icons/gr";
@@ -770,6 +771,7 @@ export const CirclePicture = ({
     parentCircleSizeRatio = 3,
     parentCircleOffset = 0,
     isActive = true,
+    showIfInVideoSession = true,
     ...props
 }) => {
     const navigate = useNavigateNoUpdates();
@@ -821,21 +823,28 @@ export const CirclePicture = ({
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
             <Popover isLazy trigger="hover" gutter="0">
                 <PopoverTrigger>
-                    <Image
-                        width={`${size}px`}
-                        height={`${size}px`}
-                        src={getCirclePicture(circle?.picture)}
-                        flexShrink="0"
-                        flexGrow="0"
-                        borderRadius="50%"
-                        objectFit="cover"
-                        onClick={onClick}
-                        cursor={!disableClick ? "pointer" : "inherit"}
-                        fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                        // filter={isActive ? "" : "grayscale(1)"}
-                        opacity={isActive ? "1" : inActiveOpacity}
-                        {...props}
-                    />
+                    <Box position="relative">
+                        <Image
+                            width={`${size}px`}
+                            height={`${size}px`}
+                            src={getCirclePicture(circle?.picture)}
+                            flexShrink="0"
+                            flexGrow="0"
+                            borderRadius="50%"
+                            objectFit="cover"
+                            onClick={onClick}
+                            cursor={!disableClick ? "pointer" : "inherit"}
+                            fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                            // filter={isActive ? "" : "grayscale(1)"}
+                            opacity={isActive ? "1" : inActiveOpacity}
+                            {...props}
+                        />
+                        {showIfInVideoSession && isActiveInVideoConference(circle) && (
+                            <Box position="absolute" right="-6px" bottom="-6px">
+                                <RiLiveFill color="red" />
+                            </Box>
+                        )}
+                    </Box>
                 </PopoverTrigger>
                 <Portal>
                     <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
@@ -895,6 +904,12 @@ export const CirclePicture = ({
                     bottom="0px"
                     right="0px"
                 ></Box>
+            )}
+
+            {showIfInVideoSession && isActiveInVideoConference(circle) && (
+                <Box position="absolute" bottom={`${parentCircleOffset}px`} right={`${parentCircleOffset}px`}>
+                    <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
+                </Box>
             )}
         </Box>
     );

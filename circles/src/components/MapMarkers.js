@@ -1,13 +1,13 @@
 //#region imports
 import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes } from "components/Helpers";
+import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes, isCircleActive, isActiveInVideoConference } from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle, previewCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom } from "components/Atoms";
+import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom, circlesFilterAtom } from "components/Atoms";
 import { useNavigateNoUpdates, useQueryParamsNoUpdates } from "components/RouterUtils";
 import { useSearchParams } from "react-router-dom";
 //#endregion
@@ -145,10 +145,6 @@ export const CircleMapMarker = ({ circle }) => {
         }
     };
 
-    const isOnline = () => {
-        return isWithinMinutes(circle.last_online, 5);
-    };
-
     return (
         circle?.base && (
             <Marker
@@ -163,21 +159,18 @@ export const CircleMapMarker = ({ circle }) => {
                     src={getImageKitUrl(getMarkerBackground(), 48, 48)}
                     width="48px"
                     height="48px"
-                    filter={isOnline() ? "" : "grayscale(1)"}
-                    opacity={isOnline() ? "1" : "0.5"}
+                    filter={isCircleActive(circle) ? "" : "grayscale(1)"}
+                    opacity={isCircleActive(circle) ? "1" : "0.5"}
                 />
-                <Box
-                    top="3px"
-                    left="9px"
-                    width="30px"
-                    height="30px"
-                    overflow="hidden"
-                    flexShrink="0"
-                    borderRadius="50%"
-                    backgroundColor="white"
-                    position="absolute"
-                >
-                    <CirclePicture circle={circle} size={30} disableClick={true} isActive={isOnline()} />
+                <Box top="3px" left="9px" width="30px" height="30px" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
+                    <CirclePicture
+                        circle={circle}
+                        size={30}
+                        disableClick={true}
+                        isActive={isCircleActive(circle)}
+                        parentCircleSizeRatio={2}
+                        parentCircleOffset={-3}
+                    />
                 </Box>
 
                 <Popover trigger="hover" gutter="0" isLazy>
@@ -199,6 +192,8 @@ export const CircleMapMarker = ({ circle }) => {
 };
 
 export const CirclesMapMarkers = ({ circles }) => {
+    //const [circlesFilter] = useAtom(circlesFilterAtom);
+
     return (
         <>
             {circles
