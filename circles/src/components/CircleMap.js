@@ -1,7 +1,7 @@
 //#region imports
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { Flex } from "@chakra-ui/react";
-import { getLatlng, log } from "components/Helpers";
+import { getLatlng, log, getLocation } from "components/Helpers";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -66,7 +66,9 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         if (!focusOnMapItem) return;
 
         let zoom = focusOnMapItem.zoom ?? 15;
-        let location = getLatlng(focusOnMapItem.item.base);
+        let location = getLocation(focusOnMapItem.item);
+        if (!location) return;
+
         let transitionDuration = focusOnMapItem.transitionDuration ?? 500;
 
         setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom, transitionDuration });
@@ -75,7 +77,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     }, [focusOnMapItem, setFocusOnMapItem, mapViewport]);
 
     const focusItem = (item) => {
-        let location = getLatlng(item.base);
+        let location = getLocation(item);
+        if (!location) return;
         setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom: 15, transitionDuration: 500 });
     };
 
@@ -140,7 +143,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 {/* <NavigationControl /> */}
 
                 {circle && filteredCircles?.length > 0 && <CircleMapEdges circle={circle} circles={filteredCircles} />}
-                {circle && circle?.id === "global" && <ConnectionsEdges />}
+                {/* {circle && circle?.id === "global" && <ConnectionsEdges />} */}
                 {circle && <CircleMarker circle={circle} />}
                 {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} />}
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}

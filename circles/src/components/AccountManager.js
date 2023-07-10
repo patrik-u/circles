@@ -261,7 +261,7 @@ export const AccountManager = () => {
     useEffect(() => {
         if (!signInStatus.signedIn || !user?.id) return;
 
-        let location = userLocation ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
+        let location = userLocation?.latitude && userLocation?.longitude ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
 
         try {
             axios.put(`/circles/${user.id}/activity`, {

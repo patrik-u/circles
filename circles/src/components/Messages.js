@@ -10,7 +10,7 @@ import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "components/
 import { openCircle } from "components/Navigation";
 import { CirclePicture, buttonHighlight } from "components/CircleElements";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, chatCircleAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, chatCircleAtom, signInStatusAtom } from "components/Atoms";
 import db from "components/Firebase";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
@@ -98,6 +98,7 @@ const Messages = () => {
     const iconSize = isMobile ? 24 : 24;
     const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
+    const [signInStatus] = useAtom(signInStatusAtom);
 
     useOutsideClick({
         ref: messagesBoxRef,
@@ -124,6 +125,7 @@ const Messages = () => {
 
     useEffect(() => {
         log("Messages.useEffect", -1);
+        if (!signInStatus.signedIn) return;
         if (!user?.id) return;
 
         //console.log("querying for messages", user.id);
@@ -157,7 +159,7 @@ const Messages = () => {
                 unsubscribeGetMessages();
             }
         };
-    }, [user?.id, chatCircle]);
+    }, [signInStatus.signedIn, user?.id, chatCircle]);
 
     return (
         user?.id && (

@@ -13,7 +13,7 @@ const configs = {
         },
         imageKitEndpoint: "https://ik.imagekit.io/circles/",
         googleId: "174159362871-juqvepnc0ej66ggdmfpbrt2483jtbkjj.apps.googleusercontent.com",
-        logLevel: 0, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
+        logLevel: -1, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",

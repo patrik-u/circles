@@ -192,6 +192,12 @@ export const lng = (item) => {
     return 0;
 };
 
+export const getLocation = (item) => {
+    let loc = item?.activity?.location ? item?.activity?.location : item?.base;
+    if (!loc) return null;
+    return getLatlng(loc);
+};
+
 export const isToday = (date) => {
     let currentDate = new Date().setHours(0, 0, 0, 0);
     let compareDate = new Date(date).setHours(0, 0, 0, 0);

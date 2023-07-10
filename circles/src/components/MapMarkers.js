@@ -1,7 +1,18 @@
 //#region imports
 import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes, isCircleActive, isActiveInVideoConference } from "components/Helpers";
+import {
+    lat,
+    lng,
+    getLngLatArray,
+    getImageKitUrl,
+    log,
+    getCircleTypes,
+    isWithinMinutes,
+    isCircleActive,
+    isActiveInVideoConference,
+    getLocation,
+} from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle, previewCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
@@ -35,7 +46,10 @@ export const ConnectionsEdges = () => {
                     //log(JSON.stringify(x, null, 2), 2, true);
                     return false;
                 }
-                if (x.source.base && x.target.base && filteredCircles.some((a) => a.id === x.source.id) && filteredCircles.some((a) => a.id === x.target.id)) {
+                let sourceLoc = getLocation(x.source);
+                let targetLoc = getLocation(x.target);
+
+                if (sourceLoc && targetLoc && filteredCircles.some((a) => a.id === x.source.id) && filteredCircles.some((a) => a.id === x.target.id)) {
                     return true;
                 }
                 return false;
@@ -46,7 +60,7 @@ export const ConnectionsEdges = () => {
                     properties: { circle_types: x.circle_types },
                     geometry: {
                         type: "LineString",
-                        coordinates: [getLngLatArray(x.source.base), getLngLatArray(x.target.base)],
+                        coordinates: [getLngLatArray(getLocation(x.source)), getLngLatArray(getLocation(x.target))],
                     },
                 };
             });
@@ -77,18 +91,18 @@ export const ConnectionsEdges = () => {
 };
 
 export const CircleMapEdges = ({ circle, circles }) => {
-    if (!circle?.base) return null;
+    if (!getLocation(circle)) return null;
 
     const getFeatures = () => {
         return circles
-            .filter((x) => x.base)
+            .filter((x) => getLocation(x))
             .map((x) => {
                 return {
                     type: "Feature",
                     properties: { circle_types: getCircleTypes(circle.type, x.type) },
                     geometry: {
                         type: "LineString",
-                        coordinates: [getLngLatArray(circle.base), getLngLatArray(x.base)],
+                        coordinates: [getLngLatArray(getLocation(circle)), getLngLatArray(getLocation(x))],
                     },
                 };
             });
@@ -145,13 +159,14 @@ export const CircleMapMarker = ({ circle }) => {
         }
     };
 
+    const loc = getLocation(circle);
     return (
-        circle?.base && (
+        loc && (
             <Marker
                 key={circle.id}
                 offset={[0, -24]}
-                latitude={lat(circle.base)}
-                longitude={lng(circle.base)}
+                latitude={lat(loc)}
+                longitude={lng(loc)}
                 className="circle-marker"
                 onClick={() => previewCircle(circle, setToggleAbout)}
             >
@@ -197,7 +212,7 @@ export const CirclesMapMarkers = ({ circles }) => {
     return (
         <>
             {circles
-                ?.filter((item) => item.base)
+                ?.filter((item) => getLocation(item))
                 .map((item) => (
                     <CircleMapMarker key={item.id} circle={item} />
                 ))}

@@ -880,8 +880,14 @@ app.put("/circles/:id/activity", auth, async (req, res) => {
             // user is updating their own activity status
             circleData.activity.last_online = new Date();
             circleData.activity.active_in_video_conference = req.body.active_in_video_conference ? new Date() : false;
-            circleData.activity.active_in_circle = req.body.active_in_circle ?? false;
-            circleData.activity.location = req.body.location ?? false;
+            let activeInCircle = req.body.active_in_circle;
+            if (activeInCircle) {
+                activeInCircle.activity = {}; // to avoid recursion
+            }
+            circleData.activity.active_in_circle = activeInCircle ?? false;
+            if (req.body.location) {
+                circleData.activity.location = req.body.location;
+            }
         } else {
             // user is visiting a circle and updating its activity status
             if (req.body.active_in_video_conference) {

@@ -136,112 +136,134 @@ export const Circle = ({ isGlobal }) => {
     useEffect(() => {
         if (!circleId && !isGlobal) return;
 
+        // get all circles that has recently been active in circle
+        const lastXMinutes = new Date();
+        lastXMinutes.setMinutes(lastXMinutes.getMinutes() - 60 * 24); // last 24 hours
+
         // show all connections on the map
         // subscribe to connected circles
         let q = null;
         let everything = circleId === "global" || isGlobal;
         if (everything) {
-            q = query(collection(db, "connections"));
+            q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
         } else {
-            q = query(collection(db, "connections"), where("circle_ids", "array-contains", circleId));
+            q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId), where("activity.last_activity", ">=", lastXMinutes));
         }
         let unsubscribeGetCircles = onSnapshot(q, (snap) => {
-            let circleConnections = snap.docs.map((doc) => {
+            let circles = snap.docs.map((doc) => {
                 return { id: doc.id, ...doc.data() };
             });
-            // merge circle connections of the same type
-            let connections = [];
-            if (Array.isArray(circleConnections)) {
-                let seen = {};
-                connections = everything
-                    ? circleConnections?.filter((entry) => {
-                          if (!entry.source || !entry.target) {
-                              //log(entry.id, 2, true); // due to some unknown bug there was a couple of connections missing source or target
-                              return false;
-                          }
-                          let id = entry.source.id > entry.target.id ? entry.source.id + entry.target.id : entry.target.id + entry.source.id;
-                          if (seen.hasOwnProperty(id)) {
-                              // yes, grab it and add this data to it
-                              let previous = seen[id];
-                              previous.type.push(entry.type);
-                              // don't keep this entry, we've merged it into the previous one
-                              return false;
-                          }
-                          // entry.type probably isn't an array; make it one for consistency
-                          if (!Array.isArray(entry.type)) {
-                              entry.type = [entry.type];
-                          }
 
-                          // remember that we've seen it
-                          seen[id] = entry;
-
-                          return true;
-                      })
-                    : circleConnections?.filter((entry) => {
-                          var previous;
-                          // wether to use source or target depends
-                          let parentCircleIsSource = entry.source.id === circleId;
-                          let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
-                          // have we seen this label before?
-                          if (seen.hasOwnProperty(mergeId)) {
-                              // yes, grab it and add this data to it
-                              previous = seen[mergeId];
-                              previous.type.push(entry.type);
-                              // don't keep this entry, we've merged it into the previous one
-                              return false;
-                          }
-                          // entry.type probably isn't an array; make it one for consistency
-                          if (!Array.isArray(entry.type)) {
-                              entry.type = [entry.type];
-                          }
-                          entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
-                          // remember that we've seen it
-                          seen[mergeId] = entry;
-                          return true;
-                      });
-            }
-
-            setCircleConnections(connections);
             let startDate = getDateWithoutTime(); // today
-
-            if (everything) {
-                let seen = {};
-                let everyCircle = [];
-                connections?.forEach((entry) => {
-                    if (!seen.hasOwnProperty(entry.source.id)) {
-                        everyCircle.push(entry.source);
-                        seen[entry.source.id] = true;
+            setCircles(
+                circles.filter((x) => {
+                    // remove old events
+                    if (x.type === "event") {
+                        return fromFsDate(x.starts_at) > startDate;
+                    } else {
+                        return true;
                     }
-                    if (!seen.hasOwnProperty(entry.target.id)) {
-                        everyCircle.push(entry.target);
-                        seen[entry.target.id] = true;
-                    }
-                });
-                setCircles(
-                    everyCircle.filter((x) => {
-                        // remove old events
-                        if (x.type === "event") {
-                            return fromFsDate(x.starts_at) > startDate;
-                        } else {
-                            return true;
-                        }
-                    })
-                );
-            } else {
-                setCircles(
-                    connections
-                        ?.map((x) => x.display_circle)
-                        .filter((x) => {
-                            // remove old events
-                            if (x.type === "event") {
-                                return fromFsDate(x.starts_at) > startDate;
-                            } else {
-                                return true;
-                            }
-                        })
-                );
-            }
+                })
+            );
         });
+
+        // let unsubscribeGetCircles = onSnapshot(q, (snap) => {
+        //     let circleConnections = snap.docs.map((doc) => {
+        //         return { id: doc.id, ...doc.data() };
+        //     });
+        //     // merge circle connections of the same type
+        //     let connections = [];
+        //     if (Array.isArray(circleConnections)) {
+        //         let seen = {};
+        //         connections = everything
+        //             ? circleConnections?.filter((entry) => {
+        //                   if (!entry.source || !entry.target) {
+        //                       //log(entry.id, 2, true); // due to some unknown bug there was a couple of connections missing source or target
+        //                       return false;
+        //                   }
+        //                   let id = entry.source.id > entry.target.id ? entry.source.id + entry.target.id : entry.target.id + entry.source.id;
+        //                   if (seen.hasOwnProperty(id)) {
+        //                       // yes, grab it and add this data to it
+        //                       let previous = seen[id];
+        //                       previous.type.push(entry.type);
+        //                       // don't keep this entry, we've merged it into the previous one
+        //                       return false;
+        //                   }
+        //                   // entry.type probably isn't an array; make it one for consistency
+        //                   if (!Array.isArray(entry.type)) {
+        //                       entry.type = [entry.type];
+        //                   }
+
+        //                   // remember that we've seen it
+        //                   seen[id] = entry;
+
+        //                   return true;
+        //               })
+        //             : circleConnections?.filter((entry) => {
+        //                   var previous;
+        //                   // wether to use source or target depends
+        //                   let parentCircleIsSource = entry.source.id === circleId;
+        //                   let mergeId = parentCircleIsSource ? entry.target.id : entry.source.id;
+        //                   // have we seen this label before?
+        //                   if (seen.hasOwnProperty(mergeId)) {
+        //                       // yes, grab it and add this data to it
+        //                       previous = seen[mergeId];
+        //                       previous.type.push(entry.type);
+        //                       // don't keep this entry, we've merged it into the previous one
+        //                       return false;
+        //                   }
+        //                   // entry.type probably isn't an array; make it one for consistency
+        //                   if (!Array.isArray(entry.type)) {
+        //                       entry.type = [entry.type];
+        //                   }
+        //                   entry.display_circle = parentCircleIsSource ? entry.target : entry.source;
+        //                   // remember that we've seen it
+        //                   seen[mergeId] = entry;
+        //                   return true;
+        //               });
+        //     }
+
+        //     setCircleConnections(connections);
+        //     let startDate = getDateWithoutTime(); // today
+
+        //     if (everything) {
+        //         let seen = {};
+        //         let everyCircle = [];
+        //         connections?.forEach((entry) => {
+        //             if (!seen.hasOwnProperty(entry.source.id)) {
+        //                 everyCircle.push(entry.source);
+        //                 seen[entry.source.id] = true;
+        //             }
+        //             if (!seen.hasOwnProperty(entry.target.id)) {
+        //                 everyCircle.push(entry.target);
+        //                 seen[entry.target.id] = true;
+        //             }
+        //         });
+        //         setCircles(
+        //             everyCircle.filter((x) => {
+        //                 // remove old events
+        //                 if (x.type === "event") {
+        //                     return fromFsDate(x.starts_at) > startDate;
+        //                 } else {
+        //                     return true;
+        //                 }
+        //             })
+        //         );
+        //     } else {
+        //         setCircles(
+        //             connections
+        //                 ?.map((x) => x.display_circle)
+        //                 .filter((x) => {
+        //                     // remove old events
+        //                     if (x.type === "event") {
+        //                         return fromFsDate(x.starts_at) > startDate;
+        //                     } else {
+        //                         return true;
+        //                     }
+        //                 })
+        //         );
+        //     }
+        // });
 
         return () => {
             if (unsubscribeGetCircles) {
