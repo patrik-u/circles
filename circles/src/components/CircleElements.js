@@ -321,7 +321,8 @@ export const NotificationsBell = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const iconSize = isMobile ? 20 : 26;
+    //const iconSize = isMobile ? 20 : 26;
+    const iconSize = 20;
     const iconSizePx = iconSize + "px";
 
     const [notificationSetting, setNotificationSetting] = useState(null);
