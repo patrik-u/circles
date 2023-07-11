@@ -393,6 +393,8 @@ export const Circle = ({ isGlobal }) => {
                             <FloatingAddButton />
                         </>
                     )} */}
+
+                    {/* <FloatingAddButton /> */}
                 </Flex>
                 {(!isPinned || isMobile) && (
                     <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={isMobile ? "full" : "xs"} closeOnOverlayClick={!isPinned}>

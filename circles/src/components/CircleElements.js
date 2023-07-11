@@ -241,7 +241,7 @@ export const FloatingAddButton = () => {
     const size = isMobile ? "46px" : "54px";
 
     return (
-        <VStack position="fixed" right="18px" bottom={isMobile ? "80px" : "30px"} zIndex="50">
+        <VStack position="fixed" right="18px" bottom={isMobile ? "100px" : "100px"} zIndex="50">
             <Flex
                 backgroundColor="#c242bbdd"
                 _hover={{ backgroundColor: "#e94ce1dd" }}

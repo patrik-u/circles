@@ -729,13 +729,13 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 <Popover trigger="click" gutter="0" enabled={false}>
                                     {user && (
                                         <PopoverTrigger>
-                                            <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
+                                            <Box position="absolute" top="18px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
                                                 <HiOutlineEmojiHappy size="30px" color={user ? "#ffffff" : "#e6e6e6"} />
                                             </Box>
                                         </PopoverTrigger>
                                     )}
                                     {!user && (
-                                        <Box position="absolute" top="15px" right="10px" width="30px" height="30px" flexShrink="0">
+                                        <Box position="absolute" top="18px" right="10px" width="30px" height="30px" flexShrink="0">
                                             <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
                                         </Box>
                                     )}
@@ -747,7 +747,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                     </PopoverContent>
                                 </Popover>
                                 {isMobile && (
-                                    <Box position="absolute" top="18px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
+                                    <Box position="absolute" top="21px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
                                         <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
                                     </Box>
                                 )}
