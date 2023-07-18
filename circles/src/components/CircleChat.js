@@ -42,7 +42,7 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom } from "components/Atoms";
 //#endregion
 
 export const CircleChat = ({ item, embeddedChatHeight }) => {
@@ -68,6 +68,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
     const [, setCaretIndex] = useState(0);
     const textAreaRef = useRef();
     const { windowWidth, windowHeight } = useWindowDimensions();
+    const [circles] = useAtom(circlesAtom);
 
     useEffect(() => {
         log("Chat.useEffect 1", -1);
@@ -168,6 +169,17 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
             const options = { target: "_blank" };
             let formattedMessage = message.has_links && !isMobile ? linkifyHtml(message.message, options) : message.message;
             let isSelf = message.user?.id === userId;
+
+            // get fresh user data
+            if (isSelf) {
+                message.user = user;
+            } else {
+                let messageUserId = message.user?.id;
+                let onlineUser = circles?.find((c) => c.id === messageUserId);
+                if (onlineUser) {
+                    message.user = onlineUser;
+                }
+            }
 
             if (previousMessage?.user?.id === message.user?.id) {
                 if (previousMessage) {
@@ -451,7 +463,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                     >
                                                         {item.isLast ? (
                                                             <Box align="top" width="33px" height="37.5px" flexShrink="0">
-                                                                <CirclePicture circle={item.user} size={33} hasPopover={true} />
+                                                                <CirclePicture circle={item.user} size={33} hasPopover={true} inChat={true} />
                                                             </Box>
                                                         ) : (
                                                             <Box className="circle-chat-picture" flexShrink="0" />
@@ -475,12 +487,8 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                     overflow="hidden"
                                                                 >
                                                                     <Box
-                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
-                                                                            item.isLast ? "10px" : "2px"
-                                                                        }`}
-                                                                        bgGradient={
-                                                                            item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"
-                                                                        }
+                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${item.isLast ? "10px" : "2px"}`}
+                                                                        bgGradient={item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"}
                                                                         color={item.user.id !== user?.id ? "black" : "black"}
                                                                         marginRight="auto"
                                                                         overflow="hidden"
@@ -488,13 +496,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                     >
                                                                         {item.reply_to && (
                                                                             <Box padding="11px 11px 0px 11px">
-                                                                                <VStack
-                                                                                    align="left"
-                                                                                    spacing="0px"
-                                                                                    flexGrow="1"
-                                                                                    borderLeft="3px solid #7179a9"
-                                                                                    paddingLeft="5px"
-                                                                                >
+                                                                                <VStack align="left" spacing="0px" flexGrow="1" borderLeft="3px solid #7179a9" paddingLeft="5px">
                                                                                     <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                                                         {item.reply_to.user.name}
                                                                                     </Text>
@@ -512,10 +514,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                                     fontSize="14px"
                                                                                     maxWidth="290px"
                                                                                 >
-                                                                                    <div
-                                                                                        className="embedChatHtmlContent"
-                                                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                                                    />
+                                                                                    <div className="embedChatHtmlContent" dangerouslySetInnerHTML={{ __html: item.formattedMessage }} />
                                                                                 </Box>
                                                                             )}
 
@@ -563,13 +562,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                             </PopoverTrigger>
 
                                                             <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
-                                                                <Box
-                                                                    zIndex="160"
-                                                                    height="12px"
-                                                                    backgroundColor="transparent"
-                                                                    align="center"
-                                                                    position="relative"
-                                                                >
+                                                                <Box zIndex="160" height="12px" backgroundColor="transparent" align="center" position="relative">
                                                                     <HStack
                                                                         align="center"
                                                                         position="absolute"
@@ -699,16 +692,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 </Flex>
                             )}
 
-                            <Box
-                                align="flex-end"
-                                boxSizing="border-box"
-                                height="60px"
-                                paddingTop="15px"
-                                paddingLeft="5px"
-                                paddingRight="10px"
-                                marginTop="auto"
-                                position="relative"
-                            >
+                            <Box align="flex-end" boxSizing="border-box" height="60px" paddingTop="15px" paddingLeft="5px" paddingRight="10px" marginTop="auto" position="relative">
                                 <Textarea
                                     ref={textAreaRef}
                                     id="message"

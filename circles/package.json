@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.4.1",
+    "version": "1.4.7",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -39,7 +39,7 @@
         "react-error-boundary": "^3.1.4",
         "react-force-graph": "^1.41.15",
         "react-i18next": "^11.15.4",
-        "react-icons": "^4.6.0",
+        "react-icons": "^4.10.1",
         "react-instantsearch-hooks-web": "^6.38.1",
         "react-map-gl": "^7.0.16",
         "react-onesignal": "^2.0.4",

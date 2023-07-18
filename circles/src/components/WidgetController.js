@@ -64,6 +64,7 @@ import {
     toggleSettingsAtom,
     toggleWidgetEventAtom,
     inVideoConferenceAtom,
+    newCirclePopupAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -77,6 +78,7 @@ import CircleChat from "components/CircleChat";
 import CircleVideo from "components/CircleVideo";
 import CircleAbout from "components/CircleAbout";
 import CircleSettings from "components/settings/CircleSettings";
+import { DisplayModeButtons } from "./CircleElements";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
@@ -95,6 +97,8 @@ const WidgetController = () => {
     const videoMinimized = useMemo(() => {
         return !toggledWidgets.includes("video") && inVideoConference;
     }, [toggledWidgets, inVideoConference]);
+    const [, setNewCirclePopup] = useAtom(newCirclePopupAtom);
+
     // get preview circle from search params
     //const previewCircleId = searchParams.get("preview");
 
@@ -214,6 +218,10 @@ const WidgetController = () => {
         return true;
     };
 
+    const openCreateCircle = () => {
+        setNewCirclePopup({ circle });
+    };
+
     // useEffect(() => {
     //     console.log("previewing circle", previewCircleId);
     //     if (!previewCircleId) {
@@ -254,6 +262,13 @@ const WidgetController = () => {
                                 {component.charAt(0).toUpperCase() + component.slice(1)}
                             </button>
                         ))}
+                    <button
+                        class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark
+                                }`}
+                        onClick={() => openCreateCircle()}
+                    >
+                        + Create
+                    </button>
                 </div>
             </div>
 
@@ -273,16 +288,17 @@ const WidgetController = () => {
                         <CircleVideo isMinimized={videoMinimized} />
                     </div>
                 )}
-                {!(toggledWidgets.includes("video") || inVideoConference) && <div class="flex flex-col flex-grow order-2"></div>}
+                {!(isMobile || toggledWidgets.includes("video") || toggledWidgets.includes("settings") || inVideoConference) && <div class="flex flex-col flex-grow order-2"></div>}
 
                 {toggledWidgets.includes("settings") && (
-                    <div class="flex flex-col order-3">
+                    <div class="flex flex-col flex-grow order-2">
                         <CircleSettings onClose={onSettingsClose} />
                     </div>
                 )}
 
                 {toggledWidgets.includes("calendar") && <div class={getWidgetClass("calendar")}></div>}
             </Box>
+            <DisplayModeButtons position={isMobile ? "static" : "absolute"} />
         </div>
     );
 };

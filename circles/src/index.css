@@ -10,8 +10,7 @@
 
 body {
     margin: 0;
-    font-family: "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
+    font-family: "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     width: 100%;
@@ -290,10 +289,10 @@ code {
 }
 
 .social-media-icon {
-    width: 26px;
-    height: 26px;
-    min-width: 26px;
-    min-height: 26px;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
 }
 
 .sectionContent {

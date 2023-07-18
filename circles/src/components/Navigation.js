@@ -45,7 +45,7 @@ export const openCircle = (navigate, circle, section) => {
     navigate(section ? path[section] : path.home);
 };
 
-export const previewCircle = (circle, setToggleAbout) => {
+export const openAboutCircle = (circle, setToggleAbout) => {
     if (!circle?.id) return;
     setToggleAbout(circle);
 };

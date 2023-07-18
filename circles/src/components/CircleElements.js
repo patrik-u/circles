@@ -1,5 +1,5 @@
 //#region imports
-import React, { forwardRef, useState, useEffect, useRef } from "react";
+import React, { forwardRef, useState, useEffect, useRef, useMemo } from "react";
 import {
     Flex,
     Box,
@@ -24,6 +24,7 @@ import {
     Fade,
     useDisclosure,
     useOutsideClick,
+    Tooltip,
 } from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
@@ -40,8 +41,12 @@ import {
     log,
     getMetaImage,
     isActiveInVideoConference,
+    getDistanceString,
+    getLatlng,
+    isCircleActive,
+    isWithinActiveThreshold,
 } from "components/Helpers";
-import { routes, openCircle, previewCircle } from "components/Navigation";
+import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine, RiShareLine, RiLiveFill } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
@@ -60,6 +65,9 @@ import {
     connectPopupAtom,
     isConnectingAtom,
     toggleAboutAtom,
+    focusOnMapItemAtom,
+    userLocationAtom,
+    showHistoricCirclesAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -69,7 +77,10 @@ import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { TbChartCircles } from "react-icons/tb";
 import DonateToHolon from "components/Holons/DonateToHolon";
-import { MdOutlineClose } from "react-icons/md";
+import { MdOutlineClose, MdHistory } from "react-icons/md";
+import { RiMapPinFill } from "react-icons/ri";
+import { BsIncognito } from "react-icons/bs";
+import { getPreciseDistance } from "geolib";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -259,7 +270,66 @@ export const FloatingAddButton = () => {
     );
 };
 
-export const FavoriteButton = ({ circle }) => {
+export const LocationButton = ({ circle, inPreview, ...props }) => {
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [userLocation] = useAtom(userLocationAtom);
+    const [user] = useAtom(userAtom);
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+
+    const circleLocation = useMemo(() => {
+        let activeLocation = circle?.activity?.location && isWithinActiveThreshold(circle?.activity?.last_activity);
+        let loc = activeLocation ? circle?.activity?.location : circle?.base;
+        if (!loc) return null;
+        return getLatlng(loc);
+    }, [circle?.activity?.location, circle?.activity?.last_activity, circle?.base]);
+
+    const distance = useMemo(() => {
+        if (circleLocation === null) return null;
+        if (circle?.id === user?.id) return null;
+        if (!userLocation?.latitude || !userLocation.longitude) return null;
+
+        var preciseDistance = getPreciseDistance(userLocation, circleLocation);
+        return preciseDistance;
+    }, [circleLocation, userLocation, circle?.id, user?.id]);
+
+    if (circleLocation === null) return;
+
+    return (
+        <Tooltip label="Location - click to go to circle location" aria-label="A tooltip">
+            <Flex
+                height={iconSize + 8 + "px"}
+                width={distance ? "auto" : iconSize + 8 + "px"}
+                borderRadius="20px"
+                paddingLeft={distance ? "2px" : "0px"}
+                paddingRight={distance ? "5px" : "0px"}
+                //backgroundColor="#c242bb"
+                backgroundColor={inPreview ? "#f4f4f4dd" : "none"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                align="center"
+                flexDirection="row"
+                justifyContent="center"
+                cursor="pointer"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    setFocusOnMapItem({ item: circle });
+                    openAboutCircle(circle, setToggleAbout);
+                }}
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color="#333" as={RiMapPinFill} />
+                {distance !== undefined && distance > 0 && (
+                    <Text fontWeight="700" color="#333" fontSize="12px" marginLeft="2px">
+                        {getDistanceString(distance)}
+                    </Text>
+                )}
+            </Flex>
+        </Tooltip>
+    );
+};
+
+export const FavoriteButton = ({ circle, inPreview, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -299,25 +369,27 @@ export const FavoriteButton = ({ circle }) => {
     if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
     return (
-        <Flex
-            position="relative"
-            width={iconSize + 8 + "px"}
-            height={iconSize + 8 + "px"}
-            backgroundColor="#f4f4f4dd"
-            _hover={{ backgroundColor: buttonHighlight }}
-            borderRadius="50%"
-            justifyContent="center"
-            alignItems="center"
-            onClick={toggleFavorite}
-            cursor="pointer"
-        >
-            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={favoriteSetting === true ? AiFillStar : AiOutlineStar} />
-        </Flex>
+        <Tooltip label="Favorite - add circle to favorites" aria-label="A tooltip">
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                backgroundColor={inPreview ? "#f4f4f4dd" : "none"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                onClick={toggleFavorite}
+                cursor="pointer"
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={favoriteSetting === true ? AiFillStar : AiOutlineStar} />
+            </Flex>
+        </Tooltip>
     );
 };
 
-export const NotificationsBell = () => {
-    const [circle] = useAtom(circleAtom);
+export const NotificationsBell = ({ circle, inPreview, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -358,20 +430,23 @@ export const NotificationsBell = () => {
     if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
     return (
-        <Flex
-            position="relative"
-            width={iconSize + 8 + "px"}
-            height={iconSize + 8 + "px"}
-            backgroundColor="#f4f4f4dd"
-            _hover={{ backgroundColor: buttonHighlight }}
-            borderRadius="50%"
-            justifyContent="center"
-            alignItems="center"
-            onClick={toggleNotifications}
-            cursor="pointer"
-        >
-            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert} />
-        </Flex>
+        <Tooltip label="Notification - turn notifications from this circle on/off" aria-label="A tooltip">
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                backgroundColor={inPreview ? "#f4f4f4dd" : "none"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                onClick={toggleNotifications}
+                cursor="pointer"
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={notificationSetting === "off" ? HiOutlineBellSlash : HiOutlineBellAlert} />
+            </Flex>
+        </Tooltip>
     );
 };
 
@@ -453,60 +528,57 @@ export const QuickLinks = ({ circle }) => {
     if (!circle?.social_media) return null;
 
     return (
-        <Flex flexDirection="row" flexWrap="wrap" gap="6px">
+        <Flex flexDirection="row" flexWrap="wrap" gap="6px" maxWidth="125px" marginTop="5px" height="25px" overflow="hidden">
             {circle.social_media.facebook && (
                 <Link href={circle.social_media.facebook} target="_blank">
-                    <Image src={"/social_facebook26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_facebook20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.twitter && (
                 <Link href={circle.social_media.twitter} target="_blank">
-                    <Image src={"/social_twitter26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_twitter20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.instagram && (
                 <Link href={circle.social_media.instagram} target="_blank">
-                    <Image src={"/social_instagram26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_instagram20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.youtube && (
                 <Link href={circle.social_media.youtube} target="_blank">
-                    <Image src={"/social_youtube26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_youtube20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.tiktok && (
                 <Link href={circle.social_media.tiktok} target="_blank">
-                    <Image src={"/social_tiktok26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_tiktok20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.linkedin && (
                 <Link href={circle.social_media.linkedin} target="_blank">
-                    <Image src={"/social_linkedin26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_linkedin20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.medium && (
                 <Link href={circle.social_media.medium} target="_blank">
-                    <Image src={"/social_medium26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_medium20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.link1 && (
                 <Link href={circle.social_media.link1} target="_blank">
-                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_link20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.link2 && (
                 <Link href={circle.social_media.link2} target="_blank">
-                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_link20.png"} className="social-media-icon" />
                 </Link>
             )}
             {circle.social_media.link3 && (
                 <Link href={circle.social_media.link3} target="_blank">
-                    <Image src={"/social_link26x26.png"} className="social-media-icon" />
+                    <Image src={"/social_link20.png"} className="social-media-icon" />
                 </Link>
             )}
-            <Link href={location.pathname} target="_blank">
-                <Image src={"/social_codo26x26.png"} className="social-media-icon" />
-            </Link>
         </Flex>
     );
 };
@@ -628,12 +700,7 @@ export const CircleRightPanel = ({ section }) => {
     switch (section) {
         case "home":
             return (
-                <Box
-                    flex={isMobile ? "initial" : "1"}
-                    order={isMobile ? "0" : "3"}
-                    maxWidth={isMobile ? "none" : "270px"}
-                    paddingTop={isMobile ? "0px" : "10px"}
-                >
+                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -645,12 +712,7 @@ export const CircleRightPanel = ({ section }) => {
         case "chat":
         case "circles":
             return isMobile ? null : (
-                <Box
-                    flex={isMobile ? "initial" : "1"}
-                    order={isMobile ? "0" : "3"}
-                    maxWidth={isMobile ? "none" : "270px"}
-                    paddingTop={isMobile ? "0px" : "10px"}
-                >
+                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -663,69 +725,88 @@ export const CircleRightPanel = ({ section }) => {
 export const DisplayModeButtons = ({ ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [displayMode, setDisplayMode] = useAtom(displayModeAtom);
-    const iconCircleSize = isMobile ? "38px" : "48px";
-    const iconSize = isMobile ? "22px" : "28px";
+    const iconCircleSize = isMobile ? "38px" : "38px";
+    const iconSize = isMobile ? "22px" : "22px";
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const [currentIncognitoMode, setCurrentIncognitoMode] = useState(null);
+    const incognitoMode = useMemo(() => {
+        if (currentIncognitoMode !== null) {
+            return currentIncognitoMode;
+        } else {
+            return userData?.incognito;
+        }
+    }, [currentIncognitoMode, userData?.incognito]);
+    const [showHistoricCircles, setShowHistoricCircles] = useAtom(showHistoricCirclesAtom);
+
+    if (!user) return null;
+
+    const toggleIncognitoMode = () => {
+        let newIncognitoMode = !incognitoMode;
+        // update user data
+        axios.put(`/circles/${user.id}`, {
+            circlePrivateData: {
+                incognito: !incognitoMode,
+            },
+        });
+        // clear current activity
+        if (newIncognitoMode) {
+            axios.delete(`/circles/${user.id}/activity`);
+        }
+        setCurrentIncognitoMode(newIncognitoMode);
+    };
+
+    const toggleShowHistoricCircles = () => {
+        setShowHistoricCircles(!showHistoricCircles);
+    };
 
     return (
-        <VStack
-            position="absolute"
-            right={isMobile ? (displayMode === displayModes.map ? "40px" : "10px") : "12px"}
-            bottom={isMobile ? "10px" : displayMode === displayModes.map ? "26px" : "12px"}
+        <Flex
+            gap="5px"
+            padding="5px"
+            // right={isMobile ? (displayMode === displayModes.map ? "40px" : "10px") : "60px"}
+            bottom={isMobile ? "0px" : "5px"}
+            zIndex="100"
+            width="100%"
+            align="center"
+            justifyContent="center"
             {...props}
         >
-            <Flex
-                backgroundColor="#f4f4f4dd"
-                _hover={{ backgroundColor: buttonHighlight }}
-                width={iconCircleSize}
-                height={iconCircleSize}
-                borderRadius="50%"
-                cursor="pointer"
-                alignItems="center"
-                justifyContent="center"
-                onClick={() => setDisplayMode(displayModes.default)}
-            >
-                <Icon width={iconSize} height={iconSize} color="black" as={GrGallery} cursor="pointer" />
-            </Flex>
-            <Flex
-                backgroundColor="#f4f4f4dd"
-                _hover={{ backgroundColor: buttonHighlight }}
-                width={iconCircleSize}
-                height={iconCircleSize}
-                borderRadius="50%"
-                cursor="pointer"
-                alignItems="center"
-                justifyContent="center"
-                onClick={() => setDisplayMode(displayModes.map)}
-            >
-                <Icon width={iconSize} height={iconSize} color="black" as={FaMapMarkedAlt} cursor="pointer" />
-            </Flex>
-            <Flex
-                backgroundColor="#f4f4f4dd"
-                _hover={{ backgroundColor: buttonHighlight }}
-                width={iconCircleSize}
-                height={iconCircleSize}
-                borderRadius="50%"
-                cursor="pointer"
-                alignItems="center"
-                justifyContent="center"
-                onClick={() => setDisplayMode(displayModes.video)}
-            >
-                <Icon width={iconSize} height={iconSize} color="black" as={FaVideo} cursor="pointer" />
-            </Flex>
-            <Flex
-                backgroundColor="#f4f4f4dd"
-                _hover={{ backgroundColor: buttonHighlight }}
-                width={iconCircleSize}
-                height={iconCircleSize}
-                borderRadius="50%"
-                cursor="pointer"
-                alignItems="center"
-                justifyContent="center"
-                onClick={() => setDisplayMode(displayModes.holon)}
-            >
-                <Icon width={iconSize} height={iconSize} color="black" as={TbChartCircles} cursor="pointer" />
-            </Flex>
-        </VStack>
+            <Tooltip pointerEvents="auto" label="Incognito mode - you are not seen as online and your active location is not shown" aria-label="A tooltip">
+                <Flex
+                    // backgroundColor="#f4f4f4"
+                    backgroundColor={incognitoMode ? "#314b8f" : "#3c3d42"}
+                    _hover={{ backgroundColor: "#3175ad" }}
+                    width={iconCircleSize}
+                    height={iconCircleSize}
+                    borderRadius="50%"
+                    cursor="pointer"
+                    alignItems="center"
+                    justifyContent="center"
+                    pointerEvents="auto"
+                    onClick={() => toggleIncognitoMode()}
+                >
+                    <Icon width={iconSize} height={iconSize} color="white" as={BsIncognito} cursor="pointer" />
+                </Flex>
+            </Tooltip>
+            <Tooltip pointerEvents="auto" label="Show historic - also show circles not currently active" aria-label="A tooltip">
+                <Flex
+                    // backgroundColor="#f4f4f4"
+                    backgroundColor={showHistoricCircles ? "#314b8f" : "#3c3d42"}
+                    _hover={{ backgroundColor: "#3175ad" }}
+                    width={iconCircleSize}
+                    height={iconCircleSize}
+                    borderRadius="50%"
+                    cursor="pointer"
+                    alignItems="center"
+                    justifyContent="center"
+                    pointerEvents="auto"
+                    onClick={() => toggleShowHistoricCircles()}
+                >
+                    <Icon width={iconSize} height={iconSize} color="white" as={MdHistory} cursor="pointer" />
+                </Flex>
+            </Tooltip>
+        </Flex>
     );
 };
 
@@ -773,6 +854,7 @@ export const CirclePicture = ({
     parentCircleOffset = 0,
     isActive = true,
     showIfInVideoSession = true,
+    inChat = false,
     ...props
 }) => {
     const navigate = useNavigateNoUpdates();
@@ -808,13 +890,13 @@ export const CirclePicture = ({
     const onClick = () => {
         if (disableClick) return;
 
-        previewCircle(circle, setToggleAbout);
+        openAboutCircle(circle, setToggleAbout);
         //openCircle(navigate, circle);
     };
 
     const onParentClick = () => {
         if (disableClick) return;
-        previewCircle(circle?.parent_circle, setToggleAbout);
+        openAboutCircle(circle?.parent_circle, setToggleAbout);
         //openCircle(navigate, circle?.parent_circle);
     };
 
@@ -851,7 +933,7 @@ export const CirclePicture = ({
                     <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
                         <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
                             <PopoverArrow />
-                            <CirclePreview item={circle} />
+                            <CirclePreview item={circle} inChat={inChat} />
                         </Box>
                     </PopoverContent>
                 </Portal>
@@ -875,7 +957,7 @@ export const CirclePicture = ({
                 {...props}
             />
 
-            {circle?.parent_circle && (
+            {/* {circle?.parent_circle && (
                 <Image
                     position="absolute"
                     width={`${size / parentCircleSizeRatio}px`}
@@ -893,18 +975,10 @@ export const CirclePicture = ({
                     // filter={isActive ? "" : "grayscale(1)"}
                     opacity={isActive ? "1" : inActiveOpacity}
                 />
-            )}
+            )} */}
 
             {hasUpdates(userData, circle, "any") && (
-                <Box
-                    width={`${size / 7}px`}
-                    height={`${size / 7}px`}
-                    backgroundColor="#ff6499"
-                    borderRadius="50%"
-                    position="absolute"
-                    bottom="0px"
-                    right="0px"
-                ></Box>
+                <Box width={`${size / 7}px`} height={`${size / 7}px`} backgroundColor="#ff6499" borderRadius="50%" position="absolute" bottom="0px" right="0px"></Box>
             )}
 
             {showIfInVideoSession && isActiveInVideoConference(circle) && (
@@ -950,7 +1024,48 @@ export const LargeConnectButton = ({ circle }) => {
     );
 };
 
-export const CircleHeader = ({ circle, onClose }) => {
+export const OpenButton = ({ circle, ...props }) => {
+    const [userData] = useAtom(userDataAtom);
+    const [currentCircle] = useAtom(circleAtom);
+    const userIsConnected = useMemo(() => isConnected(userData, circle?.id), [userData, circle?.id]);
+    const navigate = useNavigateNoUpdates();
+    const height = "28px";
+
+    if (!userIsConnected) return null;
+    if (currentCircle?.id === circle?.id) return null;
+
+    return (
+        <Flex
+            height={height}
+            borderRadius="25px"
+            lineHeight="0"
+            backgroundColor="#389bf8"
+            color="white"
+            onClick={(event) => {
+                event.stopPropagation();
+                openCircle(navigate, circle);
+            }}
+            position="relative"
+            align="center"
+            justifyContent="center"
+            _hover={{
+                backgroundColor: "var(--chakra-colors-blue-600);",
+            }}
+            _active={{
+                backgroundColor: "var(--chakra-colors-blue-700);",
+            }}
+            cursor="pointer"
+            padding="0px 5px 0px 5px"
+            {...props}
+        >
+            <Text fontWeight="700" fontSize="13px">
+                {i18n.t(`Open`)}
+            </Text>
+        </Flex>
+    );
+};
+
+export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [userData] = useAtom(userDataAtom);
 
@@ -966,20 +1081,25 @@ export const CircleHeader = ({ circle, onClose }) => {
     };
 
     const iconSize = 12;
+    const spacingPx = "2px";
 
     if (!circle) return null;
 
     return (
-        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "32px" : "32px"}>
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "32px" : "32px"} {...props}>
             <Flex flexDirection="row" width="100%" align="center">
-                <Flex align="end" flexDirection="column" width="100%" position="relative">
-                    <HStack marginRight="2px">
-                        <FavoriteButton circle={circle} />
-                        {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} />}
-                        {/* <ShareButtonMenu circle={circle} /> */}
-                        {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={true} fadeBackground={false} />}
-                        {/* <CloseButton onClick={onClose} /> */}
+                <Flex flexDirection="row" width="100%" position="relative" align="center">
+                    {inChat && <Box flexGrow="1" />}
+                    <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />
+                    <LocationButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
+                    {!inChat && <Box flexGrow="1" />}
+                    <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
+                    {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}
+                    {/* <ShareButtonMenu circle={circle} /> */}
+                    {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={true} fadeBackground={false} inPreview={inPreview} marginLeft={spacingPx} />}
+                    {inPreview && <Box width="10px" />}
 
+                    {onClose && (
                         <Flex
                             width={iconSize + 8 + "px"}
                             height={iconSize + 8 + "px"}
@@ -990,10 +1110,11 @@ export const CircleHeader = ({ circle, onClose }) => {
                             alignItems="center"
                             onClick={onClose}
                             cursor="pointer"
+                            marginLeft={spacingPx}
                         >
                             <Icon width={iconSize + 8 + "px"} height={iconSize + 8 + "px"} color={"#333"} as={MdOutlineClose} cursor="pointer" />
                         </Flex>
-                    </HStack>
+                    )}
                 </Flex>
             </Flex>
         </Flex>
@@ -1122,7 +1243,7 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, hoverFadeColor = "#ddd8db", ...props }) => {
+export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, hoverFadeColor = "#ddd8db", inPreview, ...props }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);

@@ -1,5 +1,5 @@
 //#region imports
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import { log } from "components/Helpers";
 import { useAtom } from "jotai";
 import { ModalPopup } from "components/CircleElements";
@@ -12,7 +12,12 @@ export const CreateNewCirclePopup = () => {
     log("ConnectPopup.render", -1);
 
     const [newCirclePopup, setNewCirclePopup] = useAtom(newCirclePopupAtom);
+    const [mapInteract, setMapInteract] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
+
+    const toggleMapInteract = (value) => {
+        setMapInteract(value);
+    };
 
     //#region useEffects
 
@@ -37,9 +42,9 @@ export const CreateNewCirclePopup = () => {
     if (!newCirclePopup) return null;
 
     return (
-        <ModalPopup onClose={onClose} fullscreen={isMobile}>
+        <ModalPopup onClose={onClose} fullscreen={isMobile} mapInteract={mapInteract}>
             <Suspense fallback={<div></div>}>
-                <NewCircleGuide onClose={onClose} type={newCirclePopup?.type} circle={newCirclePopup?.circle} message={newCirclePopup?.message} />
+                <NewCircleGuide onClose={onClose} type={newCirclePopup?.type} circle={newCirclePopup?.circle} message={newCirclePopup?.message} toggleMapInteract={toggleMapInteract} />
             </Suspense>
         </ModalPopup>
     );

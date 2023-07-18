@@ -7,16 +7,7 @@ import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Hel
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
 import { defaultCoverHeight } from "components/Constants";
-import {
-    CircleHeader,
-    CircleCover,
-    DisplayModeButtons,
-    CircleRightPanel,
-    ConnectButton,
-    CirclePicture,
-    FloatingAddButton,
-    CircleProfilePicture,
-} from "components/CircleElements";
+import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton, CircleProfilePicture } from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import HorizontalNavigator from "components/HorizontalNavigator";
 import { useAtom } from "jotai";
@@ -34,6 +25,7 @@ import {
     navigationPanelPinnedAtom,
     circlesFilterAtom,
     inVideoConferenceAtom,
+    showHistoricCirclesAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
@@ -88,6 +80,7 @@ export const Circle = ({ isGlobal }) => {
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
+    const [showHistoricCircles, setShowHistoricCircles] = useAtom(showHistoricCirclesAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const navigate = useNavigateNoUpdates();
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -143,11 +136,21 @@ export const Circle = ({ isGlobal }) => {
         // show all connections on the map
         // subscribe to connected circles
         let q = null;
+
+        log("showHistoricCircles: " + showHistoricCircles, 0, true);
         let everything = circleId === "global" || isGlobal;
         if (everything) {
-            q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
+            if (showHistoricCircles) {
+                q = query(collection(db, "circles"));
+            } else {
+                q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
+            }
         } else {
-            q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId), where("activity.last_activity", ">=", lastXMinutes));
+            if (showHistoricCircles) {
+                q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId));
+            } else {
+                q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId), where("activity.last_activity", ">=", lastXMinutes));
+            }
         }
         let unsubscribeGetCircles = onSnapshot(q, (snap) => {
             let circles = snap.docs.map((doc) => {
@@ -270,35 +273,35 @@ export const Circle = ({ isGlobal }) => {
                 unsubscribeGetCircles();
             }
         };
-    }, [circleId, setCircles, setCircleConnections, isGlobal]);
+    }, [circleId, setCircles, setCircleConnections, isGlobal, showHistoricCircles]);
 
-    useEffect(() => {
-        log("Circle.useEffect 2", -1);
-        if (!signInStatus.signedIn) return;
-        if (!user?.id || !circleId) return;
+    // SEEN123
+    // useEffect(() => {
+    //     log("Circle.useEffect 2", -1);
+    //     if (!signInStatus.signedIn) return;
+    //     if (!user?.id || !circleId) return;
 
-        log("Circle.seen");
+    //     log("Circle.seen");
 
-        // mark circle as seen
-        axios
-            .post(`/seen`, {
-                category: "any",
-                circleId: circleId,
-            })
-            .then((x) => {})
-            .catch((error) => {});
-    }, [user?.id, circleId, signInStatus]);
+    //     // mark circle as seen
+    //     axios
+    //         .post(`/seen`, {
+    //             category: "any",
+    //             circleId: circleId,
+    //         })
+    //         .then((x) => {})
+    //         .catch((error) => {});
+    // }, [user?.id, circleId, signInStatus]);
 
     useEffect(() => {
         // set to show only active circles
-        if (!circlesFilter.only_active) {
-            setCirclesFilter({ ...circlesFilter, only_active: true });
+        if (circlesFilter.only_active !== !showHistoricCircles) {
+            setCirclesFilter({ ...circlesFilter, only_active: !showHistoricCircles });
         }
-
         if (!circlesFilter.types) return;
         let { types: _, ...newFilter } = circlesFilter;
         setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter]);
+    }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
 
     useEffect(() => {
         if (!signInStatus.signedIn && user?.id) return;
@@ -338,7 +341,6 @@ export const Circle = ({ isGlobal }) => {
             <Box flexGrow="1" position="relative">
                 {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
                 <Flex flexDirection="column" position="relative">
-                    {/* Cover image */}
                     <Box width="100%" height={coverHeight + "px"} position="relative">
                         <CircleMap height={coverHeight} />
                     </Box>

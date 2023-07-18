@@ -7,7 +7,7 @@ import { useAtom } from "jotai";
 import { uidAtom, signInStatusAtom, messageTokenAtom, userDataAtom } from "components/Atoms";
 import config from "Config";
 import OneSignal from "react-onesignal";
-import { useLocation } from "react-router-dom";
+import { useLocationNoUpdates } from "./RouterUtils";
 //#endregion
 
 // asks permission for user location and updates it
@@ -21,7 +21,7 @@ export const PushNotificationsManager = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isUserIdReported, setIsUserIdReported] = useState(false);
     const toast = useToast();
-    const location = useLocation();
+    const location = useLocationNoUpdates();
 
     //#region useEffects
 

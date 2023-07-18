@@ -11,6 +11,8 @@ import {
     focusOnMapItemAtom,
     filteredCirclesAtom,
     mapStyleAtom,
+    highlightedCircleAtom,
+    previewCircleAtom,
 } from "components/Atoms";
 import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
@@ -43,6 +45,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [locationPickerActive] = useAtom(locationPickerActiveAtom);
     const [locationPickerPosition, setLocationPickerPosition] = useAtom(locationPickerPositionAtom);
+    const [highlightedCircle] = useAtom(highlightedCircleAtom);
+    const [previewCircle] = useAtom(previewCircleAtom);
 
     //const { current: mapbox } = useMap();
     const fog = {
@@ -67,11 +71,25 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
 
         let zoom = focusOnMapItem.zoom ?? 15;
         let location = getLocation(focusOnMapItem.item);
+
         if (!location) return;
 
-        let transitionDuration = focusOnMapItem.transitionDuration ?? 500;
+        log("location: " + JSON.stringify(location));
 
-        setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom, transitionDuration });
+        let transitionSpeed = focusOnMapItem.speed ?? 3;
+        let transitionCurve = focusOnMapItem.curve ?? 2;
+
+        //setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom, transitionDuration });
+
+        // fly to location
+        const mapInstance = mapRef.current.getMap();
+        mapInstance.flyTo({
+            center: [location.longitude, location.latitude],
+            zoom: zoom,
+            speed: transitionSpeed, // make the flying slow
+            curve: transitionCurve, // change the speed at which it zooms out
+            easing: (t) => t,
+        });
 
         setFocusOnMapItem(null);
     }, [focusOnMapItem, setFocusOnMapItem, mapViewport]);
@@ -132,13 +150,15 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 projection="globe"
                 fog={fog}
             >
-                <GeolocateControl
-                    style={geolocateControlStyle}
-                    position={isMobile ? "bottom-right" : "bottom-right"}
-                    positionOptions={{ enableHighAccuracy: true }}
-                    trackUserLocation={true}
-                    auto
-                />
+                {!isMobile && (
+                    <GeolocateControl
+                        style={geolocateControlStyle}
+                        position={isMobile ? "bottom-right" : "bottom-right"}
+                        positionOptions={{ enableHighAccuracy: true }}
+                        trackUserLocation={true}
+                        auto
+                    />
+                )}
 
                 {/* <NavigationControl /> */}
 
@@ -147,6 +167,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 {circle && <CircleMarker circle={circle} />}
                 {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} />}
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
+                {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} />}
+                {previewCircle && <CircleMarker circle={previewCircle} highlighted={true} />}
 
                 {children}
             </Map>

@@ -218,7 +218,7 @@
     "Tags text event": "Which causes, topics or values are the event connected to? The first three tags will be featured in the event header.",
     "Tags text tag": "Which causes, topics or values are the tag connected to? The first three tags will be featured in the tag header.",
     "Choose user location": "Choose your location",
-    "Place user location": "Click on map to place your location. Users nearby will easier be able to discover you.",
+    "Place user location": "Click on map to place your location. This is your location shown when you are offline and when your active location isn't shown.",
     "Choose event location": "Choose event location",
     "Place event location": "Click on map to place the event location. Users nearby will easier be able to discover the event.",
     "Settings updated": "Settings updated",

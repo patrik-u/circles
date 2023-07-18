@@ -17,7 +17,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
         <Formik
             initialValues={{ type: type ?? "circle" }}
             onSubmit={async (values, actions) => {
-                console.log("Submitting");
+                // console.log("Submitting");
                 actions.setSubmitting(false);
                 let newCircle = { type: values.type, language: i18n.language, is_public: true };
                 if (circle) {
@@ -37,14 +37,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                     errors.type = i18n.t("Choose type of circle");
                 } else if (values.type === "tag" && !user?.is_admin) {
                     errors.type = "unauthorized";
-                } else if (
-                    values.type !== "tag" &&
-                    values.type !== "circle" &&
-                    values.type !== "event" &&
-                    values.type !== "room" &&
-                    values.type !== "link" &&
-                    values.type !== "post"
-                ) {
+                } else if (values.type !== "tag" && values.type !== "circle" && values.type !== "event" && values.type !== "room" && values.type !== "link" && values.type !== "post") {
                     errors.type = i18n.t("Choose valid circle type");
                 }
                 return errors;
@@ -81,7 +74,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             </VStack>
                                                         </HStack>
                                                     </Radio>
-                                                    <Radio onChange={onChange} value="room">
+                                                    {/* <Radio onChange={onChange} value="room">
                                                         <HStack spacing="10px">
                                                             <Image src="/circle-room-option.png" width="100px" height="100px" />
                                                             <VStack align="start" spacing="0px">
@@ -89,9 +82,9 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                                 <Text textAlign="left">{i18n.t("Room description")}</Text>
                                                             </VStack>
                                                         </HStack>
-                                                    </Radio>
+                                                    </Radio> */}
 
-                                                    <Radio onChange={onChange} value="post">
+                                                    {/* <Radio onChange={onChange} value="post">
                                                         <HStack spacing="10px">
                                                             <Image src="/circle-post-option.png" width="100px" height="100px" />
                                                             <VStack align="start" spacing="0px">
@@ -99,9 +92,9 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                                 <Text textAlign="left">{i18n.t("Post description")}</Text>
                                                             </VStack>
                                                         </HStack>
-                                                    </Radio>
+                                                    </Radio> */}
 
-                                                    {user?.is_admin && (
+                                                    {/* {user?.is_admin && (
                                                         <Radio onChange={onChange} value="link">
                                                             <HStack spacing="10px">
                                                                 <Image src="/circle-link-option.png" width="100px" height="100px" />
@@ -111,7 +104,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                                 </VStack>
                                                             </HStack>
                                                         </Radio>
-                                                    )}
+                                                    )} */}
 
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="tag">

@@ -1,24 +1,13 @@
 //#region imports
 import React, { lazy, Suspense, useEffect } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import {
-    lat,
-    lng,
-    getLngLatArray,
-    getImageKitUrl,
-    log,
-    getCircleTypes,
-    isWithinMinutes,
-    isCircleActive,
-    isActiveInVideoConference,
-    getLocation,
-} from "components/Helpers";
+import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes, isCircleActive, isActiveInVideoConference, getLocation } from "components/Helpers";
 import { Marker } from "react-map-gl";
-import { openCircle, previewCircle } from "components/Navigation";
+import { openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom, circlesFilterAtom } from "components/Atoms";
+import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom, circlesFilterAtom, highlightedCircleAtom, previewCircleAtom } from "components/Atoms";
 import { useNavigateNoUpdates, useQueryParamsNoUpdates } from "components/RouterUtils";
 import { useSearchParams } from "react-router-dom";
 //#endregion
@@ -137,17 +126,21 @@ export const CircleMapEdges = ({ circle, circles }) => {
     );
 };
 
-export const CircleMarker = ({ circle }) => {
-    return circle && <CircleMapMarker circle={circle} />;
+export const CircleMarker = ({ circle, highlighted }) => {
+    return circle && <CircleMapMarker circle={circle} highlighted={highlighted} />;
 };
 
 const CirclePreview = lazy(() => import("components/CirclePreview"));
 
-export const CircleMapMarker = ({ circle }) => {
+export const CircleMapMarker = ({ circle, highlighted }) => {
     const [user] = useAtom(userAtom);
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
+    const [highlightedCircle] = useAtom(highlightedCircleAtom);
+    const [previewCircle] = useAtom(previewCircleAtom);
+
     const getMarkerBackground = () => {
+        if (highlighted) return "/marker4.png";
         switch (circle?.type) {
             default:
             case "circle":
@@ -159,33 +152,20 @@ export const CircleMapMarker = ({ circle }) => {
         }
     };
 
+    const isActive = () => {
+        if (highlightedCircle?.id === circle?.id) return true;
+        if (previewCircle?.id === circle?.id) return true;
+        if (isCircleActive(circle)) return true;
+        return false;
+    };
+
     const loc = getLocation(circle);
     return (
         loc && (
-            <Marker
-                key={circle.id}
-                offset={[0, -24]}
-                latitude={lat(loc)}
-                longitude={lng(loc)}
-                className="circle-marker"
-                onClick={() => previewCircle(circle, setToggleAbout)}
-            >
-                <Image
-                    src={getImageKitUrl(getMarkerBackground(), 48, 48)}
-                    width="48px"
-                    height="48px"
-                    filter={isCircleActive(circle) ? "" : "grayscale(1)"}
-                    opacity={isCircleActive(circle) ? "1" : "0.5"}
-                />
+            <Marker key={circle.id} offset={[0, -24]} latitude={lat(loc)} longitude={lng(loc)} className="circle-marker" onClick={() => openAboutCircle(circle, setToggleAbout)}>
+                <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" filter={isActive() ? "" : "grayscale(1)"} opacity={isActive() ? "1" : "0.5"} />
                 <Box top="3px" left="9px" width="30px" height="30px" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
-                    <CirclePicture
-                        circle={circle}
-                        size={30}
-                        disableClick={true}
-                        isActive={isCircleActive(circle)}
-                        parentCircleSizeRatio={2}
-                        parentCircleOffset={-3}
-                    />
+                    <CirclePicture circle={circle} size={30} disableClick={true} isActive={isCircleActive(circle)} parentCircleSizeRatio={2} parentCircleOffset={-3} />
                 </Box>
 
                 <Popover trigger="hover" gutter="0" isLazy>
@@ -196,7 +176,7 @@ export const CircleMapMarker = ({ circle }) => {
                         <Box zIndex="160">
                             <PopoverArrow />
                             <Suspense fallback={<Box />}>
-                                <CirclePreview key={circle.id} item={circle} />
+                                <CirclePreview key={circle.id} item={circle} inMap={true} />
                             </Suspense>
                         </Box>
                     </PopoverContent>

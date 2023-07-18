@@ -42,7 +42,7 @@ export const AccountManager = () => {
     const [user, setUser] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
-    const [, setUserData] = useAtom(userDataAtom);
+    const [userData, setUserData] = useAtom(userDataAtom);
     const [, setUserConnections] = useAtom(userConnectionsAtom);
     const [, setNewUserPopup] = useAtom(newUserPopupAtom);
     const [requestUserConnections] = useAtom(requestUserConnectionsAtom);
@@ -184,12 +184,7 @@ export const AccountManager = () => {
                 let alwaysShowGuide = config.alwaysShowGuide;
 
                 // show new profile guide
-                if (
-                    !data.userData.agreed_to_tnc ||
-                    !data.userData.completed_guide ||
-                    (!data.user.base && !data.userData.skipped_setting_location) ||
-                    alwaysShowGuide
-                ) {
+                if (!data.userData.agreed_to_tnc || !data.userData.completed_guide || (!data.user.base && !data.userData.skipped_setting_location) || alwaysShowGuide) {
                     setNewUserPopup(true);
                 }
 
@@ -260,6 +255,9 @@ export const AccountManager = () => {
 
     useEffect(() => {
         if (!signInStatus.signedIn || !user?.id) return;
+        if (userData?.incognito) return;
+
+        // we want to do this once only unless circle ID changes
 
         let location = userLocation?.latitude && userLocation?.longitude ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
 
@@ -285,7 +283,7 @@ export const AccountManager = () => {
             }
         }, 60000); // update every minute
         return () => clearInterval(intervalId);
-    }, [signInStatus?.signedIn, user?.id, circle, inVideoConference, userLocation]);
+    }, [signInStatus?.signedIn, user?.id, circle?.id, inVideoConference, userLocation, userData?.incognito]); // we only want to trigger if circle ID changes hence compiler warning
 
     // get user connections
     useEffect(() => {

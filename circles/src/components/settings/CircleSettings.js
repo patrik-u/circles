@@ -60,8 +60,8 @@ const CircleSettings = ({ onClose }) => {
                     { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
                     { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
                     { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
-                    { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
                     { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
                     { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
@@ -81,12 +81,12 @@ const CircleSettings = ({ onClose }) => {
             borderRadius="10px"
             margin={isMobile ? "0px" : "0px 10px 10px 10px"}
             padding="5px"
-            flexGrow="1"
+            // flexGrow="1"
             pointerEvents="auto"
             position="relative"
             overflow="hidden"
-            height="100%"
-            width={isMobile ? "auto" : "700px"}
+            height={isMatch[3] ? "200px" : "100%"}
+            width="auto"
         >
             <Flex flexGrow="1" height={isMobile ? "auto" : "100%"} position="relative" left="0px" flexDirection={isMobile ? "column" : "row"} top="0px">
                 <Box marginLeft="2px" backgroundColor="white" borderRadius="0px 7px 7px 0px" flexGrow="1">

@@ -143,7 +143,7 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                     )}
                                 </Field> */}
 
-                                <CreateHolon />
+                                {/* <CreateHolon /> */}
                             </VStack>
                             <Box>
                                 <HStack align="center" marginTop="10px">

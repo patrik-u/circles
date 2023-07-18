@@ -194,11 +194,7 @@ const getConnection = async (sourceId, targetId) => {
 };
 
 const getConnectionWithType = async (sourceId, targetId, type) => {
-    let connectionsRef = db
-        .collection("connections")
-        .where("source.id", "==", sourceId)
-        .where("target.id", "==", targetId)
-        .where("types", "array-contains", type);
+    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId).where("types", "array-contains", type);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -860,50 +856,6 @@ app.post("/circles", auth, async (req, res) => {
     }
 });
 
-// update circle activity status
-app.put("/circles/:id/activity", auth, async (req, res) => {
-    const circleId = req.params.id;
-    const authCallerId = req.user.user_id;
-
-    try {
-        const circleRef = db.collection("circles").doc(circleId);
-        const doc = await circleRef.get();
-        if (!doc.exists) {
-            return res.json({ error: "circle not found" });
-        }
-
-        // update circle data
-        var circleData = {};
-        circleData.activity = { last_activity: new Date() };
-
-        if (circleId === authCallerId) {
-            // user is updating their own activity status
-            circleData.activity.last_online = new Date();
-            circleData.activity.active_in_video_conference = req.body.active_in_video_conference ? new Date() : false;
-            let activeInCircle = req.body.active_in_circle;
-            if (activeInCircle) {
-                activeInCircle.activity = {}; // to avoid recursion
-            }
-            circleData.activity.active_in_circle = activeInCircle ?? false;
-            if (req.body.location) {
-                circleData.activity.location = req.body.location;
-            }
-        } else {
-            // user is visiting a circle and updating its activity status
-            if (req.body.active_in_video_conference) {
-                circleData.activity.active_video_conference = new Date();
-            }
-        }
-
-        // update circle
-        await updateCircle(circleId, circleData, false);
-        return res.json({ message: "circle activity updated" });
-    } catch (error) {
-        functions.logger.error("Error while updating circle activity data:", error);
-        return res.json({ error: error });
-    }
-});
-
 // update circle
 app.put("/circles/:id", auth, async (req, res) => {
     const circleId = req.params.id;
@@ -1099,6 +1051,9 @@ app.put("/circles/:id", auth, async (req, res) => {
             if (req.body.circlePrivateData.skipped_setting_location !== undefined) {
                 circlePrivateData.skipped_setting_location = req.body.circlePrivateData.skipped_setting_location;
             }
+            if (req.body.circlePrivateData.incognito !== undefined) {
+                circlePrivateData.incognito = req.body.circlePrivateData.incognito;
+            }
 
             if (Object.keys(circlePrivateData).length > 0) {
                 const circleDataRef = db.collection("circle_data");
@@ -1149,6 +1104,78 @@ app.delete("/circles/:id", auth, async (req, res) => {
         return res.json({ message: "circle deleted" });
     } catch (error) {
         functions.logger.error("Error while updating circle data:", error);
+        return res.json({ error: error });
+    }
+});
+
+// update circle activity status
+app.put("/circles/:id/activity", auth, async (req, res) => {
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+
+    try {
+        const circleRef = db.collection("circles").doc(circleId);
+        const doc = await circleRef.get();
+        if (!doc.exists) {
+            return res.json({ error: "circle not found" });
+        }
+
+        // update circle data
+        var circleData = {};
+        circleData.activity = { last_activity: new Date() };
+
+        if (circleId === authCallerId) {
+            // user is updating their own activity status
+            circleData.activity.last_online = new Date();
+            circleData.activity.active_in_video_conference = req.body.active_in_video_conference ? new Date() : false;
+            let activeInCircle = req.body.active_in_circle;
+            if (activeInCircle) {
+                activeInCircle.activity = {}; // to avoid recursion
+            }
+            circleData.activity.active_in_circle = activeInCircle ?? false;
+            if (req.body.location) {
+                circleData.activity.location = req.body.location;
+            }
+        } else {
+            // user is visiting a circle and updating its activity status
+            if (req.body.active_in_video_conference) {
+                circleData.activity.active_video_conference = new Date();
+            }
+        }
+
+        // update circle
+        await updateCircle(circleId, circleData, false);
+        return res.json({ message: "circle activity updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating circle activity data:", error);
+        return res.json({ error: error });
+    }
+});
+
+// delete circle activity status
+app.delete("/circles/:id/activity", auth, async (req, res) => {
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+
+    try {
+        const circleRef = db.collection("circles").doc(circleId);
+        const doc = await circleRef.get();
+        if (!doc.exists) {
+            return res.json({ error: "circle not found" });
+        }
+
+        if (circleId !== authCallerId) {
+            return res.status(403).json({ error: "unauthorized" });
+        }
+
+        // update circle data
+        var circleData = { activity: admin.firestore.FieldValue.delete() };
+
+        // update circle
+        await updateCircle(circleId, circleData, false);
+        return res.json({ message: "circle activity updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating circle activity data:", error);
         return res.json({ error: error });
     }
 });
@@ -1315,11 +1342,7 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "approved", request_updated_at: date });
@@ -1363,11 +1386,7 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
@@ -1408,7 +1427,7 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
         likedSet = true;
     }
 
-    console.log(JSON.stringify(newSettings, null, 2));
+    // console.log(JSON.stringify(newSettings, null, 2));
 
     if (Object.keys(newSettings).length === 0) {
         return res.json({ error: "Invalid input" });
@@ -1670,7 +1689,7 @@ app.post("/chat_messages", auth, async (req, res) => {
         if (newMessage.is_ai_prompt) {
             // initiate AI prompt
             sendOpenAIPrompt(newMessage.message, 0.7, 500).then((x) => {
-                console.log("AI response: " + x.choices[0].text);
+                // console.log("AI response: " + x.choices[0].text);
                 if (x.choices?.[0]) {
                     x.choices[0].text = DOMPurify.sanitize(x.choices[0].text)?.trim();
                 }
@@ -1834,11 +1853,7 @@ app.put("/chat_notifications", auth, async (req, res) => {
         } else if (circle_id) {
             // set specific chat notification as read
             let notificationRef = null;
-            const notificationsSnapshot = await db
-                .collection("chat_notifications")
-                .where("user_id", "==", authCallerId)
-                .where("circle_id", "==", circle_id)
-                .get();
+            const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("circle_id", "==", circle_id).get();
             if (notificationsSnapshot.docs.length > 0) {
                 notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
                 await notificationRef.update({ is_seen: true, unread_messages: 0 });

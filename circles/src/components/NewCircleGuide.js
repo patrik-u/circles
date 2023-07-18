@@ -7,9 +7,9 @@ import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
 import PrivacyPolicy from "components/PrivacyPolicy";
-import { userAtom } from "components/Atoms";
+import { userAtom, toggleAboutAtom } from "components/Atoms";
 import { useAtom } from "jotai";
-import { routes, openCircle } from "components/Navigation";
+import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
 
@@ -19,29 +19,39 @@ const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm
 const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
 const CircleBaseForm = lazy(() => import("components/settings/CircleBaseForm"));
 const CircleTypeForm = lazy(() => import("components/settings/CircleTypeForm"));
+const CircleBasePopupForm = lazy(() => import("components/settings/CircleBasePopupForm"));
 
-export const NewCircleGuide = ({ onClose, type, circle, message }) => {
+export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapInteract }) => {
     const [user] = useAtom(userAtom);
     const [createdCircle, setCreatedCircle] = useState({ type: type, parent_circle: circle, content: message, is_public: true, language: i18n.language });
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const navigate = useNavigateNoUpdates();
     const allSteps = useMemo(
         () => ({
+            type: { id: "type", label: i18n.t("Type") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
             tags: { id: "tags", label: i18n.t("Tags") },
-            //            location: { id: "location", label: i18n.t("base") },
+            location: { id: "location", label: i18n.t("base") },
             //            complete: { id: "complete", label: i18n.t("Congratulations") },
         }),
         []
     );
-    const [steps] = useState([allSteps.about, allSteps.images, allSteps.tags]);
-    const [activeStep, setActiveStep] = useState(allSteps.about);
+    const [steps] = useState([allSteps.type, allSteps.about, allSteps.images, allSteps.tags, allSteps.location]);
+    const [activeStep, setActiveStep] = useState(allSteps.type);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
         if (nextIndex >= steps.length) {
             onClose();
-            navigate(routes.circle(createdCircle).home);
+            openCircle(navigate, createdCircle);
+            openAboutCircle(createdCircle, setToggleAbout);
+
+            // add circle to favorites by default
+            axios.post(`/circles/${user.id}/settings`, {
+                circleId: createdCircle.id,
+                settings: { favorite: true },
+            });
         } else {
             setActiveStep(steps[nextIndex]);
         }
@@ -53,6 +63,17 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
 
     const getActiveStepComponent = () => {
         switch (activeStep.id) {
+            case allSteps.type.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleTypeForm isUpdateForm={false} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
             case allSteps.about.id:
                 return (
                     <Box>
@@ -81,6 +102,17 @@ export const NewCircleGuide = ({ onClose, type, circle, message }) => {
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleTagsForm isUpdateForm={true} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
+            case allSteps.location.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleBasePopupForm isUpdateForm={true} circle={createdCircle} isGuideForm={true} onNext={next} toggleMapInteract={toggleMapInteract} />
                             </Suspense>
                         </VStack>
                     </Box>

@@ -30,16 +30,7 @@ export const isConnected = (userData, circleId, types) => {
     if (userData.id === circleId) return true;
 
     if (!types) {
-        types = [
-            "connected_mutually_to",
-            "connected_to",
-            "owner_of",
-            "admin_of",
-            "moderator_of",
-            "creator_of",
-            "connected_mutually_to_request",
-            "admin_of_request",
-        ];
+        types = ["connected_mutually_to", "connected_to", "owner_of", "admin_of", "moderator_of", "creator_of", "connected_mutually_to_request", "admin_of_request"];
     }
 
     for (let type of types) {
@@ -193,7 +184,9 @@ export const lng = (item) => {
 };
 
 export const getLocation = (item) => {
-    let loc = item?.activity?.location ? item?.activity?.location : item?.base;
+    let activeLocation = item?.activity?.location && isWithinActiveThreshold(item?.activity?.last_activity);
+    let loc = activeLocation ? item?.activity?.location : item?.base;
+
     if (!loc) return null;
     return getLatlng(loc);
 };
@@ -212,6 +205,10 @@ export const isWithinMinutes = (date, minutes) => {
 
 export const isCircleActive = (circle) => {
     return isWithinMinutes(circle?.activity?.last_activity, 2);
+};
+
+export const isWithinActiveThreshold = (lastActivity) => {
+    return isWithinMinutes(lastActivity, 2);
 };
 
 export const isCircleOnline = (circle) => {
@@ -247,9 +244,7 @@ export const datesAreOnSameDay = (first, second) => {
     let secondDate = fromFsDate(second);
     if (!firstDate || !secondDate) return false;
 
-    return (
-        firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate()
-    );
+    return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate();
 };
 
 export const combineDateAndTime = (date, time) => {
@@ -271,9 +266,7 @@ export const getDayAndMonth = (date = new Date()) => {
 };
 
 export const getDateAndTimeLong = (date) => {
-    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
-        date
-    )?.toLocaleTimeString?.(i18n.language, {
+    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(date)?.toLocaleTimeString?.(i18n.language, {
         hour: "2-digit",
         minute: "2-digit",
     })}`;
@@ -358,7 +351,6 @@ export const getDistanceString = (distance) => {
     if (!distance) {
         return "";
     }
-
     if (distance < 1000) {
         return `${distance} m`;
     }
