@@ -275,23 +275,22 @@ export const Circle = ({ isGlobal }) => {
         };
     }, [circleId, setCircles, setCircleConnections, isGlobal, showHistoricCircles]);
 
-    // SEEN123
-    // useEffect(() => {
-    //     log("Circle.useEffect 2", -1);
-    //     if (!signInStatus.signedIn) return;
-    //     if (!user?.id || !circleId) return;
+    useEffect(() => {
+        log("Circle.useEffect 2", -1);
+        if (!signInStatus.signedIn) return;
+        if (!user?.id || !circleId) return;
 
-    //     log("Circle.seen");
+        log("Circle.seen");
 
-    //     // mark circle as seen
-    //     axios
-    //         .post(`/seen`, {
-    //             category: "any",
-    //             circleId: circleId,
-    //         })
-    //         .then((x) => {})
-    //         .catch((error) => {});
-    // }, [user?.id, circleId, signInStatus]);
+        // mark circle as seen
+        axios
+            .post(`/seen`, {
+                category: "any",
+                circleId: circleId,
+            })
+            .then((x) => {})
+            .catch((error) => {});
+    }, [user?.id, circleId, signInStatus]);
 
     useEffect(() => {
         // set to show only active circles
@@ -304,7 +303,7 @@ export const Circle = ({ isGlobal }) => {
     }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
 
     useEffect(() => {
-        if (!signInStatus.signedIn && user?.id) return;
+        if (!signInStatus.signedIn || !user?.id) return;
 
         try {
             axios.put(`/circles/${circleId}/activity`, {

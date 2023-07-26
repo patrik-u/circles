@@ -42,7 +42,7 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom } from "components/Atoms";
 //#endregion
 
 export const CircleChat = ({ item, embeddedChatHeight }) => {
@@ -69,6 +69,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
     const textAreaRef = useRef();
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [circles] = useAtom(circlesAtom);
+    const [signInStatus] = useAtom(signInStatusAtom);
 
     useEffect(() => {
         log("Chat.useEffect 1", -1);
@@ -82,6 +83,8 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         setChatCircle(circle?.id);
 
         if (!user?.id) return;
+        if (!signInStatus.signedIn) return;
+
         if (circle?.id) {
             // mark messages as read
             axios.put(`/chat_notifications`, { circle_id: circle?.id });
@@ -90,7 +93,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         return () => {
             setChatCircle(null);
         };
-    }, [user?.id, circle?.id, setChatCircle]);
+    }, [user?.id, circle?.id, setChatCircle, signInStatus.signedIn]);
 
     useEffect(() => {
         log("Chat.useEffect 2", -1);
@@ -213,11 +216,12 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         log("Chat.useEffect 5", -1);
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
+        if (!signInStatus.signedIn) return;
 
         log("Chat.seen", user?.id);
 
         updateSeen(circleId);
-    }, [user?.id, circle?.id]);
+    }, [user?.id, circle?.id, signInStatus.signedIn]);
 
     const updateSeen = (circleId) => {
         // mark circles as seen
@@ -625,7 +629,11 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                             </Box>
                                         ))}
 
-                                        {!chatMessages?.length && !isLoadingMessages && <Text marginLeft="12px">{i18n.t("No messages")}</Text>}
+                                        {!chatMessages?.length && !isLoadingMessages && (
+                                            <Text color="white" marginLeft="12px">
+                                                {i18n.t("No messages")}
+                                            </Text>
+                                        )}
                                         {isLoadingMessages && <Spinner marginLeft="12px" />}
                                     </VStack>
                                     {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}

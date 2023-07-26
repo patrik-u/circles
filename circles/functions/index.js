@@ -907,6 +907,10 @@ app.put("/circles/:id", auth, async (req, res) => {
         if (req.body.circleData?.social_media) {
             circleData.social_media = req.body.circleData.social_media;
         }
+        if (req.body.circleData?.jitsi_id) {
+            circleData.jitsi_id = req.body.circleData.jitsi_id;
+        }
+
         if (req.body.circleData?.tags) {
             if (!Array.isArray(req.body.circleData.tags)) {
                 errors.tags = "Invalid tags data";

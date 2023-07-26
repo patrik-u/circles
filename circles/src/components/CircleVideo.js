@@ -42,16 +42,7 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import {
-    isMobileAtom,
-    userAtom,
-    userDataAtom,
-    circleAtom,
-    chatCircleAtom,
-    jaasTokenAtom,
-    inVideoConferenceAtom,
-    toggleWidgetEventAtom,
-} from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, jaasTokenAtom, inVideoConferenceAtom, toggleWidgetEventAtom } from "components/Atoms";
 import { JitsiMeeting, JaaSMeeting } from "@jitsi/react-sdk";
 import config from "Config";
 //#endregion
@@ -84,17 +75,29 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
         // here you can attach custom event listeners to the Jitsi Meet External API
         log("On api ready!", 1, true);
 
-        // listen for the participantJoined event
+        // called when local user joins video conference
         externalApi.addListener("videoConferenceJoined", (event) => {
-            log("On joined!", 1, true);
+            log("On joined! " + event.id, 1, true);
             setInVideoConference(circle?.id);
+
+            // update user jitsiId in db
+            axios.put(`/circles/${user.id}`, {
+                circleData: {
+                    jitsi_id: event.id,
+                },
+            });
         });
 
-        // listen for the participantLeft event
+        // called when local user leaves video conference
         externalApi.addListener("videoConferenceLeft", (event) => {
-            log("On leave!", 1, true);
+            log("On leave! " + event.id, 1, true);
             setInVideoConference(false);
             setToggleWidgetEvent({ name: "video", value: false });
+        });
+
+        // called when dominant speaker changes
+        externalApi.addListener("dominantSpeakerChanged", (event) => {
+            log("On dominantSpeakerChanged! " + event.id, 1, true);
         });
 
         // vlean up event listeners when component is unmounted
@@ -104,18 +107,10 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
         };
     };
 
-    log("RoomName: " + roomName, 1, true);
-
-    if (!circle || !roomName || !jaasToken) return null;
+    if (!circle || !roomName || !jaasToken || !user?.id) return null;
 
     return (
-        <Flex
-            width={isMinimized ? "300px" : "100%"}
-            height={isMinimized ? "300px" : "100%"}
-            marginTop={isMinimized ? "auto" : "0px"}
-            pointerEvents="auto"
-            marginLeft={isMinimized ? "auto" : "0px"}
-        >
+        <Flex width={isMinimized ? "300px" : "100%"} height={isMinimized ? "300px" : "100%"} marginTop={isMinimized ? "auto" : "0px"} pointerEvents="auto" marginLeft={isMinimized ? "auto" : "0px"}>
             <JaaSMeeting
                 appId={config.jitsiJaasKey}
                 roomName={roomName}

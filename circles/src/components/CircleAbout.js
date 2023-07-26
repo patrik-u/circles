@@ -86,7 +86,7 @@ const CircleAbout = ({ onClose }) => {
                 <Box
                     bgGradient="linear(to-r,#d3d1d3,#ffffff)"
                     borderRadius="10px"
-                    margin={isMobile ? "0px" : "0px 10px 10px 10px"}
+                    margin={isMobile ? "0px" : "0px 10px 10px 0px"}
                     padding="5px"
                     flexGrow="1"
                     pointerEvents="auto"

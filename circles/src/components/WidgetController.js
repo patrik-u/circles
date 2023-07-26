@@ -78,6 +78,7 @@ import CircleChat from "components/CircleChat";
 import CircleVideo from "components/CircleVideo";
 import CircleAbout from "components/CircleAbout";
 import CircleSettings from "components/settings/CircleSettings";
+import CircleCalendar from "components/CircleCalendar";
 import { DisplayModeButtons } from "./CircleElements";
 //#endregion
 
@@ -91,7 +92,7 @@ const WidgetController = () => {
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
-    const menuItems = useMemo(() => ["about", "activity", "video", "settings"], []);
+    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -211,6 +212,10 @@ const WidgetController = () => {
         toggleWidget("settings", false);
     };
 
+    const onCalendarClose = () => {
+        toggleWidget("calendar", false);
+    };
+
     const shouldShowMenuItem = (item) => {
         if (item === "settings") {
             return showSettings();
@@ -248,13 +253,13 @@ const WidgetController = () => {
     return (
         <div class="flex flex-col h-screen w-full z-1 absolute pointer-events-none">
             <div class={`p-5 absolute w-full pointer-events-auto`}>
-                <div class="flex justify-center" style={{ marginLeft: "5px", marginTop: isMobile ? "30px" : "" }}>
+                <div class="flex justify-center flex-wrap gap-1" style={{ marginTop: isMobile ? "30px" : "" }}>
                     {menuItems
                         .filter((x) => shouldShowMenuItem(x))
                         .map((component) => (
                             <button
                                 key={component}
-                                class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
+                                class={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
                                     toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
                                 }`}
                                 onClick={() => toggleWidget(component)}
@@ -263,11 +268,10 @@ const WidgetController = () => {
                             </button>
                         ))}
                     <button
-                        class={`mr-2 px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark
-                                }`}
+                        class={`${isMobile ? "px-3" : "px-6"} py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
                         onClick={() => openCreateCircle()}
                     >
-                        + Create
+                        {isMobile ? "+" : "+ Create"}
                     </button>
                 </div>
             </div>
@@ -288,7 +292,9 @@ const WidgetController = () => {
                         <CircleVideo isMinimized={videoMinimized} />
                     </div>
                 )}
-                {!(isMobile || toggledWidgets.includes("video") || toggledWidgets.includes("settings") || inVideoConference) && <div class="flex flex-col flex-grow order-2"></div>}
+                {!(isMobile || toggledWidgets.includes("video") || toggledWidgets.includes("calendar") || toggledWidgets.includes("settings") || inVideoConference) && (
+                    <div class="flex flex-col flex-grow order-2"></div>
+                )}
 
                 {toggledWidgets.includes("settings") && (
                     <div class="flex flex-col flex-grow order-2">
@@ -296,7 +302,11 @@ const WidgetController = () => {
                     </div>
                 )}
 
-                {toggledWidgets.includes("calendar") && <div class={getWidgetClass("calendar")}></div>}
+                {toggledWidgets.includes("calendar") && (
+                    <div class="flex flex-col flex-grow order-2">
+                        <CircleCalendar onClose={onCalendarClose} />
+                    </div>
+                )}
             </Box>
             <DisplayModeButtons position={isMobile ? "static" : "absolute"} />
         </div>

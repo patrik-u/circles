@@ -766,7 +766,6 @@ export const DisplayModeButtons = ({ ...props }) => {
             padding="5px"
             // right={isMobile ? (displayMode === displayModes.map ? "40px" : "10px") : "60px"}
             bottom={isMobile ? "0px" : "5px"}
-            zIndex="100"
             width="100%"
             align="center"
             justifyContent="center"
@@ -1025,14 +1024,8 @@ export const LargeConnectButton = ({ circle }) => {
 };
 
 export const OpenButton = ({ circle, ...props }) => {
-    const [userData] = useAtom(userDataAtom);
-    const [currentCircle] = useAtom(circleAtom);
-    const userIsConnected = useMemo(() => isConnected(userData, circle?.id), [userData, circle?.id]);
     const navigate = useNavigateNoUpdates();
     const height = "28px";
-
-    if (!userIsConnected) return null;
-    if (currentCircle?.id === circle?.id) return null;
 
     return (
         <Flex
@@ -1069,16 +1062,9 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
     const [isMobile] = useAtom(isMobileAtom);
     const [userData] = useAtom(userDataAtom);
 
-    const getNameFontSize = (name) => {
-        if (!isMobile || !name) return "32px";
-
-        if (name.length <= 16) return "24px";
-        if (name.length <= 17) return "23px";
-        if (name.length <= 18) return "22px";
-        if (name.length <= 19) return "20px";
-        if (name.length <= 20) return "19px";
-        return "19px";
-    };
+    const [currentCircle] = useAtom(circleAtom);
+    const userIsConnected = useMemo(() => isConnected(userData, circle?.id), [userData, circle?.id]);
+    const showOpen = useMemo(() => userIsConnected && currentCircle?.id !== circle?.id, [userIsConnected, currentCircle?.id, circle?.id]);
 
     const iconSize = 12;
     const spacingPx = "2px";
@@ -1090,8 +1076,8 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex flexDirection="row" width="100%" position="relative" align="center">
                     {inChat && <Box flexGrow="1" />}
-                    <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />
-                    <LocationButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
+                    {showOpen && <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />}
+                    <LocationButton circle={circle} inPreview={inPreview} marginLeft={!showOpen && inPreview ? "10px" : showOpen ? spacingPx : "0px"} />
                     {!inChat && <Box flexGrow="1" />}
                     <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}

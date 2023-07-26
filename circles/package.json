@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.4.7",
+    "version": "1.4.12",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -15,7 +15,9 @@
         "@use-gesture/react": "^10.2.24",
         "algoliasearch": "^4.14.2",
         "axios": "^0.23.0",
+        "caniuse-lite": "^1.0.30001517",
         "d3": "^7.8.4",
+        "date-fns": "^2.30.0",
         "emoji-mart": "^5.1.0",
         "env-cmd": "^10.1.0",
         "firebase": "^9.1.2",

@@ -104,7 +104,7 @@ export const ActiveInCircle = ({ item, location, ...props }) => {
     );
 };
 
-export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMap, ...props }) => {
+export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMap, hideHeader, ...props }) => {
     const [highlightedCircle, setHighlightedCircle] = useAtom(highlightedCircleAtom);
 
     useEffect(() => {
@@ -121,7 +121,7 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
 
     return (
         <Box key={item.id}>
-            <CircleHeader circle={item} position="absolute" top="-30px" inPreview={true} inChat={inChat} />
+            {!hideHeader && <CircleHeader circle={item} position="absolute" top="-30px" inPreview={true} inChat={inChat} />}
             <Flex
                 key={item.id}
                 align="left"
