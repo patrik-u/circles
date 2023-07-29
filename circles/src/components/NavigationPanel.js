@@ -8,6 +8,7 @@ import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleListItem, CircleListItemNormal } from "components/CircleListItem";
 import { openCircle } from "components/Navigation";
 import { globalCircle } from "components/Circle";
+import Scrollbars from "react-custom-scrollbars-2";
 
 const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     const iconSize = 16;
@@ -44,36 +45,37 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
 
     return (
         <>
-            <Box color="white" mt="0" bg={panelBackground} minH="100vh" maxW={isMobile ? "none" : "400px"} width="full" position="relative">
-                <CircleListItem item={globalCircle} onClick={() => onCircleClick(globalCircle)} isDark={true} inSelect={true} inNav={true} />
-                {favoriteCircles?.map((item) =>
-                    view === "compact" ? (
-                        <CircleListItem key={item.id} item={item} onClick={() => onCircleClick(item)} isDark={true} inSelect={true} inNav={true} />
-                    ) : (
-                        <CircleListItemNormal key={item.id} item={item} onClick={() => onCircleClick(item)} />
-                    )
-                )}
+            <Box color="white" mt="0" bg={panelBackground} height="100vh" minH="100vh" maxW={isMobile ? "none" : "400px"} width="full" position="relative">
+                <Scrollbars autoHide>
+                    <CircleListItem item={globalCircle} onClick={() => onCircleClick(globalCircle)} isDark={true} inSelect={true} inNav={true} />
+                    {favoriteCircles?.map((item) =>
+                        view === "compact" ? (
+                            <CircleListItem key={item.id} item={item} onClick={() => onCircleClick(item)} isDark={true} inSelect={true} inNav={true} />
+                        ) : (
+                            <CircleListItemNormal key={item.id} item={item} onClick={() => onCircleClick(item)} />
+                        )
+                    )}
 
-                {isMobile && (
-                    <Flex
-                        position="absolute"
-                        top="10px"
-                        right="10px"
-                        width={iconSize + 8 + "px"}
-                        height={iconSize + 8 + "px"}
-                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                        _active={{ transform: "scale(0.98)" }}
-                        borderRadius="50%"
-                        justifyContent="center"
-                        alignItems="center"
-                        onClick={onClose}
-                        cursor="pointer"
-                        zIndex="100"
-                    >
-                        <Icon width={iconSize + 8 + "px"} height={iconSize + 8 + "px"} color={"#ddd"} as={MdOutlineClose} cursor="pointer" />
-                    </Flex>
-                )}
-
+                    {isMobile && (
+                        <Flex
+                            position="absolute"
+                            top="10px"
+                            right="10px"
+                            width={iconSize + 8 + "px"}
+                            height={iconSize + 8 + "px"}
+                            _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                            _active={{ transform: "scale(0.98)" }}
+                            borderRadius="50%"
+                            justifyContent="center"
+                            alignItems="center"
+                            onClick={onClose}
+                            cursor="pointer"
+                            zIndex="100"
+                        >
+                            <Icon width={iconSize + 8 + "px"} height={iconSize + 8 + "px"} color={"#ddd"} as={MdOutlineClose} cursor="pointer" />
+                        </Flex>
+                    )}
+                </Scrollbars>
                 {!isMobile && (
                     <Flex
                         position="absolute"

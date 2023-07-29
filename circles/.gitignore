@@ -3,6 +3,7 @@
 .vscode
 .firebase
 firebase-debug.log
+.sentryclirc
 
 # dependencies
 /node_modules
