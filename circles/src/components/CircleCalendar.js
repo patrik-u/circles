@@ -1,6 +1,6 @@
 //#region imports
 import React, { useState, lazy, useEffect, Suspense } from "react";
-import { Box, Flex, Text, Icon, Button, IconButton, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
+import { Box, Flex, Text, Icon, Button, IconButton, Popover, PopoverTrigger, PopoverContent, PopoverArrow, HStack } from "@chakra-ui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { CirclePicture } from "components/CircleElements";
 import i18n from "i18n/Localization";
@@ -150,7 +150,11 @@ const CircleCalendar = ({ onClose }) => {
         return (
             <Flex justify="space-between">
                 <IconButton aria-label="Previous month" icon={<ChevronLeftIcon />} onClick={prevMonth} />
-                <Text>{format(currentMonth, dateFormat)}</Text>
+                <HStack>
+                    <CirclePicture size={20} circle={circle} />
+                    <Text>{circle?.name} - </Text>
+                    <Text>{format(currentMonth, dateFormat)}</Text>
+                </HStack>
                 <IconButton aria-label="Next month" icon={<ChevronRightIcon />} onClick={nextMonth} marginRight="40px" />
             </Flex>
         );
@@ -227,7 +231,14 @@ const CircleCalendar = ({ onClose }) => {
                             return (
                                 <Popover trigger="hover" gutter="0" isLazy>
                                     <PopoverTrigger>
-                                        <Flex key={x.id} align="center" flexDirection="row" cursor="pointer" onClick={() => openAboutCircle(x, setToggleAbout)} gap="2px">
+                                        <Flex
+                                            key={x.id}
+                                            align="center"
+                                            flexDirection="row"
+                                            cursor="pointer"
+                                            onClick={() => openAboutCircle(x, setToggleAbout)}
+                                            gap="2px"
+                                        >
                                             <CirclePicture size={14} circle={x} />
                                             {!x.is_all_day && <Text fontSize="sm">{getShortEventTime(fromFsDate(x.starts_at))}</Text>}
                                             <Text fontSize="sm" noOfLines={1}>

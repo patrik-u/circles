@@ -104,7 +104,7 @@ const auth = async (req, res, next) => {
 
 //#region helper functions
 
-const circleTypes = ["circle", "event", "tag", "room", "link", "post"];
+const circleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent"];
 
 const getCircle = async (circleId) => {
     let circleDoc = await db.collection("circles").doc(circleId).get();
@@ -194,7 +194,11 @@ const getConnection = async (sourceId, targetId) => {
 };
 
 const getConnectionWithType = async (sourceId, targetId, type) => {
-    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId).where("types", "array-contains", type);
+    let connectionsRef = db
+        .collection("connections")
+        .where("source.id", "==", sourceId)
+        .where("target.id", "==", targetId)
+        .where("types", "array-contains", type);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -1346,7 +1350,11 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("connection_id", "==", connectionId)
+            .where("connection_type", "==", connectionType)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "approved", request_updated_at: date });
@@ -1390,7 +1398,11 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("connection_id", "==", connectionId)
+            .where("connection_type", "==", connectionType)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
@@ -1637,10 +1649,20 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
+        let aiChatSession = circle?.type === "ai_chat_session";
+
         if (!circle?.is_public) {
-            let isAuthorized = await isMemberOf(authCallerId, circleId);
-            if (!isAuthorized) {
-                return res.status(403).json({ error: "unauthorized" });
+            if (aiChatSession) {
+                // get circle data
+                let circleData = await getCircleData(circleId);
+                if (!circleData?.connected_mutually_to?.includes(authCallerId)) {
+                    return res.status(403).json({ error: "unauthorized" });
+                }
+            } else {
+                let isAuthorized = await isMemberOf(authCallerId, circleId);
+                if (!isAuthorized) {
+                    return res.status(403).json({ error: "unauthorized" });
+                }
             }
         }
 
@@ -1662,7 +1684,7 @@ app.post("/chat_messages", auth, async (req, res) => {
         }
 
         // is the message an AI prompt?
-        if (message.startsWith("/ai") || message.startsWith("/AI")) {
+        if (!aiChatSession && (message.startsWith("/ai") || message.startsWith("/AI"))) {
             newMessage.message = message.substring(3).trim();
             newMessage.is_ai_prompt = true;
         }
@@ -1714,6 +1736,11 @@ app.post("/chat_messages", auth, async (req, res) => {
                 }
             });
         });
+
+        if (aiChatSession) {
+            // trigger AI agent to respond
+            triggerAiAgentResponse(circle, authCallerId);
+        }
 
         return res.json({ message: "Message sent" });
     } catch (error) {
@@ -1774,7 +1801,6 @@ app.put("/chat_messages/:id", auth, async (req, res) => {
 app.delete("/chat_messages/:id", auth, async (req, res) => {
     const messageId = req.params.id;
     const authCallerId = req.user.user_id;
-
     try {
         const message = await getChatMessage(messageId);
         if (!message) {
@@ -1798,6 +1824,84 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
         return res.json({ message: "message deleted" });
     } catch (error) {
         functions.logger.error("Error while deleting chat message:", error);
+        return res.json({ error: error });
+    }
+});
+
+// create AI chat session
+app.post("/chat_sessions", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const aiAgentId = req.body.ai_agent_id;
+    const date = new Date();
+
+    try {
+        const aiAgent = await getCircle(aiAgentId);
+        if (!aiAgent) {
+            return res.json({ error: "AI agent not found" });
+        }
+        const user = await getCircle(authCallerId);
+        if (!user) {
+            return res.json({ error: "User not found" });
+        }
+
+        const circleRef = db.collection("circles").doc();
+        const newSession = {
+            type: "ai_chat_session",
+            created_at: date,
+            name: "AI Chat Session " + date.toISOString(),
+            ai_agent: aiAgent,
+        };
+
+        await circleRef.set(newSession);
+
+        var circleId = circleRef.id;
+
+        // add connection to circle
+        const userDataRef = db.collection("circle_data").doc(circleId);
+        await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(authCallerId), circle_id: circleId }, { merge: true });
+
+        // add initial AI message
+        const newMessage = {
+            circle_id: circleId,
+            user: aiAgent,
+            sent_at: date,
+            awaits_response: true,
+        };
+
+        const chatMessageRef = db.collection("chat_messages").doc();
+        await chatMessageRef.set(newMessage);
+
+        // add update to circle that new chat message has been sent
+        let updatedCircle = {
+            updates: {
+                any: date,
+                chat: date,
+            },
+            messages: admin.firestore.FieldValue.increment(1),
+        };
+        // update circle and propagate changes
+        updateCircle(circleId, updatedCircle);
+
+        // update user that chat message has been seen
+        setUserSeen(authCallerId, circleId, "chat");
+
+        // initiate AI response
+        sendOpenAIChatPrompt(
+            `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
+        ).then((x) => {
+            // console.log("AI response: " + x.choices[0].text);
+            let message = "";
+            if (x.choices?.[0]?.message?.content) {
+                message = DOMPurify.sanitize(x.choices[0].message.content)?.trim();
+            }
+            // update message with AI response
+            chatMessageRef.update({ openai_response: x, awaits_response: false, message: message });
+        });
+        // ***************************************
+
+        return res.json({ id: circleId, ...newSession });
+    } catch (error) {
+        functions.logger.error("Error creating chat session:", error);
         return res.json({ error: error });
     }
 });
@@ -1857,7 +1961,11 @@ app.put("/chat_notifications", auth, async (req, res) => {
         } else if (circle_id) {
             // set specific chat notification as read
             let notificationRef = null;
-            const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("circle_id", "==", circle_id).get();
+            const notificationsSnapshot = await db
+                .collection("chat_notifications")
+                .where("user_id", "==", authCallerId)
+                .where("circle_id", "==", circle_id)
+                .get();
             if (notificationsSnapshot.docs.length > 0) {
                 notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
                 await notificationRef.update({ is_seen: true, unread_messages: 0 });
@@ -1978,6 +2086,122 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
             console.log(error.body);
         }
     }
+};
+
+const triggerAiAgentResponse = async (circle, authCallerId, prompt = undefined) => {
+    if (typeof circle === "string") {
+        circle = await getCircle(circle);
+    }
+
+    if (!circle) return;
+
+    const circleId = circle.id;
+
+    // fetch latest messages from circle
+    //const messages = await getChatMessages(circleId, 1);
+    const chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(5).get();
+
+    let messages = [];
+
+    // add system prompt
+    let agentId = circle.ai_agent.id;
+    let agentCircleData = await getCircleData(agentId);
+
+    messages.push({ role: "system", content: agentCircleData?.system_message ?? "You are a helpful assistant." });
+
+    // add previous messages
+    for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {
+        let message = chatMessagesDocs.docs[i].data();
+        messages.push({ role: message.user.id === circle.ai_agent.id ? "assistant" : "user", content: message.message });
+    }
+
+    if (prompt) {
+        messages.push({ role: "user", content: prompt });
+    }
+
+    // if last message isn't a user message we should not trigger AI agent
+    if (messages.length <= 0 || messages[messages.length - 1].role !== "user") {
+        return;
+    }
+
+    const date = new Date();
+
+    // add message that will be filled with AI response
+    const newMessage = {
+        circle_id: circleId,
+        user: circle.ai_agent,
+        sent_at: date,
+        awaits_response: true,
+    };
+
+    const chatMessageRef = db.collection("chat_messages").doc();
+    await chatMessageRef.set(newMessage);
+
+    // add update to circle that new chat message has been sent
+    let updatedCircle = {
+        updates: {
+            any: date,
+            chat: date,
+        },
+        messages: admin.firestore.FieldValue.increment(1),
+    };
+
+    // update circle and propagate changes
+    updateCircle(circleId, updatedCircle);
+
+    // update user that chat message has been seen
+    setUserSeen(authCallerId, circleId, "chat");
+
+    // initiate AI response
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    let request = {
+        messages,
+        model: "gpt-4", // model
+    };
+
+    const response = await openai.createChatCompletion(request);
+    let data = response.data;
+
+    let message = "";
+    if (data.choices?.[0]?.message?.content) {
+        message = DOMPurify.sanitize(data.choices[0].message.content)?.trim();
+    }
+
+    // update message with AI response
+    chatMessageRef.update({ openai_response: data, awaits_response: false, message: message, sent_at: new Date() });
+};
+
+const sendOpenAIChatPrompt = async (prompt, temperature = undefined, max_tokens = undefined) => {
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    let request = {
+        messages: [
+            {
+                role: "system",
+                content:
+                    "Ditt namn är Stellan och du är partiledare för Basinkomstpartiet i Sverige. Du är humanitär och omsorgsfull. Du bryr dig djupt om naturen och mänskligheten. Du älskar teknisk innovation (av sociala, ekonomiska och tekniska system) och vill att det ska användas för att bemyndiga folket att göra gott och göra alla välbärgade. Du vill tjäna mänskligheten och hjälpa den uppfylla sin potential. Du inspirerar och mobiliserar mänskligheten, håller plats för kreativitet och utforskande, och verkar för att vi lyfter golvet för alla. Du har också ett sinne för humor, är djärv (med glimten i ögat) och spelar också på att du är en AI/robot och meningsmotståndare är människor.",
+            },
+            { role: "user", content: prompt },
+        ],
+        model: "gpt-4", // model
+    };
+    if (temperature !== undefined) {
+        request.temperature = temperature;
+    }
+    if (max_tokens !== undefined) {
+        request.max_tokens = max_tokens;
+    }
+
+    const response = await openai.createChatCompletion(request);
+
+    return response.data;
 };
 
 const sendOpenAIPrompt = async (prompt, temperature, max_tokens) => {

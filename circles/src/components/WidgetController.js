@@ -74,7 +74,7 @@ import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
 import { TbChartCircles } from "react-icons/tb";
 import { useSearchParams } from "react-router-dom";
-import CircleChat from "components/CircleChat";
+import { CircleChatWidget } from "components/CircleChat";
 import CircleVideo from "components/CircleVideo";
 import CircleAbout from "components/CircleAbout";
 import CircleSettings from "components/settings/CircleSettings";
@@ -163,7 +163,6 @@ const WidgetController = () => {
     }, [toggleAbout, setToggleAbout, toggleWidget, setPreviewCircle]);
 
     useEffect(() => {
-        log("toggling settings:" + toggleSettings, 0, true);
         if (!toggleSettings) {
             return;
         }
@@ -251,8 +250,8 @@ const WidgetController = () => {
     // selected: #1e5785
 
     return (
-        <div class="flex flex-col h-screen w-full z-1 absolute pointer-events-none">
-            <div class={`p-5 absolute w-full pointer-events-auto`}>
+        <div class={`flex flex-col h-screen w-full z-1 absolute pointer-events-none`}>
+            <div class={`pt-5 pr-1 pl-1 ${isMobile ? "relative" : "absolute"} w-full pointer-events-auto`}>
                 <div class="flex justify-center flex-wrap gap-1" style={{ marginTop: isMobile ? "30px" : "" }}>
                     {menuItems
                         .filter((x) => shouldShowMenuItem(x))
@@ -268,7 +267,9 @@ const WidgetController = () => {
                             </button>
                         ))}
                     <button
-                        class={`${isMobile ? "px-3" : "px-6"} py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
+                        class={`${
+                            isMobile ? "px-3" : "px-6"
+                        } py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
                         onClick={() => openCreateCircle()}
                     >
                         {isMobile ? "+" : "+ Create"}
@@ -276,7 +277,7 @@ const WidgetController = () => {
                 </div>
             </div>
 
-            <Box className="flex flex-grow" marginTop="90px" zIndex="10">
+            <Box className="flex flex-grow" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
                 {toggledWidgets.includes("about") && (
                     <div class={getWidgetClass("about")}>
                         <CircleAbout onClose={onAboutClose} />
@@ -284,7 +285,7 @@ const WidgetController = () => {
                 )}
                 {toggledWidgets.includes("activity") && (
                     <div class={getWidgetClass("activity")}>
-                        <CircleChat />
+                        <CircleChatWidget />
                     </div>
                 )}
                 {(toggledWidgets.includes("video") || inVideoConference) && (
@@ -292,9 +293,13 @@ const WidgetController = () => {
                         <CircleVideo isMinimized={videoMinimized} />
                     </div>
                 )}
-                {!(isMobile || toggledWidgets.includes("video") || toggledWidgets.includes("calendar") || toggledWidgets.includes("settings") || inVideoConference) && (
-                    <div class="flex flex-col flex-grow order-2"></div>
-                )}
+                {!(
+                    isMobile ||
+                    toggledWidgets.includes("video") ||
+                    toggledWidgets.includes("calendar") ||
+                    toggledWidgets.includes("settings") ||
+                    inVideoConference
+                ) && <div class="flex flex-col flex-grow order-2"></div>}
 
                 {toggledWidgets.includes("settings") && (
                     <div class="flex flex-col flex-grow order-2">

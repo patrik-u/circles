@@ -37,7 +37,15 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                     errors.type = i18n.t("Choose type of circle");
                 } else if (values.type === "tag" && !user?.is_admin) {
                     errors.type = "unauthorized";
-                } else if (values.type !== "tag" && values.type !== "circle" && values.type !== "event" && values.type !== "room" && values.type !== "link" && values.type !== "post") {
+                } else if (
+                    values.type !== "tag" &&
+                    values.type !== "circle" &&
+                    values.type !== "event" &&
+                    values.type !== "room" &&
+                    values.type !== "link" &&
+                    values.type !== "post" &&
+                    values.type !== "ai_agent"
+                ) {
                     errors.type = i18n.t("Choose valid circle type");
                 }
                 return errors;
@@ -74,6 +82,16 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             </VStack>
                                                         </HStack>
                                                     </Radio>
+                                                    <Radio onChange={onChange} value="ai_agent">
+                                                        <HStack spacing="10px">
+                                                            <Image src="/circle-ai_agent-option.png" width="100px" height="100px" />
+                                                            <VStack align="start" spacing="0px">
+                                                                <Text fontWeight="700">{i18n.t("AI agent")}</Text>
+                                                                <Text textAlign="left">{i18n.t("AI agent description")}</Text>
+                                                            </VStack>
+                                                        </HStack>
+                                                    </Radio>
+
                                                     {/* <Radio onChange={onChange} value="room">
                                                         <HStack spacing="10px">
                                                             <Image src="/circle-room-option.png" width="100px" height="100px" />

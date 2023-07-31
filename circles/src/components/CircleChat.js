@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     Box,
+    Tooltip,
+    IconButton,
     Textarea,
     Modal,
     ModalOverlay,
@@ -35,23 +37,110 @@ import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from 
 import { CirclePicture, MetaData } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
-import { BsReplyFill } from "react-icons/bs";
+import { AiOutlineUser } from "react-icons/ai";
+import { BsReplyFill, BsFillCircleFill, BsGlobeAmericas } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
+import { RiChatPrivateLine } from "react-icons/ri";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom } from "components/Atoms";
+import Lottie from "react-lottie";
+import talkdotsAnimation from "assets/lottie/talkdots.json";
 //#endregion
 
-export const CircleChat = ({ item, embeddedChatHeight }) => {
+export const CircleChatWidget = ({ item }) => {
+    const [currentCircle] = useAtom(circleAtom);
+    const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
+    const [user] = useAtom(userAtom);
+    const [signInStatus] = useAtom(signInStatusAtom);
+    const [aiChatCircle, setAiChatCircle] = useState(null);
+    // const [selectedCircle]
+    const [chatMode, setChatMode] = useState("Members");
+
+    useEffect(() => {
+        if (!user?.id || !signInStatus.signedIn) {
+            setChatMode("Members");
+            setAiChatCircle(null);
+            return;
+        }
+
+        if (circle?.ai_agent?.id) {
+            setChatMode("AI");
+
+            // create new circle for one-on-one AI chat session and initialize it
+            axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id }).then(
+                (res) => {
+                    log("Return from chat sessions", 0, true);
+                    let data = res?.data;
+                    if (!data || data.error) {
+                        setAiChatCircle(null);
+                        return;
+                    }
+                    log("Setting AI Circle:" + JSON.stringify(data, null, 2), 0, true);
+                    setAiChatCircle(data);
+                },
+                (error) => {
+                    log("Error creating chat session: " + JSON.stringify(error, null, 2), 0, true);
+                }
+            );
+        } else {
+            setChatMode("Members");
+            setAiChatCircle(null);
+        }
+    }, [circle?.ai_agent?.id, user?.id, signInStatus.signedIn]);
+
+    const switchChatMode = (mode) => {
+        setChatMode(mode);
+    };
+
+    if (!circle?.id) return null;
+
+    return (
+        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto" flexDirection="column">
+            {/* top menu to switch between AI chat and member chat */}
+            {circle?.ai_agent && (
+                <Box pl={2} pointerEvents="auto" zIndex="10">
+                    <Tooltip label="AI agent chat" aria-label="A tooltip">
+                        <IconButton
+                            aria-label="AI Chat"
+                            icon={<CirclePicture circle={circle.ai_agent} size={35} disableClick={true} />}
+                            isRound
+                            colorScheme="transparent"
+                            borderWidth="2px"
+                            borderColor={chatMode === "AI" ? "#d6d4d6" : "transparent"}
+                            onClick={() => switchChatMode("AI")}
+                            size="35px"
+                        />
+                    </Tooltip>
+                    <Tooltip label="Members chat" aria-label="A tooltip">
+                        <IconButton
+                            aria-label="Members Chat"
+                            icon={<CirclePicture circle={circle} size={35} disableClick={true} />}
+                            isRound
+                            ml={2}
+                            colorScheme="transparent"
+                            borderWidth="2px"
+                            borderColor={chatMode === "Members" ? "#d6d4d6" : "transparent"}
+                            onClick={() => switchChatMode("Members")}
+                            size="35px"
+                        />
+                    </Tooltip>
+                </Box>
+            )}
+            {chatMode === "AI" && <CircleChat circle={aiChatCircle} aiChat={true} />}
+
+            {chatMode === "Members" && <CircleChat circle={circle} />}
+        </Flex>
+    );
+};
+
+export const CircleChat = ({ circle, aiChat }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const [currentCircle] = useAtom(circleAtom);
-    const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
-
     const [, setChatCircle] = useAtom(chatCircleAtom);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
     const [chatMessages, setChatMessages] = useState([]);
@@ -74,9 +163,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
     useEffect(() => {
         log("Chat.useEffect 1", -1);
         setScrollToLastSmooth(false);
-        if (!item) {
-            window.scrollTo(0, document.body.scrollHeight);
-        }
+        window.scrollTo(0, document.body.scrollHeight);
     }, []);
 
     useEffect(() => {
@@ -101,6 +188,8 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         if (!circleId) {
             return;
         }
+
+        log("Getting chat messages from circle: " + circleId, 0, true);
 
         // console.log("Showing chat messages for:", circleId);
         setIsLoadingMessages(true);
@@ -133,6 +222,11 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
             return;
         }
 
+        if (aiChat) {
+            setIsAuthorized(true);
+            return;
+        }
+
         // check if user is authorized to view chat
         if (!circle.is_public && !isConnected(userData, circleId, ["connected_mutually_to"])) {
             setIsAuthorized(false);
@@ -140,7 +234,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, setIsAuthorized, circle?.is_public, userData]);
+    }, [circle?.id, setIsAuthorized, circle?.is_public, userData, aiChat]);
 
     useEffect(() => {
         log("Chat.useEffect 3", -1);
@@ -398,34 +492,10 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
         setMessageToReply(null);
     };
 
-    // top bar + cover image + header
-    const getChatHeight = () => {
-        if (embeddedChatHeight) {
-            return !isAuthorized ? 60 : embeddedChatHeight;
-        }
-
-        return isMobile ? windowHeight - (40 + 250 + 123) : 900;
-    };
-
-    const selfMessageBg = "#c3f5bf"; //"#fcdab6"; // "#c6f3c0"; //"#fbdaae"; //"#c6f3c0";
-    const otherMessageBg = "#ebebeb"; //"#dddddd"; // 1838
-    const chatBackgroundColor = "#f9f9f9";
-
-    if (!circle) return null;
+    if (!circle) return <Spinner color="white" />;
 
     return (
-        <Flex
-            flexGrow="1"
-            width="100%"
-            height="100%"
-            position="relative"
-            left="0px"
-            flexDirection={isMobile ? "column" : "row"}
-            top="0px"
-            borderRadius={isMobile ? "0px" : "5px"}
-            overflow="hidden"
-            pointerEvents="auto"
-        >
+        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
             {/* <Box height="5px" position="absolute" width="100%" bgGradient="linear(to-b, #000000, #00000000)" zIndex="10" /> */}
             <Box height="1px" backgroundColor="#000000" position="absolute" width="100%" zIndex="10" bottom="60px" />
 
@@ -491,8 +561,12 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                     overflow="hidden"
                                                                 >
                                                                     <Box
-                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${item.isLast ? "10px" : "2px"}`}
-                                                                        bgGradient={item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"}
+                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
+                                                                            item.isLast ? "10px" : "2px"
+                                                                        }`}
+                                                                        bgGradient={
+                                                                            item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"
+                                                                        }
                                                                         color={item.user.id !== user?.id ? "black" : "black"}
                                                                         marginRight="auto"
                                                                         overflow="hidden"
@@ -500,7 +574,13 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                     >
                                                                         {item.reply_to && (
                                                                             <Box padding="11px 11px 0px 11px">
-                                                                                <VStack align="left" spacing="0px" flexGrow="1" borderLeft="3px solid #7179a9" paddingLeft="5px">
+                                                                                <VStack
+                                                                                    align="left"
+                                                                                    spacing="0px"
+                                                                                    flexGrow="1"
+                                                                                    borderLeft="3px solid #7179a9"
+                                                                                    paddingLeft="5px"
+                                                                                >
                                                                                     <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                                                         {item.reply_to.user.name}
                                                                                     </Text>
@@ -518,8 +598,26 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                                                     fontSize="14px"
                                                                                     maxWidth="290px"
                                                                                 >
-                                                                                    <div className="embedChatHtmlContent" dangerouslySetInnerHTML={{ __html: item.formattedMessage }} />
+                                                                                    <div
+                                                                                        className="embedChatHtmlContent"
+                                                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
+                                                                                    />
                                                                                 </Box>
+                                                                            )}
+
+                                                                            {item.awaits_response && (
+                                                                                <Lottie
+                                                                                    options={{
+                                                                                        loop: true,
+                                                                                        autoplay: true,
+                                                                                        animationData: talkdotsAnimation,
+                                                                                        rendererSettings: {
+                                                                                            preserveAspectRatio: "xMidYMid slice",
+                                                                                        },
+                                                                                    }}
+                                                                                    height={50}
+                                                                                    width={50}
+                                                                                />
                                                                             )}
 
                                                                             <MetaData data={item.meta_data} />
@@ -566,7 +664,13 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                             </PopoverTrigger>
 
                                                             <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
-                                                                <Box zIndex="160" height="12px" backgroundColor="transparent" align="center" position="relative">
+                                                                <Box
+                                                                    zIndex="160"
+                                                                    height="12px"
+                                                                    backgroundColor="transparent"
+                                                                    align="center"
+                                                                    position="relative"
+                                                                >
                                                                     <HStack
                                                                         align="center"
                                                                         position="absolute"
@@ -634,7 +738,7 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                                 {i18n.t("No messages")}
                                             </Text>
                                         )}
-                                        {isLoadingMessages && <Spinner marginLeft="12px" />}
+                                        {isLoadingMessages && <Spinner marginLeft="12px" color="white" />}
                                     </VStack>
                                     {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
                                 </Scrollbars>
@@ -700,7 +804,16 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 </Flex>
                             )}
 
-                            <Box align="flex-end" boxSizing="border-box" height="60px" paddingTop="15px" paddingLeft="5px" paddingRight="10px" marginTop="auto" position="relative">
+                            <Box
+                                align="flex-end"
+                                boxSizing="border-box"
+                                height="60px"
+                                paddingTop="15px"
+                                paddingLeft="5px"
+                                paddingRight="10px"
+                                marginTop="auto"
+                                position="relative"
+                            >
                                 <Textarea
                                     ref={textAreaRef}
                                     id="message"
@@ -745,14 +858,12 @@ export const CircleChat = ({ item, embeddedChatHeight }) => {
                                 )}
                             </Box>
 
-                            {circle?.is_public && false && (
-                                <Box alignSelf="center" position="absolute">
-                                    <Box backgroundColor="#50505d" borderRadius="20px" marginTop="10px">
-                                        <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
-                                            {i18n.t("This is a public chat, messages can be read by all")}
-                                        </Text>
+                            {!circle?.is_public && (
+                                <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
+                                    <Box alignSelf="end" position="absolute">
+                                        <RiChatPrivateLine color="white" />
                                     </Box>
-                                </Box>
+                                </Tooltip>
                             )}
                         </>
                     )}

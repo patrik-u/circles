@@ -1,6 +1,6 @@
 {
     "name": "circles",
-    "version": "1.4.12",
+    "version": "1.4.13",
     "private": true,
     "dependencies": {
         "@chakra-ui/icons": "^2.0.12",
@@ -30,6 +30,7 @@
         "jotai": "^1.10.0",
         "linkify-html": "^3.0.5",
         "linkifyjs": "^3.0.5",
+        "lottie-web": "^5.12.2",
         "mapbox-gl": "^2.10.0",
         "qrcode.react": "^3.0.1",
         "react": "^18.2.0",
@@ -44,6 +45,7 @@
         "react-i18next": "^11.15.4",
         "react-icons": "^4.10.1",
         "react-instantsearch-hooks-web": "^6.38.1",
+        "react-lottie": "^1.2.3",
         "react-map-gl": "^7.0.16",
         "react-onesignal": "^2.0.4",
         "react-quill": "^2.0.0",

@@ -83,7 +83,7 @@ export const PushNotificationsManager = () => {
         // });
 
         // initialize onesignal
-        log("**** initializing onesignal ****", 0, true);
+        log("**** initializing onesignal ****", 0);
         if (config.environment === "dev") {
             setIsInitialized(true);
             return;

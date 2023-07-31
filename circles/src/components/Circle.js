@@ -7,7 +7,16 @@ import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Hel
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
 import { defaultCoverHeight } from "components/Constants";
-import { CircleHeader, CircleCover, DisplayModeButtons, CircleRightPanel, ConnectButton, CirclePicture, FloatingAddButton, CircleProfilePicture } from "components/CircleElements";
+import {
+    CircleHeader,
+    CircleCover,
+    DisplayModeButtons,
+    CircleRightPanel,
+    ConnectButton,
+    CirclePicture,
+    FloatingAddButton,
+    CircleProfilePicture,
+} from "components/CircleElements";
 import LeftMenu from "components/LeftMenu";
 import HorizontalNavigator from "components/HorizontalNavigator";
 import { useAtom } from "jotai";
@@ -137,7 +146,6 @@ export const Circle = ({ isGlobal }) => {
         // subscribe to connected circles
         let q = null;
 
-        log("showHistoricCircles: " + showHistoricCircles, 0, true);
         let everything = circleId === "global" || isGlobal;
         if (everything) {
             if (showHistoricCircles) {
@@ -149,7 +157,11 @@ export const Circle = ({ isGlobal }) => {
             if (showHistoricCircles) {
                 q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId));
             } else {
-                q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId), where("activity.last_activity", ">=", lastXMinutes));
+                q = query(
+                    collection(db, "circles"),
+                    where("activity.active_in_circle.id", "==", circleId),
+                    where("activity.last_activity", ">=", lastXMinutes)
+                );
             }
         }
         let unsubscribeGetCircles = onSnapshot(q, (snap) => {
@@ -345,57 +357,6 @@ export const Circle = ({ isGlobal }) => {
                     </Box>
 
                     <WidgetController />
-
-                    {/* Main Content */}
-                    {/* {false && displayMode !== displayModes.map_only && (
-                        <>
-                            <Flex
-                                width="100%"
-                                height="100%"
-                                flexDirection={isMobile ? "column" : "row"}
-                                flexWrap={isMobile ? "nowrap" : "wrap"}
-                                justifyContent="center"
-                                zIndex="2"
-                                backgroundColor="white"
-                                position="absolute"
-                            >
-                                <Box
-                                    flex={isMobile ? "initial" : "2"}
-                                    order={isMobile ? "0" : "2"}
-                                    maxWidth={isMobile ? "none" : "800px"}
-                                    backgroundColor={debugBg ? "lightgreen" : "transparent"}
-                                    position="relative"
-                                >
-                                    <CircleProfilePicture circle={circle} size={circlePictureSize} left={isMobile ? "10px" : "-180px"} />
-                                    <Box marginLeft={isMobile ? `${circlePictureSize + 20}px` : "0px"} marginTop={isMobile ? "3px" : "5px"}>
-                                        <CircleHeader circle={circle} />
-                                    </Box>
-                                    {isMobile && circle?.id !== "global" && !isConnected(userData, circle?.id, ["connected_mutually_to"]) && (
-                                        <Flex align="center" justifyContent="center" marginTop="5px" marginBottom="5px">
-                                            <ConnectButton circle={circle} inHeader={true} />
-                                        </Flex>
-                                    )}
-                                    <Routes>
-                                        <Route path="/" element={<CircleHome />} />
-                                        <Route path="/posts" element={<Circles type="post" />} />
-                                        <Route path="/chat" element={<CircleChat />} />
-                                        <Route path="/video" element={<CircleVideo />} />
-                                        <Route path="/circles" element={<Circles type="circle" />} />
-                                        <Route path="/events" element={<Circles type="event" />} />
-                                        <Route path="/rooms" element={<Circles type="room" />} />
-                                        <Route path="/users" element={<Circles type="user" />} />
-                                        <Route path="/links" element={<Circles type="link" />} />
-                                        <Route path="/settings/*" element={<CircleSettings />} />
-                                        <Route path="/admin" element={<CircleAdmin />} />
-                                        <Route path="/new" element={<CircleCreateNew />} />
-                                    </Routes>
-                                </Box>
-                            </Flex>
-                            <FloatingAddButton />
-                        </>
-                    )} */}
-
-                    {/* <FloatingAddButton /> */}
                 </Flex>
                 {(!isPinned || isMobile) && (
                     <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={isMobile ? "full" : "xs"} closeOnOverlayClick={!isPinned}>
