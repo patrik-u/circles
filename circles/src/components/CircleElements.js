@@ -616,8 +616,7 @@ export const CircleFundingPanel = () => {
     );
 };
 
-export const CircleMembersPanel = () => {
-    const [circle] = useAtom(circleAtom);
+export const CircleMembersPanel = ({ circle }) => {
     const [circles] = useAtom(circlesAtom);
     const [circleConnections] = useAtom(circleConnectionsAtom);
     if (!circle?.id) return null;
@@ -700,7 +699,12 @@ export const CircleRightPanel = ({ section }) => {
     switch (section) {
         case "home":
             return (
-                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -712,7 +716,12 @@ export const CircleRightPanel = ({ section }) => {
         case "chat":
         case "circles":
             return isMobile ? null : (
-                <Box flex={isMobile ? "initial" : "1"} order={isMobile ? "0" : "3"} maxWidth={isMobile ? "none" : "270px"} paddingTop={isMobile ? "0px" : "10px"}>
+                <Box
+                    flex={isMobile ? "initial" : "1"}
+                    order={isMobile ? "0" : "3"}
+                    maxWidth={isMobile ? "none" : "270px"}
+                    paddingTop={isMobile ? "0px" : "10px"}
+                >
                     <QuickLinksPanel />
                     <CircleFundingPanel />
                     <CircleTagsPanel />
@@ -977,7 +986,15 @@ export const CirclePicture = ({
             )} */}
 
             {hasUpdates(userData, circle, "any") && (
-                <Box width={`${size / 7}px`} height={`${size / 7}px`} backgroundColor="#ff6499" borderRadius="50%" position="absolute" bottom="0px" right="0px"></Box>
+                <Box
+                    width={`${size / 7}px`}
+                    height={`${size / 7}px`}
+                    backgroundColor="#ff6499"
+                    borderRadius="50%"
+                    position="absolute"
+                    bottom="0px"
+                    right="0px"
+                ></Box>
             )}
 
             {showIfInVideoSession && isActiveInVideoConference(circle) && (
@@ -1080,9 +1097,13 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
                     <LocationButton circle={circle} inPreview={inPreview} marginLeft={!showOpen && inPreview ? "10px" : showOpen ? spacingPx : "0px"} />
                     {!inChat && <Box flexGrow="1" />}
                     <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
-                    {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}
+                    {isConnected(userData, circle.id, ["connected_mutually_to"]) && (
+                        <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
+                    )}
                     {/* <ShareButtonMenu circle={circle} /> */}
-                    {circle?.id !== "global" && <ConnectButton circle={circle} inHeader={true} fadeBackground={false} inPreview={inPreview} marginLeft={spacingPx} />}
+                    {circle?.id !== "global" && (
+                        <ConnectButton circle={circle} inHeader={true} fadeBackground={false} inPreview={inPreview} marginLeft={spacingPx} />
+                    )}
                     {inPreview && <Box width="10px" />}
 
                     {onClose && (

@@ -113,6 +113,13 @@ const getCircle = async (circleId) => {
 };
 
 const getCircleData = async (circleId) => {
+    const circleDataDirectRef = db.collection("circle_data").doc(circleId);
+    const circleDataDirectSnapshot = await circleDataDirectRef.get();
+    if (circleDataDirectSnapshot.exists) {
+        return { id: circleDataDirectSnapshot.id, ...circleDataDirectSnapshot.data() };
+    }
+
+    // see if indirect reference exist
     const circleDataRef = db.collection("circle_data");
     const circleDataSnapshot = await circleDataRef.where("circle_id", "==", circleId).get();
     if (circleDataSnapshot.docs.length <= 0) return null;
@@ -1637,6 +1644,7 @@ app.post("/chat_messages", auth, async (req, res) => {
     try {
         const date = new Date();
         var circleId = req.body.circle_id;
+        var parentCircleId = req.body.parent_circle_id;
         var message = DOMPurify.sanitize(req.body.message);
         var replyToId = req.body.replyToId;
         const authCallerId = req.user.user_id;
@@ -1739,7 +1747,7 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         if (aiChatSession) {
             // trigger AI agent to respond
-            triggerAiAgentResponse(circle, authCallerId);
+            triggerAiAgentResponse(circle, parentCircleId, authCallerId);
         }
 
         return res.json({ message: "Message sent" });
@@ -1832,6 +1840,7 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
 app.post("/chat_sessions", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
     const aiAgentId = req.body.ai_agent_id;
+    const parentCircleId = req.body.parent_circle_id;
     const date = new Date();
 
     try {
@@ -1860,44 +1869,52 @@ app.post("/chat_sessions", auth, async (req, res) => {
         const userDataRef = db.collection("circle_data").doc(circleId);
         await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(authCallerId), circle_id: circleId }, { merge: true });
 
-        // add initial AI message
-        const newMessage = {
-            circle_id: circleId,
-            user: aiAgent,
-            sent_at: date,
-            awaits_response: true,
-        };
-
-        const chatMessageRef = db.collection("chat_messages").doc();
-        await chatMessageRef.set(newMessage);
-
-        // add update to circle that new chat message has been sent
-        let updatedCircle = {
-            updates: {
-                any: date,
-                chat: date,
-            },
-            messages: admin.firestore.FieldValue.increment(1),
-        };
-        // update circle and propagate changes
-        updateCircle(circleId, updatedCircle);
-
-        // update user that chat message has been seen
-        setUserSeen(authCallerId, circleId, "chat");
-
-        // initiate AI response
-        sendOpenAIChatPrompt(
+        // TODO get introduction from AI agent settings
+        triggerAiAgentResponse(
+            circleId,
+            parentCircleId,
+            authCallerId,
             `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
-        ).then((x) => {
-            // console.log("AI response: " + x.choices[0].text);
-            let message = "";
-            if (x.choices?.[0]?.message?.content) {
-                message = DOMPurify.sanitize(x.choices[0].message.content)?.trim();
-            }
-            // update message with AI response
-            chatMessageRef.update({ openai_response: x, awaits_response: false, message: message });
-        });
-        // ***************************************
+        );
+
+        // // add initial AI message
+        // const newMessage = {
+        //     circle_id: circleId,
+        //     user: aiAgent,
+        //     sent_at: date,
+        //     awaits_response: true,
+        // };
+
+        // const chatMessageRef = db.collection("chat_messages").doc();
+        // await chatMessageRef.set(newMessage);
+
+        // // add update to circle that new chat message has been sent
+        // let updatedCircle = {
+        //     updates: {
+        //         any: date,
+        //         chat: date,
+        //     },
+        //     messages: admin.firestore.FieldValue.increment(1),
+        // };
+        // // update circle and propagate changes
+        // updateCircle(circleId, updatedCircle);
+
+        // // update user that chat message has been seen
+        // setUserSeen(authCallerId, circleId, "chat");
+
+        // // initiate AI response
+        // sendOpenAIChatPrompt(
+        //     `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
+        // ).then((x) => {
+        //     // console.log("AI response: " + x.choices[0].text);
+        //     let message = "";
+        //     if (x.choices?.[0]?.message?.content) {
+        //         message = DOMPurify.sanitize(x.choices[0].message.content)?.trim();
+        //     }
+        //     // update message with AI response
+        //     chatMessageRef.update({ openai_response: x, awaits_response: false, message: message });
+        // });
+        // // ***************************************
 
         return res.json({ id: circleId, ...newSession });
     } catch (error) {
@@ -2088,18 +2105,20 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
     }
 };
 
-const triggerAiAgentResponse = async (circle, authCallerId, prompt = undefined) => {
+const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt = undefined) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
+    }
+    if (typeof parentCircle === "string") {
+        parentCircle = await getCircle(parentCircle);
     }
 
     if (!circle) return;
 
     const circleId = circle.id;
 
-    // fetch latest messages from circle
-    //const messages = await getChatMessages(circleId, 1);
-    const chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(5).get();
+    // get messages in session
+    const chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(30).get();
 
     let messages = [];
 
@@ -2115,9 +2134,12 @@ const triggerAiAgentResponse = async (circle, authCallerId, prompt = undefined) 
         messages.push({ role: message.user.id === circle.ai_agent.id ? "assistant" : "user", content: message.message });
     }
 
+    // add custom prompt if specified
     if (prompt) {
         messages.push({ role: "user", content: prompt });
     }
+
+    console.log("messages: ", JSON.stringify(messages, null, 2));
 
     // if last message isn't a user message we should not trigger AI agent
     if (messages.length <= 0 || messages[messages.length - 1].role !== "user") {
@@ -2161,6 +2183,12 @@ const triggerAiAgentResponse = async (circle, authCallerId, prompt = undefined) 
     let request = {
         messages,
         model: "gpt-4", // model
+        // functions: [
+        //     {
+        //         name: "getMembers",
+        //         description: `Gets a full list of members and their public data in the circle "${parentCircle.name}".`,
+        //     },
+        // ],
     };
 
     const response = await openai.createChatCompletion(request);

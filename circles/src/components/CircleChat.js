@@ -71,7 +71,7 @@ export const CircleChatWidget = ({ item }) => {
             setChatMode("AI");
 
             // create new circle for one-on-one AI chat session and initialize it
-            axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id }).then(
+            axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id, parent_circle_id: circle.id }).then(
                 (res) => {
                     log("Return from chat sessions", 0, true);
                     let data = res?.data;
@@ -130,14 +130,14 @@ export const CircleChatWidget = ({ item }) => {
                     </Tooltip>
                 </Box>
             )}
-            {chatMode === "AI" && <CircleChat circle={aiChatCircle} aiChat={true} />}
+            {chatMode === "AI" && <CircleChat circle={aiChatCircle} parentCircle={circle} aiChat={true} />}
 
             {chatMode === "Members" && <CircleChat circle={circle} />}
         </Flex>
     );
 };
 
-export const CircleChat = ({ circle, aiChat }) => {
+export const CircleChat = ({ circle, parentCircle, aiChat }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -370,6 +370,7 @@ export const CircleChat = ({ circle, aiChat }) => {
             // send request to edit message
             let postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
                 message: message,
+                parent_circle_id: parentCircle?.id,
             });
 
             if (postMessageResult.data?.error) {
@@ -387,6 +388,7 @@ export const CircleChat = ({ circle, aiChat }) => {
             let req = {
                 circle_id: circle.id,
                 message: message,
+                parent_circle_id: parentCircle?.id,
             };
             if (isReplyingMessage) {
                 req.replyToId = messageToReply?.id;
@@ -643,19 +645,21 @@ export const CircleChat = ({ circle, aiChat }) => {
 
                                                                             {item.isLast && (
                                                                                 <Box paddingBottom="4px" paddingTop="2px">
-                                                                                    <Text
-                                                                                        align="right"
-                                                                                        className="circle-list-title"
-                                                                                        paddingRight="0px"
-                                                                                        lineHeight="10px"
-                                                                                        fontSize="10px"
-                                                                                        color={!item.isSelf ? "#9f9f9f" : "#818181"}
-                                                                                    >
-                                                                                        {item.sent_at.toDate().toLocaleString([], {
-                                                                                            hour: "2-digit",
-                                                                                            minute: "2-digit",
-                                                                                        })}
-                                                                                    </Text>
+                                                                                    {!item.awaits_response && (
+                                                                                        <Text
+                                                                                            align="right"
+                                                                                            className="circle-list-title"
+                                                                                            paddingRight="0px"
+                                                                                            lineHeight="10px"
+                                                                                            fontSize="10px"
+                                                                                            color={!item.isSelf ? "#9f9f9f" : "#818181"}
+                                                                                        >
+                                                                                            {item.sent_at.toDate().toLocaleString([], {
+                                                                                                hour: "2-digit",
+                                                                                                minute: "2-digit",
+                                                                                            })}
+                                                                                        </Text>
+                                                                                    )}
                                                                                 </Box>
                                                                             )}
                                                                         </Box>

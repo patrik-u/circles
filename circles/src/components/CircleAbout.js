@@ -5,7 +5,7 @@ import { log, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, twoLineE
 import { useAtom } from "jotai";
 import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom } from "components/Atoms";
 import { useLocationNoUpdates } from "components/RouterUtils";
-import { CircleCover, CirclePicture, CircleHeader, QuickLinks } from "components/CircleElements";
+import { CircleCover, CirclePicture, CircleHeader, QuickLinks, CircleMembersPanel } from "components/CircleElements";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { CircleTags } from "components/CircleElements";
 import { ActiveInCircle } from "components/CirclePreview";
@@ -101,12 +101,37 @@ const CircleAbout = ({ onClose }) => {
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
                         <Flex height="44px" width="100%" flexDirection="row" position="relative">
                             <Box width="calc(50% - 38px)" overflow="hidden">
-                                <Text fontSize={getNameFontSize(circle.name)} fontWeight="bold" marginLeft="5px" color="black" style={twoLineEllipsisStyle} marginTop="5px" lineHeight="18px">
+                                <Text
+                                    fontSize={getNameFontSize(circle.name)}
+                                    fontWeight="bold"
+                                    marginLeft="5px"
+                                    color="black"
+                                    style={twoLineEllipsisStyle}
+                                    marginTop="5px"
+                                    lineHeight="18px"
+                                >
                                     {circle.name}
                                 </Text>
                             </Box>
-                            <Box flexGrow="1" align="center" position="absolute" width="76px" height="76px" left="140px" top="-38px" backgroundColor="white" borderRadius="50%">
-                                <CirclePicture circle={circle} size={76} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} disableClick={true} />
+                            <Box
+                                flexGrow="1"
+                                align="center"
+                                position="absolute"
+                                width="76px"
+                                height="76px"
+                                left="140px"
+                                top="-38px"
+                                backgroundColor="white"
+                                borderRadius="50%"
+                            >
+                                <CirclePicture
+                                    circle={circle}
+                                    size={76}
+                                    hasPopover={false}
+                                    parentCircleSizeRatio={3.75}
+                                    parentCircleOffset={3}
+                                    disableClick={true}
+                                />
                             </Box>
                             <Box flexGrow="1" />
                             <QuickLinks circle={circle} />
@@ -157,6 +182,8 @@ const CircleAbout = ({ onClose }) => {
                                 {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
                             </Box>
                         )}
+
+                        {/* <CircleMembersPanel circle={circle} /> */}
 
                         {circle.id === "global" && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
