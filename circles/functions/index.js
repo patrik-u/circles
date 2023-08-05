@@ -13,6 +13,18 @@ const { Configuration, OpenAIApi } = require("openai");
 const OneSignal = require("onesignal-node");
 var jsonwebtoken = require("jsonwebtoken");
 var uuid = require("uuid-random");
+const PineconeClient = require("@pinecone-database/pinecone").PineconeClient;
+
+// init pinecone client
+const pinecone = new PineconeClient();
+pinecone
+    .init({
+        environment: "gcp-starter",
+        apiKey: process.env.PINECONE_API_KEY,
+    })
+    .catch((err) => {
+        console.log(err);
+    });
 
 admin.initializeApp();
 
@@ -241,8 +253,65 @@ const getCircleTypes = (source, target) => {
     return types.sort().join("_");
 };
 
+const propagateCircleUpdate = async (id) => {
+    const circleRef = db.collection("circles").doc(id);
+    let circleDoc = await circleRef.get();
+    circleDoc = await circleRef.get();
+    let circleData = circleDoc?.data();
+    if (!circleData) return;
+
+    const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", id).get();
+    circleData.id = circleDoc.id;
+
+    // workaround for firestore limit of 500 writes per batch
+    let batchArray = [db.batch()];
+    let operationCounter = 0;
+    let batchIndex = 0;
+
+    // loop through connections and update them
+    for (var i = 0; i < connectionDocs.docs.length; ++i) {
+        let connection = connectionDocs.docs[i].data();
+        let connectionRef = db.collection("connections").doc(connectionDocs.docs[i].id);
+
+        if (connection.source.id === id) {
+            batchArray[batchIndex].set(connectionRef, { source: circleData }, { merge: true });
+        } else if (connection.target.id === id) {
+            batchArray[batchIndex].set(connectionRef, { target: circleData }, { merge: true });
+        }
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
+
+    // update circles with this circle as creator
+    const creatorDocs = await db.collection("circles").where("creator.id", "==", id).get();
+    batchArray = [db.batch()];
+    operationCounter = 0;
+    batchIndex = 0;
+
+    // loop through circles and update creator
+    for (var i = 0; i < creatorDocs.docs.length; ++i) {
+        let creatorCircleRef = db.collection("circles").doc(creatorDocs.docs[i].id);
+
+        batchArray[batchIndex].set(creatorCircleRef, { creator: circleData }, { merge: true });
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
+};
+
 // updates circle data
-const updateCircle = async (id, circle, propagateUpdate = true) => {
+const updateCircle = async (id, circle, propagateUpdate = true, useUpdate = false) => {
     const circleRef = db.collection("circles").doc(id);
     let circleDoc = await circleRef.get();
     if (!circleDoc.exists) {
@@ -251,66 +320,21 @@ const updateCircle = async (id, circle, propagateUpdate = true) => {
 
     delete circle.id;
 
-    // update circle
-    await circleRef.set(circle, {
-        merge: true,
-    });
+    if (useUpdate) {
+        // update circle
+        await circleRef.update(circle);
+    } else {
+        // update circle
+        await circleRef.set(circle, {
+            merge: true,
+        });
+    }
 
     circle.id = id;
 
-    circleDoc = await circleRef.get();
-    let circleData = circleDoc?.data();
-    if (!circleData) return;
-
+    let circleData = null;
     if (propagateUpdate) {
-        const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", id).get();
-        circleData.id = circleDoc.id;
-
-        // workaround for firestore limit of 500 writes per batch
-        let batchArray = [db.batch()];
-        let operationCounter = 0;
-        let batchIndex = 0;
-
-        // loop through connections and update them
-        for (var i = 0; i < connectionDocs.docs.length; ++i) {
-            let connection = connectionDocs.docs[i].data();
-            let connectionRef = db.collection("connections").doc(connectionDocs.docs[i].id);
-
-            if (connection.source.id === id) {
-                batchArray[batchIndex].set(connectionRef, { source: circleData }, { merge: true });
-            } else if (connection.target.id === id) {
-                batchArray[batchIndex].set(connectionRef, { target: circleData }, { merge: true });
-            }
-            ++operationCounter;
-            if (operationCounter >= 499) {
-                batchArray.push(db.batch());
-                ++batchIndex;
-                operationCounter = 0;
-            }
-        }
-
-        batchArray.forEach(async (batch) => await batch.commit());
-
-        // update circles with this circle as creator
-        const creatorDocs = await db.collection("circles").where("creator.id", "==", id).get();
-        batchArray = [db.batch()];
-        operationCounter = 0;
-        batchIndex = 0;
-
-        // loop through circles and update creator
-        for (var i = 0; i < creatorDocs.docs.length; ++i) {
-            let creatorCircleRef = db.collection("circles").doc(creatorDocs.docs[i].id);
-
-            batchArray[batchIndex].set(creatorCircleRef, { creator: circleData }, { merge: true });
-            ++operationCounter;
-            if (operationCounter >= 499) {
-                batchArray.push(db.batch());
-                ++batchIndex;
-                operationCounter = 0;
-            }
-        }
-
-        batchArray.forEach(async (batch) => await batch.commit());
+        circleData = await propagateCircleUpdate(id);
     }
 
     return circleData;
@@ -456,6 +480,11 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
     // add target circle to source circle's list of connections
     const circleDataRef = db.collection("circle_data").doc(source.id);
     await circleDataRef.set({ [type]: admin.firestore.FieldValue.arrayUnion(target.id) }, { merge: true });
+
+    // if connected to a circle, add it to source's favorites
+    if (type === "connected_mutually_to" && target.type === "circle") {
+        await updateCircleSettings(authCallerId, source.id, target.id, { favorite: true }, false);
+    }
 };
 
 // deletes connection between two circles
@@ -1159,7 +1188,7 @@ app.put("/circles/:id/activity", auth, async (req, res) => {
         }
 
         // update circle
-        await updateCircle(circleId, circleData, false);
+        await updateCircle(circleId, circleData, false, true);
         return res.json({ message: "circle activity updated" });
     } catch (error) {
         functions.logger.error("Error while updating circle activity data:", error);
@@ -1187,7 +1216,7 @@ app.delete("/circles/:id/activity", auth, async (req, res) => {
         var circleData = { activity: admin.firestore.FieldValue.delete() };
 
         // update circle
-        await updateCircle(circleId, circleData, false);
+        await updateCircle(circleId, circleData, false, true);
         return res.json({ message: "circle activity updated" });
     } catch (error) {
         functions.logger.error("Error while updating circle activity data:", error);
@@ -1424,19 +1453,10 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
     }
 });
 
-// update circle settings for circle
-app.post("/circles/:id/settings", auth, async (req, res) => {
-    const authCallerId = req.user.user_id;
-    const circleId = req.params.id;
-    const targetCircleId = req.body.circleId;
-    const settings = req.body.settings;
+// update circle settings
+const updateCircleSettings = async (authCallerId, circleId, targetCircleId, settings, checkAuth = true) => {
     let favoriteSet = false;
     let likedSet = false;
-
-    if (!circleId || !targetCircleId) {
-        return res.json({ error: "Invalid input" });
-    }
-
     let newSettings = {};
     if (settings.notifications) {
         newSettings.notifications = settings.notifications;
@@ -1453,7 +1473,7 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
     // console.log(JSON.stringify(newSettings, null, 2));
 
     if (Object.keys(newSettings).length === 0) {
-        return res.json({ error: "Invalid input" });
+        return { error: "Invalid input" };
     }
 
     let circle = await getCircle(targetCircleId);
@@ -1466,9 +1486,11 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
     }
 
     // verify user is authorized to change settings
-    const isAuthorized = await isAdminOf(authCallerId, circleId);
-    if (!isAuthorized) {
-        return res.status(403).json({ error: "unauthorized" });
+    if (checkAuth) {
+        const isAuthorized = await isAdminOf(authCallerId, circleId);
+        if (!isAuthorized) {
+            return { error: "unauthorized" };
+        }
     }
 
     // get circle data
@@ -1510,7 +1532,18 @@ app.post("/circles/:id/settings", auth, async (req, res) => {
         await updateCircle(targetCircleId, likeFavoriteData);
     }
 
-    return res.json({ message: "Ok" });
+    return { message: "Ok" };
+};
+
+// update circle settings for circle
+app.post("/circles/:id/settings", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const circleId = req.params.id;
+    const targetCircleId = req.body.circleId;
+    const settings = req.body.settings;
+
+    let result = await updateCircleSettings(authCallerId, circleId, targetCircleId, settings, true);
+    return res.json(result);
 });
 
 //#endregion
@@ -1874,47 +1907,10 @@ app.post("/chat_sessions", auth, async (req, res) => {
             circleId,
             parentCircleId,
             authCallerId,
-            `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
+            `Hej mitt namn är ${user.name}. Kan du introducera dig själv?`
+            //`Hello my name is ${user.name}. Can you introduce yourself?`
+            // `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
         );
-
-        // // add initial AI message
-        // const newMessage = {
-        //     circle_id: circleId,
-        //     user: aiAgent,
-        //     sent_at: date,
-        //     awaits_response: true,
-        // };
-
-        // const chatMessageRef = db.collection("chat_messages").doc();
-        // await chatMessageRef.set(newMessage);
-
-        // // add update to circle that new chat message has been sent
-        // let updatedCircle = {
-        //     updates: {
-        //         any: date,
-        //         chat: date,
-        //     },
-        //     messages: admin.firestore.FieldValue.increment(1),
-        // };
-        // // update circle and propagate changes
-        // updateCircle(circleId, updatedCircle);
-
-        // // update user that chat message has been seen
-        // setUserSeen(authCallerId, circleId, "chat");
-
-        // // initiate AI response
-        // sendOpenAIChatPrompt(
-        //     `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
-        // ).then((x) => {
-        //     // console.log("AI response: " + x.choices[0].text);
-        //     let message = "";
-        //     if (x.choices?.[0]?.message?.content) {
-        //         message = DOMPurify.sanitize(x.choices[0].message.content)?.trim();
-        //     }
-        //     // update message with AI response
-        //     chatMessageRef.update({ openai_response: x, awaits_response: false, message: message });
-        // });
-        // // ***************************************
 
         return res.json({ id: circleId, ...newSession });
     } catch (error) {
@@ -2127,6 +2123,10 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
     let agentCircleData = await getCircleData(agentId);
 
     messages.push({ role: "system", content: agentCircleData?.system_message ?? "You are a helpful assistant." });
+    // messages.push({
+    //     role: "system",
+    //     content: "If you mention a circle (user, circle or event that has an ID) in your response, please use the format: @circle_id. Don't use markdown.",
+    // });
 
     // add previous messages
     for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {
@@ -2183,25 +2183,89 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
     let request = {
         messages,
         model: "gpt-4", // model
-        // functions: [
-        //     {
-        //         name: "getMembers",
-        //         description: `Gets a full list of members and their public data in the circle "${parentCircle.name}".`,
-        //     },
-        // ],
+        functions: [
+            {
+                name: "getMemberData",
+                description: `Hämtar lista med Basinkomstpartiets medlemmar på co:do plattformen och dess publika information, samt allmän information om partiets medlemskap.`,
+                parameters: { type: "object", properties: {} },
+            },
+            {
+                name: "getPartyHistory",
+                description: `Hämtar information om partiets historik.`,
+                parameters: { type: "object", properties: {} },
+            },
+            {
+                name: "getPartyPolicy_UbiFinancing",
+                description: `Hämtar information om partiets ställningstagande kring finansiering av basinkomst.`,
+                parameters: { type: "object", properties: {} },
+            },
+        ],
+        function_call: "auto",
     };
 
-    const response = await openai.createChatCompletion(request);
-    let data = response.data;
+    let functionCalls = 0;
+    let messageData = null;
+    let message = null;
 
-    let message = "";
-    if (data.choices?.[0]?.message?.content) {
-        message = DOMPurify.sanitize(data.choices[0].message.content)?.trim();
+    try {
+        while (functionCalls < 4) {
+            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            const response = await openai.createChatCompletion(request);
+            messageData = response.data?.choices?.[0]?.message;
+
+            // check if AI wanted a function call
+            if (messageData?.function_call) {
+                // AI wants to call a function
+                // append response message to messages
+                request.messages.push(messageData);
+
+                let functionName = messageData.function_call.name;
+                if (functionName === "getMemberData") {
+                    const members = await fn_getMemberData(parentCircle.id);
+                    request.messages.push({ role: "function", name: "getMembers", content: JSON.stringify(members) });
+                } else if (functionName === "getPartyHistory") {
+                    request.messages.push({
+                        role: "function",
+                        name: "getPartyHistory",
+                        content:
+                            "Basinkomstpartiet grundades 2018 och har uppstått som en reaktion på att inga av de etablerade partierna i Sverige för ett seriöst samtal om basinkomst eller medborgarlön. Trots att de många globala pilotprojekten och den samlade forskningen sedan 1960-talet visar på enorma samhälleliga och sociala fördelar direkt kopplade till ovillkorlig grundläggande ekonomisk trygghet, fortsätter Sveriges politiker att undvika frågan. Det är dags att basinkomst lyfts upp på den politiska agendan.",
+                    });
+                } else if (functionName === "getPartyPolicy_UbiFinancing") {
+                    request.messages.push({
+                        role: "function",
+                        name: "getPartyPolicy_UbiFinancing",
+                        content:
+                            "Basinkomstpartiet är agnostisk till finansieringsmodell men vi vidhåller vid viktiga principer som att basinkomsten ska vara individuell, ovillkorad och universell. Basinkomstpartiet jobbar på att ta fram utgångsförslag. Basinkomstpartiet stöder alla varianter och förslag ledande till basinkomst. Från ett reformerat och förenklat socialförsäkringssystem via negativ inkomstskatt till “basic income” i sin rena form. Vi vill inte utesluta bra reformer och förslag. Den exakta nivån och de villkorade stöd som skall ersättas ger ofta förlamande och oändliga detalj-diskussioner, vilket vi vill undvika. Basinkomst skall vara så pass hög att man kan leva drägligt, vilket för närvarande innebär mellan 10-15 tusen kr/månad med en lägre nivå för barn.",
+                    });
+                }
+
+                ++functionCalls;
+            } else {
+                message = messageData?.content;
+                break;
+            }
+        }
+    } catch (error) {
+        console.log("error: ", error);
     }
 
     // update message with AI response
-    chatMessageRef.update({ openai_response: data, awaits_response: false, message: message, sent_at: new Date() });
+    chatMessageRef.update({ awaits_response: false, openai_response: messageData ?? {}, message: message ?? "No response.", sent_at: new Date() });
 };
+
+//#region OpenAI functions
+
+const fn_getMemberData = async (circleId) => {
+    const memberConnections = await getMemberConnections(circleId);
+    const members = memberConnections
+        .filter((x) => x.target.type === "user")
+        .map((x) => {
+            return { id: x.target.id, name: x.target.name, description: x.target.description, content: x.target.content };
+        });
+    return { members: members, total_count: 120, on_codo_platform: members.length };
+};
+
+//#endregion
 
 const sendOpenAIChatPrompt = async (prompt, temperature = undefined, max_tokens = undefined) => {
     const configuration = new Configuration({
@@ -2294,6 +2358,70 @@ app.post("/update", auth, async (req, res) => {
         // go through all connections and add circle_types array
         if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
+        } else if (commandArgs[0] === "create_embeddings") {
+            // loops through all circles and creates embeddings for them and stores them in the pinecone database
+            let circles = await db.collection("circles").get();
+            let circleEmbeddingRequests = [];
+            const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for errors in counting tokens
+
+            // loop through circles and get embedding text
+            for (var i = 0; i < circles.docs.length; ++i) {
+                let circle = { id: circles.docs[i].id, ...circles.docs[i].data() };
+                if (circle.type !== "user" && circle.type !== "circle") {
+                    continue;
+                }
+
+                if (circle.id !== "Cuu0TEAx01WIKOu2iXqBmHV7A2t1") {
+                    // try it once on a specific circle for test
+                    continue;
+                }
+
+                console.log("creating embeddings for circle: " + circle.id);
+                let embeddingRequest = { circle: { id: circle.id, name: circle.name, type: circle.type }, embedding: null, text: null };
+
+                // create textual representation of circle
+                let text = `Type: ${circle.type}\n`;
+                text += `Name: ${circle.name}\n`;
+                text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
+                text += `Location: ${circle.location?.name}\n`;
+                text += `Description: ${circle.description}\n`;
+
+                let chars = text.length;
+                text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
+
+                embeddingRequest.text = text;
+                circleEmbeddingRequests.push(embeddingRequest);
+            }
+
+            // create embeddings using openai
+            let embeddingResponse = null;
+            try {
+                const configuration = new Configuration({
+                    apiKey: process.env.OPENAI,
+                });
+
+                const openai = new OpenAIApi(configuration);
+                const response = await openai.createEmbedding({
+                    input: circleEmbeddingRequests.map((x) => x.text),
+                    model: "text-embedding-ada-002",
+                });
+
+                embeddingResponse = response.data;
+            } catch (error) {
+                return res.json({ error: error });
+            }
+
+            // insert embeddings into pinecone
+            let pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
+                return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddingResponse.data[i].embedding };
+            });
+
+            //let pineconeResponse = await pinecone.insert("circles", embeddings);
+
+            //let vectors = embeddings.filter((x) => !x.error && !x.embedding).map((x) => x.embedding);
+
+            return res.json({ data: pineconeEmbeddings });
+            //return res.json({ data: embeddingResponse });
         } else if (commandArgs[0] === "openai") {
             const max_tokens = parseInt(commandArgs[1]);
             const temperature = parseFloat(commandArgs[2]);
@@ -2417,215 +2545,6 @@ app.post("/update", auth, async (req, res) => {
                     console.log(error.body);
                 }
             }
-        } else if (commandArgs[0] === "update_circle_connections") {
-            // this temporary command only needs to be run once
-            // go through every connection and add it to source's list of connections
-            let connections = await db.collection("connections").get();
-            connections.forEach(async (doc) => {
-                let connection = doc.data();
-
-                const circleDataRef = db.collection("circle_data").doc(connection.source.id);
-                let circleData = {
-                    mutual_connections: admin.firestore.FieldValue.delete(),
-                };
-                for (const type of connection.types) {
-                    circleData[type] = admin.firestore.FieldValue.arrayUnion(connection.target.id);
-                }
-
-                await circleDataRef.set(circleData, { merge: true });
-            });
-        } else if (commandArgs[0] === "update_circle_connections2") {
-            let circle = await db.collection("circles").get();
-            circle.forEach(async (doc) => {
-                const circleDataRef = db.collection("circle_data").doc(doc.id);
-                let circleData = {
-                    mutual_connections: admin.firestore.FieldValue.delete(),
-                };
-                //connected_mutually_to: admin.firestore.FieldValue.arrayRemove(doc.id),
-                await circleDataRef.set(circleData, { merge: true });
-            });
-        } else if (commandArgs[0] === "backup_connections") {
-            // this temporary command only needs to be run once
-            let connections = await db.collection("connections").get();
-            connections.forEach(async (doc) => {
-                let connection = doc.data();
-                await db.collection("backup_connections").doc(doc.id).set(connection);
-            });
-        } else if (commandArgs[0] === "consolidate_connections") {
-            // this temporary command only needs to be run once
-            let connections = await db.collection("connections").get();
-
-            let connectionsTouched = {};
-            let connectionsToDelete = [];
-            connections.forEach(async (doc) => {
-                let connection = { id: doc.id, ...doc.data() };
-
-                if (!connection.source || !connection.target) {
-                    // if connection is invalid then skip it
-                    connectionsToDelete.push(connection.id);
-                } else if (connection.source.id === "earth" || connection.target.id === "earth") {
-                    // if connection is to earth then skip it
-                    connectionsToDelete.push(connection.id);
-                } else {
-                    // see if connection has been touched already
-                    let masterConnectionKey = connection.source.id + connection.target.id;
-                    if (connectionsTouched[masterConnectionKey]) {
-                        // update master connection
-                        let masterConnectionId = connectionsTouched[masterConnectionKey]?.id;
-                        const masterConnectionRef = db.collection("connections").doc(masterConnectionId);
-                        await masterConnectionRef.update({
-                            type: admin.firestore.FieldValue.delete(),
-                            created_at: admin.firestore.FieldValue.delete(),
-                            types: admin.firestore.FieldValue.arrayUnion(connection.type),
-                            [connection.type + "_data"]: { created_at: connection.created_at },
-                        });
-
-                        // add connection to list of connections to delete
-                        connectionsToDelete.push(connection.id);
-                    } else {
-                        connectionsTouched[masterConnectionKey] = connection;
-                        if (!connection.types && connection.type) {
-                            // not yet consolidated
-                            const masterConnectionRef = db.collection("connections").doc(connection.id);
-                            await masterConnectionRef.update({
-                                type: admin.firestore.FieldValue.delete(),
-                                created_at: admin.firestore.FieldValue.delete(),
-                                types: admin.firestore.FieldValue.arrayUnion(connection.type),
-                                [connection.type + "_data"]: { created_at: connection.created_at },
-                            });
-                        }
-                    }
-                }
-            });
-
-            // delete connections
-            for (const connectionToDelete of connectionsToDelete) {
-                const connectionToDeleteRef = db.collection("connections").doc(connectionToDelete);
-                await connectionToDeleteRef.delete();
-            }
-
-            return res.json({ connectionsTouched: Object.keys(connectionsTouched).length, connectionsDeleted: connectionsToDelete.length });
-        } else if (commandArgs[0] === "repair_connections") {
-            // this temporary command only needs to be run once
-            let connections = await db.collection("connections").get();
-
-            let connectionsRepaired = [];
-            connections.forEach(async (doc) => {
-                let connection = { id: doc.id, ...doc.data() };
-
-                let anyRepaired = false;
-                let types = connection.types ?? [];
-                let newTypes = [];
-                if (connection.connected_mutually_to_data && !connection.types.includes("connected_mutually_to")) {
-                    types.push("connected_mutually_to");
-                    newTypes.push("connected_mutually_to");
-                    anyRepaired = true;
-                }
-                if (connection.connected_to_data && !connection.types.includes("connected_to")) {
-                    types.push("connected_to");
-                    newTypes.push("connected_to");
-                    anyRepaired = true;
-                }
-                if (connection.creator_of_data && !connection.types.includes("creator_of")) {
-                    types.push("creator_of");
-                    newTypes.push("creator_of");
-                    anyRepaired = true;
-                }
-                if (connection.created_by_data && !connection.types.includes("created_by")) {
-                    types.push("created_by");
-                    newTypes.push("created_by");
-                    anyRepaired = true;
-                }
-                if (connection.owned_by_data && !connection.types.includes("owned_by")) {
-                    types.push("owned_by");
-                    newTypes.push("owned_by");
-                    anyRepaired = true;
-                }
-                if (connection.owner_of_data && !connection.types.includes("owner_of")) {
-                    types.push("owner_of");
-                    newTypes.push("owner_of");
-                    anyRepaired = true;
-                }
-                if (connection.admin_of_data && !connection.types.includes("admin_of")) {
-                    types.push("admin_of");
-                    newTypes.push("admin_of");
-                    anyRepaired = true;
-                }
-                if (connection.admin_by_data && !connection.types.includes("admin_by")) {
-                    types.push("admin_by");
-                    newTypes.push("admin_by");
-                    anyRepaired = true;
-                }
-                if (connection.moderator_of_data && !connection.types.includes("moderator_of")) {
-                    types.push("moderator_of");
-                    newTypes.push("moderator_of");
-                    anyRepaired = true;
-                }
-                if (connection.moderated_by_data && !connection.types.includes("moderated_by")) {
-                    types.push("moderated_by");
-                    newTypes.push("moderated_by");
-                    anyRepaired = true;
-                }
-                if (connection.moderated_by_data && !connection.types.includes("moderated_by")) {
-                    types.push("moderated_by");
-                    newTypes.push("moderated_by");
-                    anyRepaired = true;
-                }
-                if (connection.connected_mutually_to_request_data && !connection.types.includes("connected_mutually_to_request")) {
-                    types.push("connected_mutually_to_request");
-                    newTypes.push("connected_mutually_to_request");
-                    anyRepaired = true;
-                }
-                if (connection.admin_by_request_data && !connection.types.includes("admin_by_request")) {
-                    types.push("admin_by_request");
-                    newTypes.push("admin_by_request");
-                    anyRepaired = true;
-                }
-
-                if (anyRepaired) {
-                    connectionsRepaired.push({ id: connection.id, types: newTypes });
-                    const connectionRef = db.collection("connections").doc(connection.id);
-                    await connectionRef.update({
-                        types: types,
-                    });
-                }
-            });
-
-            return res.json({ connectionsRepaired: connectionsRepaired });
-        } else if (commandArgs[0] === "convert_custom_tags") {
-            // should be run once
-            // this temporary command only needs to be run once
-            let circles = await db.collection("circles").get();
-
-            let tagsConverted = [];
-
-            // loop through circles and update custom tags
-            for (var i = 0; i < circles.docs.length; ++i) {
-                let circle = { id: circles.docs[i].id, ...circles.docs[i].data() };
-                if (!circle.tags) continue;
-
-                let anyConverted = false;
-                let newTags = [];
-
-                for (var j = 0; j < circle.tags.length; ++j) {
-                    if (!circle.tags[j].is_custom) {
-                        newTags.push(circle.tags[j]);
-                        continue;
-                    } else {
-                        anyConverted = true;
-                        let newTag = await getTagByName(circle.tags[j].name, true);
-                        tagsConverted.push(newTag);
-                        newTags.push(newTag);
-                    }
-                }
-
-                if (anyConverted) {
-                    let circleRef = db.collection("circles").doc(circle.id);
-                    await circleRef.update({ tags: newTags });
-                }
-            }
-
-            return res.json({ tagsConverted: tagsConverted });
         } else if (commandArgs[0] === "test123") {
             // go through every circle_data and see if any of them lack corresponding circle
             let circleData = await db.collection("circle_data").get();
@@ -2638,6 +2557,7 @@ app.post("/update", auth, async (req, res) => {
             });
             return res.json({ data: data });
         } else if (commandArgs[0] === "connect") {
+            // connects two circles together connect <source> <type> <target> <notify>, e.g. connect 123 connected_mutually_to 456 true
             let sourceId = commandArgs[1];
             let type = commandArgs[2];
             let targetId = commandArgs[3];
@@ -2694,6 +2614,8 @@ app.post("/update", auth, async (req, res) => {
 
             return res.json({ result });
         } else if (commandArgs[0] === "count_new_circles") {
+            // count_new_circles <type> <date>, e.g. count_new_circles circle 2021-01-01
+            // count number of new circles that has been created after a certain date after a certain date
             let type = commandArgs[1];
             if (!type) {
                 return res.json({ error: "invalid type" });
@@ -2720,7 +2642,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY"],
+    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY", "PINECONE_API_KEY"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);

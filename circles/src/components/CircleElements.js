@@ -45,6 +45,7 @@ import {
     getLatlng,
     isCircleActive,
     isWithinActiveThreshold,
+    fromFsDate,
 } from "components/Helpers";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
@@ -504,8 +505,8 @@ export const CirclePanel = ({ children, title }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
     return (
-        <Box align="left" marginLeft={{ base: "22px", md: "22px" }} marginBottom={{ base: "50px", md: "0px" }} paddingBottom={isMobile ? "0px" : "5px"}>
-            <Text className="contentSubHeader">{title}</Text>
+        <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
+            <Text fontWeight="bold">{title}</Text>
             {children}
         </Box>
     );
@@ -619,15 +620,34 @@ export const CircleFundingPanel = () => {
 export const CircleMembersPanel = ({ circle }) => {
     const [circles] = useAtom(circlesAtom);
     const [circleConnections] = useAtom(circleConnectionsAtom);
+
+    useEffect(() => {
+        if (!circle?.id) return;
+
+        // get connections and combine it with active circles, the connections we get once (probably in parent circle)
+        // this should perhaps be done at a higher level
+
+        // we need total number of members somehow
+
+        // show 6 members and then show "and x more"
+        // sort by last_active date
+
+        // get user connections to circle
+        // sort by last online
+        // last online is not updated in connections
+    }, [circle?.id]);
+
     if (!circle?.id) return null;
 
     let members = [];
     if (circle.id === "global") {
         members = circles.filter((x) => x.type === "user" && x.picture);
     } else {
-        const circleTypes = getCircleTypes(circle.type, "user");
-        members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle?.picture).map((x) => x.display_circle);
+        members = circles.filter((x) => x.type === "user" && x.picture);
+        // const circleTypes = getCircleTypes(circle.type, "user");
+        // members = circleConnections.filter((x) => x.circle_types === circleTypes && x.display_circle?.picture).map((x) => x.display_circle);
     }
+    members.sort((a, b) => fromFsDate(b.activity.last_activity) - fromFsDate(a.activity.last_activity));
     if (members.length <= 0) return null;
 
     const size = 44;
@@ -640,7 +660,7 @@ export const CircleMembersPanel = ({ circle }) => {
             <Flex flexWrap="wrap">
                 {members.map((member) => (
                     <Box key={member.id} width={sizePx} height={sizePx} marginRight={spacingPx} marginBottom={spacingPx}>
-                        <CirclePicture circle={member} hasPopover={true} size={size} />
+                        <CirclePicture circle={member} hasPopover={true} size={size} isActive={isCircleActive(member)} />
                     </Box>
                 ))}
             </Flex>

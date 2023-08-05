@@ -46,12 +46,6 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
             onClose();
             openCircle(navigate, createdCircle);
             openAboutCircle(createdCircle, setToggleAbout);
-
-            // add circle to favorites by default
-            axios.post(`/circles/${user.id}/settings`, {
-                circleId: createdCircle.id,
-                settings: { favorite: true },
-            });
         } else {
             setActiveStep(steps[nextIndex]);
         }
@@ -68,7 +62,14 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleTypeForm isUpdateForm={false} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                                <CircleTypeForm
+                                    isUpdateForm={false}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -79,7 +80,14 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleContentForm isUpdateForm={false} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                                <CircleContentForm
+                                    isUpdateForm={false}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -90,7 +98,14 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleImagesForm isUpdateForm={true} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                                <CircleImagesForm
+                                    isUpdateForm={true}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -101,7 +116,14 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleTagsForm isUpdateForm={true} circle={createdCircle} isGuideForm={false} onNext={next} onUpdate={onUpdate} onCancel={onClose} />
+                                <CircleTagsForm
+                                    isUpdateForm={true}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -112,7 +134,13 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleBasePopupForm isUpdateForm={true} circle={createdCircle} isGuideForm={true} onNext={next} toggleMapInteract={toggleMapInteract} />
+                                <CircleBasePopupForm
+                                    isUpdateForm={true}
+                                    circle={createdCircle}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                    toggleMapInteract={toggleMapInteract}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -129,7 +157,13 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
             <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
                 <HStack align="center">
                     {steps.map((x, i) => (
-                        <Box key={x.id} width="10px" height="10px" borderRadius="50%" backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}></Box>
+                        <Box
+                            key={x.id}
+                            width="10px"
+                            height="10px"
+                            borderRadius="50%"
+                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
+                        ></Box>
                     ))}
                 </HStack>
             </Flex>

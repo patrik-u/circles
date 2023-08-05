@@ -149,12 +149,14 @@ export const Circle = ({ isGlobal }) => {
         let everything = circleId === "global" || isGlobal;
         if (everything) {
             if (showHistoricCircles) {
+                // TODO get connected circles as well
                 q = query(collection(db, "circles"));
             } else {
                 q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
             }
         } else {
             if (showHistoricCircles) {
+                // TODO get connected circles as well
                 q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId));
             } else {
                 q = query(

@@ -1,13 +1,33 @@
 //#region imports
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useMemo } from "react";
 import { Box, Image, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from "@chakra-ui/react";
-import { lat, lng, getLngLatArray, getImageKitUrl, log, getCircleTypes, isWithinMinutes, isCircleActive, isActiveInVideoConference, getLocation } from "components/Helpers";
+import {
+    lat,
+    lng,
+    getLngLatArray,
+    getImageKitUrl,
+    log,
+    getCircleTypes,
+    isWithinMinutes,
+    isCircleActive,
+    isActiveInVideoConference,
+    getLocation,
+    isActiveInCircle,
+} from "components/Helpers";
 import { Marker } from "react-map-gl";
 import { openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePicture } from "components/CircleElements";
 import { Source, Layer } from "react-map-gl";
 import { useAtom } from "jotai";
-import { userAtom, circleConnectionsAtom, filteredCirclesAtom, toggleAboutAtom, circlesFilterAtom, highlightedCircleAtom, previewCircleAtom } from "components/Atoms";
+import {
+    userAtom,
+    circleConnectionsAtom,
+    filteredCirclesAtom,
+    toggleAboutAtom,
+    circlesFilterAtom,
+    highlightedCircleAtom,
+    previewCircleAtom,
+} from "components/Atoms";
 import { useNavigateNoUpdates, useQueryParamsNoUpdates } from "components/RouterUtils";
 import { useSearchParams } from "react-router-dom";
 //#endregion
@@ -80,7 +100,7 @@ export const ConnectionsEdges = () => {
 };
 
 export const CircleMapEdges = ({ circle, circles }) => {
-    if (!getLocation(circle)) return null;
+    if (circle?.id !== "global" && !getLocation(circle)) return null;
 
     const getFeatures = () => {
         return circles
@@ -97,9 +117,40 @@ export const CircleMapEdges = ({ circle, circles }) => {
             });
     };
 
+    const getGlobalFeatures = () => {
+        return circles
+            .map((x) => {
+                if (!isActiveInCircle(x)) return null;
+
+                let sourceLoc = getLocation(x);
+                let targetLoc = getLocation(x.activity.active_in_circle);
+
+                let targetCircle = circles.find((a) => a.id === x.activity.active_in_circle.id);
+                if (!targetCircle) return null;
+                if (!isCircleActive(targetCircle)) return null;
+                if (targetCircle.id === "global") return null;
+
+                if (sourceLoc && targetLoc) {
+                    return { source: x, target: x.activity.active_in_circle };
+                }
+                return null;
+            })
+            .filter((x) => x)
+            .map((x) => {
+                return {
+                    type: "Feature",
+                    properties: { circle_types: getCircleTypes(x.source.type, x.target.type) },
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [getLngLatArray(getLocation(x.source)), getLngLatArray(getLocation(x.target))],
+                    },
+                };
+            });
+    };
+
     const lineFeatures = {
         type: "FeatureCollection",
-        features: getFeatures(),
+        features: circle?.id === "global" ? getGlobalFeatures() : getFeatures(),
     };
 
     return (
@@ -162,10 +213,30 @@ export const CircleMapMarker = ({ circle, highlighted }) => {
     const loc = getLocation(circle);
     return (
         loc && (
-            <Marker key={circle.id} offset={[0, -24]} latitude={lat(loc)} longitude={lng(loc)} className="circle-marker" onClick={() => openAboutCircle(circle, setToggleAbout)}>
-                <Image src={getImageKitUrl(getMarkerBackground(), 48, 48)} width="48px" height="48px" filter={isActive() ? "" : "grayscale(1)"} opacity={isActive() ? "1" : "0.5"} />
+            <Marker
+                key={circle.id}
+                offset={[0, -24]}
+                latitude={lat(loc)}
+                longitude={lng(loc)}
+                className="circle-marker"
+                onClick={() => openAboutCircle(circle, setToggleAbout)}
+            >
+                <Image
+                    src={getImageKitUrl(getMarkerBackground(), 48, 48)}
+                    width="48px"
+                    height="48px"
+                    filter={isActive() ? "" : "grayscale(1)"}
+                    opacity={isActive() ? "1" : "0.5"}
+                />
                 <Box top="3px" left="9px" width="30px" height="30px" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
-                    <CirclePicture circle={circle} size={30} disableClick={true} isActive={isCircleActive(circle)} parentCircleSizeRatio={2} parentCircleOffset={-3} />
+                    <CirclePicture
+                        circle={circle}
+                        size={30}
+                        disableClick={true}
+                        isActive={isCircleActive(circle)}
+                        parentCircleSizeRatio={2}
+                        parentCircleOffset={-3}
+                    />
                 </Box>
 
                 <Popover trigger="hover" gutter="0" isLazy>

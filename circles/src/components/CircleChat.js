@@ -505,7 +505,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
                     {!isAuthorized && (
-                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px">
+                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px" color="white">
                             <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
                         </Box>
                     )}

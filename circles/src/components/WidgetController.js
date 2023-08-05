@@ -80,6 +80,7 @@ import CircleAbout from "components/CircleAbout";
 import CircleSettings from "components/settings/CircleSettings";
 import CircleCalendar from "components/CircleCalendar";
 import { DisplayModeButtons } from "./CircleElements";
+import CircleAdmin from "components/CircleAdmin";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
@@ -88,11 +89,12 @@ const WidgetController = () => {
     const [toggleAbout, setToggleAbout] = useAtom(toggleAboutAtom);
     const [toggleSettings, setToggleSettings] = useAtom(toggleSettingsAtom);
     const [circle] = useAtom(circleAtom);
+    const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
-    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings"], []);
+    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -215,9 +217,16 @@ const WidgetController = () => {
         toggleWidget("calendar", false);
     };
 
+    const onAdminClose = () => {
+        toggleWidget("admin", false);
+    };
+
     const shouldShowMenuItem = (item) => {
         if (item === "settings") {
             return showSettings();
+        }
+        if (item === "admin") {
+            return circle?.id === "global" && user?.is_admin;
         }
         return true;
     };
@@ -298,6 +307,7 @@ const WidgetController = () => {
                     toggledWidgets.includes("video") ||
                     toggledWidgets.includes("calendar") ||
                     toggledWidgets.includes("settings") ||
+                    toggledWidgets.includes("admin") ||
                     inVideoConference
                 ) && <div class="flex flex-col flex-grow order-2"></div>}
 
@@ -310,6 +320,12 @@ const WidgetController = () => {
                 {toggledWidgets.includes("calendar") && (
                     <div class="flex flex-col flex-grow order-2">
                         <CircleCalendar onClose={onCalendarClose} />
+                    </div>
+                )}
+
+                {toggledWidgets.includes("admin") && (
+                    <div class="flex flex-col flex-grow order-2">
+                        <CircleAdmin onClose={onAdminClose} />
                     </div>
                 )}
             </Box>
