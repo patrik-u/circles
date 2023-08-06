@@ -13,6 +13,7 @@ import i18n from "i18n/Localization";
 
 import algoliasearch from "algoliasearch/lite";
 import { InstantSearch, useInstantSearch, useSearchBox, useHits } from "react-instantsearch-hooks-web";
+import { RiSearchEyeLine } from "react-icons/ri";
 // #endregion
 
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
@@ -79,7 +80,7 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
             <InputLeftElement
                 color="#333"
                 pointerEvents="none"
-                children={<HiOutlineSearch size={isMobile ? 20 : 28} />}
+                children={<RiSearchEyeLine size={isMobile ? 20 : 28} />}
                 height={isSmall ? "30px" : "38px"}
                 marginLeft={isSmall ? "12px" : "20px"}
             />
@@ -126,53 +127,6 @@ const EmptyQueryBoundary = ({ children, fallback }) => {
         return fallback;
     }
     return children;
-};
-
-export const MobileSearchBox = (props) => {
-    const [searchIsOpen, setSearchIsOpen] = useState(false);
-    const iconSize = "24px";
-    const openSearch = () => {
-        if (searchIsOpen) {
-            setSearchIsOpen(false);
-        } else {
-            setSearchIsOpen(true);
-        }
-    };
-    const onHitClick = () => {
-        setSearchIsOpen(false);
-    };
-
-    return (
-        <>
-            <Box position="relative" height={iconSize} {...props}>
-                <Icon
-                    width={iconSize}
-                    height={iconSize}
-                    color={"white"}
-                    _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                    _active={{ transform: "scale(0.98)" }}
-                    as={HiOutlineSearch}
-                    onClick={openSearch}
-                    cursor="pointer"
-                />
-            </Box>
-            {searchIsOpen && (
-                <Box>
-                    <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
-                        <CircleSearchBox
-                            size="sm"
-                            hidePlaceholder={true}
-                            popover={true}
-                            maxWidth="450px"
-                            setSearchIsOpen={setSearchIsOpen}
-                            onHitClick={onHitClick}
-                            autofocus={true}
-                        />
-                    </Box>
-                </Box>
-            )}
-        </>
-    );
 };
 
 export const CircleSearchBox = ({
@@ -236,6 +190,53 @@ export const CircleSearchBox = ({
 
             {children}
         </InstantSearch>
+    );
+};
+
+export const CircleSearchBoxIcon = (props) => {
+    const [searchIsOpen, setSearchIsOpen] = useState(false);
+    const iconSize = "24px";
+    const openSearch = () => {
+        if (searchIsOpen) {
+            setSearchIsOpen(false);
+        } else {
+            setSearchIsOpen(true);
+        }
+    };
+    const onHitClick = () => {
+        setSearchIsOpen(false);
+    };
+
+    return (
+        <>
+            <Box position="relative" height={iconSize} {...props}>
+                <Icon
+                    width={iconSize}
+                    height={iconSize}
+                    color={"white"}
+                    _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                    _active={{ transform: "scale(0.98)" }}
+                    as={RiSearchEyeLine}
+                    onClick={openSearch}
+                    cursor="pointer"
+                />
+            </Box>
+            {searchIsOpen && (
+                <Box>
+                    <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
+                        <CircleSearchBox
+                            size="sm"
+                            hidePlaceholder={true}
+                            popover={true}
+                            maxWidth="450px"
+                            setSearchIsOpen={setSearchIsOpen}
+                            onHitClick={onHitClick}
+                            autofocus={true}
+                        />
+                    </Box>
+                </Box>
+            )}
+        </>
     );
 };
 

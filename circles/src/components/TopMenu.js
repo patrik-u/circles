@@ -10,7 +10,7 @@ import { LoginRegisterMenu } from "components/LoginForms";
 import { useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, homeExpandedAtom, circleAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
-import { CircleSearchBox, MobileSearchBox } from "components/CircleSearch";
+import { CircleSearchBoxIcon } from "components/CircleSearch";
 import { CirclePicture } from "components/CircleElements";
 import { Routes, Route } from "react-router-dom";
 //#endregion
@@ -43,13 +43,7 @@ export const TopMenu = ({ onLogoClick }) => {
                 <Box flex="1" />
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">
                     <HStack spacing={isMobile ? "20px" : "20px"} align="center" height={height}>
-                        {!homeExpanded &&
-                            (isMobile ? (
-                                <MobileSearchBox marginRight="12px" />
-                            ) : (
-                                <MobileSearchBox marginRight="12px" />
-                                // <CircleSearchBox size={isMobile ? "sm" : "md"} hidePlaceholder={true} popover={true} maxWidth="450px" />
-                            ))}
+                        {!homeExpanded && <CircleSearchBoxIcon marginRight="12px" />}
 
                         {signInStatus.signedIn && (
                             <>

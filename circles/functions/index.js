@@ -19,7 +19,7 @@ const PineconeClient = require("@pinecone-database/pinecone").PineconeClient;
 const pinecone = new PineconeClient();
 pinecone
     .init({
-        environment: "gcp-starter",
+        environment: process.env.PINECONE_ENVIRONMENT,
         apiKey: process.env.PINECONE_API_KEY,
     })
     .catch((err) => {
@@ -41,20 +41,8 @@ const db = admin.firestore();
 
 const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
 
-//const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
-// const oneSignalApiKeyProvider = {
-//     getToken() {
-//         return process.env.ONESIGNAL_API_KEY;
-//     },
-// };
-// const oneSignalConfiguration = OneSignal.createConfiguration({
-//     authMethods: {
-//         app_key: {
-//             tokenProvider: oneSignalApiKeyProvider,
-//         },
-//     },
-// });
-// const oneSignalClient = new OneSignal.DefaultApi(oneSignalConfiguration);
+const circleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent"];
+const indexCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "user"];
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -115,8 +103,6 @@ const auth = async (req, res, next) => {
 //#endregion
 
 //#region helper functions
-
-const circleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent"];
 
 const getCircle = async (circleId) => {
     let circleDoc = await db.collection("circles").doc(circleId).get();
@@ -234,6 +220,94 @@ const getConfig = async () => {
     let configDoc = await db.collection("config").doc("config").get();
     if (!configDoc.exists) return null;
     return configDoc.data();
+};
+
+// create textual representation of circle
+const getCircleText = (circle) => {
+    const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
+
+    // create textual representation of circle
+    let text = `Type: ${circle.type}\n`;
+    text += `Name: ${circle.name}\n`;
+    text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
+    text += `Location: ${circle.location?.name}\n`;
+    text += `Description: ${circle.description}\n`;
+    if (circle.type === "event") {
+        // add info about event
+        text += `Starts at: ${circle.starts_at}\n`;
+    }
+
+    let chars = text.length;
+    text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
+
+    // TODO add textual representation of location if set
+    return text;
+};
+
+const upsertCircleEmbedding = async (circle) => {
+    if (typeof circle === "string") {
+        circle = await getCircle(circle);
+    }
+    if (!circle) return null;
+    return await upsertCirclesEmbeddings([circle]);
+};
+
+const upsertCirclesEmbeddings = async (circles) => {
+    // loops through all circles and creates embeddings for them and stores them in the pinecone database
+    let circleEmbeddingRequests = [];
+
+    // loop through circles and get embedding text
+    for (var i = 0; i < circles.length; ++i) {
+        let circle = circles[i];
+
+        // only index user and circle circles
+        if (!indexCircleTypes.includes(circle.type)) {
+            continue;
+        }
+
+        let embeddingRequest = { circle: { id: circle.id, name: circle.name, type: circle.type }, embedding: null, text: null };
+
+        // create textual representation of circle
+        let text = getCircleText(circle);
+
+        embeddingRequest.text = text;
+        circleEmbeddingRequests.push(embeddingRequest);
+    }
+
+    // create embeddings using openai
+    let embeddingResponse = null;
+    let insertBatches = [];
+    let pineconeEmbeddings = null;
+    try {
+        const configuration = new Configuration({
+            apiKey: process.env.OPENAI,
+        });
+
+        const openai = new OpenAIApi(configuration);
+        const response = await openai.createEmbedding({
+            input: circleEmbeddingRequests.map((x) => x.text),
+            model: "text-embedding-ada-002",
+        });
+
+        embeddingResponse = response.data;
+
+        // insert embeddings into pinecone
+        pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
+            return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddingResponse.data[i].embedding };
+        });
+
+        // add 250 vectors at a time to pinecone
+        while (pineconeEmbeddings.length) {
+            let batchedVectors = pineconeEmbeddings.splice(0, 250);
+            const index = pinecone.Index("circles");
+            let pineconeResponse = await index.upsert({ upsertRequest: { vectors: batchedVectors } });
+            insertBatches.push(pineconeResponse);
+        }
+
+        return insertBatches;
+    } catch (error) {
+        return { error: error };
+    }
 };
 
 const isSuperAdmin = async (authCallerId) => {
@@ -889,6 +963,9 @@ app.post("/circles", auth, async (req, res) => {
             await createConnection(circle, parent, "parented_by", false, null, false);
         }
 
+        // upsert embeddings
+        upsertCircleEmbedding(circle);
+
         return res.json({ message: "Circle created", circle: { id: circleRes.id, ...circle } });
     } catch (error) {
         functions.logger.error("Error while creating circle:", error);
@@ -1031,6 +1108,9 @@ app.put("/circles/:id", auth, async (req, res) => {
         if (Object.keys(circleData).length > 0) {
             // update circle
             await updateCircle(circleId, circleData);
+
+            // upsert embeddings
+            upsertCircleEmbedding(circleId);
 
             // update connection to parent if changed
             if (hasNewParent) {
@@ -2358,70 +2438,51 @@ app.post("/update", auth, async (req, res) => {
         // go through all connections and add circle_types array
         if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
-        } else if (commandArgs[0] === "create_embeddings") {
-            // loops through all circles and creates embeddings for them and stores them in the pinecone database
-            let circles = await db.collection("circles").get();
-            let circleEmbeddingRequests = [];
-            const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for errors in counting tokens
+        } else if (commandArgs[0] === "query_embeddings") {
+            let circleId = commandArgs[1];
+            let filterType = commandArgs?.[2];
 
-            // loop through circles and get embedding text
-            for (var i = 0; i < circles.docs.length; ++i) {
-                let circle = { id: circles.docs[i].id, ...circles.docs[i].data() };
-                if (circle.type !== "user" && circle.type !== "circle") {
-                    continue;
-                }
-
-                if (circle.id !== "Cuu0TEAx01WIKOu2iXqBmHV7A2t1") {
-                    // try it once on a specific circle for test
-                    continue;
-                }
-
-                console.log("creating embeddings for circle: " + circle.id);
-                let embeddingRequest = { circle: { id: circle.id, name: circle.name, type: circle.type }, embedding: null, text: null };
-
-                // create textual representation of circle
-                let text = `Type: ${circle.type}\n`;
-                text += `Name: ${circle.name}\n`;
-                text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
-                text += `Location: ${circle.location?.name}\n`;
-                text += `Description: ${circle.description}\n`;
-
-                let chars = text.length;
-                text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
-
-                embeddingRequest.text = text;
-                circleEmbeddingRequests.push(embeddingRequest);
-            }
-
-            // create embeddings using openai
-            let embeddingResponse = null;
             try {
-                const configuration = new Configuration({
-                    apiKey: process.env.OPENAI,
-                });
+                const index = pinecone.Index("circles");
 
-                const openai = new OpenAIApi(configuration);
-                const response = await openai.createEmbedding({
-                    input: circleEmbeddingRequests.map((x) => x.text),
-                    model: "text-embedding-ada-002",
-                });
+                let pineconeRequest = { queryRequest: { id: circleId, topK: 10 } };
+                if (filterType) {
+                    pineconeRequest.queryRequest.filter = { type: filterType };
+                }
 
-                embeddingResponse = response.data;
+                let pineconeResponse = await index.query(pineconeRequest);
+
+                // get circle data from response
+                let circleIds = pineconeResponse.matches.map((x) => x.id);
+                // let circleRefs = circleIds.map((x) => db.collection("circles").doc(x));
+                let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIds).get();
+
+                // add score to circle
+                let circles = [];
+                for (var i = 0; i < circleDocs.docs.length; ++i) {
+                    let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+                    let match = pineconeResponse.matches.find((x) => x.id === circle.id);
+                    circle.score = match?.score;
+                    circles.push(circle);
+                }
+                return res.json({
+                    data: circles.map((x) => {
+                        return { name: x.name, description: x.description, type: x.type, score: x.score };
+                    }),
+                });
             } catch (error) {
                 return res.json({ error: error });
             }
+        } else if (commandArgs[0] === "upsert_embeddings") {
+            // loops through all circles and creates embeddings for them and stores them in the pinecone database
+            let circleDocs = await db.collection("circles").get();
+            let circles = [];
+            for (var j = 0; j < circleDocs.docs.length; ++j) {
+                circles.push({ id: circleDocs.docs[j].id, ...circleDocs.docs[j].data() });
+            }
+            let response = await upsertCirclesEmbeddings(circles);
 
-            // insert embeddings into pinecone
-            let pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
-                return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddingResponse.data[i].embedding };
-            });
-
-            //let pineconeResponse = await pinecone.insert("circles", embeddings);
-
-            //let vectors = embeddings.filter((x) => !x.error && !x.embedding).map((x) => x.embedding);
-
-            return res.json({ data: pineconeEmbeddings });
-            //return res.json({ data: embeddingResponse });
+            return res.json(response);
         } else if (commandArgs[0] === "openai") {
             const max_tokens = parseInt(commandArgs[1]);
             const temperature = parseFloat(commandArgs[2]);
@@ -2620,7 +2681,7 @@ app.post("/update", auth, async (req, res) => {
             if (!type) {
                 return res.json({ error: "invalid type" });
             }
-            let date = new Date(commandArgs[2]);
+            let date = new Date(commandArgs[2] ?? "2020-01-01");
             const snapshot = await db.collection("circles").where("type", "==", type).where("created_at", ">=", date).get();
 
             let result = { count: `${snapshot.docs.length} ${type}s` };
@@ -2642,7 +2703,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY", "PINECONE_API_KEY"],
+    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY", "PINECONE_API_KEY", "PINECONE_ENVIRONMENT"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);

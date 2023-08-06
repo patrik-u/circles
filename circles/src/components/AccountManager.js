@@ -288,7 +288,7 @@ export const AccountManager = () => {
             }
         }, 60000); // update every minute
         return () => clearInterval(intervalId);
-    }, [signInStatus?.signedIn, user?.id, circle?.id, inVideoConference, userLocation, userData?.incognito, circle]); // we only want to trigger if circle ID changes hence compiler warning
+    }, [signInStatus?.signedIn, user?.id, circle?.id, inVideoConference, userLocation, userData?.incognito]); // we only want to trigger if circle ID changes hence compiler warning
 
     // get user connections
     useEffect(() => {
