@@ -13,6 +13,7 @@ import {
     mapStyleAtom,
     highlightedCircleAtom,
     previewCircleAtom,
+    semanticSearchCirclesAtom,
 } from "components/Atoms";
 import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
@@ -43,6 +44,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
 
     const [circle] = useAtom(circleAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
+    const [semanticSearchCircles] = useAtom(semanticSearchCirclesAtom);
     const [locationPickerActive] = useAtom(locationPickerActiveAtom);
     const [locationPickerPosition, setLocationPickerPosition] = useAtom(locationPickerPositionAtom);
     const [highlightedCircle] = useAtom(highlightedCircleAtom);
@@ -166,6 +168,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 {/* {circle && circle?.id === "global" && <ConnectionsEdges />} */}
                 {circle && <CircleMarker circle={circle} />}
                 {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} />}
+                {semanticSearchCircles?.length > 0 && <CirclesMapMarkers circles={semanticSearchCircles} ignoreIsActive={true} />}
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
                 {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} />}
                 {previewCircle && <CircleMarker circle={previewCircle} highlighted={true} />}

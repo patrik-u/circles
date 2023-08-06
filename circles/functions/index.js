@@ -244,6 +244,26 @@ const getCircleText = (circle) => {
     return text;
 };
 
+const getEmbedding = async (text) => {
+    return (await getEmbeddings([text]))?.[0];
+};
+
+const getEmbeddings = async (textArray) => {
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    // TODO make sure each text in array is less than 8192 tokens
+
+    const openai = new OpenAIApi(configuration);
+    const response = await openai.createEmbedding({
+        input: textArray,
+        model: "text-embedding-ada-002",
+    });
+
+    return response?.data?.data?.map((x) => x.embedding);
+};
+
 const upsertCircleEmbedding = async (circle) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
@@ -275,25 +295,15 @@ const upsertCirclesEmbeddings = async (circles) => {
     }
 
     // create embeddings using openai
-    let embeddingResponse = null;
+    let embeddings = null;
     let insertBatches = [];
     let pineconeEmbeddings = null;
     try {
-        const configuration = new Configuration({
-            apiKey: process.env.OPENAI,
-        });
-
-        const openai = new OpenAIApi(configuration);
-        const response = await openai.createEmbedding({
-            input: circleEmbeddingRequests.map((x) => x.text),
-            model: "text-embedding-ada-002",
-        });
-
-        embeddingResponse = response.data;
+        embeddings = await getEmbeddings(circleEmbeddingRequests.map((x) => x.text));
 
         // insert embeddings into pinecone
         pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
-            return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddingResponse.data[i].embedding };
+            return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddings[i] };
         });
 
         // add 250 vectors at a time to pinecone
@@ -2106,6 +2116,70 @@ app.put("/notifications", auth, async (req, res) => {
 
 //#endregion
 
+//#region Search
+
+// do semantic search either by query or by circle id
+const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20) => {
+    const index = pinecone.Index("circles");
+
+    let pineconeRequest = { queryRequest: { topK: topK } };
+    if (filterTypes) {
+        pineconeRequest.queryRequest.filter = { type: { $in: filterTypes } };
+    }
+    if (query) {
+        // get embeddings from openai
+        let embedding = await getEmbedding(query);
+        if (!embedding) {
+            return [];
+        }
+        pineconeRequest.queryRequest.vector = embedding;
+    } else if (circleId) {
+        pineconeRequest.queryRequest.id = circleId;
+    } else {
+        return [];
+    }
+
+    //console.log("pineconeRequest", JSON.stringify(pineconeRequest, null, 2));
+    let pineconeResponse = await index.query(pineconeRequest);
+
+    // get circle data from response
+    let circleIds = pineconeResponse.matches.map((x) => x.id);
+    let circles = [];
+    while (circleIds.length) {
+        let circleIdsBatch = circleIds.splice(0, 10);
+        let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+
+        // add score to circle
+        for (var i = 0; i < circleDocs.docs.length; ++i) {
+            let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+            let match = pineconeResponse.matches.find((x) => x.id === circle.id);
+            circle.score = match?.score;
+            circles.push(circle);
+        }
+    }
+
+    // order circles by score
+    circles = circles.sort((a, b) => b.score - a.score);
+    return circles;
+};
+
+// do semantic search
+app.post("/search", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const query = req.body.query;
+    const circleId = req.body.circleId;
+
+    try {
+        let searchResults = await semanticSearch(query, circleId ?? authCallerId, null, 20);
+        return res.json({ circles: searchResults });
+    } catch (error) {
+        functions.logger.error("Error while searching:", error);
+        return res.json({ error: error });
+    }
+});
+
+//#endregion
+
 //#region admin
 
 const sendPushNotification = async (sender, receiver, message, circle, bigPicture, category) => {
@@ -2219,7 +2293,7 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
         messages.push({ role: "user", content: prompt });
     }
 
-    console.log("messages: ", JSON.stringify(messages, null, 2));
+    //console.log("messages: ", JSON.stringify(messages, null, 2));
 
     // if last message isn't a user message we should not trigger AI agent
     if (messages.length <= 0 || messages[messages.length - 1].role !== "user") {
@@ -2289,7 +2363,7 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
 
     try {
         while (functionCalls < 4) {
-            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
 
@@ -2436,37 +2510,43 @@ app.post("/update", auth, async (req, res) => {
         const commandArgs = command?.split(" ") ?? [];
 
         // go through all connections and add circle_types array
-        if (commandArgs[0] === "delete_circle") {
+        if (commandArgs[0] === "list") {
+            // list all commants
+            let commands = [
+                { name: "list", description: "Lists all commands." },
+                { name: "delete_circle", args: "<circle_id>", description: "Delete circle." },
+                { name: "search", args: "<query> | circle <circle_id> ?<type>", description: "Does semantic search using either query or circle ID." },
+                { name: "upsert_embeddings", description: "Goes through all circles and upserts embeddings into pinecone database." },
+                {
+                    name: "connect",
+                    args: "<source_id> connected_mutually_to/admin_of/admin_by <target_id>",
+                    description: "Creates a connection between two circles.",
+                },
+            ];
+            return res.json({ commands });
+        } else if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
-        } else if (commandArgs[0] === "query_embeddings") {
-            let circleId = commandArgs[1];
-            let filterType = commandArgs?.[2];
+        } else if (commandArgs[0] === "search") {
+            // do semantic search using either query or circle ID
+            let query = null;
+            let circleId = null;
+            let filterType = null;
+
+            if (commandArgs[1] === "circle") {
+                query = null;
+                circleId = commandArgs[2];
+                filterType = commandArgs[3];
+            } else {
+                circleId = null;
+                commandArgs.shift();
+                query = commandArgs.join(" ");
+                filterType = null;
+            }
 
             try {
-                const index = pinecone.Index("circles");
-
-                let pineconeRequest = { queryRequest: { id: circleId, topK: 10 } };
-                if (filterType) {
-                    pineconeRequest.queryRequest.filter = { type: filterType };
-                }
-
-                let pineconeResponse = await index.query(pineconeRequest);
-
-                // get circle data from response
-                let circleIds = pineconeResponse.matches.map((x) => x.id);
-                // let circleRefs = circleIds.map((x) => db.collection("circles").doc(x));
-                let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIds).get();
-
-                // add score to circle
-                let circles = [];
-                for (var i = 0; i < circleDocs.docs.length; ++i) {
-                    let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
-                    let match = pineconeResponse.matches.find((x) => x.id === circle.id);
-                    circle.score = match?.score;
-                    circles.push(circle);
-                }
+                let result = await semanticSearch(query, circleId, filterType ? [filterType] : null, 20);
                 return res.json({
-                    data: circles.map((x) => {
+                    data: result.map((x) => {
                         return { name: x.name, description: x.description, type: x.type, score: x.score };
                     }),
                 });
@@ -2606,7 +2686,7 @@ app.post("/update", auth, async (req, res) => {
                     console.log(error.body);
                 }
             }
-        } else if (commandArgs[0] === "test123") {
+        } else if (commandArgs[0] === "check_circle_data") {
             // go through every circle_data and see if any of them lack corresponding circle
             let circleData = await db.collection("circle_data").get();
             let data = [];

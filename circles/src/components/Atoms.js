@@ -42,6 +42,7 @@ export const circleAtom = atom(null);
 export const circlesAtom = atom([]);
 export const circleConnectionsAtom = atom([]);
 export const highlightedCircleAtom = atom(null);
+export const semanticSearchCirclesAtom = atom([]);
 export const homeExpandedAtom = atom(false);
 export const chatCircleAtom = atom(null);
 export const circlesFilterAtom = atom({});

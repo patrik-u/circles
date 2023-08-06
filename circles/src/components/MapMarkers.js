@@ -183,7 +183,7 @@ export const CircleMarker = ({ circle, highlighted }) => {
 
 const CirclePreview = lazy(() => import("components/CirclePreview"));
 
-export const CircleMapMarker = ({ circle, highlighted }) => {
+export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
     const [user] = useAtom(userAtom);
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
@@ -204,6 +204,7 @@ export const CircleMapMarker = ({ circle, highlighted }) => {
     };
 
     const isActive = () => {
+        if (ignoreIsActive) return true;
         if (highlightedCircle?.id === circle?.id) return true;
         if (previewCircle?.id === circle?.id) return true;
         if (isCircleActive(circle)) return true;
@@ -233,7 +234,7 @@ export const CircleMapMarker = ({ circle, highlighted }) => {
                         circle={circle}
                         size={30}
                         disableClick={true}
-                        isActive={isCircleActive(circle)}
+                        isActive={ignoreIsActive ? true : isCircleActive(circle)}
                         parentCircleSizeRatio={2}
                         parentCircleOffset={-3}
                     />
@@ -257,7 +258,7 @@ export const CircleMapMarker = ({ circle, highlighted }) => {
     );
 };
 
-export const CirclesMapMarkers = ({ circles }) => {
+export const CirclesMapMarkers = ({ circles, ignoreIsActive }) => {
     //const [circlesFilter] = useAtom(circlesFilterAtom);
 
     return (
@@ -265,7 +266,7 @@ export const CirclesMapMarkers = ({ circles }) => {
             {circles
                 ?.filter((item) => getLocation(item))
                 .map((item) => (
-                    <CircleMapMarker key={item.id} circle={item} />
+                    <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} />
                 ))}
         </>
     );

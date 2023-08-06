@@ -1,19 +1,21 @@
 // #region imports
 import React, { useState, useEffect } from "react";
-import { Box, Input, Flex, InputGroup, InputLeftElement, Text, InputRightElement, Icon } from "@chakra-ui/react";
+import { Box, Input, Flex, InputGroup, InputLeftElement, Text, InputRightElement, Icon, Tag, TagLabel, TagCloseButton, Spinner } from "@chakra-ui/react";
 import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
+import { log } from "components/Helpers";
 import { HiOutlineSearch } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, searchResultsShownAtom } from "components/Atoms";
+import { isMobileAtom, searchResultsShownAtom, semanticSearchCirclesAtom } from "components/Atoms";
 import config from "Config";
 import CircleListItem from "components/CircleListItem";
 import i18n from "i18n/Localization";
-
+import axios from "axios";
 import algoliasearch from "algoliasearch/lite";
 import { InstantSearch, useInstantSearch, useSearchBox, useHits } from "react-instantsearch-hooks-web";
 import { RiSearchEyeLine } from "react-icons/ri";
+import { FaRegLightbulb } from "react-icons/fa";
 // #endregion
 
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
@@ -29,7 +31,7 @@ const SearchHit = ({ hit, onClick }) => {
         }
     };
 
-    return <CircleListItem minWidth={isMobile ? "none" : "450px"} item={hit} onClick={() => onHitClick()} />;
+    return <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} />;
 };
 
 const SearchHits = ({ onClick, ...props }) => {
@@ -37,21 +39,50 @@ const SearchHits = ({ onClick, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
     return (
-        <Flex flexDirection="column" {...props}>
-            {hits.length <= 0 && (
-                <Box backgroundColor="white" height="40px" minWidth={isMobile ? "none" : "450px"}>
-                    <Text marginLeft="10px">No results</Text>
+        <Flex flexDirection="column" justifyContent="center" alignItems="center" overflow="hidden" {...props}>
+            <Box border="1px" borderColor="gray.200" borderRadius="md" p={4} mt={2} bg="white">
+                <Text>
+                    <Icon as={FaRegLightbulb} color="yellow.400" w={5} h={5} mr={2} />
+                    Type in{" "}
+                    <Text as="span" fontWeight="bold">
+                        what you are looking for
+                    </Text>{" "}
+                    and press 'Enter' for a full semantic search.
+                    <Text as="span" color="gray.500" ml={2}>
+                        <br />
+                        E.g., "circles that need help with volunteering"
+                    </Text>
+                </Text>
+            </Box>
+            <Flex
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                borderRadius="20px"
+                borderWidth="1px"
+                borderColor="#e2e8f0"
+                overflow="hidden"
+                backgroundColor="white"
+                mt={"4px"}
+            >
+                <Box fontWeight="700" marginTop="5px" marginBottom="5px">
+                    Quick suggestions
                 </Box>
-            )}
+                {hits.length <= 0 && (
+                    <Box backgroundColor="white" height="60px" minWidth={isMobile ? "none" : "450px"}>
+                        <Text marginLeft="10px">No quick suggestions. Type 'Enter' for a deeper semantic search.</Text>
+                    </Box>
+                )}
 
-            {hits.map((x) => (
-                <SearchHit key={x.objectID} hit={x} onClick={onClick} />
-            ))}
+                {hits.slice(0, 5).map((x) => (
+                    <SearchHit key={x.objectID} hit={x} onClick={onClick} />
+                ))}
+            </Flex>
         </Flex>
     );
 };
 
-export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, query, setQuery, setSearchIsOpen, children, ...props }) => {
+export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, query, setQuery, setSearchIsOpen, children, onSemanticSearch, ...props }) => {
     const { refine } = useSearchBox();
     const [isMobile] = useAtom(isMobileAtom);
     const [, setSearchResultsShown] = useAtom(searchResultsShownAtom);
@@ -68,6 +99,13 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
         setQuery(e.target.value);
     };
 
+    const handleKeyDown = (e) => {
+        if (e.keyCode === 13) {
+            onSemanticSearch(e.target.value);
+            setQuery("");
+        }
+    };
+
     const closeClick = () => {
         setQuery("");
         if (setSearchIsOpen) {
@@ -77,44 +115,34 @@ export const SearchBox = ({ hidePlaceholder, size = "md", autofocus = false, que
 
     return (
         <InputGroup {...props}>
-            <InputLeftElement
-                color="#333"
-                pointerEvents="none"
-                children={<RiSearchEyeLine size={isMobile ? 20 : 28} />}
-                height={isSmall ? "30px" : "38px"}
-                marginLeft={isSmall ? "12px" : "20px"}
-            />
+            <InputLeftElement color="#333" pointerEvents="none" children={<RiSearchEyeLine size={isMobile ? 20 : 28} />} height={isSmall ? "30px" : "38px"} />
             <Input
-                paddingLeft={isSmall ? "35px" : "65px"}
                 borderRadius="50px"
                 height={isSmall ? "30px" : "38px"}
                 backgroundColor="#f4f4f4dd"
                 width="100%"
-                marginLeft="15px"
-                marginRight="15px"
                 value={query}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 focusBorderColor="pink.400"
                 color="#333"
-                placeholder={hidePlaceholder ? "" : i18n.t("Type search terms or enter URL")}
-                _placeholder={{
-                    fontSize: isSmall ? "10px" : isMobile ? "16px" : "22px",
-                    height: isSmall ? "30px" : "38px",
-                    textAlign: "center",
-                    paddingRight: "32px",
-                }}
+                placeholder={hidePlaceholder ? "" : i18n.t("E.g. people that like cats")}
+                // _placeholder={{
+                //     fontSize: isSmall ? "10px" : isMobile ? "16px" : "22px",
+                //     height: isSmall ? "30px" : "38px",
+                //     textAlign: "center",
+                //     paddingRight: "32px",
+                // }}
                 autoFocus={autofocus}
             />
-            {(query || (isMobile && size === "sm")) && (
-                <InputRightElement
-                    color="#333"
-                    children={<MdOutlineClose size={isSmall ? 20 : 28} />}
-                    height={isSmall ? "30px" : "38px"}
-                    marginRight={isSmall ? "12px" : "20px"}
-                    onClick={closeClick}
-                    cursor="pointer"
-                />
-            )}
+            <InputRightElement
+                color="#333"
+                children={<MdOutlineClose size={isSmall ? 20 : 28} />}
+                height={isSmall ? "30px" : "38px"}
+                marginRight={isSmall ? "6px" : "5px"}
+                onClick={closeClick}
+                cursor="pointer"
+            />
             {children}
         </InputGroup>
     );
@@ -137,6 +165,7 @@ export const CircleSearchBox = ({
     searchActive,
     onHitClick,
     setSearchActive,
+    onSemanticSearch,
     autofocus = false,
     fallback = null,
     ...props
@@ -152,20 +181,18 @@ export const CircleSearchBox = ({
 
     return (
         <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
-            <SearchBox size={size} autofocus={autofocus} hidePlaceholder={hidePlaceholder} query={query} setQuery={setQuery} {...props}>
+            <SearchBox
+                size={size}
+                autofocus={autofocus}
+                hidePlaceholder={hidePlaceholder}
+                query={query}
+                setQuery={setQuery}
+                onSemanticSearch={onSemanticSearch}
+                {...props}
+            >
                 {popover && !isMobile && (
                     <EmptyQueryBoundary fallback={fallback}>
-                        <Flex
-                            position="absolute"
-                            top="55px"
-                            justifyContent="center"
-                            alignItems="center"
-                            borderRadius="20px"
-                            borderWidth="1px"
-                            borderColor="#e2e8f0"
-                            overflow="hidden"
-                            backgroundColor="white"
-                        >
+                        <Flex position="absolute" top="35px">
                             <Box width="450px" maxWidth="450px" minWidth="450px">
                                 <SearchHits onClick={hitClick} />
                             </Box>
@@ -195,7 +222,12 @@ export const CircleSearchBox = ({
 
 export const CircleSearchBoxIcon = (props) => {
     const [searchIsOpen, setSearchIsOpen] = useState(false);
-    const iconSize = "24px";
+    const [isMobile] = useAtom(isMobileAtom);
+    const [semanticSearchQuery, setSemanticSearchQuery] = useState(null);
+    const [semanticSearchLoading, setSemanticSearchLoading] = useState(false);
+    const [, setSemanticSearchCirclesAtom] = useAtom(semanticSearchCirclesAtom);
+
+    const iconSize = "26px";
     const openSearch = () => {
         if (searchIsOpen) {
             setSearchIsOpen(false);
@@ -207,8 +239,43 @@ export const CircleSearchBoxIcon = (props) => {
         setSearchIsOpen(false);
     };
 
+    const onSemanticSearch = (query) => {
+        setSearchIsOpen(false);
+        setSemanticSearchQuery(!query ? "recommended" : query);
+        // show tag with current semantic query
+        //openCircle(navigate, { id: query, host: "circles" });
+
+        // do semantic search
+        setSemanticSearchLoading(true);
+
+        // call api to do semantic search
+        axios.post("/search", { query: query }).then(
+            (res) => {
+                let data = res?.data;
+                if (!data || data.error) {
+                    setSemanticSearchCirclesAtom([]);
+                    return;
+                }
+
+                // log("Semantic search results: " + data.circles?.length, 0, true);
+                // log(JSON.stringify(data.circles, null, 2));
+                setSemanticSearchCirclesAtom(data.circles);
+                setSemanticSearchLoading(false);
+            },
+            (error) => {
+                log(JSON.stringify(error), 0);
+                setSemanticSearchCirclesAtom([]);
+            }
+        );
+    };
+
+    const onSemanticSearchClear = () => {
+        setSemanticSearchQuery(null);
+        setSemanticSearchCirclesAtom(null);
+    };
+
     return (
-        <>
+        <Box>
             <Box position="relative" height={iconSize} {...props}>
                 <Icon
                     width={iconSize}
@@ -221,22 +288,53 @@ export const CircleSearchBoxIcon = (props) => {
                     cursor="pointer"
                 />
             </Box>
-            {searchIsOpen && (
-                <Box>
-                    <Box zIndex="55" margin="0px" padding="0px" position="absolute" top="40px" left="0px" width="100%" height="40px">
-                        <CircleSearchBox
-                            size="sm"
-                            hidePlaceholder={true}
-                            popover={true}
-                            maxWidth="450px"
-                            setSearchIsOpen={setSearchIsOpen}
-                            onHitClick={onHitClick}
-                            autofocus={true}
-                        />
-                    </Box>
+            {semanticSearchQuery && (
+                <Box
+                    zIndex="55"
+                    margin="0px"
+                    padding="0px"
+                    position="absolute"
+                    top={isMobile ? "40px" : "60px"}
+                    left="0px"
+                    width="100%"
+                    height="40px"
+                    pointerEvents={"none"}
+                >
+                    <Tag size={"md"} borderRadius="full" variant="solid" colorScheme="purple" pointerEvents="auto">
+                        {semanticSearchLoading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
+
+                        <TagLabel>{semanticSearchQuery}</TagLabel>
+                        <TagCloseButton onClick={onSemanticSearchClear} />
+                    </Tag>
                 </Box>
             )}
-        </>
+
+            {searchIsOpen && (
+                <Box
+                    zIndex="55"
+                    margin="0px"
+                    padding="0px"
+                    position="absolute"
+                    top={isMobile ? "40px" : "60px"}
+                    left="0px"
+                    width="100%"
+                    height="40px"
+                    pointerEvents={"none"}
+                >
+                    <CircleSearchBox
+                        size={isMobile ? "sm" : "md"}
+                        hidePlaceholder={false}
+                        popover={true}
+                        maxWidth="450px"
+                        setSearchIsOpen={setSearchIsOpen}
+                        onHitClick={onHitClick}
+                        autofocus={true}
+                        pointerEvents={"auto"}
+                        onSemanticSearch={onSemanticSearch}
+                    />
+                </Box>
+            )}
+        </Box>
     );
 };
 

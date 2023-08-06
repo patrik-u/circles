@@ -35,15 +35,15 @@ export const TopMenu = ({ onLogoClick }) => {
             <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="154" pointerEvents="none">
                 <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
                     <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
-                    <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft="20px">
+                    <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
                         {circle?.name}
                     </Text>
                 </Flex>
 
                 <Box flex="1" />
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">
-                    <HStack spacing={isMobile ? "20px" : "20px"} align="center" height={height}>
-                        {!homeExpanded && <CircleSearchBoxIcon marginRight="12px" />}
+                    <HStack spacing={isMobile ? "10px" : "20px"} align="center" height={height}>
+                        {!homeExpanded && <CircleSearchBoxIcon marginRight={isMobile ? "0px" : "4px"} />}
 
                         {signInStatus.signedIn && (
                             <>
