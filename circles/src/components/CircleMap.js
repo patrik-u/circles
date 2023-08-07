@@ -176,8 +176,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                     </>
                 )}
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
-                {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} />}
-                {previewCircle && <CircleMarker circle={previewCircle} highlighted={true} />}
+                {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} ignoreIsActive={true} />}
+                {previewCircle && <CircleMarker circle={previewCircle} highlighted={true} ignoreIsActive={true} />}
 
                 {children}
             </Map>

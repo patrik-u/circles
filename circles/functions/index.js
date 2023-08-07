@@ -1567,7 +1567,7 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
     }
 
     let circle = await getCircle(targetCircleId);
-    newSettings.circle = { id: circle.id, name: circle.name }; // store basic info about circle
+    newSettings.circle = { id: circle.id, name: circle.name, type: circle.type }; // store basic info about circle
     if (circle.picture) {
         newSettings.circle.picture = circle.picture;
     }
