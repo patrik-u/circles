@@ -183,7 +183,7 @@ export const CircleMarker = ({ circle, highlighted }) => {
 
 const CirclePreview = lazy(() => import("components/CirclePreview"));
 
-export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
+export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive, color }) => {
     const [user] = useAtom(userAtom);
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
@@ -201,6 +201,10 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
             case "user":
                 return "/marker3.png";
         }
+    };
+
+    const getMarkerColor = () => {
+        return highlighted ? "#ffe96a" : color ?? "white";
     };
 
     const isActive = () => {
@@ -222,21 +226,24 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
                 className="circle-marker"
                 onClick={() => openAboutCircle(circle, setToggleAbout)}
             >
-                <Image
+                {/* <Image
                     src={getImageKitUrl(getMarkerBackground(), 48, 48)}
                     width="48px"
                     height="48px"
                     filter={isActive() ? "" : "grayscale(1)"}
                     opacity={isActive() ? "1" : "0.5"}
-                />
-                <Box top="3px" left="9px" width="30px" height="30px" flexShrink="0" borderRadius="50%" backgroundColor="white" position="absolute">
+                /> */}
+                <Box width="48px" height="48px"></Box>
+                <Box bottom="0px" left="23px" width="1px" height="20px" position="absolute" backgroundColor={getMarkerColor()} />
+                <Box top="0px" left="8px" width="30px" height="30px" flexShrink="0" position="absolute">
                     <CirclePicture
                         circle={circle}
-                        size={30}
+                        size={32}
                         disableClick={true}
                         isActive={ignoreIsActive ? true : isCircleActive(circle)}
                         parentCircleSizeRatio={2}
                         parentCircleOffset={-3}
+                        circleBorderColor={getMarkerColor()}
                     />
                 </Box>
 
@@ -258,7 +265,7 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
     );
 };
 
-export const CirclesMapMarkers = ({ circles, ignoreIsActive }) => {
+export const CirclesMapMarkers = ({ circles, ignoreIsActive, color }) => {
     //const [circlesFilter] = useAtom(circlesFilterAtom);
 
     return (
@@ -266,7 +273,7 @@ export const CirclesMapMarkers = ({ circles, ignoreIsActive }) => {
             {circles
                 ?.filter((item) => getLocation(item))
                 .map((item) => (
-                    <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} />
+                    <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} color={color} />
                 ))}
         </>
     );

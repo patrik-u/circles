@@ -113,17 +113,7 @@ const CircleAbout = ({ onClose }) => {
                                     {circle.name}
                                 </Text>
                             </Box>
-                            <Box
-                                flexGrow="1"
-                                align="center"
-                                position="absolute"
-                                width="76px"
-                                height="76px"
-                                left="140px"
-                                top="-38px"
-                                backgroundColor="white"
-                                borderRadius="50%"
-                            >
+                            <Box flexGrow="1" align="center" position="absolute" width="76px" height="76px" left="140px" top="-38px">
                                 <CirclePicture
                                     circle={circle}
                                     size={76}
@@ -131,6 +121,7 @@ const CircleAbout = ({ onClose }) => {
                                     parentCircleSizeRatio={3.75}
                                     parentCircleOffset={3}
                                     disableClick={true}
+                                    circleBorderColor={"#ffffff"}
                                 />
                             </Box>
                             <Box flexGrow="1" />

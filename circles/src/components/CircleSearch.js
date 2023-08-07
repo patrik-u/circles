@@ -1,6 +1,20 @@
 // #region imports
 import React, { useState, useEffect } from "react";
-import { Box, Input, Flex, InputGroup, InputLeftElement, Text, InputRightElement, Icon, Tag, TagLabel, TagCloseButton, Spinner } from "@chakra-ui/react";
+import {
+    Box,
+    HStack,
+    Input,
+    Flex,
+    InputGroup,
+    InputLeftElement,
+    Text,
+    InputRightElement,
+    Icon,
+    Tag,
+    TagLabel,
+    TagCloseButton,
+    Spinner,
+} from "@chakra-ui/react";
 import { openCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { log } from "components/Helpers";
@@ -223,9 +237,7 @@ export const CircleSearchBox = ({
 export const CircleSearchBoxIcon = (props) => {
     const [searchIsOpen, setSearchIsOpen] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
-    const [semanticSearchQuery, setSemanticSearchQuery] = useState(null);
-    const [semanticSearchLoading, setSemanticSearchLoading] = useState(false);
-    const [, setSemanticSearchCirclesAtom] = useAtom(semanticSearchCirclesAtom);
+    const [semanticSearchCircles, _setSemanticSearchCircles] = useAtom(semanticSearchCirclesAtom);
 
     const iconSize = "26px";
     const openSearch = () => {
@@ -239,39 +251,108 @@ export const CircleSearchBoxIcon = (props) => {
         setSearchIsOpen(false);
     };
 
+    const getRandomColor = () => {
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        return { r, g, b };
+    };
+
+    const getLuminance = (r, g, b) => {
+        const a = [r, g, b].map((v) => {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+    };
+
+    const getContrastRatio = (luminance) => {
+        const l1 = 1; // luminance of white
+        const l2 = luminance;
+        return (l1 + 0.05) / (l2 + 0.05);
+    };
+
+    const rgbToHex = (r, g, b) => {
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+    };
+
+    const generateColorForWhiteText = () => {
+        let color = getRandomColor();
+        let luminance = getLuminance(color.r, color.g, color.b);
+        let contrastRatio = getContrastRatio(luminance);
+
+        while (contrastRatio < 4.5) {
+            color = getRandomColor();
+            luminance = getLuminance(color.r, color.g, color.b);
+            contrastRatio = getContrastRatio(luminance);
+        }
+
+        return rgbToHex(color.r, color.g, color.b);
+    };
+
     const onSemanticSearch = (query) => {
         setSearchIsOpen(false);
-        setSemanticSearchQuery(!query ? "recommended" : query);
         // show tag with current semantic query
         //openCircle(navigate, { id: query, host: "circles" });
 
         // do semantic search
-        setSemanticSearchLoading(true);
+        const randomColor = generateColorForWhiteText();
+        setSemanticSearchCircles([
+            ...semanticSearchCircles,
+            { query: query, circles: [], loading: true, color: randomColor, index: semanticSearchCircles.length },
+        ]);
 
         // call api to do semantic search
         axios.post("/search", { query: query }).then(
             (res) => {
                 let data = res?.data;
                 if (!data || data.error) {
-                    setSemanticSearchCirclesAtom([]);
+                    setSemanticSearchCircles(
+                        semanticSearchCircles.map((y) => {
+                            if (y.query === query) {
+                                return { ...y, loading: false, error: true };
+                            }
+                            return y;
+                        })
+                    );
                     return;
                 }
 
                 // log("Semantic search results: " + data.circles?.length, 0, true);
                 // log(JSON.stringify(data.circles, null, 2));
-                setSemanticSearchCirclesAtom(data.circles);
-                setSemanticSearchLoading(false);
+
+                // TODO calculate colors and filter duplicate circles
+                setSemanticSearchCircles((x) =>
+                    x.map((y) => {
+                        if (y.query === query) {
+                            return { ...y, circles: data.circles, loading: false };
+                        }
+                        return y;
+                    })
+                );
             },
             (error) => {
+                setSemanticSearchCircles(
+                    semanticSearchCircles.map((y) => {
+                        if (y.query === query) {
+                            return { ...y, loading: false, error: true };
+                        }
+                        return y;
+                    })
+                );
+
                 log(JSON.stringify(error), 0);
-                setSemanticSearchCirclesAtom([]);
             }
         );
     };
 
-    const onSemanticSearchClear = () => {
-        setSemanticSearchQuery(null);
-        setSemanticSearchCirclesAtom(null);
+    const onSemanticSearchClear = (item) => {
+        setSemanticSearchCircles(semanticSearchCircles.filter((x) => x.query !== item.query));
+    };
+
+    const setSemanticSearchCircles = (circles) => {
+        // TODO calculate colors and filter duplicate circles
+        _setSemanticSearchCircles(circles);
     };
 
     return (
@@ -288,8 +369,8 @@ export const CircleSearchBoxIcon = (props) => {
                     cursor="pointer"
                 />
             </Box>
-            {semanticSearchQuery && (
-                <Box
+            {semanticSearchCircles.length > 0 && (
+                <Flex
                     zIndex="55"
                     margin="0px"
                     padding="0px"
@@ -299,14 +380,20 @@ export const CircleSearchBoxIcon = (props) => {
                     width="100%"
                     height="40px"
                     pointerEvents={"none"}
+                    alignItems="center"
+                    justifyContent="center"
                 >
-                    <Tag size={"md"} borderRadius="full" variant="solid" colorScheme="purple" pointerEvents="auto">
-                        {semanticSearchLoading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
+                    <HStack>
+                        {semanticSearchCircles.map((item) => (
+                            <Tag size={"md"} borderRadius="full" variant="solid" backgroundColor={item.color} pointerEvents="auto">
+                                {item.loading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
 
-                        <TagLabel>{semanticSearchQuery}</TagLabel>
-                        <TagCloseButton onClick={onSemanticSearchClear} />
-                    </Tag>
-                </Box>
+                                <TagLabel>{item.query}</TagLabel>
+                                <TagCloseButton onClick={() => onSemanticSearchClear(item)} />
+                            </Tag>
+                        ))}
+                    </HStack>
+                </Flex>
             )}
 
             {searchIsOpen && (

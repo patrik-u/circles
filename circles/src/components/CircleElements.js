@@ -883,6 +883,7 @@ export const CirclePicture = ({
     isActive = true,
     showIfInVideoSession = true,
     inChat = false,
+    circleBorderColor = null,
     ...props
 }) => {
     const navigate = useNavigateNoUpdates();
@@ -930,24 +931,51 @@ export const CirclePicture = ({
 
     const inActiveOpacity = 0.5;
 
+    const getShapeStyle = (type) => {
+        if (type === "user") {
+            // circle
+            return {
+                borderRadius: "50%",
+            };
+        } else {
+            // hexagon
+            return {
+                clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+            };
+        }
+    };
+
+    const HexagonBorder = ({ size, color }) => (
+        <svg width={size} height={size} viewBox="-2 -2 104 104" fill="none">
+            <path d="M50 0 L100 25 L100 75 L50 100 L0 75 L0 25 L50 0" fill="white" stroke={color} strokeWidth="4" />
+        </svg>
+    );
+
+    const isHexagon = circle?.type !== "user";
+
     return hasPopover && !isMobile ? (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
             <Popover isLazy trigger="hover" gutter="0">
                 <PopoverTrigger>
                     <Box position="relative">
+                        {isHexagon && <HexagonBorder size={size} color={circleBorderColor} />}
                         <Image
-                            width={`${size}px`}
-                            height={`${size}px`}
+                            position="absolute"
+                            top={isHexagon ? "2px" : "0px"}
+                            left={isHexagon ? "2px" : "0px"}
+                            width={`${size - (isHexagon ? 4 : 0)}px`}
+                            height={`${size - (isHexagon ? 4 : 0)}px`}
                             src={getCirclePicture(circle?.picture)}
                             flexShrink="0"
                             flexGrow="0"
-                            borderRadius="50%"
+                            style={getShapeStyle(circle?.type)}
                             objectFit="cover"
                             onClick={onClick}
                             cursor={!disableClick ? "pointer" : "inherit"}
                             fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                             // filter={isActive ? "" : "grayscale(1)"}
                             opacity={isActive ? "1" : inActiveOpacity}
+                            border={!isHexagon && circleBorderColor !== null ? `2px solid ${circleBorderColor}` : "none"}
                             {...props}
                         />
                         {showIfInVideoSession && isActiveInVideoConference(circle) && (
@@ -969,41 +997,26 @@ export const CirclePicture = ({
         </Box>
     ) : (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
+            {isHexagon && <HexagonBorder size={size} color={circleBorderColor} />}
             <Image
-                width={`${size}px`}
-                height={`${size}px`}
+                position="absolute"
+                top={isHexagon ? "2px" : "0px"}
+                left={isHexagon ? "2px" : "0px"}
+                width={`${size - (isHexagon ? 4 : 0)}px`}
+                height={`${size - (isHexagon ? 4 : 0)}px`}
                 src={getCirclePicture(circle?.picture)}
                 flexShrink="0"
                 flexGrow="0"
-                borderRadius="50%"
+                style={getShapeStyle(circle?.type)}
                 objectFit="cover"
                 onClick={circle ? onClick : undefined}
                 cursor={!disableClick ? "pointer" : "inherit"}
                 fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
                 // filter={isActive ? "" : "grayscale(1)"}
                 opacity={isActive ? "1" : inActiveOpacity}
+                border={!isHexagon && circleBorderColor !== null ? `2px solid ${circleBorderColor}` : "none"}
                 {...props}
             />
-
-            {/* {circle?.parent_circle && (
-                <Image
-                    position="absolute"
-                    width={`${size / parentCircleSizeRatio}px`}
-                    height={`${size / parentCircleSizeRatio}px`}
-                    top={`${parentCircleOffset}px`}
-                    left={`${parentCircleOffset}px`}
-                    src={getCirclePicture(circle?.parent_circle?.picture)}
-                    flexShrink="0"
-                    flexGrow="0"
-                    borderRadius="50%"
-                    objectFit="cover"
-                    onClick={onParentClick}
-                    cursor={!disableClick ? "pointer" : "inherit"}
-                    fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                    // filter={isActive ? "" : "grayscale(1)"}
-                    opacity={isActive ? "1" : inActiveOpacity}
-                />
-            )} */}
 
             {hasUpdates(userData, circle, "any") && (
                 <Box
