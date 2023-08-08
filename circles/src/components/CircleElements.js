@@ -883,7 +883,7 @@ export const CirclePicture = ({
     isActive = true,
     showIfInVideoSession = true,
     inChat = false,
-    circleBorderColor = null,
+    circleBorderColors = [],
     ...props
 }) => {
     const navigate = useNavigateNoUpdates();
@@ -931,8 +931,13 @@ export const CirclePicture = ({
 
     const inActiveOpacity = 0.5;
 
-    const getShapeStyle = (type) => {
-        if (type === "user") {
+    const borderWidth = 2;
+    const isHexagon = circle?.type !== "user";
+    const imageWidth = size - circleBorderColors.length * (borderWidth * 2);
+    const imageOffset = circleBorderColors.length * borderWidth;
+
+    const getShapeStyle = () => {
+        if (!isHexagon) {
             // circle
             return {
                 borderRadius: "50%",
@@ -945,37 +950,69 @@ export const CirclePicture = ({
         }
     };
 
-    const HexagonBorder = ({ size, color }) => (
-        <svg width={size} height={size} viewBox="-2 -2 104 104" fill="none">
+    const HexagonBorder = ({ size, color, ...props }) => (
+        <svg width={size} height={size} viewBox="-2 -2 104 104" fill="none" {...props}>
             <path d="M50 0 L100 25 L100 75 L50 100 L0 75 L0 25 L50 0" fill="white" stroke={color} strokeWidth="4" />
         </svg>
     );
 
-    const isHexagon = circle?.type !== "user";
+    const MultipleHexagonBorders = ({ size, colors }) => (
+        <>
+            {colors.map((color, index) => (
+                <HexagonBorder
+                    key={index}
+                    size={size - 4 * index} // Adjust size for each border
+                    color={color}
+                    style={{ position: "absolute", top: `${2 * index}px`, left: `${2 * index}px` }}
+                />
+            ))}
+        </>
+    );
+
+    const MultipleCircleBorders = ({ size, colors }) => (
+        <>
+            {colors.map((color, index) => (
+                <Box
+                    key={index}
+                    position="absolute"
+                    top={`${2 * index}px`}
+                    left={`${2 * index}px`}
+                    width={`${size - 4 * index}px`}
+                    height={`${size - 4 * index}px`}
+                    borderRadius="50%"
+                    border={`2px solid ${color}`}
+                />
+            ))}
+        </>
+    );
 
     return hasPopover && !isMobile ? (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
             <Popover isLazy trigger="hover" gutter="0">
                 <PopoverTrigger>
-                    <Box position="relative">
-                        {isHexagon && <HexagonBorder size={size} color={circleBorderColor} />}
+                    <Box position="relative" width={`${size}px`} height={`${size}px`}>
+                        {isHexagon ? (
+                            <MultipleHexagonBorders size={size} colors={circleBorderColors} />
+                        ) : (
+                            <MultipleCircleBorders size={size} colors={circleBorderColors} />
+                        )}
                         <Image
                             position="absolute"
-                            top={isHexagon ? "2px" : "0px"}
-                            left={isHexagon ? "2px" : "0px"}
-                            width={`${size - (isHexagon ? 4 : 0)}px`}
-                            height={`${size - (isHexagon ? 4 : 0)}px`}
+                            top={`${imageOffset}px`}
+                            left={`${imageOffset}px`}
+                            width={`${imageWidth}px`}
+                            height={`${imageWidth}px`}
                             src={getCirclePicture(circle?.picture)}
                             flexShrink="0"
                             flexGrow="0"
-                            style={getShapeStyle(circle?.type)}
+                            style={getShapeStyle()}
                             objectFit="cover"
                             onClick={onClick}
                             cursor={!disableClick ? "pointer" : "inherit"}
                             fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
+                            backgroundColor="white"
                             // filter={isActive ? "" : "grayscale(1)"}
                             opacity={isActive ? "1" : inActiveOpacity}
-                            border={!isHexagon && circleBorderColor !== null ? `2px solid ${circleBorderColor}` : "none"}
                             {...props}
                         />
                         {showIfInVideoSession && isActiveInVideoConference(circle) && (
@@ -997,24 +1034,23 @@ export const CirclePicture = ({
         </Box>
     ) : (
         <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            {isHexagon && <HexagonBorder size={size} color={circleBorderColor} />}
+            {isHexagon ? <MultipleHexagonBorders size={size} colors={circleBorderColors} /> : <MultipleCircleBorders size={size} colors={circleBorderColors} />}
             <Image
                 position="absolute"
-                top={isHexagon ? "2px" : "0px"}
-                left={isHexagon ? "2px" : "0px"}
-                width={`${size - (isHexagon ? 4 : 0)}px`}
-                height={`${size - (isHexagon ? 4 : 0)}px`}
+                top={`${imageOffset}px`}
+                left={`${imageOffset}px`}
+                width={`${imageWidth}px`}
+                height={`${imageWidth}px`}
                 src={getCirclePicture(circle?.picture)}
                 flexShrink="0"
                 flexGrow="0"
-                style={getShapeStyle(circle?.type)}
+                style={getShapeStyle()}
                 objectFit="cover"
                 onClick={circle ? onClick : undefined}
                 cursor={!disableClick ? "pointer" : "inherit"}
                 fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                // filter={isActive ? "" : "grayscale(1)"}
-                opacity={isActive ? "1" : inActiveOpacity}
-                border={!isHexagon && circleBorderColor !== null ? `2px solid ${circleBorderColor}` : "none"}
+                backgroundColor="white"
+                // opacity={isActive ? "1" : inActiveOpacity}
                 {...props}
             />
 

@@ -174,13 +174,6 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 {circle && <CircleMarker circle={circle} />}
                 {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} ignoreIsActive={true} />}
                 {mergedSemanticSearchCircles?.length > 0 && <CirclesMapMarkers circles={mergedSemanticSearchCircles} ignoreIsActive={true} />}
-                {/* {mergedSemanticSearchCircles?.length > 0 && (
-                    <>
-                        {semanticSearchCircles.map((item) => (
-                            <CirclesMapMarkers key={item.query} circles={item.circles} ignoreIsActive={true} color={item.color} />
-                        ))}
-                    </>
-                )} */}
 
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
                 {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} ignoreIsActive={true} />}

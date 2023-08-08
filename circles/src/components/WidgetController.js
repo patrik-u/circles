@@ -93,8 +93,8 @@ const WidgetController = () => {
     const [userData] = useAtom(userDataAtom);
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
-    const [toggledWidgets, setToggledWidgets] = useState(["activity"]);
-    const menuItems = useMemo(() => ["about", "activity", "video", "calendar", "settings", "admin"], []);
+    const [toggledWidgets, setToggledWidgets] = useState(["chat"]);
+    const menuItems = useMemo(() => ["about", "chat", "video", "calendar", "settings", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -192,7 +192,7 @@ const WidgetController = () => {
         let fixedSize = false;
         if (!isMobile) {
             fixedSize = (toggledWidgets[0] === component || toggledWidgets[2] === component) && toggledWidgets.length !== 1;
-            if (component === "activity") {
+            if (component === "chat") {
                 fixedSize = true;
                 index = 0;
             } else if (component === "about") {
@@ -292,8 +292,8 @@ const WidgetController = () => {
                         <CircleAbout onClose={onAboutClose} />
                     </div>
                 )}
-                {toggledWidgets.includes("activity") && (
-                    <div class={getWidgetClass("activity")}>
+                {toggledWidgets.includes("chat") && (
+                    <div class={getWidgetClass("chat")}>
                         <CircleChatWidget />
                     </div>
                 )}

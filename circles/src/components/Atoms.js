@@ -73,7 +73,26 @@ export const circlesAtom = atom((get) => {
     const activeCircles = get(activeCirclesAtom);
     const mergedSemanticSearchCircles = get(mergedSemanticSearchCirclesAtom);
 
-    let circles = [...activeCircles, ...mergedSemanticSearchCircles];
+    // remove duplicates here
+
+    let circles = [...activeCircles];
+    for (var circle of circles) {
+        // clear colors and queries
+        circle.colors = [];
+        circle.queries = [];
+    }
+
+    for (var item of mergedSemanticSearchCircles) {
+        // loop through all semantic search circles and add them to the list
+        let circleId = item.id;
+        let existingCircle = circles.find((x) => x.id === circleId);
+        if (existingCircle) {
+            existingCircle.colors = item.colors;
+            existingCircle.query = item.query;
+        } else {
+            circles.push(item);
+        }
+    }
     return circles;
 });
 

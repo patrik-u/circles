@@ -206,9 +206,19 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
     const getMarkerColor = () => {
         if (highlighted) return "#ffe96a";
         // return last color
-        if (circle?.colors?.length > 0) return circle.colors[circle.colors.length - 1];
+        if (circle?.colors?.length > 0) return circle.colors[0];
         // return default color
         return "white";
+    };
+
+    const getMarkerColors = () => {
+        if (highlighted) {
+            if (circle?.colors?.length > 0) return Array(circle.colors.length).fill("#ffe96a");
+            return ["#ffe96a"];
+        }
+        if (circle?.colors?.length > 0) return circle.colors;
+        // return default color
+        return ["white"];
     };
 
     const isActive = () => {
@@ -219,35 +229,40 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
         return false;
     };
 
+    const borderWidth = 2;
+    const markerSize = 30 + getMarkerColors().length * (borderWidth * 2);
+    const anchorHeight = 15;
+    const yOffset = (markerSize + anchorHeight) / 2;
+
     const loc = getLocation(circle);
     return (
         loc && (
             <Marker
                 key={circle.id}
-                offset={[0, -24]}
+                offset={[0, -yOffset]}
                 latitude={lat(loc)}
                 longitude={lng(loc)}
                 className="circle-marker"
                 onClick={() => openAboutCircle(circle, setToggleAbout)}
             >
-                {/* <Image
-                    src={getImageKitUrl(getMarkerBackground(), 48, 48)}
-                    width="48px"
-                    height="48px"
-                    filter={isActive() ? "" : "grayscale(1)"}
-                    opacity={isActive() ? "1" : "0.5"}
-                /> */}
-                <Box width="48px" height="48px"></Box>
-                <Box bottom="0px" left="23px" width="1px" height="20px" position="absolute" backgroundColor={getMarkerColor()} />
-                <Box top="0px" left="8px" width="30px" height="30px" flexShrink="0" position="absolute">
+                <Box width={`${markerSize}px`} height={`${markerSize + anchorHeight}px`}></Box>
+                <Box
+                    width="1px"
+                    height={`${anchorHeight}px`}
+                    backgroundColor={getMarkerColor()}
+                    position="absolute"
+                    bottom="0px"
+                    left={`${markerSize / 2 - 1}px`}
+                ></Box>
+                <Box top="0px" width={`${markerSize}px`} height={`${markerSize}px`} flexShrink="0" position="absolute">
                     <CirclePicture
                         circle={circle}
-                        size={32}
+                        size={markerSize}
                         disableClick={true}
                         isActive={ignoreIsActive ? true : isCircleActive(circle)}
                         parentCircleSizeRatio={2}
                         parentCircleOffset={-3}
-                        circleBorderColor={getMarkerColor()}
+                        circleBorderColors={getMarkerColors()}
                     />
                 </Box>
 

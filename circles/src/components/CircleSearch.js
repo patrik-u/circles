@@ -292,6 +292,12 @@ export const CircleSearchBoxIcon = (props) => {
 
     const onSemanticSearch = (query) => {
         setSearchIsOpen(false);
+
+        // check so query isn't already in list
+        if (semanticSearchCircles.find((x) => x.query === query)) {
+            return;
+        }
+
         // show tag with current semantic query
         //openCircle(navigate, { id: query, host: "circles" });
 
@@ -385,7 +391,7 @@ export const CircleSearchBoxIcon = (props) => {
                 >
                     <HStack>
                         {semanticSearchCircles.map((item) => (
-                            <Tag size={"md"} borderRadius="full" variant="solid" backgroundColor={item.color} pointerEvents="auto">
+                            <Tag key={item.query} size={"md"} borderRadius="full" variant="solid" backgroundColor={item.color} pointerEvents="auto">
                                 {item.loading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
 
                                 <TagLabel>{item.query}</TagLabel>

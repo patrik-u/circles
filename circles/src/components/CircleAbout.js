@@ -80,7 +80,7 @@ const CircleAbout = ({ onClose }) => {
                                     parentCircleSizeRatio={3.75}
                                     parentCircleOffset={3}
                                     disableClick={true}
-                                    circleBorderColor={"#ffffff"}
+                                    // circleBorderColors={["#ffffff"]}
                                 />
                             </Box>
                             <Box flexGrow="1" />

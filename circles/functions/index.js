@@ -107,7 +107,7 @@ const auth = async (req, res, next) => {
 const getCircle = async (circleId) => {
     let circleDoc = await db.collection("circles").doc(circleId).get();
     if (!circleDoc.exists) return null;
-    return { id: circleId, ...circleDoc.data() };
+    return { id: circleId, ...circleDoc.data(), activity: {} };
 };
 
 const getCircleData = async (circleId) => {
@@ -346,6 +346,7 @@ const propagateCircleUpdate = async (id) => {
 
     const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", id).get();
     circleData.id = circleDoc.id;
+    circleData.activity = {};
 
     // workaround for firestore limit of 500 writes per batch
     let batchArray = [db.batch()];
@@ -994,7 +995,7 @@ app.put("/circles/:id", auth, async (req, res) => {
         if (!doc.exists) {
             return res.json({ error: "circle not found" });
         }
-        let circle = { id: doc.id, ...doc.data() };
+        let circle = { id: doc.id, ...doc.data(), activity: {} };
         let type = circle.type;
 
         // check if user is owner or admin and allowed to update circle data
