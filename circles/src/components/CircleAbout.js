@@ -18,48 +18,7 @@ const CircleAbout = ({ onClose }) => {
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
     const circle = useMemo(() => previewCircle ?? currentCircle, [previewCircle, currentCircle]);
-
-    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const location = useLocationNoUpdates();
-
-    // useEffect(() => {
-    //     if (!circlesFilter.types) return;
-    //     let { types: _, ...newFilter } = circlesFilter;
-    //     setCirclesFilter(newFilter);
-    //     log("setting circles filter", 0, true);
-    // }, [circlesFilter, setCirclesFilter]);
-
-    // useEffect(() => {
-    //     log("CircleHome.useEffect 2", 0);
-    //     let listCircles = unfilteredCircles; //!filterConnected ? unfilteredCircles : unfilteredCircles.filter((x) => user?.connections?.some((y) => y.target.id === x.id));
-
-    //     // filter all past events
-    //     let startDate = getDateWithoutTime(); // today
-    //     listCircles = listCircles.filter((x) => x.type !== "event" || fromFsDate(x.starts_at) > startDate);
-
-    //     if (!userLocation) {
-    //         setCircles(listCircles);
-    //         return;
-    //     }
-
-    //     let newFilteredCircles = [];
-    //     if (userLocation.latitude && userLocation.longitude) {
-    //         for (var circle of listCircles.filter((x) => x.base)) {
-    //             var circleLocation = getLatlng(circle.base);
-    //             var preciseDistance = getPreciseDistance(userLocation, circleLocation);
-    //             newFilteredCircles.push({ ...circle, distance: preciseDistance });
-    //         }
-
-    //         newFilteredCircles.sort((a, b) => a.distance - b.distance);
-    //         for (var circlesWithNoBase of listCircles.filter((x) => !x.base)) {
-    //             newFilteredCircles.push(circlesWithNoBase);
-    //         }
-    //     } else {
-    //         newFilteredCircles = listCircles;
-    //     }
-
-    //     setCircles(newFilteredCircles);
-    // }, [unfilteredCircles, userLocation, setCircles]);
 
     const CircleQuestion = ({ question }) => {
         return (

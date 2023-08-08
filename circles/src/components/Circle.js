@@ -28,13 +28,13 @@ import {
     homeExpandedAtom,
     signInStatusAtom,
     circleAtom,
-    circlesAtom,
     circleConnectionsAtom,
     searchResultsShownAtom,
     navigationPanelPinnedAtom,
     circlesFilterAtom,
     inVideoConferenceAtom,
     showHistoricCirclesAtom,
+    activeCirclesAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
@@ -85,7 +85,7 @@ export const Circle = ({ isGlobal }) => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circle, setCircle] = useAtom(circleAtom);
     const [displayMode] = useAtom(displayModeAtom);
-    const [, setCircles] = useAtom(circlesAtom);
+    const [, setActiveCircles] = useAtom(activeCirclesAtom);
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -166,22 +166,13 @@ export const Circle = ({ isGlobal }) => {
                 );
             }
         }
+
+        // subscribe to active circles
         let unsubscribeGetCircles = onSnapshot(q, (snap) => {
-            let circles = snap.docs.map((doc) => {
+            let activeCircles = snap.docs.map((doc) => {
                 return { id: doc.id, ...doc.data() };
             });
-
-            let startDate = getDateWithoutTime(); // today
-            setCircles(
-                circles.filter((x) => {
-                    // remove old events
-                    if (x.type === "event") {
-                        return fromFsDate(x.starts_at) > startDate;
-                    } else {
-                        return true;
-                    }
-                })
-            );
+            setActiveCircles(activeCircles);
         });
 
         return () => {
@@ -189,7 +180,7 @@ export const Circle = ({ isGlobal }) => {
                 unsubscribeGetCircles();
             }
         };
-    }, [circleId, setCircles, setCircleConnections, isGlobal, showHistoricCircles]);
+    }, [circleId, setActiveCircles, setCircleConnections, isGlobal, showHistoricCircles]);
 
     useEffect(() => {
         log("Circle.useEffect 2", -1);

@@ -3,7 +3,7 @@ import { atomWithStorage } from "jotai/utils";
 import { signInStatusValues, displayModes, circleSubSections } from "./Constants";
 import { isCircleActive } from "components/Helpers";
 import { isMobile as detectIsMobile } from "react-device-detect";
-import { fromFsDate } from "components/Helpers";
+import { fromFsDate, log } from "components/Helpers";
 
 // misc
 export const isMobileAtom = atom(detectIsMobile);
@@ -39,7 +39,7 @@ export const navigationPanelPinnedAtom = atomWithStorage(false);
 
 // circle atoms
 export const circleAtom = atom(null);
-export const circlesAtom = atom([]);
+export const activeCirclesAtom = atom([]);
 export const circleConnectionsAtom = atom([]);
 export const highlightedCircleAtom = atom(null);
 export const semanticSearchCirclesAtom = atom([]);
@@ -47,6 +47,36 @@ export const homeExpandedAtom = atom(false);
 export const chatCircleAtom = atom(null);
 export const circlesFilterAtom = atom({});
 export const circleSubSectionAtom = atom(circleSubSections.default);
+
+export const mergedSemanticSearchCirclesAtom = atom((get) => {
+    const semanticSearchCircles = get(semanticSearchCirclesAtom);
+    let mergedCircles = [];
+    for (var item of semanticSearchCircles) {
+        // loop through all semantic search circles and add them to the list
+        for (var circle of item.circles) {
+            // check if circle already exists in the list if so update it
+            let circleId = circle.id;
+            let existingCircle = mergedCircles.find((x) => x.id === circleId);
+            if (existingCircle) {
+                existingCircle.colors.push(item.color);
+                existingCircle.queries.push(item.query);
+            } else {
+                mergedCircles.push({ ...circle, colors: [item.color], queries: [item.query] });
+            }
+        }
+    }
+    return mergedCircles;
+});
+
+export const circlesAtom = atom((get) => {
+    // gets active circles and circles from semantic search query and combines them to a single list
+    const activeCircles = get(activeCirclesAtom);
+    const mergedSemanticSearchCircles = get(mergedSemanticSearchCirclesAtom);
+
+    let circles = [...activeCircles, ...mergedSemanticSearchCircles];
+    return circles;
+});
+
 export const filteredCirclesAtom = atom((get) => {
     const circles = get(circlesAtom);
     const filter = get(circlesFilterAtom);

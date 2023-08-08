@@ -183,7 +183,7 @@ export const CircleMarker = ({ circle, highlighted }) => {
 
 const CirclePreview = lazy(() => import("components/CirclePreview"));
 
-export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive, color }) => {
+export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
     const [user] = useAtom(userAtom);
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
@@ -204,7 +204,11 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive, color }) 
     };
 
     const getMarkerColor = () => {
-        return highlighted ? "#ffe96a" : color ?? "white";
+        if (highlighted) return "#ffe96a";
+        // return last color
+        if (circle?.colors?.length > 0) return circle.colors[circle.colors.length - 1];
+        // return default color
+        return "white";
     };
 
     const isActive = () => {
@@ -265,7 +269,7 @@ export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive, color }) 
     );
 };
 
-export const CirclesMapMarkers = ({ circles, ignoreIsActive, color }) => {
+export const CirclesMapMarkers = ({ circles, ignoreIsActive }) => {
     //const [circlesFilter] = useAtom(circlesFilterAtom);
 
     return (
@@ -273,7 +277,7 @@ export const CirclesMapMarkers = ({ circles, ignoreIsActive, color }) => {
             {circles
                 ?.filter((item) => getLocation(item))
                 .map((item) => (
-                    <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} color={color} />
+                    <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} />
                 ))}
         </>
     );

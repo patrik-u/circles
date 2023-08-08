@@ -14,6 +14,7 @@ import {
     highlightedCircleAtom,
     previewCircleAtom,
     semanticSearchCirclesAtom,
+    mergedSemanticSearchCirclesAtom,
 } from "components/Atoms";
 import { Map } from "react-map-gl";
 import { GeolocateControl, NavigationControl } from "react-map-gl";
@@ -44,7 +45,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
 
     const [circle] = useAtom(circleAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
-    const [semanticSearchCircles] = useAtom(semanticSearchCirclesAtom);
+    const [mergedSemanticSearchCircles] = useAtom(mergedSemanticSearchCirclesAtom);
     const [locationPickerActive] = useAtom(locationPickerActiveAtom);
     const [locationPickerPosition, setLocationPickerPosition] = useAtom(locationPickerPositionAtom);
     const [highlightedCircle] = useAtom(highlightedCircleAtom);
@@ -135,6 +136,10 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         }
     };
 
+    useEffect(() => {
+        log("Map filtered circles: " + filteredCircles.length, 0, true);
+    }, [filteredCircles]);
+
     return (
         <Flex align="center" height={`${height}px`} width="100%" backgroundColor="#1f2327">
             {/* #06090e, #c9dcfd */}
@@ -167,14 +172,16 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
                 {circle && filteredCircles?.length > 0 && <CircleMapEdges circle={circle} circles={filteredCircles} />}
                 {/* {circle && circle?.id === "global" && <ConnectionsEdges />} */}
                 {circle && <CircleMarker circle={circle} />}
-                {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} />}
-                {semanticSearchCircles?.length > 0 && (
+                {filteredCircles?.length > 0 && <CirclesMapMarkers circles={filteredCircles} ignoreIsActive={true} />}
+                {mergedSemanticSearchCircles?.length > 0 && <CirclesMapMarkers circles={mergedSemanticSearchCircles} ignoreIsActive={true} />}
+                {/* {mergedSemanticSearchCircles?.length > 0 && (
                     <>
                         {semanticSearchCircles.map((item) => (
-                            <CirclesMapMarkers circles={item.circles} ignoreIsActive={true} color={item.color} />
+                            <CirclesMapMarkers key={item.query} circles={item.circles} ignoreIsActive={true} color={item.color} />
                         ))}
                     </>
-                )}
+                )} */}
+
                 {locationPickerActive && locationPickerPosition && <LocationPickerMarker position={locationPickerPosition} />}
                 {highlightedCircle && <CircleMarker circle={highlightedCircle} highlighted={true} ignoreIsActive={true} />}
                 {previewCircle && <CircleMarker circle={previewCircle} highlighted={true} ignoreIsActive={true} />}
