@@ -1,21 +1,48 @@
 //#region imports
-import React, { useEffect } from "react";
-import { Box, Flex, HStack, VStack, Text, Icon, Button } from "@chakra-ui/react";
-import { log, getDistanceString, getDateAndTimeLong, getDateLong, getEventTime, isPastEvent, isActiveInCircle, isActiveInVideoConference } from "components/Helpers";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { Box, Flex, HStack, VStack, Text, Icon, Button, Spinner } from "@chakra-ui/react";
+import {
+    log,
+    getDistanceString,
+    getDateAndTimeLong,
+    getDateLong,
+    getEventTime,
+    getSetId,
+    isPastEvent,
+    isActiveInCircle,
+    isActiveInVideoConference,
+    getCircleTypes,
+} from "components/Helpers";
 import { openAboutCircle, openCircle } from "components/Navigation";
 import { CirclePicture, CircleCover, CircleHeader } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill, RiLiveFill } from "react-icons/ri";
 import { useAtom } from "jotai";
-import { toggleAboutAtom, inVideoConferenceAtom, toggleWidgetEventAtom, highlightedCircleAtom, previewCircleAtom } from "components/Atoms";
+import {
+    toggleAboutAtom,
+    inVideoConferenceAtom,
+    toggleWidgetEventAtom,
+    highlightedCircleAtom,
+    previewCircleAtom,
+    userAtom,
+    userDataAtom,
+} from "components/Atoms";
 import { useNavigateNoUpdates } from "./RouterUtils";
+import axios from "axios";
+import Lottie from "react-lottie";
+import talkdotsAnimation from "assets/lottie/talkdots.json";
+import { throttle } from "lodash";
 //#endregion
 
-export const ActiveInCircle = ({ item, location, ...props }) => {
+export const ActiveInCircle = ({ circle, location, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+
+    if (!circle?.activity?.active_in_circle) {
+        return null;
+    }
 
     return (
         <Flex
@@ -43,29 +70,38 @@ export const ActiveInCircle = ({ item, location, ...props }) => {
             {...props}
         >
             <Flex overflow="hidden">
-                <CirclePicture circle={item.activity.active_in_circle} marginLeft="2px" size={36} disableClick={true} />
+                <CirclePicture circle={circle.activity.active_in_circle} marginLeft="2px" size={36} disableClick={true} />
 
                 <VStack flexGrow="1" align="left" justifyContent="center" spacing="0px" marginLeft="15px" marginRight="15px">
-                    {item.activity.active_in_circle.type === "event" && (
-                        <Text fontSize="14px" fontWeight="700" color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
-                            {item.activity.active_in_circle.is_all_day ? getDateLong(item.activity.active_in_circle.starts_at) : getDateAndTimeLong(item.activity.active_in_circle.starts_at)}
+                    {circle.activity.active_in_circle.type === "event" && (
+                        <Text fontSize="14px" fontWeight="700" color={isPastEvent(circle) ? "#8d8d8d" : "#cf1a1a"} href={location?.pathname} marginTop="0px">
+                            {circle.activity.active_in_circle.is_all_day
+                                ? getDateLong(circle.activity.active_in_circle.starts_at)
+                                : getDateAndTimeLong(circle.activity.active_in_circle.starts_at)}
                         </Text>
                     )}
                     <HStack>
                         <Text fontSize="16px" fontWeight="700">
-                            {item.activity.active_in_circle.name}
+                            {circle.activity.active_in_circle.name}
                         </Text>
                     </HStack>
                     {/* <Box>
                     <Text fontSize="14px" noOfLines={3}>
-                        {item.description}
+                        {circle.description}
                     </Text>
                 </Box> */}
                 </VStack>
                 {/* if video conference in progress show button to join */}
-                <Box position="absolute" onClick={() => openAboutCircle(item.activity.active_in_circle, setToggleAbout)} top="0px" left="0px" width="100%" height="100%" />
+                <Box
+                    position="absolute"
+                    onClick={() => openAboutCircle(circle.activity.active_in_circle, setToggleAbout)}
+                    top="0px"
+                    left="0px"
+                    width="100%"
+                    height="100%"
+                />
 
-                {isActiveInVideoConference(item) && !inVideoConference && (
+                {isActiveInVideoConference(circle) && !inVideoConference && (
                     <Flex
                         position="absolute"
                         right="0px"
@@ -78,7 +114,7 @@ export const ActiveInCircle = ({ item, location, ...props }) => {
                         color="white"
                         onClick={() => {
                             console.log("opening circle");
-                            openCircle(navigate, item.activity.active_in_circle);
+                            openCircle(navigate, circle.activity.active_in_circle);
                             setToggleWidgetEvent({ name: "video", value: true });
                         }}
                         align="center"
@@ -99,6 +135,131 @@ export const ActiveInCircle = ({ item, location, ...props }) => {
                         </HStack>
                     </Flex>
                 )}
+            </Flex>
+        </Flex>
+    );
+};
+
+export const RelationSetInfo = ({ circle, ...props }) => {
+    const navigate = useNavigateNoUpdates();
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
+    const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [relationSetData, setRelationSetData] = useState(null);
+    const [relationSet, setRelationSet] = useState(null);
+    const [relationIsLoading, setRelationIsLoading] = useState(false);
+
+    const setId = useMemo(() => {
+        return getSetId(user?.id, circle?.id);
+    }, [user?.id, circle?.id]);
+
+    const relationDescription = useMemo(() => {
+        return userData?.circle_settings?.[circle?.id]?.relation?.description;
+    }, [userData?.circle_settings, circle?.id]);
+
+    const updateRelationData = (circleId) => {
+        log("/request_relation_update: " + circleId, 2, true);
+        axios.post(`/request_relation_update`, { circleId: circleId });
+    };
+
+    const throttledUpdateRelationData = useMemo(
+        () => throttle((circleId) => updateRelationData(circleId), 10000),
+        [] // empty dependency array ensures throttle only created once
+    );
+
+    useEffect(() => {
+        if (user?.id === circle?.id || !setId) {
+            setRelationIsLoading(false);
+            return;
+        }
+
+        const sortedIds = [user?.id, circle?.id].sort();
+        setRelationSet({
+            type: "set",
+            id: setId,
+            [user.id]: user,
+            [circle.id]: circle,
+            set_size: 2,
+            description: relationDescription,
+            circle_ids: sortedIds,
+            circle_types: getCircleTypes(user?.type, circle?.type),
+        });
+
+        // TODO check if relation data is up to date by checking when it was generated and when the user and circle was updated
+        if (!relationDescription) {
+            // do axios call to update relation data
+            setRelationIsLoading(true);
+            log("calling throttledUpdateRelationData", 2, true);
+            throttledUpdateRelationData(circle?.id);
+            //axios.post(`/request_relation_update`, { circleId: circle?.id });
+        } else {
+            setRelationIsLoading(false);
+        }
+    }, [user, circle, setId, relationDescription, throttledUpdateRelationData]);
+
+    if (user?.id === circle?.id) return null;
+
+    return (
+        <Flex
+            borderRadius="20px"
+            role="group"
+            color="black"
+            cursor="pointer"
+            bg="white"
+            boxShadow="md"
+            _hover={{
+                bg: "#ddd8db",
+                color: "black",
+            }}
+            overflow="hidden"
+            position="relative"
+            marginLeft="10px"
+            marginRight="10px"
+            flexGrow="0"
+            flexShrink="0"
+            flexDirection="column"
+            marginTop="1px"
+            minHeight="40px"
+            align="left"
+            justifyContent="center"
+            {...props}
+        >
+            <Flex overflow="hidden">
+                <Box marginLeft="5px" marginTop="5px" marginBottom="5px">
+                    <CirclePicture circle={relationSet} size={36} disableClick={true} circleBorderColors={["white"]} />
+                </Box>
+
+                <VStack flexGrow="1" align="left" justifyContent="center" spacing="0px" marginLeft="15px" marginRight="15px" marginTop="5px" marginBottom="5px">
+                    <HStack>
+                        <Text fontSize="14px" fontStyle="italic">
+                            {relationIsLoading ? (
+                                <Lottie
+                                    options={{
+                                        loop: true,
+                                        autoplay: true,
+                                        animationData: talkdotsAnimation,
+                                        rendererSettings: {
+                                            preserveAspectRatio: "xMidYMid slice",
+                                        },
+                                    }}
+                                    height={50}
+                                    width={50}
+                                />
+                            ) : (
+                                relationDescription
+                            )}
+                        </Text>
+                    </HStack>
+                </VStack>
+                {/* <Box
+                    position="absolute"
+                    onClick={() => openAboutCircle(item.activity.active_in_circle, setToggleAbout)}
+                    top="0px"
+                    left="0px"
+                    width="100%"
+                    height="100%"
+                /> */}
             </Flex>
         </Flex>
     );
@@ -145,7 +306,16 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                 {...props}
             >
                 <Flex height="95px" overflow="hidden">
-                    <Box width="140px" height="95px" flexShrink="0" flexGrow="0" backgroundColor="#b9b9b9" overflow="hidden" position="relative" borderRadius="0px 13px 13px 0px">
+                    <Box
+                        width="140px"
+                        height="95px"
+                        flexShrink="0"
+                        flexGrow="0"
+                        backgroundColor="#b9b9b9"
+                        overflow="hidden"
+                        position="relative"
+                        borderRadius="0px 13px 13px 0px"
+                    >
                         <CircleCover type={item?.type} cover={item?.cover} metaData={item?.meta_data} coverWidth={140} coverHeight={95} />
 
                         <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" disableClick={true} />
@@ -212,7 +382,8 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                 </Flex>
             </Flex>
 
-            {isActiveInCircle(item) && <ActiveInCircle item={item} location={location} />}
+            {isActiveInCircle(item) && <ActiveInCircle circle={item} location={location} />}
+            <RelationSetInfo circle={item} />
         </Box>
     );
 };

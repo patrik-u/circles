@@ -9,6 +9,7 @@ const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 const linkify = require("linkifyjs");
+const crypto = require("crypto");
 const { Configuration, OpenAIApi } = require("openai");
 const OneSignal = require("onesignal-node");
 var jsonwebtoken = require("jsonwebtoken");
@@ -103,6 +104,10 @@ const auth = async (req, res, next) => {
 //#endregion
 
 //#region helper functions
+
+const sha256 = (input) => {
+    return crypto.createHash("sha256").update(input).digest("hex");
+};
 
 const getCircle = async (circleId) => {
     let circleDoc = await db.collection("circles").doc(circleId).get();
@@ -2164,6 +2169,72 @@ const semanticSearch = async (query = null, circleId = null, filterTypes = null,
     return circles;
 };
 
+const getSetId = (circleAId, circleBId) => {
+    // sort the IDs
+    const sortedIds = [circleAId, circleBId].sort();
+
+    // concatenate the sorted IDs
+    const combinedId = sortedIds.join("_");
+
+    // hash the combined ID using sha256
+    const setId = sha256(combinedId);
+    return setId;
+};
+
+const createSet = async (circleAId, circleBId) => {
+    const sortedIds = [circleAId, circleBId].sort();
+    const setId = getSetId(circleAId, circleBId);
+    const circleA = getCircle(circleAId);
+    const circleB = getCircle(circleBId);
+    let set = {
+        type: "set",
+        created_at: new Date(),
+        is_public: false,
+        circle_ids: sortedIds,
+        set_size: 2,
+        circle_types: getCircleTypes(circleA, circleB),
+        //need_update: true,
+    };
+    set[circleAId] = circleA;
+    set[circleBId] = circleB;
+
+    // add connected_mutually_to in set circle data
+    const circleRef = db.collection("circles").doc(setId);
+    await circleRef.set(set);
+
+    // add connection to circle
+    const userDataRef = db.collection("circle_data").doc(setId);
+    await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion([circleAId, circleBId]), circle_id: setId }, { merge: true });
+
+    return { id: setId, ...set };
+};
+
+const getSet = async (authCallerId, circleId, updateDescription) => {
+    // get set data
+    let setId = getSetId(authCallerId, circleId);
+    let set = await getCircle(setId);
+    if (set === null) {
+        // create set
+        set = createSet(authCallerId, circleId);
+    }
+    return set;
+};
+
+const getSets = async (authCallerId, circleIds, updateDescription) => {
+    if (circleIds.length < 0) {
+        return [];
+    }
+
+    // get set data
+    let sets = [];
+    for (var i = 0; i < circleIds.length; ++i) {
+        let circleId = circleIds[i];
+        let set = await getSet(authCallerId, circleId, updateDescription);
+        sets.push(set);
+    }
+    return sets;
+};
+
 // do semantic search
 app.post("/search", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
@@ -2172,9 +2243,111 @@ app.post("/search", auth, async (req, res) => {
 
     try {
         let searchResults = await semanticSearch(query, circleId ?? authCallerId, null, 20);
+
+        // get relationship data for search results
+        //let relationshipData = await getRelationshipData(authCallerId, searchResults.map((x) => x.id));
+
         return res.json({ circles: searchResults });
     } catch (error) {
         functions.logger.error("Error while searching:", error);
+        return res.json({ error: error });
+    }
+});
+
+//#endregion
+
+//#region Relation
+
+// post request to update relation description
+app.post("/request_relation_update", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const circleId = req.body.circleId;
+
+    try {
+        // get user data
+        let userData = await getCircleData(authCallerId);
+        if (!userData) {
+            return res.json({ error: "User data not found" });
+        }
+
+        // get set id
+        let setId = getSetId(authCallerId, circleId);
+
+        // see if existing relation data exists
+        let relationData = userData.circle_settings?.[setId]?.relation;
+        if (relationData) {
+            // TODO check if relation data is already up to date
+            return res.json({ message: "relation description already up to date" });
+        }
+
+        // prompt AI to find relation between circles
+        let circleA = await getCircle(authCallerId);
+        let circleB = await getCircle(circleId);
+        let circleAText = getCircleText(circleA);
+        let circleBText = getCircleText(circleB);
+
+        let messages = [];
+        messages.push({
+            role: "system",
+            content:
+                "You are a helpful assistant helping users on a social media networking platform for change makers and co-creators. You help users find other users, organizations, projects and circles that are relevant to them and that can help them reach their goals.",
+        });
+        messages.push({
+            role: "user",
+            content: `In one short sentence describe how ${circleB.name} is relevant to me.\n\nMy profile:\n${circleAText}\n\n${circleB.name} profile:\n${circleBText}`,
+        });
+
+        // initiate AI response
+        const configuration = new Configuration({
+            apiKey: process.env.OPENAI,
+        });
+
+        const openai = new OpenAIApi(configuration);
+        let request = {
+            messages,
+            model: "gpt-4", // model
+        };
+
+        let messageData = null;
+        try {
+            console.log("Calling AI to get relation description");
+            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            const response = await openai.createChatCompletion(request);
+            messageData = response.data?.choices?.[0]?.message;
+            console.log("AI response", messageData);
+        } catch (error) {
+            console.log("error: ", error);
+            return res.json({ error: error });
+        }
+
+        if (!messageData) {
+            return res.json({ error: "No response from AI" });
+        }
+
+        // update profile with AI response
+        const userDataRef = db.collection("circle_data").doc(authCallerId);
+        let newSettings = {
+            relation: {
+                circle_id: circleId,
+                updated_at: new Date(),
+                description: messageData.content,
+            },
+        };
+
+        let circle_settings = {
+            [circleId]: newSettings,
+        };
+
+        await userDataRef.set(
+            {
+                circle_settings,
+            },
+            { merge: true }
+        );
+
+        return res.json({ message: "relation description updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating relation description:", error);
         return res.json({ error: error });
     }
 });
@@ -2278,10 +2451,6 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
     let agentCircleData = await getCircleData(agentId);
 
     messages.push({ role: "system", content: agentCircleData?.system_message ?? "You are a helpful assistant." });
-    // messages.push({
-    //     role: "system",
-    //     content: "If you mention a circle (user, circle or event that has an ID) in your response, please use the format: @circle_id. Don't use markdown.",
-    // });
 
     // add previous messages
     for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {

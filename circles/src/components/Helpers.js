@@ -1,6 +1,21 @@
 import i18n from "../i18n/Localization";
 import config from "../Config";
 import { GeoPoint } from "firebase/firestore";
+import sha256 from "js-sha256";
+
+export const getSetId = (circleAId, circleBId) => {
+    if (circleAId == null || circleBId == null) return null;
+
+    // sort the IDs
+    const sortedIds = [circleAId, circleBId].sort();
+
+    // concatenate the sorted IDs
+    const combinedId = sortedIds.join("_");
+
+    // hash the combined ID using sha256
+    const setId = sha256(combinedId);
+    return setId;
+};
 
 export const getDefaultCirclePicture = (type) => {
     switch (type) {
@@ -213,7 +228,12 @@ export const isWithinMinutes = (date, minutes) => {
 };
 
 export const isCircleActive = (circle) => {
-    return isWithinMinutes(circle?.activity?.last_activity, 10);
+    // users stay active for 10 minutes after last activity, the rest for 24 hours
+    if (circle.type === "user") {
+        return isWithinMinutes(circle?.activity?.last_activity, 10);
+    } else {
+        return isWithinMinutes(circle?.activity?.last_activity, 60 * 24);
+    }
 };
 
 export const isWithinActiveThreshold = (lastActivity) => {

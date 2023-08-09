@@ -3,17 +3,18 @@ import React, { useEffect, useMemo } from "react";
 import { Box, VStack, Text, Flex, HStack } from "@chakra-ui/react";
 import { log, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, twoLineEllipsisStyle, isActiveInCircle } from "components/Helpers";
 import { useAtom } from "jotai";
-import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom } from "components/Atoms";
+import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom, userAtom } from "components/Atoms";
 import { useLocationNoUpdates } from "components/RouterUtils";
 import { CircleCover, CirclePicture, CircleHeader, QuickLinks, CircleMembersPanel } from "components/CircleElements";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { CircleTags } from "components/CircleElements";
-import { ActiveInCircle } from "components/CirclePreview";
+import { ActiveInCircle, RelationSetInfo } from "components/CirclePreview";
 //#endregion
 
 const CircleAbout = ({ onClose }) => {
     log("CircleHome.render", -1);
 
+    const [user] = useAtom(userAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
@@ -104,6 +105,8 @@ const CircleAbout = ({ onClose }) => {
                         </VStack>
 
                         {isActiveInCircle(circle) && <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />}
+
+                        {circle?.id !== user?.id && <RelationSetInfo circle={circle} marginLeft="0px" marginRight="0px" />}
 
                         {circle.description && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">

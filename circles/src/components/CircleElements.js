@@ -891,8 +891,8 @@ export const CirclePicture = ({
     const [isMobile] = useAtom(isMobileAtom);
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
 
-    const getDefaultCirclePicture = () => {
-        switch (circle?.type) {
+    const getDefaultCirclePicture = (item) => {
+        switch (item?.type) {
             case "event":
                 return "/default-event-picture.png";
             default:
@@ -909,35 +909,35 @@ export const CirclePicture = ({
         }
     };
 
-    const getCirclePicture = (picture) => {
-        if (circle?.id === "global") {
-            return picture ?? getDefaultCirclePicture();
+    const getCirclePicture = (item, picture) => {
+        if (item?.id === "global") {
+            return picture ?? getDefaultCirclePicture(item);
         }
-        return getImageKitUrl(picture ?? getDefaultCirclePicture(), size, size);
+        return getImageKitUrl(picture ?? getDefaultCirclePicture(item), size, size);
     };
 
-    const onClick = () => {
+    const onClick = (item) => {
+        log("CirclePicture onClick", 0, true);
+        //log(JSON.stringify(item, null, 2), 0);
+        log(item?.name, 0, true);
         if (disableClick) return;
 
-        openAboutCircle(circle, setToggleAbout);
+        openAboutCircle(item, setToggleAbout);
         //openCircle(navigate, circle);
-    };
-
-    const onParentClick = () => {
-        if (disableClick) return;
-        openAboutCircle(circle?.parent_circle, setToggleAbout);
-        //openCircle(navigate, circle?.parent_circle);
     };
 
     const inActiveOpacity = 0.5;
 
     const borderWidth = 2;
-    const isHexagon = circle?.type !== "user";
     const imageWidth = size - circleBorderColors.length * (borderWidth * 2);
     const imageOffset = circleBorderColors.length * borderWidth;
 
-    const getShapeStyle = () => {
-        if (!isHexagon) {
+    const isHexagon = (inCircle) => {
+        return inCircle?.type !== "user";
+    };
+
+    const getShapeStyle = (inCircle) => {
+        if (inCircle?.type === "user") {
             // circle
             return {
                 borderRadius: "50%",
@@ -956,27 +956,27 @@ export const CirclePicture = ({
         </svg>
     );
 
-    const MultipleHexagonBorders = ({ size, colors }) => (
+    const MultipleHexagonBorders = ({ size, colors, leftOffset = 0 }) => (
         <>
             {colors.map((color, index) => (
                 <HexagonBorder
                     key={index}
                     size={size - 4 * index} // Adjust size for each border
                     color={color}
-                    style={{ position: "absolute", top: `${2 * index}px`, left: `${2 * index}px` }}
+                    style={{ position: "absolute", top: `${2 * index}px`, left: `${2 * index + leftOffset}px` }}
                 />
             ))}
         </>
     );
 
-    const MultipleCircleBorders = ({ size, colors }) => (
+    const MultipleCircleBorders = ({ size, colors, leftOffset = 0 }) => (
         <>
             {colors.map((color, index) => (
                 <Box
                     key={index}
                     position="absolute"
                     top={`${2 * index}px`}
-                    left={`${2 * index}px`}
+                    left={`${2 * index + leftOffset}px`}
                     width={`${size - 4 * index}px`}
                     height={`${size - 4 * index}px`}
                     borderRadius="50%"
@@ -986,91 +986,135 @@ export const CirclePicture = ({
         </>
     );
 
+    const circles = circle?.type === "set" ? circle.circle_ids.map((x) => circle[x]) : [circle];
+    const setOffset = size / 3;
+    const width = circle?.type === "set" ? size * circles.length - setOffset : size;
+    const height = size;
+
     return hasPopover && !isMobile ? (
-        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            <Popover isLazy trigger="hover" gutter="0">
-                <PopoverTrigger>
-                    <Box position="relative" width={`${size}px`} height={`${size}px`}>
-                        {isHexagon ? (
-                            <MultipleHexagonBorders size={size} colors={circleBorderColors} />
-                        ) : (
-                            <MultipleCircleBorders size={size} colors={circleBorderColors} />
-                        )}
-                        <Image
-                            position="absolute"
-                            top={`${imageOffset}px`}
-                            left={`${imageOffset}px`}
-                            width={`${imageWidth}px`}
-                            height={`${imageWidth}px`}
-                            src={getCirclePicture(circle?.picture)}
-                            flexShrink="0"
-                            flexGrow="0"
-                            style={getShapeStyle()}
-                            objectFit="cover"
-                            onClick={onClick}
-                            cursor={!disableClick ? "pointer" : "inherit"}
-                            fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                            backgroundColor="white"
-                            // filter={isActive ? "" : "grayscale(1)"}
-                            opacity={isActive ? "1" : inActiveOpacity}
-                            {...props}
-                        />
-                        {showIfInVideoSession && isActiveInVideoConference(circle) && (
-                            <Box position="absolute" right="-6px" bottom="-6px">
-                                <RiLiveFill color="red" />
-                            </Box>
-                        )}
-                    </Box>
-                </PopoverTrigger>
-                <Portal>
-                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
-                        <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
-                            <PopoverArrow />
-                            <CirclePreview item={circle} inChat={inChat} />
-                        </Box>
-                    </PopoverContent>
-                </Portal>
-            </Popover>
-        </Box>
-    ) : (
-        <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
-            {isHexagon ? <MultipleHexagonBorders size={size} colors={circleBorderColors} /> : <MultipleCircleBorders size={size} colors={circleBorderColors} />}
-            <Image
-                position="absolute"
-                top={`${imageOffset}px`}
-                left={`${imageOffset}px`}
-                width={`${imageWidth}px`}
-                height={`${imageWidth}px`}
-                src={getCirclePicture(circle?.picture)}
-                flexShrink="0"
-                flexGrow="0"
-                style={getShapeStyle()}
-                objectFit="cover"
-                onClick={circle ? onClick : undefined}
-                cursor={!disableClick ? "pointer" : "inherit"}
-                fallbackSrc={getCirclePicture(getDefaultCirclePicture())}
-                backgroundColor="white"
-                // opacity={isActive ? "1" : inActiveOpacity}
-                {...props}
-            />
+        // <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
+        <Popover isLazy trigger="hover" gutter="0">
+            <PopoverTrigger>
+                <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
+                    {circles.map((item, index) => (
+                        <>
+                            {isHexagon(item) ? (
+                                <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
+                            ) : (
+                                <MultipleCircleBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
+                            )}
+                            <Image
+                                position="absolute"
+                                top={`${imageOffset}px`}
+                                left={`${imageOffset + index * (size - setOffset)}px`}
+                                width={`${imageWidth}px`}
+                                height={`${imageWidth}px`}
+                                src={getCirclePicture(item, item?.picture)}
+                                flexShrink="0"
+                                flexGrow="0"
+                                style={getShapeStyle(item)}
+                                objectFit="cover"
+                                onClick={item ? () => onClick(item) : undefined}
+                                cursor={!disableClick ? "pointer" : "inherit"}
+                                fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item))}
+                                backgroundColor="white"
+                                // opacity={isActive ? "1" : inActiveOpacity}
+                                {...props}
+                            />
 
-            {hasUpdates(userData, circle, "any") && (
-                <Box
-                    width={`${size / 7}px`}
-                    height={`${size / 7}px`}
-                    backgroundColor="#ff6499"
-                    borderRadius="50%"
-                    position="absolute"
-                    bottom="0px"
-                    right="0px"
-                ></Box>
-            )}
+                            {hasUpdates(userData, item, "any") && (
+                                <Box
+                                    width={`${size / 7}px`}
+                                    height={`${size / 7}px`}
+                                    backgroundColor="#ff6499"
+                                    borderRadius="50%"
+                                    position="absolute"
+                                    bottom="0px"
+                                    right="0px"
+                                ></Box>
+                            )}
 
-            {showIfInVideoSession && isActiveInVideoConference(circle) && (
-                <Box position="absolute" bottom={`${parentCircleOffset}px`} right={`${parentCircleOffset}px`}>
-                    <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
+                            {showIfInVideoSession && isActiveInVideoConference(item) && (
+                                <Box position="absolute" bottom={`${parentCircleOffset}px`} right={`${parentCircleOffset}px`}>
+                                    <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
+                                </Box>
+                            )}
+                        </>
+                    ))}
                 </Box>
-            )}
+            </PopoverTrigger>
+            <Portal>
+                <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
+                    <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
+                        <PopoverArrow />
+                        <CirclePreview item={circle} inChat={inChat} />
+                    </Box>
+                </PopoverContent>
+            </Portal>
+        </Popover>
+    ) : (
+        // </Box>
+        <Box width={`${width}px`} height={`${height}px`} position="relative" flexShrink="0" flexGrow="0">
+            {circles.map((item, index) => (
+                <>
+                    {isHexagon(item) ? (
+                        <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
+                    ) : (
+                        <MultipleCircleBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
+                    )}
+                    <Image
+                        position="absolute"
+                        top={`${imageOffset}px`}
+                        left={`${imageOffset + index * (size - setOffset)}px`}
+                        width={`${imageWidth}px`}
+                        height={`${imageWidth}px`}
+                        src={getCirclePicture(item, item?.picture)}
+                        flexShrink="0"
+                        flexGrow="0"
+                        style={getShapeStyle(item)}
+                        objectFit="cover"
+                        onClick={item ? () => onClick(item) : undefined}
+                        cursor={!disableClick ? "pointer" : "inherit"}
+                        // fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item))}
+                        backgroundColor="white"
+                        // opacity={isActive ? "1" : inActiveOpacity}
+                        {...props}
+                    />
+
+                    {hasUpdates(userData, item, "any") && (
+                        <Box
+                            width={`${size / 7}px`}
+                            height={`${size / 7}px`}
+                            backgroundColor="#ff6499"
+                            borderRadius="50%"
+                            position="absolute"
+                            bottom="0px"
+                            right="0px"
+                        ></Box>
+                    )}
+
+                    {showIfInVideoSession && isActiveInVideoConference(item) && (
+                        <Box position="absolute" bottom={`${parentCircleOffset}px`} right={`${parentCircleOffset}px`}>
+                            <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
+                        </Box>
+                    )}
+                </>
+            ))}
+            {/* {circles.length > 1 && (
+                <>
+                    {circles.map((_, index) => {
+                        if (index >= circles.length - 1) {
+                            // ensure we render N - 1 times
+                            return null;
+                        }
+                        return (
+                            <Box position="absolute" top="0px" left="0px">
+                                <RiLinksLine key={index} />
+                            </Box>
+                        );
+                    })}
+                </>
+            )} */}
         </Box>
     );
 };

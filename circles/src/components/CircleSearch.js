@@ -327,7 +327,6 @@ export const CircleSearchBoxIcon = (props) => {
                 // log("Semantic search results: " + data.circles?.length, 0, true);
                 // log(JSON.stringify(data.circles, null, 2));
 
-                // TODO calculate colors and filter duplicate circles
                 setSemanticSearchCircles((x) =>
                     x.map((y) => {
                         if (y.query === query) {
