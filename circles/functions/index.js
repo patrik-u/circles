@@ -241,10 +241,21 @@ const getCircleText = (circle) => {
         // add info about event
         text += `Starts at: ${circle.starts_at}\n`;
     }
-
     let chars = text.length;
     text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
-
+    if (circle.type === "user") {
+        // add info about answered prompts
+        let q0 = circle.questions?.question0?.label;
+        let q1 = circle.questions?.question1?.label;
+        let q2 = circle.questions?.question2?.label;
+        let a0 = circle.questions?.question0?.answer;
+        let a1 = circle.questions?.question1?.answer;
+        let a2 = circle.questions?.question2?.answer;
+        if (q0 && a0) text += `${q0}\n${a0}\n`;
+        if (q1 && a1) text += `${q1}\n${a1}\n`;
+        if (q2 && a2) text += `${q2}\n${a2}\n`;
+    }
+    console.log("circle text: " + text);
     // TODO add textual representation of location if set
     return text;
 };
@@ -2294,7 +2305,7 @@ app.post("/request_relation_update", auth, async (req, res) => {
         });
         messages.push({
             role: "user",
-            content: `In one short sentence describe how ${circleB.name} is relevant to me.\n\nMy profile:\n${circleAText}\n\n${circleB.name} profile:\n${circleBText}`,
+            content: `In one short sentence describe how ${circleB.name} is relevant to me. If information is lacking simply say so.\n\nMy profile:\n${circleAText}\n\n${circleB.name} profile:\n${circleBText}`,
         });
 
         // initiate AI response

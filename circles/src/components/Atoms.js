@@ -19,6 +19,7 @@ export const previewCircleAtom = atom(null);
 export const jaasTokenAtom = atom(null);
 export const inVideoConferenceAtom = atom(false);
 export const toggleWidgetEventAtom = atom(null);
+export const updateRelationAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);

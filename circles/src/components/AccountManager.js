@@ -22,6 +22,7 @@ import {
     jaasTokenAtom,
     inVideoConferenceAtom,
     circleAtom,
+    updateRelationAtom,
 } from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
@@ -52,6 +53,7 @@ export const AccountManager = () => {
     const googleOneTapScriptFlag = "__googleOneTapScript__";
     const [googleOneTapDone, setGoogleOneTapDone] = useState(false);
     const [userLocation] = useAtom(userLocationAtom);
+    const [updateRelation] = useAtom(updateRelationAtom);
 
     // //#region useEffects
     //initialize firebase sign in
@@ -318,6 +320,12 @@ export const AccountManager = () => {
         let credential = GoogleAuthProvider.credential(response.credential);
         await signInWithCredential(auth, credential);
     };
+
+    useEffect(() => {
+        if (!updateRelation) return;
+        log("calling /request_relation_update", 0, true);
+        axios.post(`/request_relation_update`, { circleId: updateRelation });
+    }, [updateRelation]);
 
     return null;
 };

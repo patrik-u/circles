@@ -14,9 +14,10 @@ import {
     getCircleTypes,
 } from "components/Helpers";
 import { openAboutCircle, openCircle } from "components/Navigation";
-import { CirclePicture, CircleCover, CircleHeader } from "components/CircleElements";
+import { CirclePicture, CircleCover, CircleHeader, buttonHighlight } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill, RiLiveFill } from "react-icons/ri";
+import { TbMessage } from "react-icons/tb";
 import { useAtom } from "jotai";
 import {
     toggleAboutAtom,
@@ -26,12 +27,11 @@ import {
     previewCircleAtom,
     userAtom,
     userDataAtom,
+    updateRelationAtom,
 } from "components/Atoms";
 import { useNavigateNoUpdates } from "./RouterUtils";
-import axios from "axios";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
-import { throttle } from "lodash";
 //#endregion
 
 export const ActiveInCircle = ({ circle, location, ...props }) => {
@@ -143,30 +143,29 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
 export const RelationSetInfo = ({ circle, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const [user] = useAtom(userAtom);
-    const [userData] = useAtom(userDataAtom);
+    const [userData, setUserData] = useAtom(userDataAtom);
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [relationSetData, setRelationSetData] = useState(null);
     const [relationSet, setRelationSet] = useState(null);
     const [relationIsLoading, setRelationIsLoading] = useState(false);
+    const [getRelationData, setGetRelationData] = useState(false);
+    const [updateRelationId, setUpdateRelationId] = useState(null);
+    const [, setUpdateRelation] = useAtom(updateRelationAtom);
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
 
     const setId = useMemo(() => {
         return getSetId(user?.id, circle?.id);
     }, [user?.id, circle?.id]);
 
     const relationDescription = useMemo(() => {
-        return userData?.circle_settings?.[circle?.id]?.relation?.description;
+        let description = userData?.circle_settings?.[circle?.id]?.relation?.description;
+        if (typeof description === "string") {
+            return description;
+        }
+        return null;
     }, [userData?.circle_settings, circle?.id]);
-
-    const updateRelationData = (circleId) => {
-        log("/request_relation_update: " + circleId, 2, true);
-        axios.post(`/request_relation_update`, { circleId: circleId });
-    };
-
-    const throttledUpdateRelationData = useMemo(
-        () => throttle((circleId) => updateRelationData(circleId), 10000),
-        [] // empty dependency array ensures throttle only created once
-    );
 
     useEffect(() => {
         if (user?.id === circle?.id || !setId) {
@@ -183,20 +182,18 @@ export const RelationSetInfo = ({ circle, ...props }) => {
             set_size: 2,
             description: relationDescription,
             circle_ids: sortedIds,
-            circle_types: getCircleTypes(user?.type, circle?.type),
+            circle_types: getCircleTypes(user.type, circle.type),
         });
 
         // TODO check if relation data is up to date by checking when it was generated and when the user and circle was updated
         if (!relationDescription) {
             // do axios call to update relation data
             setRelationIsLoading(true);
-            log("calling throttledUpdateRelationData", 2, true);
-            throttledUpdateRelationData(circle?.id);
-            //axios.post(`/request_relation_update`, { circleId: circle?.id });
+            setUpdateRelation(circle.id);
         } else {
             setRelationIsLoading(false);
         }
-    }, [user, circle, setId, relationDescription, throttledUpdateRelationData]);
+    }, [user, circle, setId, relationDescription, setUpdateRelation]);
 
     if (user?.id === circle?.id) return null;
 
@@ -226,40 +223,56 @@ export const RelationSetInfo = ({ circle, ...props }) => {
             {...props}
         >
             <Flex overflow="hidden">
-                <Box marginLeft="5px" marginTop="5px" marginBottom="5px">
-                    <CirclePicture circle={relationSet} size={36} disableClick={true} circleBorderColors={["white"]} />
-                </Box>
+                <Flex flexDirection="column">
+                    <Box marginLeft="5px" marginTop="5px" marginBottom="5px">
+                        <CirclePicture circle={relationSet} size={36} disableClick={true} circleBorderColors={["white"]} />
+                    </Box>
+                    <Box flexGrow="1" />
+                    <Box marginBottom="8px" marginLeft="8px">
+                        <Flex
+                            position="relative"
+                            width={iconSize + 8 + "px"}
+                            height={iconSize + 8 + "px"}
+                            backgroundColor={"#f4f4f4dd"}
+                            _hover={{ backgroundColor: buttonHighlight }}
+                            borderRadius="50%"
+                            justifyContent="center"
+                            alignItems="center"
+                            cursor="pointer"
+                        >
+                            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={TbMessage} />
+                        </Flex>
+                    </Box>
+                    {/* 
+                    <Box align="center">
+                        <Box alignSelf="flex-end" borderRadius="50%" backgroundColor="#904903" marginBottom="10px" width="28px" height="28px">
+                            <TbMessage size="20px" />
+                        </Box>
+                    </Box> */}
+                </Flex>
 
                 <VStack flexGrow="1" align="left" justifyContent="center" spacing="0px" marginLeft="15px" marginRight="15px" marginTop="5px" marginBottom="5px">
                     <HStack>
-                        <Text fontSize="14px" fontStyle="italic">
-                            {relationIsLoading ? (
-                                <Lottie
-                                    options={{
-                                        loop: true,
-                                        autoplay: true,
-                                        animationData: talkdotsAnimation,
-                                        rendererSettings: {
-                                            preserveAspectRatio: "xMidYMid slice",
-                                        },
-                                    }}
-                                    height={50}
-                                    width={50}
-                                />
-                            ) : (
-                                relationDescription
-                            )}
-                        </Text>
+                        {relationIsLoading ? (
+                            <Lottie
+                                options={{
+                                    loop: true,
+                                    autoplay: true,
+                                    animationData: talkdotsAnimation,
+                                    rendererSettings: {
+                                        preserveAspectRatio: "xMidYMid slice",
+                                    },
+                                }}
+                                height={50}
+                                width={50}
+                            />
+                        ) : (
+                            <Text fontSize="14px" fontStyle="italic">
+                                {relationDescription}
+                            </Text>
+                        )}
                     </HStack>
                 </VStack>
-                {/* <Box
-                    position="absolute"
-                    onClick={() => openAboutCircle(item.activity.active_in_circle, setToggleAbout)}
-                    top="0px"
-                    left="0px"
-                    width="100%"
-                    height="100%"
-                /> */}
             </Flex>
         </Flex>
     );
