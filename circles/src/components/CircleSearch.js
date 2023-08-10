@@ -21,7 +21,7 @@ import { log } from "components/Helpers";
 import { HiOutlineSearch } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, searchResultsShownAtom, semanticSearchCirclesAtom } from "components/Atoms";
+import { isMobileAtom, searchResultsShownAtom, semanticSearchCirclesAtom, toggleWidgetEventAtom } from "components/Atoms";
 import config from "Config";
 import CircleListItem from "components/CircleListItem";
 import i18n from "i18n/Localization";
@@ -37,9 +37,11 @@ const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
 const SearchHit = ({ hit, onClick }) => {
     const navigate = useNavigateNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const onHitClick = () => {
         openCircle(navigate, { id: hit.objectID, host: "circles" });
+        setToggleWidgetEvent({ name: "about", value: true });
         if (onClick) {
             onClick();
         }

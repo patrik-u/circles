@@ -32,13 +32,14 @@ import {
 import { useNavigateNoUpdates } from "./RouterUtils";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
+import axios from "axios";
 //#endregion
 
 export const ActiveInCircle = ({ circle, location, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
-    const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     if (!circle?.activity?.active_in_circle) {
         return null;
@@ -145,7 +146,7 @@ export const RelationSetInfo = ({ circle, ...props }) => {
     const [user] = useAtom(userAtom);
     const [userData, setUserData] = useAtom(userDataAtom);
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
-    const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [relationSetData, setRelationSetData] = useState(null);
     const [relationSet, setRelationSet] = useState(null);
     const [relationIsLoading, setRelationIsLoading] = useState(false);
@@ -154,6 +155,13 @@ export const RelationSetInfo = ({ circle, ...props }) => {
     const [, setUpdateRelation] = useAtom(updateRelationAtom);
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
+
+    const onOpenChat = () => {
+        // init set circle
+        axios.post(`/circles/${circle.id}/init_set`);
+        openCircle(navigate, { id: setId });
+        setToggleWidgetEvent({ name: "chat", value: true });
+    };
 
     const setId = useMemo(() => {
         return getSetId(user?.id, circle?.id);
@@ -239,6 +247,7 @@ export const RelationSetInfo = ({ circle, ...props }) => {
                             justifyContent="center"
                             alignItems="center"
                             cursor="pointer"
+                            onClick={onOpenChat}
                         >
                             <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={TbMessage} />
                         </Flex>

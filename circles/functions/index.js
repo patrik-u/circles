@@ -1259,6 +1259,19 @@ app.delete("/circles/:id", auth, async (req, res) => {
     }
 });
 
+app.post("/circles/:id/init_set", auth, async (req, res) => {
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+
+    try {
+        await createSet(circleId, authCallerId);
+        return res.json({ message: "circle set initialized" });
+    } catch (error) {
+        functions.logger.error("Error while initializing set:", error);
+        return res.json({ error: error });
+    }
+});
+
 // update circle activity status
 app.put("/circles/:id/activity", auth, async (req, res) => {
     const circleId = req.params.id;
@@ -2195,8 +2208,14 @@ const getSetId = (circleAId, circleBId) => {
 const createSet = async (circleAId, circleBId) => {
     const sortedIds = [circleAId, circleBId].sort();
     const setId = getSetId(circleAId, circleBId);
-    const circleA = getCircle(circleAId);
-    const circleB = getCircle(circleBId);
+
+    const existingSet = await getCircle(setId);
+    if (existingSet !== null) {
+        return existingSet;
+    }
+
+    const circleA = await getCircle(circleAId);
+    const circleB = await getCircle(circleBId);
     let set = {
         type: "set",
         created_at: new Date(),

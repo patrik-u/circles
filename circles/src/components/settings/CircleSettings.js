@@ -88,7 +88,7 @@ const CircleSettings = ({ onClose }) => {
             height={isMatch[3] ? "200px" : "100%"}
             width="auto"
         >
-            <Flex flexGrow="1" height={isMobile ? "auto" : "100%"} position="relative" left="0px" flexDirection={isMobile ? "column" : "row"} top="0px">
+            <Flex flexGrow="1" height={isMobile ? "100%" : "100%"} position="relative" left="0px" flexDirection={isMobile ? "column" : "row"} top="0px">
                 <Box marginLeft="2px" backgroundColor="white" borderRadius="0px 7px 7px 0px" flexGrow="1">
                     <Scrollbars autoHide>
                         <Box paddingLeft="15px" paddingRight="15px">

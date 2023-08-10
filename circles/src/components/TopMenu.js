@@ -11,7 +11,7 @@ import { useAtom } from "jotai";
 import { isMobileAtom, signInStatusAtom, homeExpandedAtom, circleAtom } from "components/Atoms";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleSearchBoxIcon } from "components/CircleSearch";
-import { CirclePicture } from "components/CircleElements";
+import { CirclePicture, SettingsButton } from "components/CircleElements";
 import { Routes, Route } from "react-router-dom";
 //#endregion
 
@@ -39,6 +39,7 @@ export const TopMenu = ({ onLogoClick }) => {
                         {circle?.name}
                     </Text>
                 </Flex>
+                <SettingsButton circle={circle} marginLeft="10px" pointerEvents="auto" />
 
                 <Box flex="1" />
                 <Box align="center" height={height} marginRight={isMobile ? "12px" : "25px"} borderRadius="10px" paddingLeft="10px" pointerEvents="auto">

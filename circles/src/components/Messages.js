@@ -10,7 +10,7 @@ import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "components/
 import { openCircle } from "components/Navigation";
 import { CirclePicture, buttonHighlight } from "components/CircleElements";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, chatCircleAtom, signInStatusAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, chatCircleAtom, signInStatusAtom, toggleWidgetEventAtom } from "components/Atoms";
 import db from "components/Firebase";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 //#endregion
@@ -99,6 +99,7 @@ const Messages = () => {
     const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
     const [signInStatus] = useAtom(signInStatusAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     useOutsideClick({
         ref: messagesBoxRef,
@@ -238,6 +239,7 @@ const Messages = () => {
                                                 onClick={() => {
                                                     messagesOnClose();
                                                     openCircle(navigate, { id: message.circle_id, host: "circles" }, "chat");
+                                                    setToggleWidgetEvent({ name: "chat", value: true });
                                                 }}
                                             />
                                         ))}

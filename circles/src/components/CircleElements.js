@@ -46,6 +46,7 @@ import {
     isCircleActive,
     isWithinActiveThreshold,
     fromFsDate,
+    isAdmin,
 } from "components/Helpers";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
@@ -69,10 +70,11 @@ import {
     focusOnMapItemAtom,
     userLocationAtom,
     showHistoricCirclesAtom,
+    toggleSettingsAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
-import { HiOutlineBellSlash, HiOutlineBellAlert } from "react-icons/hi2";
+import { HiOutlineBellSlash, HiOutlineBellAlert, HiCog8Tooth } from "react-icons/hi2";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { IoIosLink } from "react-icons/io";
 import { ImQrcode } from "react-icons/im";
@@ -385,6 +387,46 @@ export const FavoriteButton = ({ circle, inPreview, ...props }) => {
                 {...props}
             >
                 <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={favoriteSetting === true ? AiFillStar : AiOutlineStar} />
+            </Flex>
+        </Tooltip>
+    );
+};
+
+export const SettingsButton = ({ circle, ...props }) => {
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+    const [, setToggleSettings] = useAtom(toggleSettingsAtom);
+    const [userData] = useAtom(userDataAtom);
+
+    const toggleSettings = () => {
+        if (!circle?.id) {
+            return;
+        }
+        setToggleSettings(true);
+    };
+
+    const showSettings = () => {
+        return isAdmin(circle, userData);
+    };
+
+    if (!showSettings()) return;
+
+    return (
+        <Tooltip label="Settings - open circle settings" aria-label="A tooltip">
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                //backgroundColor={inPreview ? "#f4f4f4dd" : "none"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                onClick={toggleSettings}
+                cursor="pointer"
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={HiCog8Tooth} />
             </Flex>
         </Tooltip>
     );

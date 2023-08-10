@@ -94,7 +94,7 @@ const WidgetController = () => {
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["chat"]);
-    const menuItems = useMemo(() => ["about", "chat", "video", "calendar", "settings", "admin"], []);
+    const menuItems = useMemo(() => ["about", "chat", "video", "calendar", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -168,7 +168,7 @@ const WidgetController = () => {
         if (!toggleSettings) {
             return;
         }
-        toggleWidget("settings", true);
+        toggleWidget("settings");
         setToggleSettings(false);
     }, [toggleSettings, setToggleSettings, toggleWidget]);
 
@@ -177,7 +177,7 @@ const WidgetController = () => {
             return;
         }
         log("toggling widget:" + toggleWidgetEvent.name + " to " + toggleWidgetEvent.value, 0, true);
-        toggleWidget(toggleWidgetEvent.name, toggleWidgetEvent.value);
+        toggleWidget(toggleWidgetEvent.name, toggleWidgetEvent.value, toggleWidgetEvent.toggleAboutCircle);
         setToggleWidgetEvent(false);
     }, [toggleWidgetEvent, setToggleWidgetEvent, toggleWidget]);
 

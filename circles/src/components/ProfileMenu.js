@@ -5,7 +5,7 @@ import { getImageKitUrl, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import { routes, openCircle } from "components/Navigation";
 import { useAtom } from "jotai";
-import { isMobileAtom, signInStatusAtom, userAtom, toggleSettingsAtom } from "components/Atoms";
+import { isMobileAtom, signInStatusAtom, userAtom, toggleSettingsAtom, toggleWidgetEventAtom } from "components/Atoms";
 import { defaultUserPicture } from "components/Constants";
 import { userSignOut } from "components/AccountManager";
 import { useNavigateNoUpdates } from "components/RouterUtils";
@@ -23,6 +23,7 @@ export const ProfileMenu = () => {
     const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
     const displayProfile = signInStatus.signedIn || (signInStatus.signingIn && user?.picture);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const onSignOutClick = () => {
         profileMenuOnClose();
@@ -70,6 +71,7 @@ export const ProfileMenu = () => {
                             onClick={() => {
                                 profileMenuOnClose();
                                 openCircle(navigate, user);
+                                setToggleWidgetEvent({ name: "about", value: true });
                             }}
                         />
                     </Center>
@@ -79,13 +81,21 @@ export const ProfileMenu = () => {
                         onClick={() => {
                             profileMenuOnClose();
                             openCircle(navigate, user);
+                            setToggleWidgetEvent({ name: "about", value: true });
                         }}
                     >
                         <strong>{user?.name}</strong>
                     </Center>
                     <br />
                     <MenuDivider />
-                    <MenuItem onClick={() => openCircle(navigate, user)}>{i18n.t("my profile")}</MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            openCircle(navigate, user);
+                            setToggleWidgetEvent({ name: "about", value: true });
+                        }}
+                    >
+                        {i18n.t("my profile")}
+                    </MenuItem>
                     <MenuItem
                         onClick={() => {
                             openCircle(navigate, user);
