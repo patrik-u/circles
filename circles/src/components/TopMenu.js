@@ -26,6 +26,7 @@ export const TopMenu = ({ onLogoClick }) => {
     const height = isMobile ? "40px" : "90px";
     const logoHeight = isMobile ? 30 : 60; //68;
     const titleSize = isMobile ? "16px" : "24px";
+    const setTitleSize = isMobile ? "10px" : "18px";
     const logoHeightPx = `${logoHeight}px`;
     const logoWidth = isMobile ? 30 : 48; //157;
     const logoWidthPx = `${logoWidth}px`;
@@ -35,9 +36,18 @@ export const TopMenu = ({ onLogoClick }) => {
             <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="154" pointerEvents="none">
                 <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
                     <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
-                    <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
-                        {circle?.name}
-                    </Text>
+                    {circle?.type !== "set" && (
+                        <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
+                            {circle?.name}
+                        </Text>
+                    )}
+                    {circle?.type === "set" && (
+                        <Text fontSize={setTitleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={2}>
+                            {circle[circle.circle_ids[0]].name} &
+                            <br />
+                            {circle[circle.circle_ids[1]].name}
+                        </Text>
+                    )}
                 </Flex>
                 <SettingsButton circle={circle} marginLeft="10px" pointerEvents="auto" />
 

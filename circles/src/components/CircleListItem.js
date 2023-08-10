@@ -454,7 +454,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         </Box>
                     )}
 
-                    <CircleCover type={item.type} cover={item.cover} metaData={item?.meta_data} nullIfMissing={true} maxHeight="500px" />
+                    <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
 
                     <Box paddingTop="4px">
                         <CircleTags circle={item} size="tiny" inSelect={inSelect} />

@@ -8,7 +8,7 @@ export default class FirebaseDataProvider extends DataProvider {
         // subscribe to circle
         let unsubscribeGetCircle = onSnapshot(doc(db, "circles", circleId), (doc) => {
             var newCircle = doc.data();
-            if (!doc.exists) {
+            if (!doc.exists || !newCircle) {
                 return;
             }
             newCircle.id = doc.id;

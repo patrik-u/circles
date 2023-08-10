@@ -245,11 +245,30 @@ export const isCircleOnline = (circle) => {
 };
 
 export const isActiveInCircle = (circle) => {
+    if (!circle) return false;
+    if (circle.id === "global" || circle.type === "user" || circle.type === "set") return false;
     return isCircleActive(circle) && circle?.activity?.active_in_circle;
 };
 
 export const isActiveInVideoConference = (circle) => {
     return isWithinMinutes(circle?.activity?.active_in_video_conference, 2) || isWithinMinutes(circle?.activity?.active_video_conference, 2);
+};
+
+export const getRelationSet = (user, circle) => {
+    if (!user || !circle) return null;
+
+    let setId = getSetId(user.id, circle.id);
+    const sortedIds = [user?.id, circle?.id].sort();
+    let set = {
+        type: "set",
+        id: setId,
+        [user.id]: user,
+        [circle.id]: circle,
+        set_size: 2,
+        circle_ids: sortedIds,
+        circle_types: getCircleTypes(user.type, circle.type),
+    };
+    return set;
 };
 
 // converts firestore date to javascript date

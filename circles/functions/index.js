@@ -1811,12 +1811,19 @@ app.post("/chat_messages", auth, async (req, res) => {
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
         let aiChatSession = circle?.type === "ai_chat_session";
+        if (!circle) {
+            return res.json({ error: "circle not found" });
+        }
 
-        if (!circle?.is_public) {
+        if (!circle.is_public) {
             if (aiChatSession) {
                 // get circle data
                 let circleData = await getCircleData(circleId);
                 if (!circleData?.connected_mutually_to?.includes(authCallerId)) {
+                    return res.status(403).json({ error: "unauthorized" });
+                }
+            } else if (circle.type === "set") {
+                if (!circle.circle_ids?.includes(authCallerId)) {
                     return res.status(403).json({ error: "unauthorized" });
                 }
             } else {
@@ -1886,16 +1893,25 @@ app.post("/chat_messages", auth, async (req, res) => {
         }
         // check if message contains link and add preview image
         addPreviewImages(chatMessageRef, links).then((previewImage) => {
-            // send notification to all users connected to circle
-            getMemberConnections(circleId).then((memberConnections) => {
-                for (var memberConnection of memberConnections) {
-                    if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
-                        // ignore notifying sender and non-users
-                        continue;
-                    }
-                    sendMessageNotification(memberConnection.target, circle, newMessage, previewImage, "Chat");
+            if (circle.type === "set") {
+                // send notification to users in set
+                for (var circleId of circle.circle_ids) {
+                    if (circleId === authCallerId) continue;
+
+                    sendMessageNotification(circle[circleId], circle, newMessage, previewImage, "Chat");
                 }
-            });
+            } else {
+                // send notification to all users connected to circle
+                getMemberConnections(circleId).then((memberConnections) => {
+                    for (var memberConnection of memberConnections) {
+                        if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
+                            // ignore notifying sender and non-users
+                            continue;
+                        }
+                        sendMessageNotification(memberConnection.target, circle, newMessage, previewImage, "Chat");
+                    }
+                });
+            }
         });
 
         if (aiChatSession) {

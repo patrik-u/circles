@@ -56,24 +56,34 @@ const CircleAbout = ({ onClose }) => {
                 >
                     <CircleHeader circle={circle} onClose={onClose} />
                     <Scrollbars autoHide>
-                        <CircleCover type={circle.type} cover={circle.cover} metaData={circle?.meta_data} coverHeight={184} borderRadius="7px" />
+                        <CircleCover circle={circle} coverHeight={184} borderRadius="7px" />
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
                         <Flex height="44px" width="100%" flexDirection="row" position="relative">
                             <Box width="calc(50% - 38px)" overflow="hidden">
-                                <Text
-                                    fontSize={getNameFontSize(circle.name)}
-                                    fontWeight="bold"
-                                    marginLeft="5px"
-                                    color="black"
-                                    style={twoLineEllipsisStyle}
-                                    marginTop="5px"
-                                    lineHeight="18px"
-                                >
-                                    {circle.name}
-                                </Text>
+                                {circle.type !== "set" && (
+                                    <Text
+                                        fontSize={getNameFontSize(circle.name)}
+                                        fontWeight="bold"
+                                        marginLeft="5px"
+                                        color="black"
+                                        style={twoLineEllipsisStyle}
+                                        marginTop="5px"
+                                        lineHeight="18px"
+                                    >
+                                        {circle.name}
+                                    </Text>
+                                )}
                             </Box>
-                            <Box flexGrow="1" align="center" position="absolute" width="76px" height="76px" left="140px" top="-38px">
+                            <Box
+                                flexGrow="1"
+                                align="center"
+                                position="absolute"
+                                width={circle?.type === "set" ? "127px" : "76px"}
+                                height="76px"
+                                left={circle?.type === "set" ? "119px" : "144px"}
+                                top="-38px"
+                            >
                                 <CirclePicture
                                     circle={circle}
                                     size={76}
@@ -90,6 +100,14 @@ const CircleAbout = ({ onClose }) => {
 
                         {/* </Flex> */}
 
+                        {circle.type === "set" && (
+                            <Box align="center">
+                                <Text fontSize="17px" fontWeight="bold" marginLeft="5px" color="black">
+                                    {circle[circle.circle_ids[0]].name + " & " + circle[circle.circle_ids[1]].name}
+                                </Text>
+                            </Box>
+                        )}
+
                         <VStack spacing="0px">
                             <VStack align="center" className="circle-overview-content" spacing="16px" position="relative" top="0px">
                                 <VStack spacing="0px">
@@ -98,15 +116,27 @@ const CircleAbout = ({ onClose }) => {
                                             {circle.is_all_day ? getDateLong(circle.starts_at) : getDateAndTimeLong(circle.starts_at)}
                                         </Text>
                                     )}
-                                    {/* TODO show all circle tags somewhere */}
-                                    {/* <CircleTags circle={circle} setCircle={setCircle} size="md" /> */}
                                 </VStack>
                             </VStack>
                         </VStack>
 
-                        {isActiveInCircle(circle) && <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />}
+                        {isActiveInCircle(circle) && circle?.type !== "set" && (
+                            <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />
+                        )}
 
-                        {circle?.id !== user?.id && <RelationSetInfo circle={circle} marginLeft="0px" marginRight="0px" />}
+                        {circle?.id !== user?.id && (
+                            <RelationSetInfo
+                                circle={
+                                    circle?.type === "set"
+                                        ? circle?.circle_ids?.[0] !== user?.id
+                                            ? circle?.[circle?.circle_ids?.[0]]
+                                            : circle?.[circle?.circle_ids?.[1]]
+                                        : circle
+                                }
+                                marginLeft="0px"
+                                marginRight="0px"
+                            />
+                        )}
 
                         {circle.description && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">

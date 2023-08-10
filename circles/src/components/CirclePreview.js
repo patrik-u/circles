@@ -142,26 +142,11 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
 };
 
 export const RelationSetInfo = ({ circle, ...props }) => {
-    const navigate = useNavigateNoUpdates();
     const [user] = useAtom(userAtom);
-    const [userData, setUserData] = useAtom(userDataAtom);
-    const [, setToggleAbout] = useAtom(toggleAboutAtom);
-    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
-    const [relationSetData, setRelationSetData] = useState(null);
+    const [userData] = useAtom(userDataAtom);
     const [relationSet, setRelationSet] = useState(null);
     const [relationIsLoading, setRelationIsLoading] = useState(false);
-    const [getRelationData, setGetRelationData] = useState(false);
-    const [updateRelationId, setUpdateRelationId] = useState(null);
     const [, setUpdateRelation] = useAtom(updateRelationAtom);
-    const iconSize = 20;
-    const iconSizePx = iconSize + "px";
-
-    const onOpenChat = () => {
-        // init set circle
-        axios.post(`/circles/${circle.id}/init_set`);
-        openCircle(navigate, { id: setId });
-        setToggleWidgetEvent({ name: "chat", value: true });
-    };
 
     const setId = useMemo(() => {
         return getSetId(user?.id, circle?.id);
@@ -236,22 +221,6 @@ export const RelationSetInfo = ({ circle, ...props }) => {
                         <CirclePicture circle={relationSet} size={36} disableClick={true} circleBorderColors={["white"]} />
                     </Box>
                     <Box flexGrow="1" />
-                    <Box marginBottom="8px" marginLeft="8px">
-                        <Flex
-                            position="relative"
-                            width={iconSize + 8 + "px"}
-                            height={iconSize + 8 + "px"}
-                            backgroundColor={"#f4f4f4dd"}
-                            _hover={{ backgroundColor: buttonHighlight }}
-                            borderRadius="50%"
-                            justifyContent="center"
-                            alignItems="center"
-                            cursor="pointer"
-                            onClick={onOpenChat}
-                        >
-                            <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={TbMessage} />
-                        </Flex>
-                    </Box>
                     {/* 
                     <Box align="center">
                         <Box alignSelf="flex-end" borderRadius="50%" backgroundColor="#904903" marginBottom="10px" width="28px" height="28px">
@@ -338,7 +307,7 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                         position="relative"
                         borderRadius="0px 13px 13px 0px"
                     >
-                        <CircleCover type={item?.type} cover={item?.cover} metaData={item?.meta_data} coverWidth={140} coverHeight={95} />
+                        <CircleCover circle={item} coverWidth={140} coverHeight={95} />
 
                         <CirclePicture circle={item} position="absolute" size={40} top="5px" right="5px" disableClick={true} />
 

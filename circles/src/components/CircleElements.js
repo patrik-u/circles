@@ -47,6 +47,7 @@ import {
     isWithinActiveThreshold,
     fromFsDate,
     isAdmin,
+    getRelationSet,
 } from "components/Helpers";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
@@ -71,6 +72,8 @@ import {
     userLocationAtom,
     showHistoricCirclesAtom,
     toggleSettingsAtom,
+    previewCircleAtom,
+    toggleWidgetEventAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -83,6 +86,7 @@ import DonateToHolon from "components/Holons/DonateToHolon";
 import { MdOutlineClose, MdHistory } from "react-icons/md";
 import { RiMapPinFill } from "react-icons/ri";
 import { BsIncognito } from "react-icons/bs";
+import { TbMessage } from "react-icons/tb";
 import { getPreciseDistance } from "geolib";
 //#endregion
 
@@ -270,6 +274,49 @@ export const FloatingAddButton = () => {
                 <Icon width="28px" height="28px" color="white" as={IoAdd} />
             </Flex>
         </VStack>
+    );
+};
+
+export const MessageButton = ({ circle, inPreview, ...props }) => {
+    const navigate = useNavigateNoUpdates();
+    const [user] = useAtom(userAtom);
+    const [isMobile] = useAtom(isMobileAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, setPreviewCircle] = useAtom(previewCircleAtom);
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+
+    const onOpenChat = () => {
+        // init set circle
+        axios.post(`/circles/${circle.id}/init_set`);
+
+        let relationSet = getRelationSet(user, circle);
+        openCircle(navigate, relationSet);
+        setPreviewCircle(null);
+        setToggleWidgetEvent({ name: "chat", value: true });
+        setToggleWidgetEvent({ name: "about", value: true });
+    };
+
+    if (!user) return;
+
+    return (
+        <Tooltip label="Send private messages" aria-label="A tooltip">
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                backgroundColor={"#f4f4f4dd"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                cursor="pointer"
+                onClick={onOpenChat}
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"#333"} as={TbMessage} />
+            </Flex>
+        </Tooltip>
     );
 };
 
@@ -880,7 +927,11 @@ export const DisplayModeButtons = ({ ...props }) => {
     );
 };
 
-export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nullIfMissing, ...props }) => {
+export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ...props }) => {
+    const type = circle?.type;
+    const cover = circle?.cover;
+    const metaData = circle?.meta_data;
+
     const getDefaultCircleCover = () => {
         switch (type) {
             default:
@@ -901,6 +952,46 @@ export const CircleCover = ({ type, cover, metaData, coverWidth, coverHeight, nu
     };
 
     if (nullIfMissing && !getCover()) return null;
+
+    if (circle?.type === "set") {
+        return (
+            <Flex
+                position="relative"
+                flexDirection={"row"}
+                overflow="hidden"
+                width={coverWidth ? `${coverWidth}px` : "100%"}
+                height={`${coverHeight}px`}
+                {...props}
+            >
+                <Image
+                    position="absolute"
+                    top="0"
+                    left="0"
+                    width={"100%"}
+                    height={"100%"}
+                    src={getImageKitUrl(circle[circle.circle_ids[0]].cover ?? getDefaultCircleCover(), coverWidth, coverHeight)}
+                    backgroundColor="white"
+                    objectFit="cover"
+                />
+                <Image
+                    width={"100%"}
+                    height={"100%"}
+                    src={getImageKitUrl(circle[circle.circle_ids[1]].cover ?? getDefaultCircleCover(), coverWidth, coverHeight)}
+                    backgroundColor="white"
+                    objectFit="cover"
+                    // style={{
+                    //     WebkitMaskImage: "linear-gradient(to right, transparent 45%, black 55%)",
+                    //     maskImage: "linear-gradient(to right, transparent 45%, black 55%)",
+                    // }}
+
+                    style={{
+                        WebkitMaskImage: "linear-gradient(to bottom right, transparent 45%, white 55%)",
+                        maskImage: "linear-gradient(to bottom right, transparent 45%, white 55%)",
+                    }}
+                />
+            </Flex>
+        );
+    }
 
     return (
         <Image
@@ -1087,9 +1178,9 @@ export const CirclePicture = ({
             </PopoverTrigger>
             <Portal>
                 <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
-                    <Box zIndex="160" onClick={onClick} cursor={onClick ? "pointer" : "inherit"}>
+                    <Box zIndex="160" onClick={circle ? () => onClick(circle) : undefined} cursor={onClick ? "pointer" : "inherit"} pointerEvents="auto">
                         <PopoverArrow />
-                        <CirclePreview item={circle} inChat={inChat} />
+                        <CirclePreview item={circle} inChat={inChat} onClick={circle ? () => onClick(circle) : undefined} />
                     </Box>
                 </PopoverContent>
             </Portal>
@@ -1232,6 +1323,7 @@ export const OpenButton = ({ circle, ...props }) => {
 
 export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
 
     const [currentCircle] = useAtom(circleAtom);
@@ -1239,7 +1331,7 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
     const showOpen = useMemo(() => userIsConnected && currentCircle?.id !== circle?.id, [userIsConnected, currentCircle?.id, circle?.id]);
 
     const iconSize = 12;
-    const spacingPx = "2px";
+    const spacingPx = "4px";
 
     if (!circle) return null;
 
@@ -1251,12 +1343,13 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
                     {showOpen && <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />}
                     <LocationButton circle={circle} inPreview={inPreview} marginLeft={!showOpen && inPreview ? "10px" : showOpen ? spacingPx : "0px"} />
                     {!inChat && <Box flexGrow="1" />}
+                    {circle?.type === "user" && circle?.id !== user?.id && <MessageButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}
                     <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     {isConnected(userData, circle.id, ["connected_mutually_to"]) && (
                         <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     )}
                     {/* <ShareButtonMenu circle={circle} /> */}
-                    {circle?.id !== "global" && (
+                    {circle?.id !== "global" && circle?.type !== "set" && (
                         <ConnectButton circle={circle} inHeader={true} fadeBackground={false} inPreview={inPreview} marginLeft={spacingPx} />
                     )}
                     {inPreview && <Box width="10px" />}

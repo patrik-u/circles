@@ -222,7 +222,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
             return;
         }
 
-        if (aiChat) {
+        if (aiChat || (circle.type === "set" && circle.circle_ids.includes(user.id))) {
             setIsAuthorized(true);
             return;
         }
@@ -234,7 +234,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, setIsAuthorized, circle?.is_public, userData, aiChat]);
+    }, [circle?.id, setIsAuthorized, circle?.is_public, userData, aiChat, user?.id, circle?.circle_ids, circle?.type]);
 
     useEffect(() => {
         log("Chat.useEffect 3", -1);
