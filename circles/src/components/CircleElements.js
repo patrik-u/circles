@@ -416,7 +416,7 @@ export const FavoriteButton = ({ circle, inPreview, ...props }) => {
         });
     };
 
-    if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
+    if (!user?.id || (circle?.type !== "set" && !isConnected(userData, circle?.id, ["connected_mutually_to"]))) return;
 
     return (
         <Tooltip label="Favorite - add circle to favorites" aria-label="A tooltip">
@@ -517,7 +517,7 @@ export const NotificationsBell = ({ circle, inPreview, ...props }) => {
         });
     };
 
-    if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
+    if (!user?.id || (circle?.type !== "set" && !isConnected(userData, circle?.id, ["connected_mutually_to"]))) return;
 
     return (
         <Tooltip label="Notification - turn notifications from this circle on/off" aria-label="A tooltip">
@@ -1345,7 +1345,7 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
                     {!inChat && <Box flexGrow="1" />}
                     {circle?.type === "user" && circle?.id !== user?.id && <MessageButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}
                     <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
-                    {isConnected(userData, circle.id, ["connected_mutually_to"]) && (
+                    {(circle?.type === "set" || isConnected(userData, circle.id, ["connected_mutually_to"])) && (
                         <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     )}
                     {/* <ShareButtonMenu circle={circle} /> */}
