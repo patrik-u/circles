@@ -204,11 +204,7 @@ const getConnection = async (sourceId, targetId) => {
 };
 
 const getConnectionWithType = async (sourceId, targetId, type) => {
-    let connectionsRef = db
-        .collection("connections")
-        .where("source.id", "==", sourceId)
-        .where("target.id", "==", targetId)
-        .where("types", "array-contains", type);
+    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId).where("types", "array-contains", type);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -645,7 +641,7 @@ const deleteConnectionByObject = async (connection) => {
     });
 };
 
-const generateJaasKey = (privateKey, { id, name, email, avatar, appId, kid }) => {
+const generateJitsiToken = (privateKey, { id, name, email, avatar, appId, domain, kid }) => {
     const now = new Date();
     const jwt = jsonwebtoken.sign(
         {
@@ -658,16 +654,10 @@ const generateJaasKey = (privateKey, { id, name, email, avatar, appId, kid }) =>
                     email: email,
                     moderator: "true",
                 },
-                features: {
-                    livestreaming: "true",
-                    recording: "true",
-                    transcription: "true",
-                    "outbound-call": "true",
-                },
             },
-            iss: "chat",
+            iss: appId,
             room: "*",
-            sub: appId,
+            sub: domain,
             exp: Math.round(now.setHours(now.getHours() + 148) / 1000), // expires in 148 hours
             nbf: Math.round(new Date().getTime() / 1000) - 10,
         },
@@ -1506,11 +1496,7 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "approved", request_updated_at: date });
@@ -1554,11 +1540,7 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
         }
 
         // update notifications
-        const notificationsDocs = await db
-            .collection("notifications")
-            .where("connection_id", "==", connectionId)
-            .where("connection_type", "==", connectionType)
-            .get();
+        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connectionId).where("connection_type", "==", connectionType).get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
             await docRef.update({ request_status: "denied", request_updated_at: date });
@@ -1710,17 +1692,18 @@ app.get("/signin", auth, async (req, res) => {
         let userData = await getCircleData(authCallerId);
         let userRet = { user: user, userData: userData };
 
-        // generate jwt token for JAAS
-        const token = generateJaasKey(process.env.JAAS_API_KEY, {
+        // generate jwt token for jitsi
+        const token = generateJitsiToken(process.env.JITSI_API_KEY, {
             // Pass your generated private key
             id: user.id,
             name: user.name, // Set the user name
             email: userData.email, // Set the user email
             avatar: user.picture, // Set the user avatar
-            appId: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2", // Your AppID
+            appId: "codo", // Your AppID
+            domain: process.env.JITSI_DOMAIN,
             kid: "vpaas-magic-cookie-c4aaf34c686040deb4d92e5246619db2/64618a",
         });
-        userRet.jaasToken = token;
+        userRet.jitsiToken = token;
 
         return res.json(userRet);
     } catch (error) {
@@ -2110,11 +2093,7 @@ app.put("/chat_notifications", auth, async (req, res) => {
         } else if (circle_id) {
             // set specific chat notification as read
             let notificationRef = null;
-            const notificationsSnapshot = await db
-                .collection("chat_notifications")
-                .where("user_id", "==", authCallerId)
-                .where("circle_id", "==", circle_id)
-                .get();
+            const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("circle_id", "==", circle_id).get();
             if (notificationsSnapshot.docs.length > 0) {
                 notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
                 await notificationRef.update({ is_seen: true, unread_messages: 0 });
@@ -2999,7 +2978,7 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JAAS_API_KEY", "PINECONE_API_KEY", "PINECONE_ENVIRONMENT"],
+    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JITSI_API_KEY", "JITSI_DOMAIN", "PINECONE_API_KEY", "PINECONE_ENVIRONMENT"],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);
