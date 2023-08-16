@@ -31,14 +31,23 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
     const [focusOnMapItem, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const mapboxToken = config.mapBoxToken;
     const [isMobile] = useAtom(isMobileAtom);
+    // const defaultViewport = {
+    //     width: "100%",
+    //     height: "100%",
+    //     // longitude: 10.4035224563641,
+    //     // latitude: 11.393780175539534,
+    //     zoom: 1.8,
+    //     bearing: 0,
+    // };
     const defaultViewport = {
         width: "100%",
         height: "100%",
         // longitude: 10.4035224563641,
         // latitude: 11.393780175539534,
         zoom: 1.8,
-        bearing: 0,
+        bearing: 10,
     };
+
     const [, setIsMapInitialized] = useState(false);
     const [mapViewport, setMapViewport] = useState(defaultViewport);
     const mapRef = useRef(null);
@@ -57,7 +66,10 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         "high-color": "rgb(36, 92, 223)", // Upper atmosphere
         "horizon-blend": 0.02, // Atmosphere thickness (default 0.2 at low zooms)
         //"space-color": "rgba(0, 0, 0, 0)",
+        //"space-color": "#3c93da",
+        //"space-color": "rgb(242, 247, 255)",
         "space-color": mapStyle !== "street" ? "rgb(6, 9, 14)" : "rgb(242, 247, 255)", // Background color
+        //"star-intensity": 0,
         "star-intensity": mapStyle !== "street" ? 0.1 : 0.0, // Background star brightness (default 0.35 at low zoooms )
     };
     const geolocateControlStyle = {

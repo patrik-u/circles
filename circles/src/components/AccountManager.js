@@ -19,7 +19,7 @@ import {
     userConnectionsAtom,
     requestUserConnectionsAtom,
     newUserPopupAtom,
-    jaasTokenAtom,
+    jitsiTokenAtom,
     inVideoConferenceAtom,
     circleAtom,
     updateRelationAtom,
@@ -47,7 +47,7 @@ export const AccountManager = () => {
     const [, setUserConnections] = useAtom(userConnectionsAtom);
     const [, setNewUserPopup] = useAtom(newUserPopupAtom);
     const [requestUserConnections] = useAtom(requestUserConnectionsAtom);
-    const [, setJaasToken] = useAtom(jaasTokenAtom);
+    const [, setJitsiToken] = useAtom(jitsiTokenAtom);
     const toast = useToast();
     const googleOneTapScript = useScript("https://accounts.google.com/gsi/client");
     const googleOneTapScriptFlag = "__googleOneTapScript__";
@@ -146,7 +146,7 @@ export const AccountManager = () => {
                 }
                 setUser(data.user);
                 setUserData(data.userData);
-                setJaasToken(data.jaasToken);
+                setJitsiToken(data.jitsiToken);
                 log("signed into circles, subscribing to user data");
 
                 // subscribe to user public data
@@ -212,7 +212,7 @@ export const AccountManager = () => {
                 unsubscribeGetUserConnections();
             }
         };
-    }, [setSignInStatus, setUid, setUser, setUserData, toast, uid, setJaasToken, setNewUserPopup]);
+    }, [setSignInStatus, setUid, setUser, setUserData, toast, uid, setJitsiToken, setNewUserPopup]);
 
     // attempt sign in using google one tap
     useEffect(() => {

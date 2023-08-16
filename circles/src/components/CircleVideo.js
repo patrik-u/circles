@@ -42,8 +42,17 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, jaasTokenAtom, inVideoConferenceAtom, toggleWidgetEventAtom } from "components/Atoms";
-import { JitsiMeeting, JaaSMeeting } from "@jitsi/react-sdk";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    circleAtom,
+    chatCircleAtom,
+    jitsiTokenAtom,
+    inVideoConferenceAtom,
+    toggleWidgetEventAtom,
+} from "components/Atoms";
+import { JitsiMeeting } from "@jitsi/react-sdk";
 import config from "Config";
 //#endregion
 
@@ -52,16 +61,11 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
-    const [jaasToken] = useAtom(jaasTokenAtom);
+    const [jitsiToken] = useAtom(jitsiTokenAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [roomName, setRoomName] = useState("");
     const [inVideoConference, setInVideoConference] = useAtom(inVideoConferenceAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
-
-    // top bar + cover image + header
-    const getVideoHeight = () => {
-        return isMobile ? height - (40 + 250 + 123) : height;
-    };
 
     useEffect(() => {
         if (!inVideoConference && circle?.id) {
@@ -107,49 +111,56 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
         };
     };
 
-    if (!circle || !roomName || !jaasToken || !user?.id) return null;
+    log("roomName: " + roomName + ", jitsiToken: " + jitsiToken, 0, true);
+
+    if (!circle || !roomName || !jitsiToken || !user?.id) return null;
 
     return (
-        <Flex width={isMinimized ? "300px" : "100%"} height={isMinimized ? "300px" : "100%"} marginTop={isMinimized ? "auto" : "0px"} pointerEvents="auto" marginLeft={isMinimized ? "auto" : "0px"}>
-            <JaaSMeeting
-                appId={config.jitsiJaasKey}
+        <Flex
+            width={isMinimized ? "300px" : "100%"}
+            height={isMinimized ? "300px" : "100%"}
+            marginTop={isMinimized ? "auto" : "0px"}
+            pointerEvents="auto"
+            marginLeft={isMinimized ? "auto" : "0px"}
+        >
+            <JitsiMeeting
+                domain={"jitsi.codo.earth"}
+                appId={"codo"}
                 roomName={roomName}
-                jwt={jaasToken}
-                configOverwrite={{
-                    startWithAudioMuted: true,
-                    disableModeratorIndicator: true,
-                    startScreenSharing: true,
-                    enableEmailInStats: false,
-                    logging: {
-                        defaultLogLevel: "error",
-                    },
-                }}
-                interfaceConfigOverwrite={{
-                    DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-                    SHOW_CHROME_EXTENSION_BANNER: false,
-                    DISPLAY_WELCOME_PAGE_CONTENT: false,
-                    SHOW_JITSI_WATERMARK: false,
-                    SHOW_BRAND_WATERMARK: false,
-                    SHOW_WATERMARK_FOR_GUESTS: false,
-                    TOOLBAR_BUTTONS: [
-                        "microphone",
-                        "camera",
-                        "closedcaptions",
-                        "desktop",
-                        "fullscreen",
-                        "recording",
-                        "sharedvideo",
-                        "settings",
-                        "raisehand",
-                        "filmstrip",
-                        "invite",
-                        "stats",
-                        "shortcuts",
-                        "tileview",
-                        "hangup",
-                        "participants-pane",
-                    ],
-                }}
+                jwt={jitsiToken}
+                // configOverwrite={{
+                //     startWithAudioMuted: true,
+                //     startScreenSharing: false,
+                //     enableEmailInStats: false,
+                //     logging: {
+                //         defaultLogLevel: "error",
+                //     },
+                // }}
+                // interfaceConfigOverwrite={{
+                //     SHOW_CHROME_EXTENSION_BANNER: false,
+                //     DISPLAY_WELCOME_PAGE_CONTENT: false,
+                //     SHOW_JITSI_WATERMARK: false,
+                //     SHOW_BRAND_WATERMARK: false,
+                //     SHOW_WATERMARK_FOR_GUESTS: false,
+                //     // TOOLBAR_BUTTONS: [
+                //     //     "microphone",
+                //     //     "camera",
+                //     //     "closedcaptions",
+                //     //     "desktop",
+                //     //     "fullscreen",
+                //     //     "recording",
+                //     //     "sharedvideo",
+                //     //     "settings",
+                //     //     "raisehand",
+                //     //     "filmstrip",
+                //     //     "invite",
+                //     //     "stats",
+                //     //     "shortcuts",
+                //     //     "tileview",
+                //     //     "hangup",
+                //     //     "participants-pane",
+                //     // ],
+                // }}
                 userInfo={{
                     displayName: user?.name,
                 }}
