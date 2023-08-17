@@ -70,6 +70,7 @@ export const globalCircle = {
     type: "circle",
     created: new Date(),
     created_by: "global",
+    chat_circle_ids: ["tN05inp7an26vZMaAAWw"],
     updated: new Date(),
     updated_by: "global",
     connections: [],
@@ -246,12 +247,14 @@ export const Circle = ({ isGlobal }) => {
             )}
             <Box flexGrow="1" position="relative">
                 {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
+                {/* ONB123 */}
                 <Flex flexDirection="column" position="relative">
                     <Box width="100%" height={coverHeight + "px"} position="relative">
                         <CircleMap height={coverHeight} />
                     </Box>
 
                     <WidgetController />
+                    {/* ONB123 */}
                 </Flex>
                 {(!isPinned || isMobile) && (
                     <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={isMobile ? "full" : "xs"} closeOnOverlayClick={!isPinned}>

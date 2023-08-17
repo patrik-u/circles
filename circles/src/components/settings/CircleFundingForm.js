@@ -65,6 +65,10 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         new_funding.open_collective = values?.openCollective;
                     }
 
+                    if (values?.paypal) {
+                        new_funding.paypal = values?.paypal;
+                    }
+
                     // if new_funding is empty return
                     if (Object.keys(new_funding).length === 0) {
                         return;
@@ -120,14 +124,22 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                                 {form?.values?.openCollective ? form.values.openCollective.length : 0} / 200
                                             </Text>
                                             <InputGroup>
-                                                <Input {...field} id="openCollective" type="text" placeholder={i18n.t("OpenCollective example")} maxLength="200" />
-                                                {!form.errors.openCollective && form.touched.openCollective && <InputRightElement children={<CheckIcon color="green.500" />} />}
+                                                <Input
+                                                    {...field}
+                                                    id="openCollective"
+                                                    type="text"
+                                                    placeholder={i18n.t("OpenCollective example")}
+                                                    maxLength="200"
+                                                />
+                                                {!form.errors.openCollective && form.touched.openCollective && (
+                                                    <InputRightElement children={<CheckIcon color="green.500" />} />
+                                                )}
                                             </InputGroup>
                                             <FormErrorMessage>{form.errors.openCollective}</FormErrorMessage>
                                         </FormControl>
                                     )}
                                 </Field>
-                                {/* <Field name="paypal">
+                                <Field name="paypal">
                                     {({ field, form }) => (
                                         <FormControl isInvalid={form.errors.paypal && form.touched.paypal}>
                                             <FormLabel>PayPal</FormLabel>
@@ -135,13 +147,13 @@ export const CircleFundingForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                                 {form?.values?.paypal ? form.values.paypal.length : 0} / 200
                                             </Text>
                                             <InputGroup>
-                                                <Input {...field} id="paypal" type="text" placeholder={i18n.t("PayPal example")} maxLength="200" />
+                                                <Input {...field} id="paypal" type="text" placeholder={i18n.t("PayPal link")} maxLength="200" />
                                                 {!form.errors.paypal && form.touched.paypal && <InputRightElement children={<CheckIcon color="green.500" />} />}
                                             </InputGroup>
-                                            <FormErrorMessage>{form.errors.twitter}</FormErrorMessage>
+                                            <FormErrorMessage>{form.errors.paypal}</FormErrorMessage>
                                         </FormControl>
                                     )}
-                                </Field> */}
+                                </Field>
 
                                 {/* <CreateHolon /> */}
                             </VStack>

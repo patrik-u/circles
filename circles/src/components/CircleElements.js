@@ -88,6 +88,8 @@ import { RiMapPinFill } from "react-icons/ri";
 import { BsIncognito } from "react-icons/bs";
 import { TbMessage } from "react-icons/tb";
 import { getPreciseDistance } from "geolib";
+import { BiInfoCircle } from "react-icons/bi";
+import { IoInformationCircle } from "react-icons/io5";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -474,6 +476,46 @@ export const SettingsButton = ({ circle, ...props }) => {
                 {...props}
             >
                 <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={HiCog8Tooth} />
+            </Flex>
+        </Tooltip>
+    );
+};
+
+export const AboutButton = ({ circle, ...props }) => {
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+    const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
+    const [, toggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, toggleAbout] = useAtom(toggleAboutAtom);
+    const [userData] = useAtom(userDataAtom);
+
+    const doToggleAbout = () => {
+        if (!circle?.id) {
+            return;
+        }
+        if (previewCircle) {
+            setPreviewCircle(null);
+        } else {
+            toggleWidgetEvent({ name: "about" });
+        }
+    };
+
+    return (
+        <Tooltip label="About - open circle information" aria-label="A tooltip">
+            <Flex
+                position="relative"
+                width={iconSize + 8 + "px"}
+                height={iconSize + 8 + "px"}
+                //backgroundColor={inPreview ? "#f4f4f4dd" : "none"}
+                _hover={{ backgroundColor: buttonHighlight }}
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                onClick={doToggleAbout}
+                cursor="pointer"
+                {...props}
+            >
+                <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={IoInformationCircle} />
             </Flex>
         </Tooltip>
     );

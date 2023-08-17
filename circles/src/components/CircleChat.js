@@ -32,8 +32,8 @@ import useWindowDimensions from "components/useWindowDimensions";
 import i18n from "i18n/Localization";
 import db from "components/Firebase";
 import axios from "axios";
-import { getDayAndMonth, datesAreOnSameDay, log, isConnected } from "components/Helpers";
-import { collection, onSnapshot, query, where, orderBy, limit, Timestamp } from "firebase/firestore";
+import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId } from "components/Helpers";
+import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId } from "firebase/firestore";
 import { CirclePicture, MetaData } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
@@ -56,44 +56,75 @@ export const CircleChatWidget = ({ item }) => {
     const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
     const [user] = useAtom(userAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [aiChatCircle, setAiChatCircle] = useState(null);
-    // const [selectedCircle]
-    const [chatMode, setChatMode] = useState("Members");
+    const [chatCircle, setChatCircle] = useState(circle);
+    const [chatCircles, setChatCircles] = useState([]);
 
     useEffect(() => {
         if (!user?.id || !signInStatus.signedIn) {
-            setChatMode("Members");
-            setAiChatCircle(null);
             return;
         }
 
-        if (circle?.ai_agent?.id) {
-            setChatMode("AI");
+        // if circle has more chat circles, fetch them
+        if (circle?.chat_circle_ids?.length > 0) {
+            // initiate relation-sets with chat circles
+            axios.post(`/circles/init_sets`, { circle_ids: circle.chat_circle_ids });
 
-            // create new circle for one-on-one AI chat session and initialize it
-            axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id, parent_circle_id: circle.id }).then(
-                (res) => {
-                    log("Return from chat sessions", 0, true);
-                    let data = res?.data;
-                    if (!data || data.error) {
-                        setAiChatCircle(null);
-                        return;
-                    }
-                    log("Setting AI Circle:" + JSON.stringify(data, null, 2), 0, true);
-                    setAiChatCircle(data);
-                },
-                (error) => {
-                    log("Error creating chat session: " + JSON.stringify(error, null, 2), 0, true);
+            // get relation-set ids
+            let relationSetIds = circle.chat_circle_ids.map((id) => getSetId(user.id, id));
+
+            // subscribe to chat circles
+            const chatCirclesQuery = query(collection(db, "circles"), where(documentId(), "in", relationSetIds));
+            const unsubscribeGetChatCircles = onSnapshot(chatCirclesQuery, (snap) => {
+                const circles = snap.docs.map((doc) => {
+                    return {
+                        id: doc.id,
+                        ...doc.data(),
+                    };
+                });
+                log(JSON.stringify(circles, null, 2), 0, true);
+                setChatCircles(circles);
+            });
+
+            return () => {
+                if (unsubscribeGetChatCircles) {
+                    unsubscribeGetChatCircles();
                 }
-            );
-        } else {
-            setChatMode("Members");
-            setAiChatCircle(null);
+            };
         }
-    }, [circle?.ai_agent?.id, user?.id, signInStatus.signedIn]);
 
-    const switchChatMode = (mode) => {
-        setChatMode(mode);
+        // if (circle?.ai_agent?.id) {
+        //     setChatMode("AI");
+
+        //     // create new circle for one-on-one AI chat session and initialize it
+        //     axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id, parent_circle_id: circle.id }).then(
+        //         (res) => {
+        //             log("Return from chat sessions", 0, true);
+        //             let data = res?.data;
+        //             if (!data || data.error) {
+        //                 setAiChatCircle(null);
+        //                 return;
+        //             }
+        //             log("Setting AI Circle:" + JSON.stringify(data, null, 2), 0, true);
+        //             setAiChatCircle(data);
+        //         },
+        //         (error) => {
+        //             log("Error creating chat session: " + JSON.stringify(error, null, 2), 0, true);
+        //         }
+        //     );
+        // } else {
+        //     setChatMode("Members");
+        //     setAiChatCircle(null);
+        // }
+    }, [user?.id, signInStatus.signedIn, circle?.id, circle?.chat_circle_ids]);
+
+    // gets target circle if relation-set
+    const getRelevantCircle = (circle) => {
+        if (!circle) return null;
+        if (circle?.type === "set") {
+            return circle[circle.circle_ids[0]].id === user?.id ? circle[circle.circle_ids[1]] : circle[circle.circle_ids[0]];
+        } else {
+            return circle;
+        }
     };
 
     if (!circle?.id) return null;
@@ -101,38 +132,40 @@ export const CircleChatWidget = ({ item }) => {
     return (
         <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto" flexDirection="column">
             {/* top menu to switch between AI chat and member chat */}
-            {circle?.ai_agent && (
+            {chatCircles.length > 0 && (
                 <Box pl={2} pointerEvents="auto" zIndex="10">
-                    <Tooltip label="AI agent chat" aria-label="A tooltip">
-                        <IconButton
-                            aria-label="AI Chat"
-                            icon={<CirclePicture circle={circle.ai_agent} size={35} disableClick={true} />}
-                            isRound
-                            colorScheme="transparent"
-                            borderWidth="2px"
-                            borderColor={chatMode === "AI" ? "#d6d4d6" : "transparent"}
-                            onClick={() => switchChatMode("AI")}
-                            size="35px"
-                        />
-                    </Tooltip>
-                    <Tooltip label="Members chat" aria-label="A tooltip">
+                    <Tooltip label={`Chat with ${circle?.name} members`} aria-label="A tooltip">
                         <IconButton
                             aria-label="Members Chat"
                             icon={<CirclePicture circle={circle} size={35} disableClick={true} />}
                             isRound
                             ml={2}
                             colorScheme="transparent"
+                            overflow="hidden"
                             borderWidth="2px"
-                            borderColor={chatMode === "Members" ? "#d6d4d6" : "transparent"}
-                            onClick={() => switchChatMode("Members")}
+                            borderColor={chatCircle?.id === circle?.id ? "#d6d4d6" : "transparent"}
+                            onClick={() => setChatCircle(circle)}
                             size="35px"
                         />
                     </Tooltip>
+                    {chatCircles.map((item) => (
+                        <Tooltip label={`Chat with ${getRelevantCircle(item)?.name}`} aria-label="A tooltip">
+                            <IconButton
+                                icon={<CirclePicture circle={getRelevantCircle(item)} size={35} disableClick={true} />}
+                                isRound
+                                colorScheme="transparent"
+                                borderWidth="2px"
+                                overflow="hidden"
+                                borderColor={chatCircle?.id === item?.id ? "#d6d4d6" : "transparent"}
+                                onClick={() => setChatCircle(item)}
+                                size="35px"
+                            />
+                        </Tooltip>
+                    ))}
                 </Box>
             )}
-            {chatMode === "AI" && <CircleChat circle={aiChatCircle} parentCircle={circle} aiChat={true} />}
 
-            {chatMode === "Members" && <CircleChat circle={circle} />}
+            <CircleChat circle={chatCircle} />
         </Flex>
     );
 };

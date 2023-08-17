@@ -1253,6 +1253,21 @@ app.delete("/circles/:id", auth, async (req, res) => {
     }
 });
 
+app.post("/circles/init_sets", auth, async (req, res) => {
+    const circleIds = req.body.circle_ids;
+    const authCallerId = req.user.user_id;
+
+    try {
+        for (const circleId of circleIds) {
+            await createSet(circleId, authCallerId);
+        }
+        return res.json({ message: "circle sets initialized" });
+    } catch (error) {
+        functions.logger.error("Error while initializing sets:", error);
+        return res.json({ error: error });
+    }
+});
+
 app.post("/circles/:id/init_set", auth, async (req, res) => {
     const circleId = req.params.id;
     const authCallerId = req.user.user_id;
@@ -2284,10 +2299,6 @@ app.post("/search", auth, async (req, res) => {
 
     try {
         let searchResults = await semanticSearch(query, circleId ?? authCallerId, null, 20);
-
-        // get relationship data for search results
-        //let relationshipData = await getRelationshipData(authCallerId, searchResults.map((x) => x.id));
-
         return res.json({ circles: searchResults });
     } catch (error) {
         functions.logger.error("Error while searching:", error);
@@ -2351,7 +2362,7 @@ app.post("/request_relation_update", auth, async (req, res) => {
 
         let messageData = null;
         try {
-            console.log("Calling AI to get relation description");
+            //console.log("Calling AI to get relation description");
             //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;

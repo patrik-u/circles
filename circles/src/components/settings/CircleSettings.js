@@ -52,7 +52,7 @@ const CircleSettings = ({ onClose }) => {
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
                     { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
+                    // { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
                     { route: routes.circle(circle).settings.misc, name: i18n.t("Misc") },
                 ];
             case "user":
@@ -63,7 +63,7 @@ const CircleSettings = ({ onClose }) => {
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
                     { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
-                    { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
+                    // { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
                     { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
                 ];
         }
@@ -100,7 +100,7 @@ const CircleSettings = ({ onClose }) => {
                                 <Route path="/settings/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
                                 <Route path="/settings/connections" element={<CircleConnectionsForm circle={circle} />} />
-                                <Route path="/settings/funding" element={<CircleFundingForm circle={circle} />} />
+                                {/* <Route path="/settings/funding" element={<CircleFundingForm circle={circle} />} /> */}
                                 <Route path="/settings/misc" element={<CircleDeleteForm circle={circle} />} />
                             </Routes>
                         </Box>

@@ -70,11 +70,11 @@ export const LandingPage = () => {
 
     return (
         <Flex justifyContent="center" align="center" flexDirection="row" height="100%" pointerEvents="none">
-            <Flex justifyContent="center" align="center" flexDirection="column" fontSize="60px" color="white" fontWeight="700">
+            <Flex justifyContent="center" align="center" flexDirection="column" fontSize="80px" color="white" fontWeight="700" marginBottom="100px">
                 {/* <Image src={getImageKitUrl("/splash.jpg")} width="100%" height="100%" position="absolute" top="0px" left="0px" /> */}
                 <Flex flexDirection="row" align="center" zIndex="100">
                     <Text textShadow="-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">What do you</Text>
-                    <Flex flexDirection="column" alignItems="center" width="160px" marginLeft="0px" marginRight="0px">
+                    <Flex flexDirection="column" alignItems="center" width="210px" marginLeft="0px" marginRight="0px">
                         <Text color="#ffffb9" textShadow="-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">
                             <AnimatePresence mode="wait">
                                 <motion.span
@@ -117,10 +117,10 @@ export const LandingPage = () => {
                         // #3c3d42b8
                         paddingLeft="20px"
                         paddingRight="50px"
-                        placeholder={`I ${words[index]} for...`}
+                        placeholder={`Type a response`}
                     />
 
-                    <Box position="absolute" right="20px" top="42px" zIndex="100" width="26px" height="26px" flexShrink="0" cursor="pointer">
+                    <Box position="absolute" right="20px" bottom="32px" zIndex="100" width="26px" height="26px" flexShrink="0" cursor="pointer">
                         <IoMdSend size="26px" color="#ffffdc" onClick={sendMessage} />
                     </Box>
                 </Box>

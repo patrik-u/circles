@@ -68,9 +68,10 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         //"space-color": "rgba(0, 0, 0, 0)",
         //"space-color": "#3c93da",
         //"space-color": "rgb(242, 247, 255)",
+        // "space-color": "#5bb0ff",
         "space-color": mapStyle !== "street" ? "rgb(6, 9, 14)" : "rgb(242, 247, 255)", // Background color
-        //"star-intensity": 0,
-        "star-intensity": mapStyle !== "street" ? 0.1 : 0.0, // Background star brightness (default 0.35 at low zoooms )
+        "star-intensity": 0,
+        //"star-intensity": mapStyle !== "street" ? 0.1 : 0.0, // Background star brightness (default 0.35 at low zoooms )
     };
     const geolocateControlStyle = {
         left: 10,
