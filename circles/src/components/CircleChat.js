@@ -49,15 +49,36 @@ import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom } from "components/Atoms";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
+import { AboutButton } from "components/CircleElements";
 //#endregion
+
+// gets target circle if relation-set
+const getRelevantCircle = (user, circle) => {
+    if (!circle) return null;
+    if (circle?.type === "set") {
+        return circle[circle.circle_ids[0]].id === user?.id ? circle[circle.circle_ids[1]] : circle[circle.circle_ids[0]];
+    } else {
+        return circle;
+    }
+};
 
 export const CircleChatWidget = ({ item }) => {
     const [currentCircle] = useAtom(circleAtom);
     const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
     const [user] = useAtom(userAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [chatCircle, setChatCircle] = useState(circle);
+    const [chatCircle, setChatCircle] = useState(null);
     const [chatCircles, setChatCircles] = useState([]);
+
+    useEffect(() => {
+        if (chatCircle) {
+            if (!chatCircles.find((x) => x.id === chatCircle.id)) {
+                setChatCircle(circle);
+            }
+        } else if (chatCircle === null && circle) {
+            setChatCircle(circle);
+        }
+    }, [circle, chatCircle, chatCircles]);
 
     useEffect(() => {
         if (!user?.id || !signInStatus.signedIn) {
@@ -81,51 +102,21 @@ export const CircleChatWidget = ({ item }) => {
                         ...doc.data(),
                     };
                 });
-                log(JSON.stringify(circles, null, 2), 0, true);
+                //log(JSON.stringify(circles, null, 2), 0, true);
                 setChatCircles(circles);
             });
 
             return () => {
                 if (unsubscribeGetChatCircles) {
                     unsubscribeGetChatCircles();
+                    setChatCircles([]);
+                    setChatCircle(null);
                 }
             };
-        }
-
-        // if (circle?.ai_agent?.id) {
-        //     setChatMode("AI");
-
-        //     // create new circle for one-on-one AI chat session and initialize it
-        //     axios.post("/chat_sessions", { ai_agent_id: circle.ai_agent.id, parent_circle_id: circle.id }).then(
-        //         (res) => {
-        //             log("Return from chat sessions", 0, true);
-        //             let data = res?.data;
-        //             if (!data || data.error) {
-        //                 setAiChatCircle(null);
-        //                 return;
-        //             }
-        //             log("Setting AI Circle:" + JSON.stringify(data, null, 2), 0, true);
-        //             setAiChatCircle(data);
-        //         },
-        //         (error) => {
-        //             log("Error creating chat session: " + JSON.stringify(error, null, 2), 0, true);
-        //         }
-        //     );
-        // } else {
-        //     setChatMode("Members");
-        //     setAiChatCircle(null);
-        // }
-    }, [user?.id, signInStatus.signedIn, circle?.id, circle?.chat_circle_ids]);
-
-    // gets target circle if relation-set
-    const getRelevantCircle = (circle) => {
-        if (!circle) return null;
-        if (circle?.type === "set") {
-            return circle[circle.circle_ids[0]].id === user?.id ? circle[circle.circle_ids[1]] : circle[circle.circle_ids[0]];
         } else {
-            return circle;
+            setChatCircles([]);
         }
-    };
+    }, [user?.id, signInStatus.signedIn, circle?.id, circle?.chat_circle_ids]);
 
     if (!circle?.id) return null;
 
@@ -149,9 +140,9 @@ export const CircleChatWidget = ({ item }) => {
                         />
                     </Tooltip>
                     {chatCircles.map((item) => (
-                        <Tooltip label={`Chat with ${getRelevantCircle(item)?.name}`} aria-label="A tooltip">
+                        <Tooltip key={item.id} label={`Chat with ${getRelevantCircle(user, item)?.name}`} aria-label="A tooltip">
                             <IconButton
-                                icon={<CirclePicture circle={getRelevantCircle(item)} size={35} disableClick={true} />}
+                                icon={<CirclePicture circle={getRelevantCircle(user, item)} size={35} disableClick={true} />}
                                 isRound
                                 colorScheme="transparent"
                                 borderWidth="2px"
@@ -170,7 +161,7 @@ export const CircleChatWidget = ({ item }) => {
     );
 };
 
-export const CircleChat = ({ circle, parentCircle, aiChat }) => {
+export const CircleChat = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -255,7 +246,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
             return;
         }
 
-        if (aiChat || (circle.type === "set" && circle.circle_ids.includes(user.id))) {
+        if (circle.type === "set" && circle.circle_ids.includes(user.id)) {
             setIsAuthorized(true);
             return;
         }
@@ -267,7 +258,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
         } else {
             setIsAuthorized(true);
         }
-    }, [circle?.id, setIsAuthorized, circle?.is_public, userData, aiChat, user?.id, circle?.circle_ids, circle?.type]);
+    }, [circle?.id, setIsAuthorized, circle?.is_public, userData, user?.id, circle?.circle_ids, circle?.type]);
 
     useEffect(() => {
         log("Chat.useEffect 3", -1);
@@ -403,7 +394,6 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
             // send request to edit message
             let postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
                 message: message,
-                parent_circle_id: parentCircle?.id,
             });
 
             if (postMessageResult.data?.error) {
@@ -421,7 +411,6 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
             let req = {
                 circle_id: circle.id,
                 message: message,
-                parent_circle_id: parentCircle?.id,
             };
             if (isReplyingMessage) {
                 req.replyToId = messageToReply?.id;
@@ -527,7 +516,7 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
         setMessageToReply(null);
     };
 
-    if (!circle) return <Spinner color="white" />;
+    if (!circle) return null;
 
     return (
         <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
@@ -896,11 +885,14 @@ export const CircleChat = ({ circle, parentCircle, aiChat }) => {
                             </Box>
 
                             {!circle?.is_public && (
-                                <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
-                                    <Box alignSelf="end" position="absolute">
-                                        <RiChatPrivateLine color="white" />
-                                    </Box>
-                                </Tooltip>
+                                <HStack alignSelf="end" position="absolute">
+                                    <AboutButton circle={getRelevantCircle(user, circle)} />
+                                    <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
+                                        <Box>
+                                            <RiChatPrivateLine color="white" />
+                                        </Box>
+                                    </Tooltip>
+                                </HStack>
                             )}
                         </>
                     )}

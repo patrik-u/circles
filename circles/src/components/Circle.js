@@ -28,6 +28,7 @@ import {
     homeExpandedAtom,
     signInStatusAtom,
     circleAtom,
+    circleDataAtom,
     circleConnectionsAtom,
     searchResultsShownAtom,
     navigationPanelPinnedAtom,
@@ -85,6 +86,7 @@ export const Circle = ({ isGlobal }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circle, setCircle] = useAtom(circleAtom);
+    const [, setCircleData] = useAtom(circleDataAtom);
     const [displayMode] = useAtom(displayModeAtom);
     const [, setActiveCircles] = useAtom(activeCirclesAtom);
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
@@ -109,14 +111,17 @@ export const Circle = ({ isGlobal }) => {
     };
 
     useEffect(() => {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        log("timeZone: " + timeZone, 0, true);
+
+        log("Circle.useEffect");
+
         if (isGlobal || circleId === "global") {
             setCircle(globalCircle);
             return;
         }
 
         if (!circleId) return;
-
-        log("Circle.useEffect");
 
         const dataProvider = DataProviderFactory.createDataProvider(hostId);
         if (dataProvider.supportsSubscription()) {
@@ -135,6 +140,31 @@ export const Circle = ({ isGlobal }) => {
             });
         }
     }, [hostId, circleId, setCircle, isGlobal]);
+
+    useEffect(() => {
+        if (!circle?.id) return;
+        if (!user?.id) return;
+
+        // if user is administrator subscribe to circle private data
+        const dataProvider = DataProviderFactory.createDataProvider(hostId);
+        let isAdmin = user.id === circle.id || userData.admin_of?.includes(circle.id) || userData.owner_of?.includes(circle.id);
+        if (isAdmin) {
+            if (dataProvider.supportsSubscription()) {
+                let unsubscribeData = dataProvider.subscribeToCircleData(circle.id, (newCircleData) => {
+                    setCircleData(newCircleData);
+                });
+                return () => {
+                    if (unsubscribeData) {
+                        unsubscribeData();
+                    }
+                };
+            } else {
+                dataProvider.getCircleData(circle.id).then((fetchedCircleData) => {
+                    setCircleData(fetchedCircleData);
+                });
+            }
+        }
+    }, [hostId, userData?.admin_of, userData?.owner_of, circle?.id, user?.id, setCircleData]);
 
     useEffect(() => {
         if (!circleId && !isGlobal) return;

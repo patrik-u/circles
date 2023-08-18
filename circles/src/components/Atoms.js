@@ -40,6 +40,7 @@ export const navigationPanelPinnedAtom = atomWithStorage(false);
 
 // circle atoms
 export const circleAtom = atom(null);
+export const circleDataAtom = atom(null);
 export const activeCirclesAtom = atom([]);
 export const circleConnectionsAtom = atom([]);
 export const highlightedCircleAtom = atom(null);

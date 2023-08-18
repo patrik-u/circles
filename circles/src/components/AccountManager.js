@@ -273,6 +273,7 @@ export const AccountManager = () => {
                 active_in_circle: circle,
                 active_in_video_conference: inVideoConference,
                 location: location,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             });
         } catch (err) {
             console.error(err);
@@ -284,6 +285,7 @@ export const AccountManager = () => {
                     active_in_circle: circle,
                     active_in_video_conference: inVideoConference,
                     location: location,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 });
             } catch (err) {
                 console.error(err);

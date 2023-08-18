@@ -32,6 +32,7 @@ export const routes = {
             socialmedia: `/${circle?.host ?? "circles"}/${circle?.id}/settings/socialmedia`,
             connections: `/${circle?.host ?? "circles"}/${circle?.id}/settings/connections`,
             funding: `/${circle?.host ?? "circles"}/${circle?.id}/settings/funding`,
+            ai: `/${circle?.host ?? "circles"}/${circle?.id}/settings/ai`,
             misc: `/${circle?.host ?? "circles"}/${circle?.id}/settings/misc`,
         },
         admin: `/${circle?.host ?? "circles"}/${circle?.id}/admin`,

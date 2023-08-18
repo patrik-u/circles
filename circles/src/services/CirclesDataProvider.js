@@ -17,6 +17,19 @@ export default class FirebaseDataProvider extends DataProvider {
         return unsubscribeGetCircle;
     }
 
+    subscribeToCircleData(circleId, callback) {
+        // subscribe to circle
+        let unsubscribeGetCircle = onSnapshot(doc(db, "circle_data", circleId), (doc) => {
+            var newCircleData = doc.data();
+            if (!doc.exists || !newCircleData) {
+                return;
+            }
+            newCircleData.id = doc.id;
+            callback(newCircleData);
+        });
+        return unsubscribeGetCircle;
+    }
+
     supportsSubscription() {
         return true;
     }

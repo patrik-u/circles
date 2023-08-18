@@ -488,15 +488,25 @@ export const AboutButton = ({ circle, ...props }) => {
     const [, toggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [, toggleAbout] = useAtom(toggleAboutAtom);
     const [userData] = useAtom(userDataAtom);
+    const [currentCircle] = useAtom(circleAtom);
 
     const doToggleAbout = () => {
         if (!circle?.id) {
             return;
         }
-        if (previewCircle) {
-            setPreviewCircle(null);
+        if (currentCircle?.id === circle?.id) {
+            if (previewCircle) {
+                setPreviewCircle(null);
+            } else {
+                toggleWidgetEvent({ name: "about" });
+            }
         } else {
-            toggleWidgetEvent({ name: "about" });
+            if (previewCircle?.id !== circle?.id) {
+                setPreviewCircle(circle);
+                toggleWidgetEvent({ name: "about", value: true, toggleAboutCircle: circle });
+            } else {
+                toggleWidgetEvent({ name: "about", toggleAboutCircle: circle });
+            }
         }
     };
 
@@ -1172,7 +1182,7 @@ export const CirclePicture = ({
             <PopoverTrigger>
                 <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
                     {circles.map((item, index) => (
-                        <>
+                        <Box key={item?.id}>
                             {isHexagon(item) ? (
                                 <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
                             ) : (
@@ -1214,7 +1224,7 @@ export const CirclePicture = ({
                                     <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
                                 </Box>
                             )}
-                        </>
+                        </Box>
                     ))}
                 </Box>
             </PopoverTrigger>
@@ -1231,7 +1241,7 @@ export const CirclePicture = ({
         // </Box>
         <Box width={`${width}px`} height={`${height}px`} position="relative" flexShrink="0" flexGrow="0">
             {circles.map((item, index) => (
-                <>
+                <Box key={item?.id}>
                     {isHexagon(item) ? (
                         <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
                     ) : (
@@ -1273,7 +1283,7 @@ export const CirclePicture = ({
                             <RiLiveFill color="red" size={`${size / parentCircleSizeRatio}px`} />
                         </Box>
                     )}
-                </>
+                </Box>
             ))}
             {/* {circles.length > 1 && (
                 <>
@@ -1385,7 +1395,9 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
                     {showOpen && <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />}
                     <LocationButton circle={circle} inPreview={inPreview} marginLeft={!showOpen && inPreview ? "10px" : showOpen ? spacingPx : "0px"} />
                     {!inChat && <Box flexGrow="1" />}
-                    {circle?.type === "user" && circle?.id !== user?.id && <MessageButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />}
+                    {(circle?.type === "user" || circle?.type === "ai_agent") && circle?.id !== user?.id && (
+                        <MessageButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
+                    )}
                     <FavoriteButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     {(circle?.type === "set" || isConnected(userData, circle.id, ["connected_mutually_to"])) && (
                         <NotificationsBell circle={circle} inPreview={inPreview} marginLeft={spacingPx} />

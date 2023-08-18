@@ -7,7 +7,7 @@ import { routes } from "components/Navigation";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, circleAtom } from "components/Atoms";
+import { isMobileAtom, circleAtom, circleDataAtom } from "components/Atoms";
 import { CircleContentForm } from "components/settings/CircleContentForm";
 import { CircleImagesForm } from "components/settings/CircleImagesForm";
 import { CircleTagsForm } from "components/settings/CircleTagsForm";
@@ -17,6 +17,7 @@ import { CircleQuickLinksForm } from "components/settings/CircleQuickLinksForm";
 import { CircleConnectionsForm } from "components/settings/CircleConnectionsForm";
 import { CircleFundingForm } from "components/settings/CircleFundingForm";
 import { CircleDeleteForm } from "components/settings/CircleDeleteForm";
+import { CircleAiForm } from "components/settings/CircleAiForm";
 import { MdOutlineClose } from "react-icons/md";
 //#endregion
 
@@ -35,6 +36,7 @@ const CircleSettings = ({ onClose }) => {
     const location = useLocationNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [circle] = useAtom(circleAtom);
+    const [circleData] = useAtom(circleDataAtom);
 
     const adminNavigationItems = () => {
         if (!circle) return [];
@@ -64,6 +66,17 @@ const CircleSettings = ({ onClose }) => {
                     { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
                     // { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
+                    { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
+                ];
+            case "ai_agent":
+                return [
+                    { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
+                    { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
+                    { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
+                    { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
+                    { route: routes.circle(circle).settings.ai, name: i18n.t("AI") },
                     { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
                 ];
         }
@@ -100,6 +113,7 @@ const CircleSettings = ({ onClose }) => {
                                 <Route path="/settings/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
                                 <Route path="/settings/connections" element={<CircleConnectionsForm circle={circle} />} />
+                                <Route path="/settings/ai" element={<CircleAiForm circle={circle} circleData={circleData} isUpdateForm={true} />} />
                                 {/* <Route path="/settings/funding" element={<CircleFundingForm circle={circle} />} /> */}
                                 <Route path="/settings/misc" element={<CircleDeleteForm circle={circle} />} />
                             </Routes>

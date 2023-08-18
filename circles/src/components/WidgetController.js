@@ -259,15 +259,15 @@ const WidgetController = () => {
     // selected: #1e5785
 
     return (
-        <div class={`flex flex-col h-screen w-full z-1 absolute pointer-events-none`}>
-            <div class={`pt-5 pr-1 pl-1 ${isMobile ? "relative" : "absolute"} w-full pointer-events-auto`}>
-                <div class="flex justify-center flex-wrap gap-1" style={{ marginTop: isMobile ? "30px" : "" }}>
+        <div className={`flex flex-col h-screen w-full z-1 absolute pointer-events-none`}>
+            <div className={`pt-5 pr-1 pl-1 ${isMobile ? "relative" : "absolute"} w-full pointer-events-auto`}>
+                <div className="flex justify-center flex-wrap gap-1" style={{ marginTop: isMobile ? "30px" : "" }}>
                     {menuItems
                         .filter((x) => shouldShowMenuItem(x))
                         .map((component) => (
                             <button
                                 key={component}
-                                class={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
+                                className={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
                                     toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
                                 }`}
                                 onClick={() => toggleWidget(component)}
@@ -276,7 +276,7 @@ const WidgetController = () => {
                             </button>
                         ))}
                     <button
-                        class={`${
+                        className={`${
                             isMobile ? "px-3" : "px-6"
                         } py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
                         onClick={() => openCreateCircle()}
@@ -288,17 +288,17 @@ const WidgetController = () => {
 
             <Box className="flex flex-grow" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
                 {toggledWidgets.includes("about") && (
-                    <div class={getWidgetClass("about")}>
+                    <div className={getWidgetClass("about")}>
                         <CircleAbout onClose={onAboutClose} />
                     </div>
                 )}
                 {toggledWidgets.includes("chat") && (
-                    <div class={getWidgetClass("chat")}>
+                    <div className={getWidgetClass("chat")}>
                         <CircleChatWidget />
                     </div>
                 )}
                 {(toggledWidgets.includes("video") || inVideoConference) && (
-                    <div class="flex flex-col flex-grow order-2">
+                    <div className="flex flex-col flex-grow order-2">
                         <CircleVideo isMinimized={videoMinimized} />
                     </div>
                 )}
@@ -309,22 +309,22 @@ const WidgetController = () => {
                     toggledWidgets.includes("settings") ||
                     toggledWidgets.includes("admin") ||
                     inVideoConference
-                ) && <div class="flex flex-col flex-grow order-2"></div>}
+                ) && <div className="flex flex-col flex-grow order-2"></div>}
 
                 {toggledWidgets.includes("settings") && (
-                    <div class="flex flex-col flex-grow order-2">
+                    <div className="flex flex-col flex-grow order-2">
                         <CircleSettings onClose={onSettingsClose} />
                     </div>
                 )}
 
                 {toggledWidgets.includes("calendar") && (
-                    <div class="flex flex-col flex-grow order-2">
+                    <div className="flex flex-col flex-grow order-2">
                         <CircleCalendar onClose={onCalendarClose} />
                     </div>
                 )}
 
                 {toggledWidgets.includes("admin") && (
-                    <div class="flex flex-col flex-grow order-2">
+                    <div className="flex flex-col flex-grow order-2">
                         <CircleAdmin onClose={onAdminClose} />
                     </div>
                 )}

@@ -228,12 +228,17 @@ const getConfig = async () => {
 };
 
 // create textual representation of circle
-const getCircleText = (circle) => {
+const getCircleText = (circle, condensed = false) => {
     const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
 
     // create textual representation of circle
-    let text = `Type: ${circle.type}\n`;
+
+    let text = `ID: ${circle.id}\n`;
+    text += `Type: ${circle.type}\n`;
     text += `Name: ${circle.name}\n`;
+    if (circle.score) {
+        text += `Similarity score: ${circle.score}\n`;
+    }
     text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
     text += `Location: ${circle.location?.name}\n`;
     text += `Description: ${circle.description}\n`;
@@ -241,21 +246,23 @@ const getCircleText = (circle) => {
         // add info about event
         text += `Starts at: ${circle.starts_at}\n`;
     }
-    let chars = text.length;
-    text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
-    if (circle.type === "user") {
-        // add info about answered prompts
-        let q0 = circle.questions?.question0?.label;
-        let q1 = circle.questions?.question1?.label;
-        let q2 = circle.questions?.question2?.label;
-        let a0 = circle.questions?.question0?.answer;
-        let a1 = circle.questions?.question1?.answer;
-        let a2 = circle.questions?.question2?.answer;
-        if (q0 && a0) text += `${q0}\n${a0}\n`;
-        if (q1 && a1) text += `${q1}\n${a1}\n`;
-        if (q2 && a2) text += `${q2}\n${a2}\n`;
+    if (!condensed) {
+        let chars = text.length;
+        text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
+        if (circle.type === "user") {
+            // add info about answered prompts
+            let q0 = circle.questions?.question0?.label;
+            let q1 = circle.questions?.question1?.label;
+            let q2 = circle.questions?.question2?.label;
+            let a0 = circle.questions?.question0?.answer;
+            let a1 = circle.questions?.question1?.answer;
+            let a2 = circle.questions?.question2?.answer;
+            if (q0 && a0) text += `${q0}\n${a0}\n`;
+            if (q1 && a1) text += `${q1}\n${a1}\n`;
+            if (q2 && a2) text += `${q2}\n${a2}\n`;
+        }
     }
-    console.log("circle text: " + text);
+    //console.log("circle text: " + text);
     // TODO add textual representation of location if set
     return text;
 };
@@ -1199,18 +1206,15 @@ app.put("/circles/:id", auth, async (req, res) => {
             if (req.body.circlePrivateData.incognito !== undefined) {
                 circlePrivateData.incognito = req.body.circlePrivateData.incognito;
             }
+            if (req.body.circlePrivateData.ai) {
+                console.log("******Found ai message: " + JSON.stringify(req.body.circlePrivateData.ai));
+                if (req.body.circlePrivateData.ai.system_message) {
+                    circlePrivateData.ai = { system_message: req.body.circlePrivateData.ai.system_message };
+                }
+            }
 
             if (Object.keys(circlePrivateData).length > 0) {
-                const circleDataRef = db.collection("circle_data");
-                const circleDataSnapshot = await circleDataRef.where("circle_id", "==", circleId).get();
-                let circleDataDocId = null;
-                if (circleDataSnapshot.docs.length <= 0) {
-                    circleDataDocId = circleDataRef.doc().id;
-                    circlePrivateData.circle_id = circleId;
-                } else {
-                    circleDataDocId = circleDataSnapshot.docs[0].id;
-                }
-                await circleDataRef.doc(circleDataDocId).set(circlePrivateData, { merge: true });
+                db.collection("circle_data").doc(circleId).set(circlePrivateData, { merge: true });
             }
         }
 
@@ -1301,6 +1305,19 @@ app.put("/circles/:id/activity", auth, async (req, res) => {
             // user is updating their own activity status
             circleData.activity.last_online = new Date();
             circleData.activity.active_in_video_conference = req.body.active_in_video_conference ? new Date() : false;
+            if (req.body.timezone) {
+                //const user = doc.data();
+                circleData.activity.timezone = req.body.timezone;
+                // store timezone in circle_data as well
+                const circleDataRef = db.collection("circle_data").doc(circleId);
+                await circleDataRef.set(
+                    {
+                        timezone: req.body.timezone,
+                    },
+                    { merge: true }
+                );
+                //circleData.timezone = req.body.timezone;
+            }
             let activeInCircle = req.body.active_in_circle;
             if (activeInCircle) {
                 activeInCircle.activity = {}; // to avoid recursion
@@ -1807,7 +1824,6 @@ app.post("/chat_messages", auth, async (req, res) => {
     try {
         const date = new Date();
         var circleId = req.body.circle_id;
-        var parentCircleId = req.body.parent_circle_id;
         var message = DOMPurify.sanitize(req.body.message);
         var replyToId = req.body.replyToId;
         const authCallerId = req.user.user_id;
@@ -1820,19 +1836,14 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
-        let aiChatSession = circle?.type === "ai_chat_session";
+        let aiChatSession =
+            circle?.type === "set" && (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
         if (!circle) {
             return res.json({ error: "circle not found" });
         }
 
         if (!circle.is_public) {
-            if (aiChatSession) {
-                // get circle data
-                let circleData = await getCircleData(circleId);
-                if (!circleData?.connected_mutually_to?.includes(authCallerId)) {
-                    return res.status(403).json({ error: "unauthorized" });
-                }
-            } else if (circle.type === "set") {
+            if (circle.type === "set") {
                 if (!circle.circle_ids?.includes(authCallerId)) {
                     return res.status(403).json({ error: "unauthorized" });
                 }
@@ -1926,7 +1937,7 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         if (aiChatSession) {
             // trigger AI agent to respond
-            triggerAiAgentResponse(circle, parentCircleId, authCallerId);
+            triggerAiAgentResponse(circle, user);
         }
 
         return res.json({ message: "Message sent" });
@@ -2016,54 +2027,54 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
 });
 
 // create AI chat session
-app.post("/chat_sessions", auth, async (req, res) => {
-    const authCallerId = req.user.user_id;
-    const aiAgentId = req.body.ai_agent_id;
-    const parentCircleId = req.body.parent_circle_id;
-    const date = new Date();
+// app.post("/chat_sessions", auth, async (req, res) => {
+//     const authCallerId = req.user.user_id;
+//     const aiAgentId = req.body.ai_agent_id;
+//     const parentCircleId = req.body.parent_circle_id;
+//     const date = new Date();
 
-    try {
-        const aiAgent = await getCircle(aiAgentId);
-        if (!aiAgent) {
-            return res.json({ error: "AI agent not found" });
-        }
-        const user = await getCircle(authCallerId);
-        if (!user) {
-            return res.json({ error: "User not found" });
-        }
+//     try {
+//         const aiAgent = await getCircle(aiAgentId);
+//         if (!aiAgent) {
+//             return res.json({ error: "AI agent not found" });
+//         }
+//         const user = await getCircle(authCallerId);
+//         if (!user) {
+//             return res.json({ error: "User not found" });
+//         }
 
-        const circleRef = db.collection("circles").doc();
-        const newSession = {
-            type: "ai_chat_session",
-            created_at: date,
-            name: "AI Chat Session " + date.toISOString(),
-            ai_agent: aiAgent,
-        };
+//         const circleRef = db.collection("circles").doc();
+//         const newSession = {
+//             type: "ai_chat_session",
+//             created_at: date,
+//             name: "AI Chat Session " + date.toISOString(),
+//             ai_agent: aiAgent,
+//         };
 
-        await circleRef.set(newSession);
+//         await circleRef.set(newSession);
 
-        var circleId = circleRef.id;
+//         var circleId = circleRef.id;
 
-        // add connection to circle
-        const userDataRef = db.collection("circle_data").doc(circleId);
-        await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(authCallerId), circle_id: circleId }, { merge: true });
+//         // add connection to circle
+//         const userDataRef = db.collection("circle_data").doc(circleId);
+//         await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(authCallerId), circle_id: circleId }, { merge: true });
 
-        // TODO get introduction from AI agent settings
-        triggerAiAgentResponse(
-            circleId,
-            parentCircleId,
-            authCallerId,
-            `Hej mitt namn är ${user.name}. Kan du introducera dig själv?`
-            //`Hello my name is ${user.name}. Can you introduce yourself?`
-            // `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
-        );
+//         // TODO get introduction from AI agent settings
+//         triggerAiAgentResponse(
+//             circleId,
+//             parentCircleId,
+//             authCallerId,
+//             `Hej mitt namn är ${user.name}. Kan du introducera dig själv?`
+//             //`Hello my name is ${user.name}. Can you introduce yourself?`
+//             // `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
+//         );
 
-        return res.json({ id: circleId, ...newSession });
-    } catch (error) {
-        functions.logger.error("Error creating chat session:", error);
-        return res.json({ error: error });
-    }
-});
+//         return res.json({ id: circleId, ...newSession });
+//     } catch (error) {
+//         functions.logger.error("Error creating chat session:", error);
+//         return res.json({ error: error });
+//     }
+// });
 
 // check if message contains link and adds preview image
 const addPreviewImages = async (docRef, links) => {
@@ -2481,17 +2492,53 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
     }
 };
 
-const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt = undefined) => {
+const getLocalDateTimeInTimezone = (timezone) => {
+    const date = new Date();
+
+    const dateString = date.toLocaleDateString("en-CA", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
+
+    const timeString = date.toLocaleTimeString("en-US", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+
+    return `${dateString} ${timeString}`;
+};
+
+const getLocalTimeInTimezone = (timezone) => {
+    const date = new Date();
+
+    return date.toLocaleString("en-US", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+};
+
+const triggerAiAgentResponse = async (circle, user, prompt = undefined) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
     }
-    if (typeof parentCircle === "string") {
-        parentCircle = await getCircle(parentCircle);
+    if (typeof user === "string") {
+        user = await getCircle(user);
     }
+    if (!circle || !user) return;
 
-    if (!circle) return;
-
+    const date = new Date();
     const circleId = circle.id;
+
+    // ai circle
+    let aiCircleId = circle.circle_ids?.find((x) => x !== user.id);
+    let aiCircle = await getCircle(aiCircleId);
+    let userData = await getCircleData(user.id);
 
     // get messages in session
     const chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(30).get();
@@ -2499,15 +2546,25 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
     let messages = [];
 
     // add system prompt
-    let agentId = circle.ai_agent.id;
-    let agentCircleData = await getCircleData(agentId);
+    let agentCircleData = await getCircleData(aiCircleId);
 
-    messages.push({ role: "system", content: agentCircleData?.system_message ?? "You are a helpful assistant." });
+    // create preamble that includes current time and date, it can include the users current profile summary and other data that can be useful for the assistant to know about
+
+    // if user has timezone stored use it otherwise use system time
+
+    let localDateAndTime = null;
+    if (userData?.timezone) {
+        localDateAndTime = getLocalDateTimeInTimezone(userData.timezone);
+    }
+    let systemMessagePreamble = localDateAndTime
+        ? `\n\nThe user's local date and time is ${localDateAndTime} (24 hour format).`
+        : `\n\nThe current date and time is ${date.toLocaleString()} (user's local time may differ).`;
+    messages.push({ role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble });
 
     // add previous messages
     for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {
         let message = chatMessagesDocs.docs[i].data();
-        messages.push({ role: message.user.id === circle.ai_agent.id ? "assistant" : "user", content: message.message });
+        messages.push({ role: message.user.id === user.id ? "user" : "assistant", content: message.message });
     }
 
     // add custom prompt if specified
@@ -2522,12 +2579,10 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
         return;
     }
 
-    const date = new Date();
-
     // add message that will be filled with AI response
     const newMessage = {
         circle_id: circleId,
-        user: circle.ai_agent,
+        user: aiCircle,
         sent_at: date,
         awaits_response: true,
     };
@@ -2548,7 +2603,7 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
     updateCircle(circleId, updatedCircle);
 
     // update user that chat message has been seen
-    setUserSeen(authCallerId, circleId, "chat");
+    setUserSeen(user.id, circleId, "chat");
 
     // initiate AI response
     const configuration = new Configuration({
@@ -2561,22 +2616,46 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
         model: "gpt-4", // model
         functions: [
             {
-                name: "getMemberData",
-                description: `Hämtar lista med Basinkomstpartiets medlemmar på co:do plattformen och dess publika information, samt allmän information om partiets medlemskap.`,
-                parameters: { type: "object", properties: {} },
-            },
-            {
-                name: "getPartyHistory",
-                description: `Hämtar information om partiets historik.`,
-                parameters: { type: "object", properties: {} },
-            },
-            {
-                name: "getPartyPolicy_UbiFinancing",
-                description: `Hämtar information om partiets ställningstagande kring finansiering av basinkomst.`,
-                parameters: { type: "object", properties: {} },
+                name: "semanticSearch",
+                description: "Does a search among circles for users, circles and/or events that are semantically similar to the query.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        query: {
+                            type: "string",
+                            description: "Query in natural language that will be used in search. Results are ranked by relevance to the query.",
+                        },
+                        filterTypes: {
+                            type: "array",
+                            items: { type: "string" },
+                            description:
+                                "Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: user, event, circle.",
+                        },
+                        topK: { type: "number", description: "Number of results to return." },
+                    },
+                    required: ["query"],
+                },
             },
         ],
         function_call: "auto",
+        // functions: [
+        //     {
+        //         name: "getMemberData",
+        //         description: `Hämtar lista med Basinkomstpartiets medlemmar på co:do plattformen och dess publika information, samt allmän information om partiets medlemskap.`,
+        //         parameters: { type: "object", properties: {} },
+        //     },
+        //     {
+        //         name: "getPartyHistory",
+        //         description: `Hämtar information om partiets historik.`,
+        //         parameters: { type: "object", properties: {} },
+        //     },
+        //     {
+        //         name: "getPartyPolicy_UbiFinancing",
+        //         description: `Hämtar information om partiets ställningstagande kring finansiering av basinkomst.`,
+        //         parameters: { type: "object", properties: {} },
+        //     },
+        // ],
+        // function_call: "auto",
     };
 
     let functionCalls = 0;
@@ -2585,7 +2664,7 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
 
     try {
         while (functionCalls < 4) {
-            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
 
@@ -2596,24 +2675,47 @@ const triggerAiAgentResponse = async (circle, parentCircle, authCallerId, prompt
                 request.messages.push(messageData);
 
                 let functionName = messageData.function_call.name;
-                if (functionName === "getMemberData") {
-                    const members = await fn_getMemberData(parentCircle.id);
-                    request.messages.push({ role: "function", name: "getMembers", content: JSON.stringify(members) });
-                } else if (functionName === "getPartyHistory") {
-                    request.messages.push({
-                        role: "function",
-                        name: "getPartyHistory",
-                        content:
-                            "Basinkomstpartiet grundades 2018 och har uppstått som en reaktion på att inga av de etablerade partierna i Sverige för ett seriöst samtal om basinkomst eller medborgarlön. Trots att de många globala pilotprojekten och den samlade forskningen sedan 1960-talet visar på enorma samhälleliga och sociala fördelar direkt kopplade till ovillkorlig grundläggande ekonomisk trygghet, fortsätter Sveriges politiker att undvika frågan. Det är dags att basinkomst lyfts upp på den politiska agendan.",
-                    });
-                } else if (functionName === "getPartyPolicy_UbiFinancing") {
-                    request.messages.push({
-                        role: "function",
-                        name: "getPartyPolicy_UbiFinancing",
-                        content:
-                            "Basinkomstpartiet är agnostisk till finansieringsmodell men vi vidhåller vid viktiga principer som att basinkomsten ska vara individuell, ovillkorad och universell. Basinkomstpartiet jobbar på att ta fram utgångsförslag. Basinkomstpartiet stöder alla varianter och förslag ledande till basinkomst. Från ett reformerat och förenklat socialförsäkringssystem via negativ inkomstskatt till “basic income” i sin rena form. Vi vill inte utesluta bra reformer och förslag. Den exakta nivån och de villkorade stöd som skall ersättas ger ofta förlamande och oändliga detalj-diskussioner, vilket vi vill undvika. Basinkomst skall vara så pass hög att man kan leva drägligt, vilket för närvarande innebär mellan 10-15 tusen kr/månad med en lägre nivå för barn.",
-                    });
+                if (functionName === "semanticSearch") {
+                    // get parameters
+                    let parametersString = messageData.function_call.arguments;
+                    let results = "no results";
+                    if (parametersString) {
+                        let parameters = JSON.parse(parametersString);
+                        let query = parameters.query;
+                        let filterTypes = parameters.filterTypes ?? [];
+                        let topK = parameters.topK ?? 5;
+
+                        // do semantic search
+                        let searchResults = await semanticSearch(query, null, filterTypes, topK);
+                        let searchResultsMessage = `Search results for "${query}":\n\n`;
+                        for (var k = 0; k < searchResults.length; ++k) {
+                            let searchResult = searchResults[k];
+                            searchResultsMessage += `${getCircleText(searchResult, true)}\n\n`;
+                        }
+                        results = searchResultsMessage;
+                    }
+
+                    request.messages.push({ role: "function", name: "semanticSearch", content: results });
                 }
+
+                // if (functionName === "getMemberData") {
+                //     const members = await fn_getMemberData(parentCircle.id);
+                //     request.messages.push({ role: "function", name: "getMembers", content: JSON.stringify(members) });
+                // } else if (functionName === "getPartyHistory") {
+                //     request.messages.push({
+                //         role: "function",
+                //         name: "getPartyHistory",
+                //         content:
+                //             "Basinkomstpartiet grundades 2018 och har uppstått som en reaktion på att inga av de etablerade partierna i Sverige för ett seriöst samtal om basinkomst eller medborgarlön. Trots att de många globala pilotprojekten och den samlade forskningen sedan 1960-talet visar på enorma samhälleliga och sociala fördelar direkt kopplade till ovillkorlig grundläggande ekonomisk trygghet, fortsätter Sveriges politiker att undvika frågan. Det är dags att basinkomst lyfts upp på den politiska agendan.",
+                //     });
+                // } else if (functionName === "getPartyPolicy_UbiFinancing") {
+                //     request.messages.push({
+                //         role: "function",
+                //         name: "getPartyPolicy_UbiFinancing",
+                //         content:
+                //             "Basinkomstpartiet är agnostisk till finansieringsmodell men vi vidhåller vid viktiga principer som att basinkomsten ska vara individuell, ovillkorad och universell. Basinkomstpartiet jobbar på att ta fram utgångsförslag. Basinkomstpartiet stöder alla varianter och förslag ledande till basinkomst. Från ett reformerat och förenklat socialförsäkringssystem via negativ inkomstskatt till “basic income” i sin rena form. Vi vill inte utesluta bra reformer och förslag. Den exakta nivån och de villkorade stöd som skall ersättas ger ofta förlamande och oändliga detalj-diskussioner, vilket vi vill undvika. Basinkomst skall vara så pass hög att man kan leva drägligt, vilket för närvarande innebär mellan 10-15 tusen kr/månad med en lägre nivå för barn.",
+                //     });
+                // }
 
                 ++functionCalls;
             } else {
