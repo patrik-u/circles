@@ -81,6 +81,7 @@ import CircleSettings from "components/settings/CircleSettings";
 import CircleCalendar from "components/CircleCalendar";
 import { DisplayModeButtons } from "./CircleElements";
 import CircleAdmin from "components/CircleAdmin";
+import CircleDiscover from "./CircleDiscover";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
@@ -94,7 +95,7 @@ const WidgetController = () => {
     const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["chat"]);
-    const menuItems = useMemo(() => ["chat", "video", "calendar", "admin"], []);
+    const menuItems = useMemo(() => ["discover", "chat", "video", "calendar", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -198,11 +199,18 @@ const WidgetController = () => {
             } else if (component === "about") {
                 fixedSize = true;
                 index = 2;
+            } else if (component === "discover") {
+                fixedSize = true;
+                index = 2;
             } else if (component === "video") {
                 index = 1;
             }
         }
         return `flex flex-col ${fixedSize ? "min-w-96 w-96 flex-shrink-0" : "flex-grow"} order-${index + 1}`;
+    };
+
+    const onDiscoverClose = () => {
+        toggleWidget("discover", false);
     };
 
     const onAboutClose = () => {
@@ -287,11 +295,18 @@ const WidgetController = () => {
             </div>
 
             <Box className="flex flex-grow" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
+                {toggledWidgets.includes("discover") && (
+                    <div className={getWidgetClass("discover")}>
+                        <CircleDiscover onClose={onDiscoverClose} />
+                    </div>
+                )}
+
                 {toggledWidgets.includes("about") && (
                     <div className={getWidgetClass("about")}>
                         <CircleAbout onClose={onAboutClose} />
                     </div>
                 )}
+
                 {toggledWidgets.includes("chat") && (
                     <div className={getWidgetClass("chat")}>
                         <CircleChatWidget />

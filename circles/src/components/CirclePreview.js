@@ -14,7 +14,7 @@ import {
     getCircleTypes,
 } from "components/Helpers";
 import { openAboutCircle, openCircle } from "components/Navigation";
-import { CirclePicture, CircleCover, CircleHeader, buttonHighlight } from "components/CircleElements";
+import { CirclePicture, CircleCover, CircleHeader, buttonHighlight, SimilarityIndicator } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill, RiLiveFill } from "react-icons/ri";
 import { TbMessage } from "react-icons/tb";
@@ -369,6 +369,7 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                         </Box>
                     </VStack>
                     <Box position="absolute" onClick={onClick} top="0px" left="0px" width="100%" height="100%" />
+                    <SimilarityIndicator circle={item} position="absolute" top="2px" right="2px" />
                 </Flex>
             </Flex>
 

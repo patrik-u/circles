@@ -12,7 +12,7 @@ import { ActiveInCircle, RelationSetInfo } from "components/CirclePreview";
 //#endregion
 
 const CircleAbout = ({ onClose }) => {
-    log("CircleHome.render", -1);
+    log("CircleAbout.render", -1);
 
     const [user] = useAtom(userAtom);
     const [isMobile] = useAtom(isMobileAtom);

@@ -1,6 +1,8 @@
 //#region imports
 import React, { forwardRef, useState, useEffect, useRef, useMemo, Suspense } from "react";
 import {
+    CircularProgress,
+    CircularProgressLabel,
     Flex,
     Box,
     VStack,
@@ -1448,6 +1450,25 @@ export const OpenButton = ({ circle, ...props }) => {
                 {i18n.t(`Open`)}
             </Text>
         </Flex>
+    );
+};
+
+export const SimilarityIndicator = ({ circle, ...props }) => {
+    const score = circle.score ?? 0;
+    const percent = ((score + 1) / 2) * 100; // convert score from [-1,1] to [0,100]
+
+    const getBarColor = (percent) => {
+        return percent > 50 ? "green" : "red";
+    };
+
+    if (!circle.score) return;
+
+    return (
+        <Box width="28px" height="28px" {...props}>
+            <CircularProgress value={percent} color={getBarColor(percent)} size="28px">
+                <CircularProgressLabel>{percent.toFixed(0) + "%"}</CircularProgressLabel>
+            </CircularProgress>
+        </Box>
     );
 };
 
