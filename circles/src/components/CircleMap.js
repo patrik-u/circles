@@ -149,10 +149,6 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         }
     };
 
-    useEffect(() => {
-        log("Map filtered circles: " + filteredCircles.length, 0, true);
-    }, [filteredCircles]);
-
     return (
         <Flex align="center" height={`${height}px`} width="100%" backgroundColor="#1f2327">
             {/* #06090e, #c9dcfd */}

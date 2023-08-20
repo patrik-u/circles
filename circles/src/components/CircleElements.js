@@ -1,5 +1,5 @@
 //#region imports
-import React, { forwardRef, useState, useEffect, useRef, useMemo } from "react";
+import React, { forwardRef, useState, useEffect, useRef, useMemo, Suspense } from "react";
 import {
     Flex,
     Box,
@@ -85,7 +85,7 @@ import { TbChartCircles } from "react-icons/tb";
 import DonateToHolon from "components/Holons/DonateToHolon";
 import { MdOutlineClose, MdHistory } from "react-icons/md";
 import { RiMapPinFill } from "react-icons/ri";
-import { BsIncognito } from "react-icons/bs";
+import { BsIncognito, BsPlus } from "react-icons/bs";
 import { TbMessage } from "react-icons/tb";
 import { getPreciseDistance } from "geolib";
 import { BiInfoCircle } from "react-icons/bi";
@@ -529,6 +529,87 @@ export const AboutButton = ({ circle, ...props }) => {
             </Flex>
         </Tooltip>
     );
+};
+
+export const NewSessionButton = ({ circle, onClick, ...props }) => {
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+    const inHeader = true;
+    const height = "28px";
+
+    return (
+        <Tooltip label="Create new chat session" aria-label="A tooltip">
+            <Button
+                colorScheme="blue"
+                borderRadius="25px"
+                lineHeight="0"
+                padding="0px 5px 0px 8px"
+                variant="ghost"
+                backgroundColor="#ffffff"
+                color="#333"
+                border="1px solid #e7e7e7"
+                height={height}
+                onClick={onClick}
+                position="relative"
+                {...props}
+            >
+                <HStack spacing="4px">
+                    <BsPlus size={inHeader ? "16px" : "12px"} />
+                    <Text fontSize={inHeader ? "13px" : "11px"} fontWeight="700" paddingRight="6px">
+                        New Session
+                    </Text>
+                </HStack>
+            </Button>
+        </Tooltip>
+    );
+};
+
+export const CircleLink = ({ href, children, ...props }) => {
+    const [circles] = useAtom(circlesAtom);
+
+    const extractCircleId = (url) => {
+        const regex = /https:\/\/codo\.earth\/circles\/([^\/?]+)/;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+    };
+
+    // check if link references a circle
+    const circle = useMemo(() => {
+        if (!href) return null;
+
+        let circleId = extractCircleId(href);
+        if (!circleId) return null;
+
+        // find circle in circles
+        let circle = circles.find((c) => c.id === circleId);
+        return circle;
+    }, [href, circles]);
+
+    if (circle) {
+        return (
+            <Popover trigger="hover" gutter="0" isLazy>
+                <PopoverTrigger>
+                    <Flex>
+                        <CirclePicture circle={circle} size={20} hasPopover={true} />
+                    </Flex>
+                </PopoverTrigger>
+                <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
+                    <Box zIndex="160">
+                        <PopoverArrow />
+                        <Suspense fallback={<Box />}>
+                            <CirclePreview key={circle.id} item={circle} inMap={true} />
+                        </Suspense>
+                    </Box>
+                </PopoverContent>
+            </Popover>
+        );
+    } else {
+        return (
+            <Link href={href} {...props} color="blue" isExternal>
+                {children}
+            </Link>
+        );
+    }
 };
 
 export const NotificationsBell = ({ circle, inPreview, ...props }) => {
@@ -1102,9 +1183,8 @@ export const CirclePicture = ({
     };
 
     const onClick = (item) => {
-        log("CirclePicture onClick", 0, true);
         //log(JSON.stringify(item, null, 2), 0);
-        log(item?.name, 0, true);
+        //log(item?.name, 0, true);
         if (disableClick) return;
 
         openAboutCircle(item, setToggleAbout);
@@ -1171,7 +1251,7 @@ export const CirclePicture = ({
         </>
     );
 
-    const circles = circle?.type === "set" ? circle.circle_ids.map((x) => circle[x]) : [circle];
+    const circles = circle?.type === "set" ? circle.circle_ids.map((x) => circle[x]) : circle ? [circle] : [];
     const setOffset = size / 3;
     const width = circle?.type === "set" ? size * circles.length - setOffset : size;
     const height = size;
@@ -1182,7 +1262,7 @@ export const CirclePicture = ({
             <PopoverTrigger>
                 <Box width={`${size}px`} height={`${size}px`} position="relative" flexShrink="0" flexGrow="0">
                     {circles.map((item, index) => (
-                        <Box key={item?.id}>
+                        <Box key={item.id}>
                             {isHexagon(item) ? (
                                 <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
                             ) : (
@@ -1241,7 +1321,7 @@ export const CirclePicture = ({
         // </Box>
         <Box width={`${width}px`} height={`${height}px`} position="relative" flexShrink="0" flexGrow="0">
             {circles.map((item, index) => (
-                <Box key={item?.id}>
+                <Box key={item.id}>
                     {isHexagon(item) ? (
                         <MultipleHexagonBorders size={size} colors={circleBorderColors} leftOffset={index * (size - setOffset)} />
                     ) : (
@@ -1285,21 +1365,6 @@ export const CirclePicture = ({
                     )}
                 </Box>
             ))}
-            {/* {circles.length > 1 && (
-                <>
-                    {circles.map((_, index) => {
-                        if (index >= circles.length - 1) {
-                            // ensure we render N - 1 times
-                            return null;
-                        }
-                        return (
-                            <Box position="absolute" top="0px" left="0px">
-                                <RiLinksLine key={index} />
-                            </Box>
-                        );
-                    })}
-                </>
-            )} */}
         </Box>
     );
 };
@@ -1366,7 +1431,7 @@ export const OpenButton = ({ circle, ...props }) => {
             padding="0px 5px 0px 5px"
             {...props}
         >
-            <Text fontWeight="700" fontSize="13px">
+            <Text fontWeight="700" fontSize="13px" marginLeft="4px" marginRight="4px">
                 {i18n.t(`Open`)}
             </Text>
         </Flex>

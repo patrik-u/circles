@@ -107,14 +107,11 @@ export const Circle = ({ isGlobal }) => {
     const onLogoClick = () => {
         // open navigation menu
         onOpen();
-        log("opening navigation menu");
+        log("opening navigation menu", -1);
     };
 
     useEffect(() => {
-        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        log("timeZone: " + timeZone, 0, true);
-
-        log("Circle.useEffect");
+        log("Circle.useEffect", -1);
 
         if (isGlobal || circleId === "global") {
             setCircle(globalCircle);
@@ -217,8 +214,6 @@ export const Circle = ({ isGlobal }) => {
         log("Circle.useEffect 2", -1);
         if (!signInStatus.signedIn) return;
         if (!user?.id || !circleId) return;
-
-        log("Circle.seen");
 
         // mark circle as seen
         axios

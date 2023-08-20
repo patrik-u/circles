@@ -8,13 +8,16 @@ const fs = require("fs");
 const createDOMPurify = require("dompurify");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
-const linkify = require("linkifyjs");
 const crypto = require("crypto");
 const { Configuration, OpenAIApi } = require("openai");
 const OneSignal = require("onesignal-node");
 var jsonwebtoken = require("jsonwebtoken");
 var uuid = require("uuid-random");
 const PineconeClient = require("@pinecone-database/pinecone").PineconeClient;
+const Linkify = require("linkify-it");
+
+const linkify = new Linkify();
+linkify.tlds("earth", true);
 
 // init pinecone client
 const pinecone = new PineconeClient();
@@ -160,6 +163,9 @@ const getAdminConnections = async (id) => {
 };
 
 const getMemberConnections = async (id) => {
+    if (!id) {
+        return [];
+    }
     let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains", "connected_mutually_to");
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
@@ -242,6 +248,7 @@ const getCircleText = (circle, condensed = false) => {
     text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
     text += `Location: ${circle.location?.name}\n`;
     text += `Description: ${circle.description}\n`;
+    text += `URL: https://codo.earth/circles/${circle.id}\n`;
     if (circle.type === "event") {
         // add info about event
         text += `Starts at: ${circle.starts_at}\n`;
@@ -948,8 +955,8 @@ app.post("/circles", auth, async (req, res) => {
         // does circle content contain links?
         let links = null;
         if (newCircle.type === "post") {
-            links = linkify.find(newCircle.content_text);
-            if (links?.length > 0) {
+            links = linkify.match(newCircle.content_text);
+            if (links) {
                 newCircle.has_links = true;
             }
         }
@@ -969,7 +976,7 @@ app.post("/circles", auth, async (req, res) => {
         await batch.commit();
 
         // add preview images to circle
-        if (links?.length > 0 && newCircle.type === "post") {
+        if (links && newCircle.type === "post") {
             await addPreviewImages(circleRes, links);
         }
 
@@ -1819,6 +1826,72 @@ const validateChatMessageRequest = (message) => {
     return errors;
 };
 
+// create chat session
+app.post("/chat_session", auth, async (req, res) => {
+    const authCallerId = req.user.user_id;
+    const circleId = req.body.circle_id;
+    const date = new Date();
+
+    try {
+        const circle = await getCircle(circleId);
+        if (!circle) {
+            return res.json({ error: "circle not found" });
+        }
+
+        // verify user is allowed to create chat session
+        if (circle.type === "set") {
+            if (!circle.circle_ids?.includes(authCallerId)) {
+                return res.status(403).json({ error: "unauthorized" });
+            }
+            if (!(circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent")) {
+                return res.status(403).json({ error: "unauthorized" });
+            }
+        } else {
+            // TODO for now only users chatting with AI are allowed to create chat sessions
+            return res.status(403).json({ error: "unauthorized" });
+            // let isAuthorized = await isMemberOf(authCallerId, circleId);
+            // if (!isAuthorized) {
+            //     return res.status(403).json({ error: "unauthorized" });
+            // }
+        }
+
+        const chatRef = db.collection("chat").doc(circleId);
+
+        // check if chat exists
+        const doc = await chatRef.get();
+        if (doc.exists) {
+            // create new session within chat
+            let sessions = doc.data().sessions;
+            let newSession = {
+                id: uuid(),
+                created_at: date,
+                user_id: authCallerId,
+            };
+            sessions.push(newSession);
+            await chatRef.update({ sessions: sessions });
+            return res.json({ message: "Chat session created", id: newSession.id });
+        }
+
+        let newChat = {
+            circle_id: circleId,
+            created_at: date,
+            sessions: [
+                {
+                    id: uuid(),
+                    created_at: date,
+                    user_id: authCallerId,
+                },
+            ],
+        };
+
+        await chatRef.set(newChat);
+        return res.json({ message: "Chat session created", id: newChat.sessions[0].id });
+    } catch (error) {
+        functions.logger.error("Error while creating chat session:", error);
+        return res.json({ error: error });
+    }
+});
+
 // post chat message
 app.post("/chat_messages", auth, async (req, res) => {
     try {
@@ -1827,6 +1900,7 @@ app.post("/chat_messages", auth, async (req, res) => {
         var message = DOMPurify.sanitize(req.body.message);
         var replyToId = req.body.replyToId;
         const authCallerId = req.user.user_id;
+        const session_id = req.body.session_id;
 
         // validate request
         let errors = validateChatMessageRequest(message);
@@ -1862,6 +1936,9 @@ app.post("/chat_messages", auth, async (req, res) => {
             sent_at: date,
             message: message,
         };
+        if (session_id) {
+            newMessage.session_id = session_id;
+        }
 
         if (replyToId) {
             // sanitize
@@ -1879,10 +1956,12 @@ app.post("/chat_messages", auth, async (req, res) => {
         }
 
         // does message contain links?
-        let links = linkify.find(message);
-        if (links?.length > 0) {
+        let links = linkify.match(message);
+        if (links) {
             newMessage.has_links = true;
         }
+
+        console.log("message contains links: " + newMessage.has_links);
 
         const chatMessageRef = db.collection("chat_messages").doc();
         await chatMessageRef.set(newMessage);
@@ -1896,7 +1975,7 @@ app.post("/chat_messages", auth, async (req, res) => {
             messages: admin.firestore.FieldValue.increment(1),
         };
         // update circle and propagate changes
-        updateCircle(circleId, updatedCircle);
+        updateCircle(circleId, updatedCircle); // TODO we should avoid calling this with propagate updates as it will trigger a lot of updates
 
         // update user that chat message has been seen
         setUserSeen(authCallerId, circleId, "chat");
@@ -1937,7 +2016,7 @@ app.post("/chat_messages", auth, async (req, res) => {
 
         if (aiChatSession) {
             // trigger AI agent to respond
-            triggerAiAgentResponse(circle, user);
+            triggerAiAgentResponse(circle, user, session_id);
         }
 
         return res.json({ message: "Message sent" });
@@ -1976,8 +2055,8 @@ app.put("/chat_messages/:id", auth, async (req, res) => {
         };
 
         // does message contain links?
-        let links = linkify.find(editedMessage);
-        if (links?.length > 0) {
+        let links = linkify.match(editedMessage);
+        if (links) {
             editedMessageObj.has_links = true;
         }
 
@@ -2081,9 +2160,14 @@ const addPreviewImages = async (docRef, links) => {
     let previewImage = null;
     // add preview images
     const metaData = [];
-    for (const link of links) {
-        if (link.type === "url") {
-            let linkUrl = link.href;
+    if (links) {
+        for (const link of links) {
+            let linkUrl = link.url;
+            if (!link.schema) {
+                linkUrl = "https://" + link.raw;
+            } else {
+                linkUrl = link.url;
+            }
             let linkPreview = await getLinkPreview(linkUrl);
             console.debug(linkPreview);
 
@@ -2523,7 +2607,7 @@ const getLocalTimeInTimezone = (timezone) => {
     });
 };
 
-const triggerAiAgentResponse = async (circle, user, prompt = undefined) => {
+const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefined) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
     }
@@ -2541,7 +2625,18 @@ const triggerAiAgentResponse = async (circle, user, prompt = undefined) => {
     let userData = await getCircleData(user.id);
 
     // get messages in session
-    const chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(30).get();
+    let chatMessagesDocs = [];
+    if (session_id) {
+        chatMessagesDocs = await db
+            .collection("chat_messages")
+            .where("circle_id", "==", circle.id)
+            .where("session_id", "==", session_id)
+            .orderBy("sent_at", "asc")
+            .limit(30)
+            .get();
+    } else {
+        chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(30).get();
+    }
 
     let messages = [];
 
@@ -2586,6 +2681,9 @@ const triggerAiAgentResponse = async (circle, user, prompt = undefined) => {
         sent_at: date,
         awaits_response: true,
     };
+    if (session_id) {
+        newMessage.session_id = session_id;
+    }
 
     const chatMessageRef = db.collection("chat_messages").doc();
     await chatMessageRef.set(newMessage);

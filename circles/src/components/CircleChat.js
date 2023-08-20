@@ -33,8 +33,8 @@ import i18n from "i18n/Localization";
 import db from "components/Firebase";
 import axios from "axios";
 import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId } from "components/Helpers";
-import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId } from "firebase/firestore";
-import { CirclePicture, MetaData } from "components/CircleElements";
+import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId, doc } from "firebase/firestore";
+import { CirclePicture, MetaData, NewSessionButton } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { AiOutlineUser } from "react-icons/ai";
@@ -44,13 +44,53 @@ import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
 import { RiChatPrivateLine } from "react-icons/ri";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
-import linkifyHtml from "linkify-html";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom } from "components/Atoms";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
-import { AboutButton } from "components/CircleElements";
+import { AboutButton, CircleLink } from "components/CircleElements";
+import ReactMarkdown from "react-markdown";
+import Linkify from "linkify-it";
+
+const linkify = new Linkify();
+linkify.tlds("earth", true);
 //#endregion
+
+const linkifyMarkdown = (input) => {
+    const matches = linkify.match(input);
+
+    if (!matches) return input;
+
+    let offset = 0;
+    let result = "";
+
+    for (const match of matches) {
+        // Check if the match is already part of a markdown link
+        const precedingText = input.slice(Math.max(0, match.index - 50), match.index); // arbitrary lookbehind, adjust as necessary
+        const followingText = input.slice(match.lastIndex, Math.min(input.length, match.lastIndex + 50)); // arbitrary lookahead, adjust as necessary
+        const markdownPattern = new RegExp(`\\[[^\\]]+?\\]\\(${match.url}\\)`);
+
+        if (markdownPattern.test(precedingText + match.url + followingText)) {
+            // Already part of a markdown link, just append it as-is
+            result += input.slice(offset, match.lastIndex);
+        } else {
+            // Append text before the match
+            result += input.slice(offset, match.index);
+
+            // Convert match to markdown format
+            const displayUrl = match.url.startsWith("http://") || match.url.startsWith("https://") ? match.url.split("://")[1] : match.url;
+            result += `[${displayUrl}](${match.url})`;
+        }
+
+        // Update the offset
+        offset = match.lastIndex;
+    }
+
+    // Append any remaining text after the last match
+    result += input.slice(offset);
+
+    return result;
+};
 
 // gets target circle if relation-set
 const getRelevantCircle = (user, circle) => {
@@ -124,7 +164,7 @@ export const CircleChatWidget = ({ item }) => {
         <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto" flexDirection="column">
             {/* top menu to switch between AI chat and member chat */}
             {chatCircles.length > 0 && (
-                <Box pl={2} pointerEvents="auto" zIndex="10">
+                <Box pl={2} pointerEvents="auto" zIndex="10" marginBottom="5px">
                     <Tooltip label={`Chat with ${circle?.name} members`} aria-label="A tooltip">
                         <IconButton
                             aria-label="Members Chat"
@@ -183,12 +223,54 @@ export const CircleChat = ({ circle }) => {
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [circles] = useAtom(circlesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
+    const [chatData, setChatData] = useState(null);
+    const chatSession = useMemo(() => chatData?.sessions[chatData?.sessions.length - 1], [chatData]);
 
     useEffect(() => {
         log("Chat.useEffect 1", -1);
         setScrollToLastSmooth(false);
         window.scrollTo(0, document.body.scrollHeight);
     }, []);
+
+    const onNewSession = () => {
+        setChatMessages([]);
+        setIsLoadingMessages(true);
+        axios.post(`/chat_session`, { circle_id: circle.id });
+    };
+
+    const isAiRelationSet = useMemo(() => {
+        // check if circle is a relation-set with user and AI as members
+        if (!circle) return false;
+        if (circle.type !== "set") return false;
+        if (circle.circle_ids.length !== 2) return false;
+        if (circle[circle.circle_ids[0]].type !== "ai_agent" && circle[circle.circle_ids[1]].type !== "ai_agent") return false;
+        return true;
+    }, [circle]);
+
+    useEffect(() => {
+        if (!circle?.id) return;
+        if (!isAiRelationSet) return;
+
+        // subscribe to meta data about chat
+        log("subscribing to chat", 0, true);
+        let unsubscribeGetChat = onSnapshot(doc(db, "chat", circle.id), (doc) => {
+            var newChatData = doc.data();
+            if (!doc.exists || !newChatData) {
+                // create new chat session
+                log("creating new chat session", 0, true);
+                axios.post(`/chat_session`, { circle_id: circle.id });
+                return;
+            }
+            newChatData.id = doc.id;
+            setChatData(newChatData);
+        });
+
+        return () => {
+            if (unsubscribeGetChat) {
+                unsubscribeGetChat();
+            }
+        };
+    }, [circle?.id, setChatData, isAiRelationSet]);
 
     useEffect(() => {
         setChatCircle(circle?.id);
@@ -213,11 +295,26 @@ export const CircleChat = ({ circle }) => {
             return;
         }
 
-        log("Getting chat messages from circle: " + circleId, 0, true);
+        //log("Getting chat messages from circle: " + circleId, 0, true);
 
         // console.log("Showing chat messages for:", circleId);
+        let chatMessagesQuery = null;
+        if (isAiRelationSet) {
+            if (!chatSession) {
+                return;
+            }
+            chatMessagesQuery = query(
+                collection(db, "chat_messages"),
+                where("circle_id", "==", circle.id),
+                where("session_id", "==", chatSession?.id),
+                orderBy("sent_at", "desc"),
+                limit(50)
+            );
+        } else {
+            chatMessagesQuery = query(collection(db, "chat_messages"), where("circle_id", "==", circle.id), orderBy("sent_at", "desc"), limit(50));
+        }
+
         setIsLoadingMessages(true);
-        const chatMessagesQuery = query(collection(db, "chat_messages"), where("circle_id", "==", circle.id), orderBy("sent_at", "desc"), limit(50));
         const unsubscribeGetChatMessages = onSnapshot(chatMessagesQuery, (snap) => {
             const newChatMessages = snap.docs.map((doc) => {
                 return {
@@ -238,7 +335,7 @@ export const CircleChat = ({ circle }) => {
                 unsubscribeGetChatMessages();
             }
         };
-    }, [circle?.id, user?.id, isAuthorized]);
+    }, [circle?.id, user?.id, isAuthorized, chatSession, isAiRelationSet]);
 
     useEffect(() => {
         let circleId = circle?.id;
@@ -287,8 +384,7 @@ export const CircleChat = ({ circle }) => {
                 previousMessage = dateMessage;
             }
 
-            const options = { target: "_blank" };
-            let formattedMessage = message.has_links && !isMobile ? linkifyHtml(message.message, options) : message.message;
+            let formattedMessage = message.has_links ? linkifyMarkdown(message.message) : message.message;
             let isSelf = message.user?.id === userId;
 
             // get fresh user data
@@ -336,8 +432,6 @@ export const CircleChat = ({ circle }) => {
         if (!user?.id || !circleId) return;
         if (!signInStatus.signedIn) return;
 
-        log("Chat.seen", user?.id);
-
         updateSeen(circleId);
     }, [user?.id, circle?.id, signInStatus.signedIn]);
 
@@ -371,7 +465,9 @@ export const CircleChat = ({ circle }) => {
             circle_id: circle.id,
             sent_at: Timestamp.now(),
             message: message,
+            session_id: chatSession?.id,
         };
+
         setScrollToLast(true);
         if (isReplyingMessage) {
             newChatMessage.reply_to = messageToReply;
@@ -411,6 +507,7 @@ export const CircleChat = ({ circle }) => {
             let req = {
                 circle_id: circle.id,
                 message: message,
+                session_id: chatSession?.id,
             };
             if (isReplyingMessage) {
                 req.replyToId = messageToReply?.id;
@@ -531,6 +628,18 @@ export const CircleChat = ({ circle }) => {
                             <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
                         </Box>
                     )}
+                    {!circle?.is_public && (
+                        <Flex borderRadius="5px" width="100%" align="center" marginBottom="5px">
+                            <NewSessionButton circle={circle} onClick={onNewSession} marginLeft="10px" />
+                            <Box flexGrow="1" />
+                            <AboutButton circle={getRelevantCircle(user, circle)} />
+                            <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
+                                <Box>
+                                    <RiChatPrivateLine color="white" size="20px" />
+                                </Box>
+                            </Tooltip>
+                        </Flex>
+                    )}
 
                     {isAuthorized && (
                         <>
@@ -614,6 +723,7 @@ export const CircleChat = ({ circle }) => {
                                                                         )}
 
                                                                         <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
+                                                                            {/* Render chat message */}
                                                                             {!item.is_ai_prompt && (
                                                                                 <Box
                                                                                     // className="circle-list-title"
@@ -622,10 +732,24 @@ export const CircleChat = ({ circle }) => {
                                                                                     fontSize="14px"
                                                                                     maxWidth="290px"
                                                                                 >
-                                                                                    <div
+                                                                                    <ReactMarkdown
+                                                                                        components={{
+                                                                                            a: ({ node, ...props }) => {
+                                                                                                return (
+                                                                                                    <CircleLink href={props.href}>{props.children}</CircleLink>
+                                                                                                    // <Link href={props.href} isExternal>
+                                                                                                    //     {props.children}
+                                                                                                    // </Link>
+                                                                                                );
+                                                                                            },
+                                                                                        }}
+                                                                                    >
+                                                                                        {item.formattedMessage}
+                                                                                    </ReactMarkdown>
+                                                                                    {/* <div
                                                                                         className="embedChatHtmlContent"
                                                                                         dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                                                    />
+                                                                                    /> */}
                                                                                 </Box>
                                                                             )}
 
@@ -883,17 +1007,6 @@ export const CircleChat = ({ circle }) => {
                                     </Box>
                                 )}
                             </Box>
-
-                            {!circle?.is_public && (
-                                <HStack alignSelf="end" position="absolute">
-                                    <AboutButton circle={getRelevantCircle(user, circle)} />
-                                    <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
-                                        <Box>
-                                            <RiChatPrivateLine color="white" />
-                                        </Box>
-                                    </Tooltip>
-                                </HStack>
-                            )}
                         </>
                     )}
                 </Flex>

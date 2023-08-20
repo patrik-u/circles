@@ -260,7 +260,6 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
     const [highlightedCircle, setHighlightedCircle] = useAtom(highlightedCircleAtom);
 
     useEffect(() => {
-        log("inMap = " + inMap, 0, true);
         if (inMap) return; // do not highlight circles in map
         // if (previewCircle?.id === item?.id) return; // do not highlight previewed circle
         setHighlightedCircle(item);
