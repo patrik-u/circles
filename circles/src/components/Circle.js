@@ -225,15 +225,16 @@ export const Circle = ({ isGlobal }) => {
             .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
 
-    useEffect(() => {
-        // set to show only active circles
-        if (circlesFilter.only_active !== !showHistoricCircles) {
-            setCirclesFilter({ ...circlesFilter, only_active: !showHistoricCircles });
-        }
-        if (!circlesFilter.types) return;
-        let { types: _, ...newFilter } = circlesFilter;
-        setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
+    //HISTORIC123
+    // useEffect(() => {
+    //     // set to show only active circles
+    //     if (circlesFilter.only_active !== !showHistoricCircles) {
+    //         setCirclesFilter({ ...circlesFilter, only_active: !showHistoricCircles });
+    //     }
+    //     if (!circlesFilter.types) return;
+    //     let { types: _, ...newFilter } = circlesFilter;
+    //     setCirclesFilter(newFilter);
+    // }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
 
     useEffect(() => {
         if (!signInStatus.signedIn || !user?.id) return;

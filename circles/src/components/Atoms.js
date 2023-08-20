@@ -104,8 +104,12 @@ export const filteredCirclesAtom = atom((get) => {
 
     // TODO filter by location, tags, date, active, etc.
 
-    let retCircles = filter?.types ? circles.filter((circle) => filter.types.includes(circle.type)) : circles;
-    retCircles = filter?.only_active ? retCircles.filter((circle) => isCircleActive(circle)) : retCircles;
+    let retCircles = filter?.types
+        ? circles.filter((circle) => filter.types.includes(circle.type))
+        : circles.filter((x) => x.type !== "set" && x.type !== "ai_agent" && x.id !== "global");
+
+    //HISTORIC123
+    //retCircles = filter?.only_active ? retCircles.filter((circle) => isCircleActive(circle)) : retCircles;
 
     if (filter?.sortBy === "newest") {
         retCircles.sort((a, b) => fromFsDate(b.created_at) - fromFsDate(a.created_at));

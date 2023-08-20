@@ -2,12 +2,21 @@
 import React, { useState, useEffect } from "react";
 import { Box, Flex, HStack, VStack, Text, Icon, Link } from "@chakra-ui/react";
 import { getDistanceString, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, isPastEvent, getEventTime, isConnected } from "components/Helpers";
-import { CirclePicture, CircleTags, ConnectButton, CircleCover, FavoriteButton, ShareButtonMenu, NotificationsBell } from "components/CircleElements";
+import {
+    CirclePicture,
+    CircleTags,
+    ConnectButton,
+    CircleCover,
+    FavoriteButton,
+    ShareButtonMenu,
+    NotificationsBell,
+    SimilarityIndicator,
+} from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useLocationNoUpdates } from "components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, userDataAtom, userAtom, focusOnMapItemAtom } from "components/Atoms";
+import { isMobileAtom, userDataAtom, userAtom, focusOnMapItemAtom, highlightedCircleAtom } from "components/Atoms";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BsChatText, BsChatTextFill, BsChatFill, BsChat, BsLockFill } from "react-icons/bs";
 import { CircleChat } from "components/CircleChat";
@@ -19,6 +28,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [highlightedCircle, setHighlightedCircle] = useAtom(highlightedCircleAtom);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -41,10 +51,12 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
             paddingBottom="10px"
             cursor={inSelect ? "pointer" : "default"}
             onClick={inSelect ? onClick : null}
+            onMouseEnter={() => setHighlightedCircle(item)}
+            onMouseLeave={() => setHighlightedCircle(null)}
             {...props}
         >
             <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
-                <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
+                <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={!inSelect} />
             </Box>
 
             <VStack
@@ -163,6 +175,8 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                         </Text>
                     </Flex>
                 )}
+
+                <SimilarityIndicator circle={item} position="absolute" top="2px" right="2px" />
             </VStack>
         </Flex>
     );

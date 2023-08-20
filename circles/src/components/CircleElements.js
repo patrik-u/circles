@@ -1054,6 +1054,7 @@ export const DisplayModeButtons = ({ ...props }) => {
                     <Icon width={iconSize} height={iconSize} color="white" as={BsIncognito} cursor="pointer" />
                 </Flex>
             </Tooltip>
+            {/* HISTORIC123
             <Tooltip pointerEvents="auto" label="Show historic - also show circles not currently active" aria-label="A tooltip">
                 <Flex
                     // backgroundColor="#f4f4f4"
@@ -1070,7 +1071,7 @@ export const DisplayModeButtons = ({ ...props }) => {
                 >
                     <Icon width={iconSize} height={iconSize} color="white" as={MdHistory} cursor="pointer" />
                 </Flex>
-            </Tooltip>
+            </Tooltip> */}
         </Flex>
     );
 };

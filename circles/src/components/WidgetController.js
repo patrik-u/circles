@@ -130,7 +130,7 @@ const WidgetController = () => {
                     }
                 } else {
                     if (toggleOn === undefined || toggleOn === true) {
-                        if (toggledWidgets.length < 3) {
+                        if (toggledWidgets.length < 4) {
                             newToggledWidgets = [...toggledWidgets, component];
                         }
                     }
