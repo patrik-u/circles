@@ -2759,6 +2759,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     let functionCalls = 0;
     let messageData = null;
     let message = null;
+    let mentions = [];
 
     try {
         while (functionCalls < 4) {
@@ -2789,6 +2790,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                         for (var k = 0; k < searchResults.length; ++k) {
                             let searchResult = searchResults[k];
                             searchResultsMessage += `${getCircleText(searchResult, true)}\n\n`;
+                            mentions.push(searchResult);
                         }
                         results = searchResultsMessage;
                     }
@@ -2826,7 +2828,13 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     }
 
     // update message with AI response
-    chatMessageRef.update({ awaits_response: false, openai_response: messageData ?? {}, message: message ?? "No response.", sent_at: new Date() });
+    chatMessageRef.update({
+        awaits_response: false,
+        openai_response: messageData ?? {},
+        message: message ?? "No response.",
+        mentions: mentions,
+        sent_at: new Date(),
+    });
 };
 
 //#region OpenAI functions

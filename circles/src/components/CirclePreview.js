@@ -272,7 +272,7 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
 
     return (
         <Box key={item.id}>
-            {!hideHeader && <CircleHeader circle={item} position="absolute" top="-30px" inPreview={true} inChat={inChat} />}
+            {!hideHeader && <CircleHeader circle={item} position="absolute" top="-30px" inPreview={true} inChat={inChat} onClickSpace={onClick} />}
             <Flex
                 key={item.id}
                 align="left"

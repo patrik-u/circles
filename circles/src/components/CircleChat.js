@@ -630,7 +630,7 @@ export const CircleChat = ({ circle }) => {
                     )}
                     {!circle?.is_public && (
                         <Flex borderRadius="5px" width="100%" align="center" marginBottom="5px">
-                            <NewSessionButton circle={circle} onClick={onNewSession} marginLeft="10px" />
+                            {isAiRelationSet && <NewSessionButton circle={circle} onClick={onNewSession} marginLeft="10px" />}
                             <Box flexGrow="1" />
                             <AboutButton circle={getRelevantCircle(user, circle)} />
                             <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
@@ -725,21 +725,14 @@ export const CircleChat = ({ circle }) => {
                                                                         <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
                                                                             {/* Render chat message */}
                                                                             {!item.is_ai_prompt && (
-                                                                                <Box
-                                                                                    // className="circle-list-title"
-                                                                                    // paddingRight="10px"
-                                                                                    lineHeight="20px"
-                                                                                    fontSize="14px"
-                                                                                    maxWidth="290px"
-                                                                                >
+                                                                                <Box lineHeight="20px" fontSize="14px" maxWidth="290px">
                                                                                     <ReactMarkdown
                                                                                         components={{
                                                                                             a: ({ node, ...props }) => {
                                                                                                 return (
-                                                                                                    <CircleLink href={props.href}>{props.children}</CircleLink>
-                                                                                                    // <Link href={props.href} isExternal>
-                                                                                                    //     {props.children}
-                                                                                                    // </Link>
+                                                                                                    <CircleLink href={props.href} mentions={item.mentions}>
+                                                                                                        {props.children}
+                                                                                                    </CircleLink>
                                                                                                 );
                                                                                             },
                                                                                         }}

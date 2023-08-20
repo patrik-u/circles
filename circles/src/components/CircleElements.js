@@ -564,11 +564,11 @@ export const NewSessionButton = ({ circle, onClick, ...props }) => {
     );
 };
 
-export const CircleLink = ({ href, children, ...props }) => {
-    const [circles] = useAtom(circlesAtom);
+export const CircleLink = ({ href, mentions, children, ...props }) => {
+    const [, setToggleAbout] = useAtom(toggleAboutAtom);
 
     const extractCircleId = (url) => {
-        const regex = /https:\/\/codo\.earth\/circles\/([^\/?]+)/;
+        const regex = /.*codo\.earth\/circles\/([^\/?]+)/;
         const match = url.match(regex);
         return match ? match[1] : null;
     };
@@ -581,26 +581,39 @@ export const CircleLink = ({ href, children, ...props }) => {
         if (!circleId) return null;
 
         // find circle in circles
-        let circle = circles.find((c) => c.id === circleId);
+        let circle = mentions?.find((c) => c.id === circleId);
         return circle;
-    }, [href, circles]);
+    }, [href, mentions]);
 
     if (circle) {
         return (
             <Popover trigger="hover" gutter="0" isLazy>
                 <PopoverTrigger>
-                    <Flex>
-                        <CirclePicture circle={circle} size={20} hasPopover={true} />
+                    <Flex
+                        cursor="pointer"
+                        display="inline-flex"
+                        align="center"
+                        verticalAlign="middle"
+                        ml="2px"
+                        onClick={() => openAboutCircle(circle, setToggleAbout)}
+                    >
+                        <CirclePicture circle={circle} size={30} hasPopover={false} />
+                        <Text color="blue" ml="5px">
+                            {circle.name}
+                        </Text>
                     </Flex>
                 </PopoverTrigger>
-                <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
-                    <Box zIndex="160">
-                        <PopoverArrow />
-                        <Suspense fallback={<Box />}>
-                            <CirclePreview key={circle.id} item={circle} inMap={true} />
-                        </Suspense>
-                    </Box>
-                </PopoverContent>
+
+                <Portal>
+                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="450px">
+                        <Box zIndex="160">
+                            <PopoverArrow />
+                            {/* <Suspense fallback={<Box />}> */}
+                            <CirclePreview key={circle.id} item={circle} onClick={() => openAboutCircle(circle, setToggleAbout)} />
+                            {/* </Suspense> */}
+                        </Box>
+                    </PopoverContent>
+                </Portal>
             </Popover>
         );
     } else {
@@ -1438,7 +1451,7 @@ export const OpenButton = ({ circle, ...props }) => {
     );
 };
 
-export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) => {
+export const CircleHeader = ({ circle, onClose, inPreview, inChat, onClickSpace, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -1456,10 +1469,10 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, ...props }) =
         <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={isMobile ? "32px" : "32px"} {...props}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex flexDirection="row" width="100%" position="relative" align="center">
-                    {inChat && <Box flexGrow="1" />}
+                    {inChat && <Box flexGrow="1" height="28px" cursor={onClickSpace ? "pointer" : "auto"} onClick={onClickSpace} />}
                     {showOpen && <OpenButton circle={circle} marginLeft={inPreview ? "10px" : "0px"} />}
                     <LocationButton circle={circle} inPreview={inPreview} marginLeft={!showOpen && inPreview ? "10px" : showOpen ? spacingPx : "0px"} />
-                    {!inChat && <Box flexGrow="1" />}
+                    {!inChat && <Box flexGrow="1" height="28px" cursor={onClickSpace ? "pointer" : "auto"} onClick={onClickSpace} />}
                     {(circle?.type === "user" || circle?.type === "ai_agent") && circle?.id !== user?.id && (
                         <MessageButton circle={circle} inPreview={inPreview} marginLeft={spacingPx} />
                     )}

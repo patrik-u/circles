@@ -65,7 +65,7 @@ const EventHeader = ({ event }) => {
                 <Box zIndex="160">
                     <PopoverArrow />
                     <Suspense fallback={<Box />}>
-                        <CirclePreview key={event.id} item={event} hideHeader={true} />
+                        <CirclePreview key={event.id} item={event} hideHeader={true} onClick={() => openAboutCircle(event, setToggleAbout)} />
                     </Suspense>
                 </Box>
             </PopoverContent>
