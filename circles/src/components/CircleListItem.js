@@ -56,7 +56,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
             {...props}
         >
             <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
-                <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={!inSelect} />
+                <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={!inSelect} circleBorderColors={item.colors} />
             </Box>
 
             <VStack

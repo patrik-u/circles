@@ -2391,9 +2391,11 @@ app.post("/search", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
     const query = req.body.query;
     const circleId = req.body.circleId;
+    const topK = req.body.topK ?? 10;
+    const filterTypes = req.body.filterTypes;
 
     try {
-        let searchResults = await semanticSearch(query, circleId ?? authCallerId, null, 20);
+        let searchResults = await semanticSearch(query, circleId ?? authCallerId, filterTypes, topK);
         return res.json({ circles: searchResults });
     } catch (error) {
         functions.logger.error("Error while searching:", error);

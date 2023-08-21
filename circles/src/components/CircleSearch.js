@@ -311,7 +311,7 @@ export const CircleSearchBoxIcon = (props) => {
         ]);
 
         // call api to do semantic search
-        axios.post("/search", { query: query }).then(
+        axios.post("/search", { query: query, topK: 10 }).then(
             (res) => {
                 let data = res?.data;
                 if (!data || data.error) {
