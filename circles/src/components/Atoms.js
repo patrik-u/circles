@@ -15,7 +15,6 @@ export const mapStyleAtom = atom("satellite");
 export const focusOnMapItemAtom = atom(null);
 export const toggleAboutAtom = atom(null);
 export const toggleSettingsAtom = atom(null);
-export const toggleDiscoverAtom = atom(null);
 export const previewCircleAtom = atom(null);
 export const jitsiTokenAtom = atom(null);
 export const inVideoConferenceAtom = atom(false);

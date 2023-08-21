@@ -21,7 +21,7 @@ import { log } from "components/Helpers";
 import { HiOutlineSearch } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, toggleDiscoverAtom, searchResultsShownAtom, semanticSearchCirclesAtom, toggleWidgetEventAtom } from "components/Atoms";
+import { isMobileAtom, searchResultsShownAtom, semanticSearchCirclesAtom, toggleWidgetEventAtom, circlesFilterAtom } from "components/Atoms";
 import config from "Config";
 import CircleListItem from "components/CircleListItem";
 import i18n from "i18n/Localization";
@@ -47,7 +47,7 @@ const SearchHit = ({ hit, onClick }) => {
         }
     };
 
-    return <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} />;
+    return <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} maxWidth="450px" />;
 };
 
 const SearchHits = ({ onClick, ...props }) => {
@@ -240,7 +240,8 @@ export const CircleSearchBoxIcon = (props) => {
     const [searchIsOpen, setSearchIsOpen] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
     const [semanticSearchCircles, _setSemanticSearchCircles] = useAtom(semanticSearchCirclesAtom);
-    const [, setToggleDiscover] = useAtom(toggleDiscoverAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const iconSize = "26px";
     const openSearch = () => {
@@ -340,7 +341,8 @@ export const CircleSearchBoxIcon = (props) => {
                 );
 
                 // open discover in search category
-                setToggleDiscover("search");
+                setCirclesFilter({ ...circlesFilter, categories: ["search"] });
+                setToggleWidgetEvent({ name: "discover", value: true });
             },
             (error) => {
                 setSemanticSearchCircles(

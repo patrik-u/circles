@@ -1294,10 +1294,38 @@ app.get("/circles/:id/circles", async (req, res) => {
 
         // get circles mentioned in circle
         // get latest chat_messages in circle and extract mentioned circles
-        //      let mentionedCircles = [];
-        //        let chatMessages = await db.collection("chat_messages").where("circle_id", "==", circleId).where("mentions").orderBy("sent_at", "desc").limit(10).get();
+        let mentionedCircles = [];
+        let chatMessages = await db
+            .collection("chat_messages")
+            .where("circle_id", "==", circleId)
+            .where("has_mentions", "==", true)
+            .orderBy("sent_at", "desc")
+            .limit(10)
+            .get();
+        for (let i = 0; i < chatMessages.docs.length; i++) {
+            let chatMessage = chatMessages.docs[i].data();
+            let mentions = chatMessage.mentions;
 
-        return res.json({ similarCircles: similarCircles, connectedCircles: connectedCircles, mentionedCircles: [] });
+            // add to mentioned circles or update existing circle with chatMessage date
+            for (let j = 0; j < mentions.length; j++) {
+                let mention = mentions[j];
+
+                // check if circle is already in mentioned circles
+                let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
+                if (mentionedCircle) {
+                    // update last mentioned date
+                    if (chatMessage.sent_at > mentionedCircle.last_mentioned_at) {
+                        mentionedCircle.last_mentioned_at = chatMessage.sent_at;
+                    }
+                } else {
+                    // add to mentioned circles
+                    mention.last_mentioned_at = chatMessage.sent_at;
+                    mentionedCircles.push(mention);
+                }
+            }
+        }
+
+        return res.json({ similarCircles: similarCircles, connectedCircles: connectedCircles, mentionedCircles: mentionedCircles });
     } catch (error) {
         functions.logger.error("Error while getting circles:", error);
         return res.json({ error: error });
@@ -1934,6 +1962,12 @@ app.post("/chat_session", auth, async (req, res) => {
     }
 });
 
+const extractCircleId = (url) => {
+    const regex = /.*codo\.earth\/circles\/([^\/?]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+};
+
 // post chat message
 app.post("/chat_messages", auth, async (req, res) => {
     try {
@@ -2001,9 +2035,27 @@ app.post("/chat_messages", auth, async (req, res) => {
         let links = linkify.match(message);
         if (links) {
             newMessage.has_links = true;
+
+            // check if link points to circle
+            let circleIds = [];
+            for (var link of links) {
+                let circleId = extractCircleId(link.url);
+                if (circleId) {
+                    circleIds.push(circleId);
+                }
+            }
+
+            if (circleIds.length > 0) {
+                // get mentions
+                let mentions = await getCirclesFromIds(circleIds);
+                if (mentions) {
+                    newMessage.mentions = mentions;
+                    newMessage.has_mentions = true;
+                }
+            }
         }
 
-        console.log("message contains links: " + newMessage.has_links);
+        //console.log("message contains links: " + newMessage.has_links);
 
         const chatMessageRef = db.collection("chat_messages").doc();
         await chatMessageRef.set(newMessage);
@@ -2310,6 +2362,20 @@ app.put("/notifications", auth, async (req, res) => {
 //#endregion
 
 //#region Search
+
+const getCirclesFromIds = async (circleIds) => {
+    let circles = [];
+    while (circleIds?.length) {
+        let circleIdsBatch = circleIds.splice(0, 10);
+        let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+
+        for (var i = 0; i < circleDocs.docs.length; ++i) {
+            let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+            circles.push(circle);
+        }
+    }
+    return circles;
+};
 
 // do semantic search either by query or by circle id
 const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20) => {
