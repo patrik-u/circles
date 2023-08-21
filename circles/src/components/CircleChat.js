@@ -43,6 +43,7 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
 import { RiChatPrivateLine } from "react-icons/ri";
 import { Scrollbars } from "react-custom-scrollbars-2";
+import { Scrollbar } from "react-scrollbars-custom";
 import EmojiPicker from "components/EmojiPicker";
 import { useAtom } from "jotai";
 import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom, mentionedCirclesAtom } from "components/Atoms";
@@ -202,6 +203,239 @@ export const CircleChatWidget = ({ item }) => {
     );
 };
 
+const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChatMessage, editChatMessage }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const { windowWidth, windowHeight } = useWindowDimensions();
+    const [user] = useAtom(userAtom);
+    const popoverBg = "#3f47796b";
+    const iconColor = "#fdfdfd";
+
+    useEffect(() => {
+        log("ChatMessages.useEffect 1", -1);
+        if (onRenderComplete) {
+            onRenderComplete();
+        }
+    }, [messages, onRenderComplete]);
+
+    return (
+        <>
+            {messages?.map((item) => (
+                <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
+                    {item.type === "date" && (
+                        <Box backgroundColor="#3c3d42" borderRadius="20px" marginTop="10px">
+                            <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
+                                {item.date}
+                            </Text>
+                        </Box>
+                    )}
+
+                    {item.type === "message" && (
+                        <Flex
+                            flexDirection="row"
+                            align="end"
+                            borderRadius="50px"
+                            role="group"
+                            color="black"
+                            spacing="12px"
+                            bg="transparent"
+                            marginTop={item.isFirst ? "10px" : "0px"}
+                            marginBottom={!item.isLast ? "2px" : "0px"}
+                        >
+                            {item.isLast ? (
+                                <Box align="top" width="33px" height="37.5px" flexShrink="0">
+                                    <CirclePicture circle={item.user} size={33} hasPopover={true} inChat={true} />
+                                </Box>
+                            ) : (
+                                <Box className="circle-chat-picture" flexShrink="0" />
+                            )}
+
+                            <Popover
+                                isLazy
+                                trigger={isMobile ? "click" : "hover"}
+                                gutter="0"
+                                //placement="center-end"
+                                placement="bottom-start"
+                                closeOnBlur={true}
+                            >
+                                <PopoverTrigger>
+                                    <VStack
+                                        align="left"
+                                        marginLeft="10px"
+                                        flexGrow="1"
+                                        spacing="4px"
+                                        maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
+                                        overflow="hidden"
+                                    >
+                                        <Box
+                                            borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${item.isLast ? "10px" : "2px"}`}
+                                            bgGradient={item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"}
+                                            color={item.user.id !== user?.id ? "black" : "black"}
+                                            marginRight="auto"
+                                            overflow="hidden"
+                                            maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
+                                        >
+                                            {item.reply_to && (
+                                                <Box padding="11px 11px 0px 11px">
+                                                    <VStack align="left" spacing="0px" flexGrow="1" borderLeft="3px solid #7179a9" paddingLeft="5px">
+                                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
+                                                            {item.reply_to.user.name}
+                                                        </Text>
+                                                        <Text noOfLines={1}>{item.reply_to.message}</Text>
+                                                    </VStack>
+                                                </Box>
+                                            )}
+
+                                            <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
+                                                {/* Render chat message */}
+                                                {!item.is_ai_prompt && (
+                                                    <Box lineHeight="20px" fontSize="14px" maxWidth="290px">
+                                                        <ReactMarkdown
+                                                            components={{
+                                                                a: ({ node, ...props }) => {
+                                                                    return (
+                                                                        <CircleLink href={props.href} mentions={item.mentions}>
+                                                                            {props.children}
+                                                                        </CircleLink>
+                                                                    );
+                                                                },
+                                                            }}
+                                                        >
+                                                            {item.formattedMessage}
+                                                        </ReactMarkdown>
+                                                        {/* <div
+                                                        className="embedChatHtmlContent"
+                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
+                                                    /> */}
+                                                    </Box>
+                                                )}
+
+                                                {item.awaits_response && (
+                                                    <Lottie
+                                                        options={{
+                                                            loop: true,
+                                                            autoplay: true,
+                                                            animationData: talkdotsAnimation,
+                                                            rendererSettings: {
+                                                                preserveAspectRatio: "xMidYMid slice",
+                                                            },
+                                                        }}
+                                                        height={50}
+                                                        width={50}
+                                                    />
+                                                )}
+
+                                                <MetaData data={item.meta_data} />
+
+                                                {item.is_ai_prompt && (
+                                                    <Box paddingRight="10px" lineHeight="20px" fontSize="14px">
+                                                        <Text>
+                                                            <b>/ai</b> {item.message}
+                                                        </Text>
+
+                                                        {item.openai_response?.choices?.[0]?.text && (
+                                                            <Box fontSize="14px" borderLeft="3px solid #7179a9" paddingLeft="5px">
+                                                                <div
+                                                                    className="embedChatHtmlContent"
+                                                                    dangerouslySetInnerHTML={{
+                                                                        __html: item.openai_response?.choices?.[0]?.text,
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                )}
+
+                                                {item.isLast && (
+                                                    <Box paddingBottom="4px" paddingTop="2px">
+                                                        {!item.awaits_response && (
+                                                            <Text
+                                                                align="right"
+                                                                className="circle-list-title"
+                                                                paddingRight="0px"
+                                                                lineHeight="10px"
+                                                                fontSize="10px"
+                                                                color={!item.isSelf ? "#9f9f9f" : "#818181"}
+                                                            >
+                                                                {item.sent_at.toDate().toLocaleString([], {
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit",
+                                                                })}
+                                                            </Text>
+                                                        )}
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </Box>
+                                    </VStack>
+                                </PopoverTrigger>
+
+                                <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
+                                    <Box zIndex="160" height="12px" backgroundColor="transparent" align="center" position="relative">
+                                        <HStack
+                                            align="center"
+                                            position="absolute"
+                                            top="-14px"
+                                            left="10px"
+                                            paddingLeft="5px"
+                                            paddingRight="5px"
+                                            paddingTop="3px"
+                                            paddingBottom="3px"
+                                            backgroundColor={popoverBg}
+                                            borderRadius="50px"
+                                        >
+                                            {!item.isSelf && (
+                                                <Icon
+                                                    width="18px"
+                                                    height="18px"
+                                                    color={iconColor}
+                                                    as={BsReplyFill}
+                                                    cursor="pointer"
+                                                    onClick={() => replyChatMessage(item)}
+                                                />
+                                            )}
+
+                                            {item.isSelf && (
+                                                <>
+                                                    <Icon
+                                                        width="18px"
+                                                        height="18px"
+                                                        color={iconColor}
+                                                        as={MdDelete}
+                                                        cursor="pointer"
+                                                        onClick={() => deleteChatMessage(item)}
+                                                    />
+                                                    <Icon
+                                                        width="18px"
+                                                        height="18px"
+                                                        color={iconColor}
+                                                        as={MdModeEdit}
+                                                        cursor="pointer"
+                                                        onClick={() => editChatMessage(item)}
+                                                    />
+                                                </>
+                                            )}
+
+                                            {/* {!item.isSelf && (
+                                                <Icon
+                                                    width="18px"
+                                                    height="18px"
+                                                    color={iconColor}
+                                                    as={MdAddReaction}
+                                                    cursor="pointer"
+                                                />
+                                            )} */}
+                                        </HStack>
+                                    </Box>
+                                </PopoverContent>
+                            </Popover>
+                        </Flex>
+                    )}
+                </Box>
+            ))}
+        </>
+    );
+};
+
 export const CircleChat = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
@@ -231,11 +465,12 @@ export const CircleChat = ({ circle }) => {
     const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input message
 
-    useEffect(() => {
-        log("Chat.useEffect 1", -1);
-        setScrollToLastSmooth(false);
-        window.scrollTo(0, document.body.scrollHeight);
-    }, []);
+    //SCROLL123
+    // useEffect(() => {
+    //     log("Chat.useEffect 1", -1);
+    //     setScrollToLastSmooth(false);
+    //     window.scrollTo(0, document.body.scrollHeight);
+    // }, []);
 
     const onNewSession = () => {
         setChatMessages([]);
@@ -431,14 +666,20 @@ export const CircleChat = ({ circle }) => {
         setChatMessages(filteredChatMessages);
     }, [unfilteredChatMessages, user?.id, isMobile]);
 
-    useEffect(() => {
-        log("Chat.useEffect 4", -1);
-        if (scrollLastRef.current && scrollToLast && chatMessages.length > 0) {
-            var behavior = scrollToLastSmooth ? "smooth" : "auto";
-            scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "nearest" });
-            setScrollToLastSmooth((current) => true);
-        }
-    }, [chatMessages, scrollToLast, scrollToLastSmooth]);
+    //SCROLL123
+    // useEffect(() => {
+    //     log("Chat.useEffect 4", -1);
+    //     if (scrollLastRef.current && scrollToLast && chatMessages.length > 0) {
+    //         requestAnimationFrame(() => {
+    //             var behavior = scrollToLastSmooth ? "smooth" : "auto";
+    //             scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "nearest" });
+    //         });
+
+    //         // var behavior = scrollToLastSmooth ? "smooth" : "auto";
+    //         // scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "end" });
+    //         //setScrollToLastSmooth((current) => true);
+    //     }
+    // }, [chatMessages, scrollToLast, scrollToLastSmooth]);
 
     useEffect(() => {
         log("Chat.useEffect 5", -1);
@@ -609,9 +850,6 @@ export const CircleChat = ({ circle }) => {
         }
     };
 
-    const popoverBg = "#3f47796b";
-    const iconColor = "#fdfdfd";
-
     const { isOpen: confirmDeleteMessageIsOpen, onOpen: confirmDeleteMessageOnOpen, onClose: confirmDeleteMessageOnClose } = useDisclosure();
     const confirmDeleteMessageInitialRef = useRef(null);
 
@@ -679,12 +917,19 @@ export const CircleChat = ({ circle }) => {
         textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
     };
 
+    const onMessagesRenderComplete = () => {
+        if (scrollbarsRef.current) {
+            scrollbarsRef.current.scrollToBottom();
+        }
+    };
+
     if (!circle) return null;
 
     return (
         <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
             {/* <Box height="5px" position="absolute" width="100%" bgGradient="linear(to-b, #000000, #00000000)" zIndex="10" /> */}
-            <Box height="1px" backgroundColor="#000000" position="absolute" width="100%" zIndex="10" bottom="60px" />
+            {/* SCROLL123 */}
+            {/* <Box height="1px" backgroundColor="#000000" position="absolute" width="100%" zIndex="10" bottom="60px" /> */}
 
             {/* <Image src={getImageKitUrl("/chatbg4.png")} position="absolute" width="100%" height="100%" zIndex="-1" objectFit="cover" /> */}
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
@@ -709,238 +954,16 @@ export const CircleChat = ({ circle }) => {
 
                     {isAuthorized && (
                         <>
-                            <Box flexGrow="1" overflow="hidden">
+                            <Box flexGrow="1" overflow="hidden" marginBottom="-1px">
                                 <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
                                     <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
-                                        {chatMessages?.map((item) => (
-                                            <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
-                                                {item.type === "date" && (
-                                                    <Box backgroundColor="#3c3d42" borderRadius="20px" marginTop="10px">
-                                                        <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
-                                                            {item.date}
-                                                        </Text>
-                                                    </Box>
-                                                )}
-
-                                                {item.type === "message" && (
-                                                    <Flex
-                                                        flexDirection="row"
-                                                        align="end"
-                                                        borderRadius="50px"
-                                                        role="group"
-                                                        color="black"
-                                                        spacing="12px"
-                                                        bg="transparent"
-                                                        marginTop={item.isFirst ? "10px" : "0px"}
-                                                        marginBottom={!item.isLast ? "2px" : "0px"}
-                                                    >
-                                                        {item.isLast ? (
-                                                            <Box align="top" width="33px" height="37.5px" flexShrink="0">
-                                                                <CirclePicture circle={item.user} size={33} hasPopover={true} inChat={true} />
-                                                            </Box>
-                                                        ) : (
-                                                            <Box className="circle-chat-picture" flexShrink="0" />
-                                                        )}
-
-                                                        <Popover
-                                                            isLazy
-                                                            trigger={isMobile ? "click" : "hover"}
-                                                            gutter="0"
-                                                            //placement="center-end"
-                                                            placement="bottom-start"
-                                                            closeOnBlur={true}
-                                                        >
-                                                            <PopoverTrigger>
-                                                                <VStack
-                                                                    align="left"
-                                                                    marginLeft="10px"
-                                                                    flexGrow="1"
-                                                                    spacing="4px"
-                                                                    maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                                                    overflow="hidden"
-                                                                >
-                                                                    <Box
-                                                                        borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
-                                                                            item.isLast ? "10px" : "2px"
-                                                                        }`}
-                                                                        bgGradient={
-                                                                            item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"
-                                                                        }
-                                                                        color={item.user.id !== user?.id ? "black" : "black"}
-                                                                        marginRight="auto"
-                                                                        overflow="hidden"
-                                                                        maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                                                    >
-                                                                        {item.reply_to && (
-                                                                            <Box padding="11px 11px 0px 11px">
-                                                                                <VStack
-                                                                                    align="left"
-                                                                                    spacing="0px"
-                                                                                    flexGrow="1"
-                                                                                    borderLeft="3px solid #7179a9"
-                                                                                    paddingLeft="5px"
-                                                                                >
-                                                                                    <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                                                                        {item.reply_to.user.name}
-                                                                                    </Text>
-                                                                                    <Text noOfLines={1}>{item.reply_to.message}</Text>
-                                                                                </VStack>
-                                                                            </Box>
-                                                                        )}
-
-                                                                        <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
-                                                                            {/* Render chat message */}
-                                                                            {!item.is_ai_prompt && (
-                                                                                <Box lineHeight="20px" fontSize="14px" maxWidth="290px">
-                                                                                    <ReactMarkdown
-                                                                                        components={{
-                                                                                            a: ({ node, ...props }) => {
-                                                                                                return (
-                                                                                                    <CircleLink href={props.href} mentions={item.mentions}>
-                                                                                                        {props.children}
-                                                                                                    </CircleLink>
-                                                                                                );
-                                                                                            },
-                                                                                        }}
-                                                                                    >
-                                                                                        {item.formattedMessage}
-                                                                                    </ReactMarkdown>
-                                                                                    {/* <div
-                                                                                        className="embedChatHtmlContent"
-                                                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                                                    /> */}
-                                                                                </Box>
-                                                                            )}
-
-                                                                            {item.awaits_response && (
-                                                                                <Lottie
-                                                                                    options={{
-                                                                                        loop: true,
-                                                                                        autoplay: true,
-                                                                                        animationData: talkdotsAnimation,
-                                                                                        rendererSettings: {
-                                                                                            preserveAspectRatio: "xMidYMid slice",
-                                                                                        },
-                                                                                    }}
-                                                                                    height={50}
-                                                                                    width={50}
-                                                                                />
-                                                                            )}
-
-                                                                            <MetaData data={item.meta_data} />
-
-                                                                            {item.is_ai_prompt && (
-                                                                                <Box paddingRight="10px" lineHeight="20px" fontSize="14px">
-                                                                                    <Text>
-                                                                                        <b>/ai</b> {item.message}
-                                                                                    </Text>
-
-                                                                                    {item.openai_response?.choices?.[0]?.text && (
-                                                                                        <Box fontSize="14px" borderLeft="3px solid #7179a9" paddingLeft="5px">
-                                                                                            <div
-                                                                                                className="embedChatHtmlContent"
-                                                                                                dangerouslySetInnerHTML={{
-                                                                                                    __html: item.openai_response?.choices?.[0]?.text,
-                                                                                                }}
-                                                                                            />
-                                                                                        </Box>
-                                                                                    )}
-                                                                                </Box>
-                                                                            )}
-
-                                                                            {item.isLast && (
-                                                                                <Box paddingBottom="4px" paddingTop="2px">
-                                                                                    {!item.awaits_response && (
-                                                                                        <Text
-                                                                                            align="right"
-                                                                                            className="circle-list-title"
-                                                                                            paddingRight="0px"
-                                                                                            lineHeight="10px"
-                                                                                            fontSize="10px"
-                                                                                            color={!item.isSelf ? "#9f9f9f" : "#818181"}
-                                                                                        >
-                                                                                            {item.sent_at.toDate().toLocaleString([], {
-                                                                                                hour: "2-digit",
-                                                                                                minute: "2-digit",
-                                                                                            })}
-                                                                                        </Text>
-                                                                                    )}
-                                                                                </Box>
-                                                                            )}
-                                                                        </Box>
-                                                                    </Box>
-                                                                </VStack>
-                                                            </PopoverTrigger>
-
-                                                            <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
-                                                                <Box
-                                                                    zIndex="160"
-                                                                    height="12px"
-                                                                    backgroundColor="transparent"
-                                                                    align="center"
-                                                                    position="relative"
-                                                                >
-                                                                    <HStack
-                                                                        align="center"
-                                                                        position="absolute"
-                                                                        top="-14px"
-                                                                        left="10px"
-                                                                        paddingLeft="5px"
-                                                                        paddingRight="5px"
-                                                                        paddingTop="3px"
-                                                                        paddingBottom="3px"
-                                                                        backgroundColor={popoverBg}
-                                                                        borderRadius="50px"
-                                                                    >
-                                                                        {!item.isSelf && (
-                                                                            <Icon
-                                                                                width="18px"
-                                                                                height="18px"
-                                                                                color={iconColor}
-                                                                                as={BsReplyFill}
-                                                                                cursor="pointer"
-                                                                                onClick={() => replyChatMessage(item)}
-                                                                            />
-                                                                        )}
-
-                                                                        {item.isSelf && (
-                                                                            <>
-                                                                                <Icon
-                                                                                    width="18px"
-                                                                                    height="18px"
-                                                                                    color={iconColor}
-                                                                                    as={MdDelete}
-                                                                                    cursor="pointer"
-                                                                                    onClick={() => deleteChatMessage(item)}
-                                                                                />
-                                                                                <Icon
-                                                                                    width="18px"
-                                                                                    height="18px"
-                                                                                    color={iconColor}
-                                                                                    as={MdModeEdit}
-                                                                                    cursor="pointer"
-                                                                                    onClick={() => editChatMessage(item)}
-                                                                                />
-                                                                            </>
-                                                                        )}
-
-                                                                        {/* {!item.isSelf && (
-                                                                                <Icon
-                                                                                    width="18px"
-                                                                                    height="18px"
-                                                                                    color={iconColor}
-                                                                                    as={MdAddReaction}
-                                                                                    cursor="pointer"
-                                                                                />
-                                                                            )} */}
-                                                                    </HStack>
-                                                                </Box>
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    </Flex>
-                                                )}
-                                            </Box>
-                                        ))}
+                                        <ChatMessages
+                                            messages={chatMessages}
+                                            onRenderComplete={onMessagesRenderComplete}
+                                            replyChatMessage={replyChatMessage}
+                                            deleteChatMessage={deleteChatMessage}
+                                            editChatMessage={editChatMessage}
+                                        />
 
                                         {!chatMessages?.length && !isLoadingMessages && (
                                             <Text color="white" marginLeft="12px">

@@ -55,6 +55,7 @@
         "react-quill": "^2.0.0",
         "react-router-dom": "^6.2.1",
         "react-scripts": "^5.0.0",
+        "react-scrollbars-custom": "^4.1.1",
         "react-select": "^5.4.0",
         "react-share": "^4.4.1",
         "react-spring": "^9.7.1",

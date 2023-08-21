@@ -1214,7 +1214,6 @@ app.put("/circles/:id", auth, async (req, res) => {
                 circlePrivateData.incognito = req.body.circlePrivateData.incognito;
             }
             if (req.body.circlePrivateData.ai) {
-                console.log("******Found ai message: " + JSON.stringify(req.body.circlePrivateData.ai));
                 if (req.body.circlePrivateData.ai.system_message) {
                     circlePrivateData.ai = { system_message: req.body.circlePrivateData.ai.system_message };
                 }
@@ -2118,7 +2117,7 @@ app.post("/chat_messages", auth, async (req, res) => {
             triggerAiAgentResponse(circle, user, session_id);
         }
 
-        console.log("message sent", JSON.stringify(newMessage, null, 2));
+        //console.log("message sent", JSON.stringify(newMessage, null, 2));
 
         return res.json({ message: "Message sent" });
     } catch (error) {
@@ -2578,7 +2577,7 @@ app.post("/request_relation_update", auth, async (req, res) => {
             //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
-            console.log("AI response", messageData);
+            //console.log("AI response", messageData);
         } catch (error) {
             console.log("error: ", error);
             return res.json({ error: error });
@@ -2880,7 +2879,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
 
     try {
         while (functionCalls < 4) {
-            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
 

@@ -560,8 +560,9 @@ code {
 }
 
 .chatScrollbars {
-    /* overflow-x: hidden; */
+    overflow-x: hidden;
     /* Bugfix horizontal scrollbar becomes visible */
+    bottom: -1px;
 }
 
 .menuHeader {
