@@ -76,9 +76,6 @@ const CircleDiscover = ({ onClose, ...props }) => {
     const iconSize = 12;
     const showIcon = false;
 
-    const [activeCategory, setActiveCategory] = useState("all"); // Default category set to 'active'
-    //const [circleTypeFilter, setCircleTypeFilter] = useState("all"); // Default filter set to 'all'
-
     const setCircleTypeFilter = (filter) => {
         let types = null;
         switch (filter) {
@@ -100,7 +97,33 @@ const CircleDiscover = ({ onClose, ...props }) => {
         setCirclesFilter({ ...circlesFilter, types: types });
     };
 
+    const setActiveCategory = (category) => {
+        let categories = null;
+        switch (category) {
+            case "similar":
+                categories = ["similar"];
+                break;
+            case "connected":
+                categories = ["connected"];
+                break;
+            case "mentioned":
+                categories = ["mentioned"];
+                break;
+            case "search":
+                categories = ["search"];
+                break;
+            default:
+            case "all":
+                categories = null;
+                break;
+        }
+
+        setCirclesFilter({ ...circlesFilter, categories: categories });
+    };
+
     const getCategoryTooltipLabel = (label) => {
+        if (!circle) return;
+
         switch (label) {
             default:
             case "All":
@@ -200,11 +223,11 @@ const CircleDiscover = ({ onClose, ...props }) => {
 
             {/* Categories Navigation */}
             <HStack spacing={4} mb={4}>
-                <CategoryButton label="All" icon={TbClockPlay} isActive={activeCategory === "all"} />
-                <CategoryButton label="Similar" icon={MdCompare} isActive={activeCategory === "similar"} />
-                <CategoryButton label="Connected" icon={MdLink} isActive={activeCategory === "connected"} />
-                <CategoryButton label="Mentioned" icon={MdChat} isActive={activeCategory === "mentioned"} />
-                <CategoryButton label="Search" icon={MdSearch} isActive={activeCategory === "search"} />
+                <CategoryButton label="All" icon={TbClockPlay} isActive={!circlesFilter?.categories} />
+                <CategoryButton label="Similar" icon={MdCompare} isActive={circlesFilter?.categories?.includes("similar")} />
+                <CategoryButton label="Connected" icon={MdLink} isActive={circlesFilter?.categories?.includes("connected")} />
+                <CategoryButton label="Mentioned" icon={MdChat} isActive={circlesFilter?.categories?.includes("mentioned")} />
+                <CategoryButton label="Search" icon={MdSearch} isActive={circlesFilter?.categories?.includes("search")} />
             </HStack>
             <Flex flexDirection="row" align="center">
                 <ButtonGroup isAttached>

@@ -1264,6 +1264,47 @@ app.delete("/circles/:id", auth, async (req, res) => {
     }
 });
 
+// get circles relevant to circle
+app.get("/circles/:id/circles", async (req, res) => {
+    const circleId = req.params.id;
+
+    try {
+        // get similar circles through semantic search
+        let similarCircles = await semanticSearch(null, circleId, null, 6);
+
+        // remove circle itself from similar circles
+        similarCircles = similarCircles.filter((x) => x.id !== circleId);
+
+        // TODO similar circles can be cached per circleId and updated periodically
+
+        // get circles connected to circle
+        const connections = await getMemberConnections(circleId);
+
+        // get up to date circle data for connections
+        let circleIds = connections.map((x) => x.target.id);
+        let connectedCircles = [];
+        while (circleIds.length) {
+            let circleIdsBatch = circleIds.splice(0, 10);
+            let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+            for (let i = 0; i < circleDocs.docs.length; i++) {
+                let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+                connectedCircles.push(circle);
+            }
+        }
+
+        // get circles mentioned in circle
+        // get latest chat_messages in circle and extract mentioned circles
+        //      let mentionedCircles = [];
+        //        let chatMessages = await db.collection("chat_messages").where("circle_id", "==", circleId).where("mentions").orderBy("sent_at", "desc").limit(10).get();
+
+        return res.json({ similarCircles: similarCircles, connectedCircles: connectedCircles, mentionedCircles: [] });
+    } catch (error) {
+        functions.logger.error("Error while getting circles:", error);
+        return res.json({ error: error });
+    }
+});
+
+// initialize set circles
 app.post("/circles/init_sets", auth, async (req, res) => {
     const circleIds = req.body.circle_ids;
     const authCallerId = req.user.user_id;
@@ -1279,6 +1320,7 @@ app.post("/circles/init_sets", auth, async (req, res) => {
     }
 });
 
+// initialize set circle
 app.post("/circles/:id/init_set", auth, async (req, res) => {
     const circleId = req.params.id;
     const authCallerId = req.user.user_id;
@@ -2941,7 +2983,6 @@ app.post("/update", auth, async (req, res) => {
         // update logic here
         const commandArgs = command?.split(" ") ?? [];
 
-        // go through all connections and add circle_types array
         if (commandArgs[0] === "list") {
             // list all commants
             let commands = [
@@ -2953,6 +2994,12 @@ app.post("/update", auth, async (req, res) => {
                     name: "connect",
                     args: "<source_id> connected_mutually_to/admin_of/admin_by <target_id>",
                     description: "Creates a connection between two circles.",
+                },
+                { name: "get_connections", args: "<circle_id>", description: "Gets all connections for a circle." },
+                {
+                    name: "count_new_circles",
+                    args: "<type> <date>",
+                    description: "Counts new circles of specified type that has created since date specified.",
                 },
             ];
             return res.json({ commands });

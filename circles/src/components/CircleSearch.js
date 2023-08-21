@@ -21,7 +21,7 @@ import { log } from "components/Helpers";
 import { HiOutlineSearch } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, searchResultsShownAtom, semanticSearchCirclesAtom, toggleWidgetEventAtom } from "components/Atoms";
+import { isMobileAtom, toggleDiscoverAtom, searchResultsShownAtom, semanticSearchCirclesAtom, toggleWidgetEventAtom } from "components/Atoms";
 import config from "Config";
 import CircleListItem from "components/CircleListItem";
 import i18n from "i18n/Localization";
@@ -240,6 +240,7 @@ export const CircleSearchBoxIcon = (props) => {
     const [searchIsOpen, setSearchIsOpen] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
     const [semanticSearchCircles, _setSemanticSearchCircles] = useAtom(semanticSearchCirclesAtom);
+    const [, setToggleDiscover] = useAtom(toggleDiscoverAtom);
 
     const iconSize = "26px";
     const openSearch = () => {
@@ -337,6 +338,9 @@ export const CircleSearchBoxIcon = (props) => {
                         return y;
                     })
                 );
+
+                // open discover in search category
+                setToggleDiscover("search");
             },
             (error) => {
                 setSemanticSearchCircles(

@@ -65,6 +65,7 @@ import {
     toggleWidgetEventAtom,
     inVideoConferenceAtom,
     newCirclePopupAtom,
+    toggleDiscoverAtom,
 } from "components/Atoms";
 import { displayModes, defaultCoverHeight } from "components/Constants";
 import axios from "axios";
@@ -89,6 +90,7 @@ const WidgetController = () => {
     const [isMobile] = useAtom(isMobileAtom);
     const [toggleAbout, setToggleAbout] = useAtom(toggleAboutAtom);
     const [toggleSettings, setToggleSettings] = useAtom(toggleSettingsAtom);
+    const [toggleDiscover, setToggleDiscover] = useAtom(toggleDiscoverAtom);
     const [circle] = useAtom(circleAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -111,7 +113,7 @@ const WidgetController = () => {
     };
 
     const toggleWidget = useCallback(
-        (component, toggleOn, toggleAboutCircle) => {
+        (component, toggleOn, toggleAboutCircle, toggleDiscoverCategory) => {
             let newToggledWidgets = [...toggledWidgets];
             if (isMobile) {
                 if (toggledWidgets.includes(component)) {
@@ -144,7 +146,13 @@ const WidgetController = () => {
 
             menuItems.forEach((item) => {
                 if (newToggledWidgets.includes(item)) {
-                    searchParams.set(item, item === "about" ? toggleAboutCircle?.id ?? circle?.id : true);
+                    if (item === "about") {
+                        searchParams.set(item, toggleAboutCircle?.id ?? circle?.id);
+                    } else if (item === "discover") {
+                        searchParams.set(item, toggleDiscoverCategory);
+                    } else {
+                        searchParams.set(item, true);
+                    }
                 } else {
                     searchParams.delete(item);
                 }
@@ -172,6 +180,14 @@ const WidgetController = () => {
         toggleWidget("settings");
         setToggleSettings(false);
     }, [toggleSettings, setToggleSettings, toggleWidget]);
+
+    useEffect(() => {
+        if (!toggleDiscover) {
+            return;
+        }
+        toggleWidget("discover", true, null, toggleDiscover);
+        setToggleDiscover(false);
+    }, [toggleDiscover, setToggleDiscover, toggleWidget]);
 
     useEffect(() => {
         if (!toggleWidgetEvent) {

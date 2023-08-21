@@ -15,6 +15,7 @@ export const mapStyleAtom = atom("satellite");
 export const focusOnMapItemAtom = atom(null);
 export const toggleAboutAtom = atom(null);
 export const toggleSettingsAtom = atom(null);
+export const toggleDiscoverAtom = atom(null);
 export const previewCircleAtom = atom(null);
 export const jitsiTokenAtom = atom(null);
 export const inVideoConferenceAtom = atom(false);
@@ -65,6 +66,9 @@ export const mergedSemanticSearchCirclesAtom = atom((get) => {
             if (existingCircle) {
                 existingCircle.colors.push(item.color);
                 existingCircle.queries.push(item.query);
+
+                // get average score
+                existingCircle.score = (existingCircle.score + circle.score) / 2;
             } else {
                 mergedCircles.push({ ...circle, colors: [item.color], queries: [item.query] });
             }
@@ -88,6 +92,7 @@ export const circlesAtom = atom((get) => {
         // clear colors and queries
         circle.colors = [];
         circle.queries = [];
+        circle.categories = ["active"];
     }
 
     for (var item of mergedSemanticSearchCircles) {
@@ -97,7 +102,9 @@ export const circlesAtom = atom((get) => {
         if (existingCircle) {
             existingCircle.colors = item.colors;
             existingCircle.query = item.query;
+            existingCircle.categories.push("search");
         } else {
+            item.categories = ["search"];
             circles.push(item);
         }
     }
@@ -107,8 +114,10 @@ export const circlesAtom = atom((get) => {
         let circleId = similarCircle.id;
         let existingCircle = circles.find((x) => x.id === circleId);
         if (!existingCircle) {
+            similarCircle.categories = ["similar"];
             circles.push(similarCircle);
         } else {
+            existingCircle.categories.push("similar");
             // TODO maybe add color
         }
     }
@@ -118,8 +127,10 @@ export const circlesAtom = atom((get) => {
         let circleId = connectedCircle.id;
         let existingCircle = circles.find((x) => x.id === circleId);
         if (!existingCircle) {
+            connectedCircle.categories = ["connected"];
             circles.push(connectedCircle);
         } else {
+            existingCircle.categories.push("connected");
             // TODO maybe add color
         }
     }
@@ -129,8 +140,10 @@ export const circlesAtom = atom((get) => {
         let circleId = mentionedCircle.id;
         let existingCircle = circles.find((x) => x.id === circleId);
         if (!existingCircle) {
+            mentionedCircle.categories = ["mentioned"];
             circles.push(mentionedCircle);
         } else {
+            existingCircle.categories.push("mentioned");
             // TODO maybe add color
         }
     }
@@ -151,6 +164,14 @@ export const filteredCirclesAtom = atom((get) => {
 
     // filter by live/active
     retCircles = filter?.live ? retCircles.filter((circle) => isCircleActive(circle)) : retCircles;
+
+    // filter by categories
+    if (filter?.categories?.length > 0) {
+        for (var x of filter?.categories) {
+            let category = x;
+            retCircles = retCircles.filter((x) => x.categories.includes(category));
+        }
+    }
 
     // TODO sorting by newest, proximity, similarity, etc.
     if (filter?.sortBy === "newest") {

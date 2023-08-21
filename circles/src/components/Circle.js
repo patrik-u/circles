@@ -198,27 +198,25 @@ export const Circle = ({ isGlobal }) => {
         });
 
         // get similar circles
-        axios.get(`/circles/${circleId}/relevant`).then((response) => {
-            let similarCircles = response.data.similar;
-            setSimilarCircles(similarCircles);
-            let connectedCircles = response.data.connected;
-            setConnectedCircles(connectedCircles);
-            let mentionedCircles = response.data.mentioned;
-            setMentionedCircles(mentionedCircles);
+        axios.get(`/circles/${circleId}/circles`).then((response) => {
+            let similarCircles = response.data.similarCircles;
+            setSimilarCircles(similarCircles ?? []);
+
+            //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
+
+            let connectedCircles = response.data.connectedCircles;
+            setConnectedCircles(connectedCircles ?? []);
+
+            let mentionedCircles = response.data.mentionedCircles;
+            setMentionedCircles(mentionedCircles ?? []);
         });
-
-        // get connected circles
-        // TODO
-
-        // get mentioned circles
-        // TODO
 
         return () => {
             if (unsubscribeGetActiveCircles) {
                 unsubscribeGetActiveCircles();
             }
         };
-    }, [circleId, setActiveCircles, setCircleConnections, isGlobal, showHistoricCircles]);
+    }, [circleId, setActiveCircles, setCircleConnections, isGlobal, setSimilarCircles, setConnectedCircles, setMentionedCircles]);
 
     useEffect(() => {
         log("Circle.useEffect 2", -1);
