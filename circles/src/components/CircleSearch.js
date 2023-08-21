@@ -34,42 +34,49 @@ import { FaRegLightbulb } from "react-icons/fa";
 
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
 
-const SearchHit = ({ hit, onClick }) => {
+const SearchHit = ({ hit, onClick, condensed = false, openCircle = true }) => {
     const navigate = useNavigateNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const onHitClick = () => {
-        openCircle(navigate, { id: hit.objectID, host: "circles" });
-        setToggleWidgetEvent({ name: "about", value: true });
+        if (openCircle) {
+            openCircle(navigate, { id: hit.objectID, host: "circles" });
+            setToggleWidgetEvent({ name: "about", value: true });
+        }
         if (onClick) {
-            onClick();
+            log("Search hit click: " + hit.objectID, 0, true);
+            onClick(hit);
         }
     };
 
-    return <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} maxWidth="450px" />;
+    return (
+        <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} maxWidth="450px" condensed={condensed} />
+    );
 };
 
-const SearchHits = ({ onClick, ...props }) => {
+const SearchHits = ({ onClick, openCircle = true, condensed = false, ...props }) => {
     const { hits } = useHits(props);
     const [isMobile] = useAtom(isMobileAtom);
 
     return (
         <Flex flexDirection="column" justifyContent="center" alignItems="center" overflow="hidden" {...props}>
-            <Box border="1px" borderColor="gray.200" borderRadius="md" p={4} mt={2} bg="white">
-                <Text>
-                    <Icon as={FaRegLightbulb} color="yellow.400" w={5} h={5} mr={2} />
-                    Type in{" "}
-                    <Text as="span" fontWeight="bold">
-                        what you are looking for
-                    </Text>{" "}
-                    and press 'Enter' for a full semantic search.
-                    <Text as="span" color="gray.500" ml={2}>
-                        <br />
-                        E.g., "circles that need help with volunteering"
+            {!condensed && (
+                <Box border="1px" borderColor="gray.200" borderRadius="md" p={4} mt={2} bg="white">
+                    <Text>
+                        <Icon as={FaRegLightbulb} color="yellow.400" w={5} h={5} mr={2} />
+                        Type in{" "}
+                        <Text as="span" fontWeight="bold">
+                            what you are looking for
+                        </Text>{" "}
+                        and press 'Enter' for a full semantic search.
+                        <Text as="span" color="gray.500" ml={2}>
+                            <br />
+                            E.g., "circles that need help with volunteering"
+                        </Text>
                     </Text>
-                </Text>
-            </Box>
+                </Box>
+            )}
             <Flex
                 flexDirection="column"
                 justifyContent="center"
@@ -81,9 +88,11 @@ const SearchHits = ({ onClick, ...props }) => {
                 backgroundColor="white"
                 mt={"4px"}
             >
-                <Box fontWeight="700" marginTop="5px" marginBottom="5px">
-                    Quick suggestions
-                </Box>
+                {!condensed && (
+                    <Box fontWeight="700" marginTop="5px" marginBottom="5px">
+                        Quick suggestions
+                    </Box>
+                )}
                 {hits.length <= 0 && (
                     <Box backgroundColor="white" height="60px" minWidth={isMobile ? "none" : "450px"}>
                         <Text marginLeft="10px">No quick suggestions. Type 'Enter' for a deeper semantic search.</Text>
@@ -91,7 +100,7 @@ const SearchHits = ({ onClick, ...props }) => {
                 )}
 
                 {hits.slice(0, 5).map((x) => (
-                    <SearchHit key={x.objectID} hit={x} onClick={onClick} />
+                    <SearchHit key={x.objectID} hit={x} onClick={onClick} openCircle={openCircle} condensed={condensed} />
                 ))}
             </Flex>
         </Flex>
@@ -171,6 +180,29 @@ const EmptyQueryBoundary = ({ children, fallback }) => {
         return fallback;
     }
     return children;
+};
+
+const CircleMentionsQuery = ({ query }) => {
+    const { refine } = useSearchBox();
+
+    useEffect(() => {
+        refine(query);
+    }, [query, refine]);
+};
+
+export const CircleMention = ({ onMention, query, fallback = null }) => {
+    return (
+        <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
+            <CircleMentionsQuery query={query} />
+            <EmptyQueryBoundary fallback={fallback}>
+                <Flex position="absolute" bottom="50px" backgroundColor="blue" zIndex="100">
+                    <Box width="450px" maxWidth="450px" minWidth="450px">
+                        <SearchHits onClick={onMention} openCircle={false} condensed={true} />
+                    </Box>
+                </Flex>
+            </EmptyQueryBoundary>
+        </InstantSearch>
+    );
 };
 
 export const CircleSearchBox = ({

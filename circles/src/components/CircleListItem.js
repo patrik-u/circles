@@ -89,7 +89,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                         lineHeight={item.type === "event" ? "17px" : "inherit"}
                         marginTop={item.type === "event" ? "2px" : "0px"}
                         style={singleLineEllipsisStyle}
-                        onClick={onClick}
+                        onClick={inSelect ? null : onClick}
                         cursor="pointer"
                     >
                         {item.name}

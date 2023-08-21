@@ -45,12 +45,13 @@ import { RiChatPrivateLine } from "react-icons/ri";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import EmojiPicker from "components/EmojiPicker";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom } from "components/Atoms";
+import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom, mentionedCirclesAtom } from "components/Atoms";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
 import { AboutButton, CircleLink } from "components/CircleElements";
 import ReactMarkdown from "react-markdown";
 import Linkify from "linkify-it";
+import { CircleMention } from "components/CircleSearch";
 
 const linkify = new Linkify();
 linkify.tlds("earth", true);
@@ -207,6 +208,7 @@ export const CircleChat = ({ circle }) => {
     const [userData] = useAtom(userDataAtom);
     const [, setChatCircle] = useAtom(chatCircleAtom);
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
+    const [mentionedCircles, setMentionedCircles] = useAtom(mentionedCirclesAtom);
     const [chatMessages, setChatMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [, setIsSending] = useState(false);
@@ -225,6 +227,9 @@ export const CircleChat = ({ circle }) => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const [chatData, setChatData] = useState(null);
     const chatSession = useMemo(() => chatData?.sessions[chatData?.sessions.length - 1], [chatData]);
+    const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
+    const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
+    const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input message
 
     useEffect(() => {
         log("Chat.useEffect 1", -1);
@@ -327,6 +332,15 @@ export const CircleChat = ({ circle }) => {
             if (user?.id) {
                 updateSeen(circleId);
             }
+
+            // update mentioned circles list with new mentions
+            const allMentions = newChatMessages
+                .filter((x) => x.has_mentions)
+                .map((message) => message.mentions)
+                .flat();
+
+            const newMentions = allMentions.filter((mention) => !mentionedCircles.find((x) => x.id === mention.id));
+            setMentionedCircles([...mentionedCircles, ...newMentions]);
             //chatMessagesUpdated(newChatMessages);
         });
 
@@ -448,6 +462,21 @@ export const CircleChat = ({ circle }) => {
 
     const handleMessageChange = (e) => {
         setMessage(e.target.value);
+
+        if (isMentioning) {
+            const queryMatch = e.target.value.match(/(?:^|\s)@(\w*)$/); // This regex matches "@" only if it's at the start or after a space
+            if (queryMatch) {
+                setMentionQuery(queryMatch[1]);
+            }
+        }
+
+        if (e.target.value.match(/(?:^|\s)@$/)) {
+            log("mentioning", 0, true);
+            setIsMentioning(true);
+        } else if (e.target.value.endsWith(" ") || e.target.value.endsWith("\n")) {
+            log("not mentioning", 0, true);
+            setIsMentioning(false);
+        }
     };
 
     const sendMessage = async () => {
@@ -458,13 +487,15 @@ export const CircleChat = ({ circle }) => {
         // disable while sending
         setIsSending(true);
 
+        let formattedMessage = transformMessageWithMentions(message);
+
         // add message
         var newChatMessage = {
             id: messageIndex,
             user: { ...user },
             circle_id: circle.id,
             sent_at: Timestamp.now(),
-            message: message,
+            message: formattedMessage,
             session_id: chatSession?.id,
         };
 
@@ -482,6 +513,7 @@ export const CircleChat = ({ circle }) => {
 
         // clear message
         setMessage("");
+        setMentionsList([]);
 
         if (isEditingMessage) {
             setIsEditingMessage(false);
@@ -489,7 +521,7 @@ export const CircleChat = ({ circle }) => {
 
             // send request to edit message
             let postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
-                message: message,
+                message: formattedMessage,
             });
 
             if (postMessageResult.data?.error) {
@@ -506,7 +538,7 @@ export const CircleChat = ({ circle }) => {
         } else {
             let req = {
                 circle_id: circle.id,
-                message: message,
+                message: formattedMessage,
                 session_id: chatSession?.id,
             };
             if (isReplyingMessage) {
@@ -611,6 +643,40 @@ export const CircleChat = ({ circle }) => {
     const closeReply = () => {
         setIsReplyingMessage(false);
         setMessageToReply(null);
+    };
+
+    const transformMessageWithMentions = (rawMessage) => {
+        let transformedMessage = rawMessage;
+
+        mentionsList.forEach((mention) => {
+            const markdownLink = `[${mention.name.slice(1)}](codo.earth/circles/${mention.id})`; // remove the '@' from the mention name
+            transformedMessage = transformedMessage.replace(mention.name, markdownLink);
+        });
+
+        return transformedMessage;
+    };
+
+    const onMention = (mentionedCircle) => {
+        log("mentioning circle: " + mentionedCircle.name, 0, true);
+        const updatedMessage = message.replace(`@${mentionQuery}`, `@${mentionedCircle.name} `);
+        setMessage(updatedMessage);
+
+        // add the mentioned circle to the mentions list
+        const newMention = {
+            id: mentionedCircle.objectID,
+            name: `@${mentionedCircle.name}`,
+            picture: mentionedCircle.picture,
+        };
+
+        setMentionsList((prevMentions) => [...prevMentions, newMention]);
+
+        setIsMentioning(false);
+        setMentionQuery("");
+
+        // Set focus back to the textarea and set cursor position
+        const newPosition = updatedMessage.length; // Get the length of the updated message
+        textAreaRef.current.focus(); // Focus the textarea
+        textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
     };
 
     if (!circle) return null;
@@ -957,6 +1023,7 @@ export const CircleChat = ({ circle }) => {
                                 marginTop="auto"
                                 position="relative"
                             >
+                                {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
                                 <Textarea
                                     ref={textAreaRef}
                                     id="message"

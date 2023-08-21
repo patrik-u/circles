@@ -2034,14 +2034,16 @@ app.post("/chat_messages", auth, async (req, res) => {
         // does message contain links?
         let links = linkify.match(message);
         if (links) {
-            newMessage.has_links = true;
-
             // check if link points to circle
             let circleIds = [];
             for (var link of links) {
                 let circleId = extractCircleId(link.url);
                 if (circleId) {
                     circleIds.push(circleId);
+
+                    // remove link from links
+                    let linkUrl = link.url;
+                    links = links.filter((x) => x.url !== linkUrl);
                 }
             }
 
@@ -2052,6 +2054,9 @@ app.post("/chat_messages", auth, async (req, res) => {
                     newMessage.mentions = mentions;
                     newMessage.has_mentions = true;
                 }
+            }
+            if (links?.length > 0) {
+                newMessage.has_links = true;
             }
         }
 
@@ -2069,7 +2074,7 @@ app.post("/chat_messages", auth, async (req, res) => {
             messages: admin.firestore.FieldValue.increment(1),
         };
         // update circle and propagate changes
-        updateCircle(circleId, updatedCircle); // TODO we should avoid calling this with propagate updates as it will trigger a lot of updates
+        updateCircle(circleId, updatedCircle, false); // TODO we should avoid calling this with propagate updates as it will trigger a lot of updates
 
         // update user that chat message has been seen
         setUserSeen(authCallerId, circleId, "chat");
@@ -2112,6 +2117,8 @@ app.post("/chat_messages", auth, async (req, res) => {
             // trigger AI agent to respond
             triggerAiAgentResponse(circle, user, session_id);
         }
+
+        console.log("message sent", JSON.stringify(newMessage, null, 2));
 
         return res.json({ message: "Message sent" });
     } catch (error) {
@@ -3336,18 +3343,7 @@ exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequ
 exports.preRender = functions.https.onRequest(async (request, response) => {
     // Error 404 is false by default
     let error404 = false;
-
     const path = request.path ? request.path.split("/") : request.path;
-
-    // Circle: https://circles-325718.web.app/circles/IazLuH4Pn3nhsDeP13KO
-
-    // Event: https://circles-83729.web.app/events/GzN1oLeZxrwGeemnRQJy
-    // https://circles-325718.web.app/members/z3KqKSeVFzU7lOVJsEcDQcezW4v2/events/OflMcdF7qyj0A1Q7coaP
-    // https://circles-325718.web.app/circles/IazLuH4Pn3nhsDeP13KO/events/KGjgO0MWF9bMmRfM5EuG
-
-    // Motion: https://circles-325718.web.app/motions/IazLuH4Pn3nhsDeP13KO
-    // Initiative: https://circles-325718.web.app/initiatives/IazLuH4Pn3nhsDeP13KO
-    // Members: https://circles-325718.web.app/members/IazLuH4Pn3nhsDeP13KO
 
     // <title>{motion.name}</title>
     // <meta property="og:url" content={location.pathname} />
@@ -3366,13 +3362,10 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
     let resourceId = null;
     let article = null;
 
-    // so we can have:
-    // baseurl/<resource>/something/else
-    // baseurl/<resource>/id/<resource>/id
-    // baseurl/<resource>/id/something/else
+    // baseurl/circles/:id
 
     if (path.length >= 2) {
-        if (path[1] === "circle") {
+        if (path[1] === "circles") {
             resourceId = path[2];
         }
     }
