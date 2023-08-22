@@ -135,6 +135,7 @@ export const circlesAtom = atom((get) => {
     }
 
     // add mentioned circles not in list
+    mentionedCircles.sort((a, b) => fromFsDate(b.mentioned_at ?? new Date("2000-01-01")) - fromFsDate(a.mentioned_at ?? new Date("2000-01-01")));
     for (var mentionedCircle of mentionedCircles) {
         let circleId = mentionedCircle.id;
         let existingCircle = circles.find((x) => x.id === circleId);

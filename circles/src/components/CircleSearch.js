@@ -13,6 +13,7 @@ import {
     Tag,
     TagLabel,
     TagCloseButton,
+    Tooltip,
     Spinner,
 } from "@chakra-ui/react";
 import { openCircle } from "components/Navigation";
@@ -34,13 +35,13 @@ import { FaRegLightbulb } from "react-icons/fa";
 
 const searchClient = algoliasearch(config.algoliaId, config.algoliaSearchKey);
 
-const SearchHit = ({ hit, onClick, condensed = false, openCircle = true }) => {
+const SearchHit = ({ hit, onClick, minWidth = "450px", maxWidth = null, condensed = false, openCircleOnClick = true }) => {
     const navigate = useNavigateNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const onHitClick = () => {
-        if (openCircle) {
+        if (openCircleOnClick) {
             openCircle(navigate, { id: hit.objectID, host: "circles" });
             setToggleWidgetEvent({ name: "about", value: true });
         }
@@ -51,11 +52,18 @@ const SearchHit = ({ hit, onClick, condensed = false, openCircle = true }) => {
     };
 
     return (
-        <CircleListItem minWidth={isMobile ? "none" : "450px"} inSelect={true} item={hit} onClick={() => onHitClick()} maxWidth="450px" condensed={condensed} />
+        <CircleListItem
+            minWidth={isMobile ? "none" : minWidth}
+            inSelect={true}
+            item={hit}
+            onClick={() => onHitClick()}
+            maxWidth={maxWidth ?? "450px"}
+            condensed={condensed}
+        />
     );
 };
 
-const SearchHits = ({ onClick, openCircle = true, condensed = false, ...props }) => {
+const SearchHits = ({ onClick, openCircleOnClick = true, minWidth = "450px", maxWidth = null, condensed = false, ...props }) => {
     const { hits } = useHits(props);
     const [isMobile] = useAtom(isMobileAtom);
 
@@ -94,13 +102,21 @@ const SearchHits = ({ onClick, openCircle = true, condensed = false, ...props })
                     </Box>
                 )}
                 {hits.length <= 0 && (
-                    <Box backgroundColor="white" height="60px" minWidth={isMobile ? "none" : "450px"}>
-                        <Text marginLeft="10px">No quick suggestions. Type 'Enter' for a deeper semantic search.</Text>
+                    <Box backgroundColor="white" height="60px" minWidth={isMobile ? "none" : minWidth} maxWidth={isMobile ? "none" : maxWidth ?? "none"}>
+                        <Text marginLeft="10px">{!condensed ? "No quick suggestions. Type 'Enter' for a deeper semantic search." : "No matches"}</Text>
                     </Box>
                 )}
 
                 {hits.slice(0, 5).map((x) => (
-                    <SearchHit key={x.objectID} hit={x} onClick={onClick} openCircle={openCircle} condensed={condensed} />
+                    <SearchHit
+                        key={x.objectID}
+                        hit={x}
+                        onClick={onClick}
+                        openCircleOnClick={openCircleOnClick}
+                        condensed={condensed}
+                        minWidth={minWidth}
+                        maxWidth={maxWidth}
+                    />
                 ))}
             </Flex>
         </Flex>
@@ -191,13 +207,15 @@ const CircleMentionsQuery = ({ query }) => {
 };
 
 export const CircleMention = ({ onMention, query, fallback = null }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
     return (
         <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
             <CircleMentionsQuery query={query} />
             <EmptyQueryBoundary fallback={fallback}>
-                <Flex position="absolute" bottom="50px" backgroundColor="blue" zIndex="100">
-                    <Box width="450px" maxWidth="450px" minWidth="450px">
-                        <SearchHits onClick={onMention} openCircle={false} condensed={true} />
+                <Flex position="absolute" bottom="50px" zIndex="100">
+                    <Box width="380px" maxWidth="380px" minWidth="none">
+                        <SearchHits onClick={onMention} openCircleOnClick={false} condensed={true} minWidth={"380px"} maxWidth={"380px"} />
                     </Box>
                 </Flex>
             </EmptyQueryBoundary>
@@ -401,72 +419,74 @@ export const CircleSearchBoxIcon = (props) => {
     };
 
     return (
-        <Box>
-            <Box position="relative" height={iconSize} {...props}>
-                <Icon
-                    width={iconSize}
-                    height={iconSize}
-                    color={"white"}
-                    _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                    _active={{ transform: "scale(0.98)" }}
-                    as={RiSearchEyeLine}
-                    onClick={openSearch}
-                    cursor="pointer"
-                />
-            </Box>
-            {semanticSearchCircles.length > 0 && (
-                <Flex
-                    zIndex="55"
-                    margin="0px"
-                    padding="0px"
-                    position="absolute"
-                    top={isMobile ? "40px" : "60px"}
-                    left="0px"
-                    width="100%"
-                    height="40px"
-                    pointerEvents={"none"}
-                    alignItems="center"
-                    justifyContent="center"
-                >
-                    <HStack>
-                        {semanticSearchCircles.map((item) => (
-                            <Tag key={item.query} size={"md"} borderRadius="full" variant="solid" backgroundColor={item.color} pointerEvents="auto">
-                                {item.loading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
-
-                                <TagLabel>{item.query}</TagLabel>
-                                <TagCloseButton onClick={() => onSemanticSearchClear(item)} />
-                            </Tag>
-                        ))}
-                    </HStack>
-                </Flex>
-            )}
-
-            {searchIsOpen && (
-                <Box
-                    zIndex="55"
-                    margin="0px"
-                    padding="0px"
-                    position="absolute"
-                    top={isMobile ? "40px" : "60px"}
-                    left="0px"
-                    width="100%"
-                    height="40px"
-                    pointerEvents={"none"}
-                >
-                    <CircleSearchBox
-                        size={isMobile ? "sm" : "md"}
-                        hidePlaceholder={false}
-                        popover={true}
-                        maxWidth="450px"
-                        setSearchIsOpen={setSearchIsOpen}
-                        onHitClick={onHitClick}
-                        autofocus={true}
-                        pointerEvents={"auto"}
-                        onSemanticSearch={onSemanticSearch}
+        <Tooltip label="Search circles" placement="bottom">
+            <Box>
+                <Box position="relative" height={iconSize} {...props}>
+                    <Icon
+                        width={iconSize}
+                        height={iconSize}
+                        color={"white"}
+                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                        _active={{ transform: "scale(0.98)" }}
+                        as={RiSearchEyeLine}
+                        onClick={openSearch}
+                        cursor="pointer"
                     />
                 </Box>
-            )}
-        </Box>
+                {semanticSearchCircles.length > 0 && (
+                    <Flex
+                        zIndex="55"
+                        margin="0px"
+                        padding="0px"
+                        position="absolute"
+                        top={isMobile ? "40px" : "60px"}
+                        left="0px"
+                        width="100%"
+                        height="40px"
+                        pointerEvents={"none"}
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <HStack>
+                            {semanticSearchCircles.map((item) => (
+                                <Tag key={item.query} size={"md"} borderRadius="full" variant="solid" backgroundColor={item.color} pointerEvents="auto">
+                                    {item.loading ? <Spinner size={"xs"} marginRight="5px" /> : <Icon as={RiSearchEyeLine} marginRight="5px" />}
+
+                                    <TagLabel>{item.query}</TagLabel>
+                                    <TagCloseButton onClick={() => onSemanticSearchClear(item)} />
+                                </Tag>
+                            ))}
+                        </HStack>
+                    </Flex>
+                )}
+
+                {searchIsOpen && (
+                    <Box
+                        zIndex="55"
+                        margin="0px"
+                        padding="0px"
+                        position="absolute"
+                        top={isMobile ? "40px" : "60px"}
+                        left="0px"
+                        width="100%"
+                        height="40px"
+                        pointerEvents={"none"}
+                    >
+                        <CircleSearchBox
+                            size={isMobile ? "sm" : "md"}
+                            hidePlaceholder={false}
+                            popover={true}
+                            maxWidth="450px"
+                            setSearchIsOpen={setSearchIsOpen}
+                            onHitClick={onHitClick}
+                            autofocus={true}
+                            pointerEvents={"auto"}
+                            onSemanticSearch={onSemanticSearch}
+                        />
+                    </Box>
+                )}
+            </Box>
+        </Tooltip>
     );
 };
 

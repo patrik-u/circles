@@ -1,6 +1,6 @@
 //#region imports
 import React, { useState, useEffect, useRef } from "react";
-import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
+import { Flex, Box, Text, Image, Icon, Button, useToast, HStack, VStack, useDisclosure, useOutsideClick, Fade, Tooltip } from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
@@ -445,9 +445,11 @@ const Notifications = () => {
         }
     };
 
+    if (!user?.id) return null;
+
     return (
-        user?.id && (
-            <>
+        <>
+            <Tooltip label={i18n.t("Notifications")} placement="bottom">
                 <Box position="relative">
                     <Flex
                         position="relative"
@@ -487,44 +489,44 @@ const Notifications = () => {
                         </Box>
                     )}
                 </Box>
+            </Tooltip>
 
-                {notificationsIsOpen && (
-                    <Box
-                        className="notificationsBoxParent"
-                        ref={notificationsBoxRef}
-                        zIndex="55"
-                        position="absolute"
-                        display={notificationsIsOpen ? "flex" : "none"}
-                        borderRadius={{ base: "20px", md: "20px" }}
-                        overflow="hidden"
-                        top={{ base: "43", md: "83px" }}
-                        right={{ base: "0px", md: "5px" }}
-                        width={{ base: "100%", md: "400px" }}
-                        height="calc(100vh - 88px)"
-                    >
-                        <Scrollbars autoHide>
-                            <Fade in={notificationsIsOpen} height="100%" width="100%">
-                                <Box className="notificationsBox" height="100%" width="100%">
-                                    <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
-                                        {/* {notifications.length <= 0 && ( */}
-                                        <Text fontWeight="500" fontSize="20px" marginBottom="10px">
-                                            {i18n.t("notifications")}
-                                        </Text>
-                                        {/* )} */}
+            {notificationsIsOpen && (
+                <Box
+                    className="notificationsBoxParent"
+                    ref={notificationsBoxRef}
+                    zIndex="55"
+                    position="absolute"
+                    display={notificationsIsOpen ? "flex" : "none"}
+                    borderRadius={{ base: "20px", md: "20px" }}
+                    overflow="hidden"
+                    top={{ base: "43", md: "83px" }}
+                    right={{ base: "0px", md: "5px" }}
+                    width={{ base: "100%", md: "400px" }}
+                    height="calc(100vh - 88px)"
+                >
+                    <Scrollbars autoHide>
+                        <Fade in={notificationsIsOpen} height="100%" width="100%">
+                            <Box className="notificationsBox" height="100%" width="100%">
+                                <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
+                                    {/* {notifications.length <= 0 && ( */}
+                                    <Text fontWeight="500" fontSize="20px" marginBottom="10px">
+                                        {i18n.t("notifications")}
+                                    </Text>
+                                    {/* )} */}
 
-                                        {notifications.length <= 0 && <Text>{i18n.t("no notifications")}</Text>}
+                                    {notifications.length <= 0 && <Text>{i18n.t("no notifications")}</Text>}
 
-                                        {notifications.map((notification) => (
-                                            <Notification key={notification.id} notification={notification} />
-                                        ))}
-                                    </Flex>
-                                </Box>
-                            </Fade>
-                        </Scrollbars>
-                    </Box>
-                )}
-            </>
-        )
+                                    {notifications.map((notification) => (
+                                        <Notification key={notification.id} notification={notification} />
+                                    ))}
+                                </Flex>
+                            </Box>
+                        </Fade>
+                    </Scrollbars>
+                </Box>
+            )}
+        </>
     );
 };
 

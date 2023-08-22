@@ -867,6 +867,249 @@ app.get("/circles", auth, (req, res) => {
         });
 });
 
+// updates or inserts circle data
+const upsertCircle = async (authCallerId, circleReq) => {
+    let errors = {};
+    const date = new Date();
+
+    let circle = {};
+    let newCircle = circleReq.id ? false : true;
+    let currentCircle = null;
+    if (!newCircle) {
+        currentCircle = await getCircle(circleReq.id);
+        if (!currentCircle) {
+            errors.circle = "Circle not found";
+            return { errors };
+        } else {
+            // check if user is owner or admin and allowed to update circle data
+            const isAuthorized = await isAdminOf(authCallerId, circleReq.id);
+            if (!isAuthorized) {
+                errors.circle = "User is not authorized to update circle";
+                return { errors };
+            }
+        }
+    }
+
+    // required fields for new circles
+    if (newCircle) {
+        if (!circleReq.name) {
+            errors.name = "Name must not be empty";
+        }
+        if (!circleReq.type) {
+            errors.type = "Type must not be empty";
+        }
+    }
+
+    // validate data
+    if (circleReq.name) {
+        if (circleReq.name.length > 50) {
+            errors.name = "Name must be between 1 and 50 characters";
+        } else {
+            circle.name = circleReq.name;
+        }
+    }
+    if (circleReq.type) {
+        if (!circleTypes.includes(circleReq.type)) {
+            errors.type = "Invalid circle type";
+        } else {
+            circle.type = circleReq.type;
+        }
+    }
+    if (circleReq.cover) {
+        circle.cover = circleReq.cover;
+    }
+    if (circleReq.picture) {
+        circle.picture = circleReq.picture;
+    }
+    if (circleReq.base) {
+        circle.base = circleReq.base;
+    }
+    if (circleReq.description) {
+        circle.description = circleReq.description;
+    }
+    if (circleReq.content) {
+        circle.content = circleReq.content;
+    }
+    if (circleReq.content_text) {
+        circle.content_text = circleReq.content_text;
+    }
+    if (circleReq.language) {
+        circle.language = circleReq.language;
+    }
+    if (circleReq.social_media) {
+        circle.social_media = circleReq.social_media;
+    }
+    if (circleReq.jitsi_id) {
+        circle.jitsi_id = circleReq.jitsi_id;
+    }
+
+    if (circleReq.tags) {
+        if (!Array.isArray(circleReq.tags)) {
+            errors.tags = "Invalid tags data";
+        }
+        let validatedTags = [];
+        for (const tag of circleReq.tags) {
+            if (tag.is_custom) {
+                // create tag if it doesn't exist
+                let newTag = await getTagByName(tag.name, true);
+                validatedTags.push(newTag);
+            } else {
+                validatedTags.push(tag);
+            }
+        }
+        circle.tags = validatedTags;
+    }
+    if (circleReq.questions) {
+        circle.questions = circleReq.questions;
+        if (circle.questions.question0?.to_delete) {
+            circle.questions.question0 = admin.firestore.FieldValue.delete();
+        }
+        if (circle.questions.question1?.to_delete) {
+            circle.questions.question1 = admin.firestore.FieldValue.delete();
+        }
+        if (circle.questions.question2?.to_delete) {
+            circle.questions.question2 = admin.firestore.FieldValue.delete();
+        }
+    }
+    if (circleReq.funding) {
+        circle.funding = circleReq.funding;
+    }
+
+    if (circle.type === "event") {
+        if (circleReq.starts_at) {
+            circle.starts_at = new Date(circleReq.starts_at);
+        }
+        if (circleReq.is_all_day) {
+            circle.is_all_day = circleReq.is_all_day;
+        }
+        if (circleReq.time) {
+            circle.time = circleReq.time;
+        }
+        if (circleReq.duration) {
+            circle.duration = circleReq.duration;
+        }
+        if (circleReq.rrule) {
+            circle.rrule = circleReq.rrule;
+        }
+    }
+
+    if (circleReq.is_public !== undefined) {
+        circle.is_public = circleReq.is_public === true;
+    }
+
+    // verify user is admin of parent circle
+    let oldParentId = currentCircle?.parent_circle?.id;
+    let hasNewParent = false;
+    let parent = null;
+    if (circleReq.parent_circle !== undefined) {
+        let parentId = circleReq.parent_circle?.id;
+        if (parentId !== oldParentId) {
+            hasNewParent = true;
+            if (parentId) {
+                // check if user is owner or admin and allowed to set circle parent
+                parent = await getCircle(parentId);
+                if (!parent.is_public) {
+                    const isAuthorized = await isAdminOf(authCallerId, parentId);
+                    if (!isAuthorized) {
+                        errors.parent_circle = "User must be admin of parent circle";
+                    }
+                }
+            }
+            circle.parent_circle = parent ?? false;
+        }
+    }
+
+    if (Object.keys(errors).length !== 0) {
+        return { errors };
+    }
+
+    if (Object.keys(circle).length <= 0) {
+        return currentCircle;
+    }
+
+    if (newCircle) {
+        // create circle
+        let user = await getCircle(authCallerId);
+        circle.created_at = date;
+        circle.created_by = authCallerId;
+        circle.creator = user;
+
+        // add circle to circles collection
+        const circleRes = await db.collection("circles").add(circle);
+
+        // add connections to circle
+        circle = await getCircle(circleRes.id);
+
+        // TODO these can perhaps be removed since we can store the information in circle_data and the relation-set
+        await createConnection(user, circle, "owner_of", false, null, false);
+        await createConnection(circle, user, "owned_by", false, null, false);
+        await createConnection(user, circle, "creator_of", false, null, false);
+        await createConnection(circle, user, "created_by", false, null, false);
+        await createConnection(user, circle, "connected_to", false, null, false);
+
+        if (circle.type !== "tag") {
+            await createConnection(user, circle, "connected_mutually_to", false, null, false);
+            await createConnection(circle, user, "connected_mutually_to", false, null, false);
+        }
+
+        if (parent) {
+            await createConnection(parent, circle, "parent_of", false, null, false);
+            await createConnection(circle, parent, "parented_by", false, null, false);
+        }
+    } else {
+        // update circle
+        await updateCircle(circle.id, circle);
+        let circleId = circle.id;
+        circle = await getCircle(circle.id);
+
+        // update connection to parent if changed
+        if (hasNewParent) {
+            if (oldParentId) {
+                let oldParent = await getCircle(oldParentId);
+                await deleteConnection(oldParent, currentCircle, "parent_of");
+                await deleteConnection(currentCircle, oldParent, "parented_by");
+            }
+
+            // add new parent
+            if (parent) {
+                await createConnection(parent, circle, "parent_of", false, null, false);
+                await createConnection(circle, parent, "parented_by", false, null, false);
+            }
+        }
+        // update connection to tags
+        if (circle.tags) {
+            // clear all connections to previous tags
+            if (currentCircle.tags) {
+                for (const tag of currentCircle.tags) {
+                    let connectionsCircleToTag = await getAllConnections(circleId, tag.id, "connected_mutually_to");
+                    if (connectionsCircleToTag) {
+                        for (const connection of connectionsCircleToTag) {
+                            await deleteConnection(connection.source, connection.target, "connected_mutually_to");
+                        }
+                    }
+                    let connectionsTagToCircle = await getAllConnections(tag.id, circleId, "connected_mutually_to");
+                    if (connectionsTagToCircle) {
+                        for (const connection of connectionsTagToCircle) {
+                            await deleteConnection(connection.source, connection.target, "connected_mutually_to");
+                        }
+                    }
+                }
+            }
+
+            // add connections to new tags
+            for (const tag of circle.tags) {
+                let tagId = tag.id;
+                await createConnection(circleId, tagId, "connected_mutually_to");
+                await createConnection(tagId, circleId, "connected_mutually_to");
+            }
+        }
+    }
+
+    // upsert embeddings
+    upsertCircleEmbedding(circle.id);
+    return circle;
+};
+
 // create circle
 app.post("/circles", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
@@ -1269,7 +1512,7 @@ app.get("/circles/:id/circles", async (req, res) => {
 
     try {
         // get similar circles through semantic search
-        let similarCircles = await semanticSearch(null, circleId, null, 6);
+        let similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event"], 6);
 
         // remove circle itself from similar circles
         similarCircles = similarCircles.filter((x) => x.id !== circleId);
@@ -1313,12 +1556,12 @@ app.get("/circles/:id/circles", async (req, res) => {
                 let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
                 if (mentionedCircle) {
                     // update last mentioned date
-                    if (chatMessage.sent_at > mentionedCircle.last_mentioned_at) {
-                        mentionedCircle.last_mentioned_at = chatMessage.sent_at;
+                    if (chatMessage.sent_at > mentionedCircle.mentioned_at) {
+                        mentionedCircle.mentioned_at = chatMessage.sent_at;
                     }
                 } else {
                     // add to mentioned circles
-                    mention.last_mentioned_at = chatMessage.sent_at;
+                    mention.mentioned_at = chatMessage.sent_at;
                     mentionedCircles.push(mention);
                 }
             }
@@ -2768,7 +3011,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
         localDateAndTime = getLocalDateTimeInTimezone(userData.timezone);
     }
     let systemMessagePreamble = localDateAndTime
-        ? `\n\nThe user's local date and time is ${localDateAndTime} (24 hour format).`
+        ? `\n\nThe user's local date and time is ${localDateAndTime} (24 hour format). The universal time is ${date.toISOString()}.`
         : `\n\nThe current date and time is ${date.toLocaleString()} (user's local time may differ).`;
     messages.push({ role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble });
 
@@ -2831,7 +3074,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
         functions: [
             {
                 name: "semanticSearch",
-                description: "Does a search among circles for users, circles and/or events that are semantically similar to the query.",
+                description: "Does a search among circles for users, circles, tags and/or events that are semantically similar to the query.",
                 parameters: {
                     type: "object",
                     properties: {
@@ -2843,33 +3086,40 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                             type: "array",
                             items: { type: "string" },
                             description:
-                                "Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: user, event, circle.",
+                                "Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: user, tag, event, circle.",
                         },
                         topK: { type: "number", description: "Number of results to return." },
                     },
                     required: ["query"],
                 },
             },
+            {
+                name: "createEvent",
+                description: "Creates a circle which represents an event scheduled at a specific time.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", description: "Name of event." },
+                        content: { type: "string", description: "Full description of event (markdown allowed)." },
+                        starts_at: {
+                            type: "string",
+                            description: "Start date and time of event in ISO 8601 format. Please specify in Coordinated Universal Time (UTC).",
+                        },
+                        duration: { type: "number", description: "Duration of event in minutes." },
+                        is_all_day: { type: "boolean", description: "If event is all day." },
+                        parent_circle_id: { type: "string", description: "Id of circle (user, circle, event ,etc) that event belongs to." },
+                        tags: {
+                            type: "array",
+                            items: { type: "string" },
+                            description: "Array of tags signifying causes, topics or values the event is associated with.",
+                        },
+                        rrule: { type: "string", description: "Recurring rule for event in RFC 5545 format." },
+                    },
+                    required: ["name", "starts_at"],
+                },
+            },
         ],
         function_call: "auto",
-        // functions: [
-        //     {
-        //         name: "getMemberData",
-        //         description: `Hämtar lista med Basinkomstpartiets medlemmar på co:do plattformen och dess publika information, samt allmän information om partiets medlemskap.`,
-        //         parameters: { type: "object", properties: {} },
-        //     },
-        //     {
-        //         name: "getPartyHistory",
-        //         description: `Hämtar information om partiets historik.`,
-        //         parameters: { type: "object", properties: {} },
-        //     },
-        //     {
-        //         name: "getPartyPolicy_UbiFinancing",
-        //         description: `Hämtar information om partiets ställningstagande kring finansiering av basinkomst.`,
-        //         parameters: { type: "object", properties: {} },
-        //     },
-        // ],
-        // function_call: "auto",
     };
 
     let functionCalls = 0;
@@ -2879,7 +3129,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
 
     try {
         while (functionCalls < 4) {
-            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
 
@@ -2890,12 +3140,13 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                 request.messages.push(messageData);
 
                 let functionName = messageData.function_call.name;
+                let parametersString = messageData.function_call.arguments;
+                let parameters = parametersString ? JSON.parse(parametersString) : null;
+                let results = null;
+
                 if (functionName === "semanticSearch") {
                     // get parameters
-                    let parametersString = messageData.function_call.arguments;
-                    let results = "no results";
-                    if (parametersString) {
-                        let parameters = JSON.parse(parametersString);
+                    if (parameters) {
                         let query = parameters.query;
                         let filterTypes = parameters.filterTypes ?? [];
                         let topK = parameters.topK ?? 5;
@@ -2906,33 +3157,56 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                         for (var k = 0; k < searchResults.length; ++k) {
                             let searchResult = searchResults[k];
                             searchResultsMessage += `${getCircleText(searchResult, true)}\n\n`;
+                            mentions.mentioned_at = date;
                             mentions.push(searchResult);
                         }
                         results = searchResultsMessage;
+                    } else {
+                        results = "no results";
                     }
+                } else if (functionName === "createEvent") {
+                    if (parameters) {
+                        let circleReq = { ...parameters, type: "event" };
 
-                    request.messages.push({ role: "function", name: "semanticSearch", content: results });
+                        if (circleReq.content) {
+                            // if no description, use first part of content
+                            if (!circleReq.description) {
+                                circleReq.description = circleReq.content.substring(0, 150);
+                                if (circleReq.description.length >= 150) {
+                                    circleReq.description += "...";
+                                }
+                            }
+                        }
+                        // format tags
+                        if (circleReq.tags) {
+                            let tags = [];
+                            for (var n = 0; n < circleReq.tags.length; ++n) {
+                                let tag = circleReq.tags[n].trim();
+                                if (tag.length > 0) {
+                                    // if starts with # remove it
+                                    if (tag.startsWith("#")) {
+                                        tag = tag.substring(1);
+                                    }
+                                    tags.push({ name: tag, is_custom: true });
+                                }
+                            }
+                            circleReq.tags = tags;
+                        }
+
+                        //  create event
+                        let event = await upsertCircle(user.id, circleReq);
+                        if (event.errors) {
+                            results = `Failed to create event: ${JSON.stringify(event.errors)}`;
+                        } else {
+                            event.mentioned_at = date;
+                            mentions.push(event);
+                            results = `Created event [${event.name}](https://codo.earth/circles/${event.id})`;
+                        }
+                    }
                 }
 
-                // if (functionName === "getMemberData") {
-                //     const members = await fn_getMemberData(parentCircle.id);
-                //     request.messages.push({ role: "function", name: "getMembers", content: JSON.stringify(members) });
-                // } else if (functionName === "getPartyHistory") {
-                //     request.messages.push({
-                //         role: "function",
-                //         name: "getPartyHistory",
-                //         content:
-                //             "Basinkomstpartiet grundades 2018 och har uppstått som en reaktion på att inga av de etablerade partierna i Sverige för ett seriöst samtal om basinkomst eller medborgarlön. Trots att de många globala pilotprojekten och den samlade forskningen sedan 1960-talet visar på enorma samhälleliga och sociala fördelar direkt kopplade till ovillkorlig grundläggande ekonomisk trygghet, fortsätter Sveriges politiker att undvika frågan. Det är dags att basinkomst lyfts upp på den politiska agendan.",
-                //     });
-                // } else if (functionName === "getPartyPolicy_UbiFinancing") {
-                //     request.messages.push({
-                //         role: "function",
-                //         name: "getPartyPolicy_UbiFinancing",
-                //         content:
-                //             "Basinkomstpartiet är agnostisk till finansieringsmodell men vi vidhåller vid viktiga principer som att basinkomsten ska vara individuell, ovillkorad och universell. Basinkomstpartiet jobbar på att ta fram utgångsförslag. Basinkomstpartiet stöder alla varianter och förslag ledande till basinkomst. Från ett reformerat och förenklat socialförsäkringssystem via negativ inkomstskatt till “basic income” i sin rena form. Vi vill inte utesluta bra reformer och förslag. Den exakta nivån och de villkorade stöd som skall ersättas ger ofta förlamande och oändliga detalj-diskussioner, vilket vi vill undvika. Basinkomst skall vara så pass hög att man kan leva drägligt, vilket för närvarande innebär mellan 10-15 tusen kr/månad med en lägre nivå för barn.",
-                //     });
-                // }
-
+                // update message with AI response
+                request.messages.push({ role: "function", name: functionName, content: results });
                 ++functionCalls;
             } else {
                 message = messageData?.content;
@@ -2949,11 +3223,42 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
         openai_response: messageData ?? {},
         message: message ?? "No response.",
         mentions: mentions,
+        has_mentions: mentions.length > 0,
         sent_at: new Date(),
     });
 };
 
 //#region OpenAI functions
+
+const createEvent = async (authCallerId, name, content, starts_at, duration, is_all_day, parent_circle_id, tags, rrule) => {
+    // const date = new Date();
+    // const circleId = parent_circle_id;
+
+    // // create event
+    // let event = {
+    //     type: "event",
+    //     created_at: date,
+    //     name: name,
+    //     description: description,
+    //     starts_at: starts_at,
+    //     duration: duration,
+    //     is_all_day: is_all_day,
+    //     parent_circle_id: parent_circle_id,
+    //     tags: tags,
+    //     rrule: rrule,
+    // };
+
+    // // add event to circle
+    // const circleRef = db.collection("circles").doc();
+    // await circleRef.set(event);
+
+    // // add connection to circle
+    // const userDataRef = db.collection("circle_data").doc(circleId);
+    // await userDataRef.set({ connected_to: admin.firestore.FieldValue.arrayUnion(circleRef.id) }, { merge: true });
+
+    // return { id: circleRef.id, ...event };
+    return null;
+};
 
 const fn_getMemberData = async (circleId) => {
     const memberConnections = await getMemberConnections(circleId);

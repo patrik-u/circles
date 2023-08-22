@@ -1,6 +1,6 @@
 //#region imports
 import React, { useState, useEffect, useRef } from "react";
-import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade } from "@chakra-ui/react";
+import { Flex, Box, Text, Icon, HStack, VStack, useDisclosure, useOutsideClick, Fade, Tooltip } from "@chakra-ui/react";
 import axios from "axios";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import i18n from "i18n/Localization";
@@ -162,9 +162,11 @@ const Messages = () => {
         };
     }, [signInStatus.signedIn, user?.id, chatCircle]);
 
+    if (!user?.id) return null;
+
     return (
-        user?.id && (
-            <>
+        <>
+            <Tooltip label={i18n.t("Chat messages")} placement="bottom">
                 <Box position="relative">
                     <Flex
                         position="relative"
@@ -205,52 +207,51 @@ const Messages = () => {
                         </Box>
                     )}
                 </Box>
+            </Tooltip>
+            {messagesIsOpen && (
+                <Box
+                    className="messagesBoxParent"
+                    ref={messagesBoxRef}
+                    zIndex="255"
+                    position="absolute"
+                    display={messagesIsOpen ? "flex" : "none"}
+                    borderRadius={{ base: "20px", md: "20px" }}
+                    overflow="hidden"
+                    top={{ base: "43", md: "83px" }}
+                    right={{ base: "0px", md: "5px" }}
+                    width={{ base: "100%", md: "400px" }}
+                    height="calc(100vh - 88px)"
+                >
+                    <Scrollbars autoHide>
+                        <Fade in={messagesIsOpen} height="100%" width="100%">
+                            <Box className="messagesBox" height="100%" width="100%">
+                                <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
+                                    {/* {messages.length <= 0 && ( */}
+                                    <Text fontWeight="500" fontSize="20px" marginBottom="10px">
+                                        {i18n.t("Messages")}
+                                    </Text>
+                                    {/* )} */}
 
-                {messagesIsOpen && (
-                    <Box
-                        className="messagesBoxParent"
-                        ref={messagesBoxRef}
-                        zIndex="255"
-                        position="absolute"
-                        display={messagesIsOpen ? "flex" : "none"}
-                        borderRadius={{ base: "20px", md: "20px" }}
-                        overflow="hidden"
-                        top={{ base: "43", md: "83px" }}
-                        right={{ base: "0px", md: "5px" }}
-                        width={{ base: "100%", md: "400px" }}
-                        height="calc(100vh - 88px)"
-                    >
-                        <Scrollbars autoHide>
-                            <Fade in={messagesIsOpen} height="100%" width="100%">
-                                <Box className="messagesBox" height="100%" width="100%">
-                                    <Flex flexDirection="column" marginLeft="10px" marginRight="10px" marginTop="10px">
-                                        {/* {messages.length <= 0 && ( */}
-                                        <Text fontWeight="500" fontSize="20px" marginBottom="10px">
-                                            {i18n.t("Messages")}
-                                        </Text>
-                                        {/* )} */}
+                                    {messages.length <= 0 && <Text>{i18n.t("no messages")}</Text>}
 
-                                        {messages.length <= 0 && <Text>{i18n.t("no messages")}</Text>}
-
-                                        {messages.map((message) => (
-                                            <MessageNotification
-                                                key={message.id}
-                                                notification={message}
-                                                onClick={() => {
-                                                    messagesOnClose();
-                                                    openCircle(navigate, { id: message.circle_id, host: "circles" }, "chat");
-                                                    setToggleWidgetEvent({ name: "chat", value: true });
-                                                }}
-                                            />
-                                        ))}
-                                    </Flex>
-                                </Box>
-                            </Fade>
-                        </Scrollbars>
-                    </Box>
-                )}
-            </>
-        )
+                                    {messages.map((message) => (
+                                        <MessageNotification
+                                            key={message.id}
+                                            notification={message}
+                                            onClick={() => {
+                                                messagesOnClose();
+                                                openCircle(navigate, { id: message.circle_id, host: "circles" }, "chat");
+                                                setToggleWidgetEvent({ name: "chat", value: true });
+                                            }}
+                                        />
+                                    ))}
+                                </Flex>
+                            </Box>
+                        </Fade>
+                    </Scrollbars>
+                </Box>
+            )}
+        </>
     );
 };
 

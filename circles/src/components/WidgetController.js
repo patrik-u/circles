@@ -22,6 +22,7 @@ import {
     MenuList,
     MenuItem,
     Fade,
+    Tooltip,
     useDisclosure,
     useOutsideClick,
 } from "@chakra-ui/react";
@@ -247,6 +248,25 @@ const WidgetController = () => {
         setNewCirclePopup({ circle });
     };
 
+    const getTooltip = (component) => {
+        switch (component) {
+            case "discover":
+                return `Show all circles relevant to ${circle?.name}`;
+            case "chat":
+                return `Chat for ${circle?.name}`;
+            case "video":
+                return `Enter video conference in ${circle?.name}`;
+            case "calendar":
+                return `Show calendar for ${circle?.name}`;
+            case "admin":
+                return `Show admin panel for ${circle?.name}`;
+            case "settings":
+                return `Show settings for ${circle?.name}`;
+            default:
+                return "";
+        }
+    };
+
     // useEffect(() => {
     //     console.log("previewing circle", previewCircleId);
     //     if (!previewCircleId) {
@@ -277,24 +297,28 @@ const WidgetController = () => {
                     {menuItems
                         .filter((x) => shouldShowMenuItem(x))
                         .map((component) => (
-                            <button
-                                key={component}
-                                className={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
-                                    toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
-                                }`}
-                                onClick={() => toggleWidget(component)}
-                            >
-                                {component.charAt(0).toUpperCase() + component.slice(1)}
-                            </button>
+                            <Tooltip key={component} label={getTooltip(component)} placement="bottom">
+                                <button
+                                    key={component}
+                                    className={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
+                                        toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
+                                    }`}
+                                    onClick={() => toggleWidget(component)}
+                                >
+                                    {component.charAt(0).toUpperCase() + component.slice(1)}
+                                </button>
+                            </Tooltip>
                         ))}
-                    <button
-                        className={`${
-                            isMobile ? "px-3" : "px-6"
-                        } py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
-                        onClick={() => openCreateCircle()}
-                    >
-                        {isMobile ? "+" : "+ Create"}
-                    </button>
+                    <Tooltip label="Create a new circle" placement="bottom">
+                        <button
+                            className={`${
+                                isMobile ? "px-3" : "px-6"
+                            } py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
+                            onClick={() => openCreateCircle()}
+                        >
+                            {isMobile ? "+" : "+ Create"}
+                        </button>
+                    </Tooltip>
                 </div>
             </div>
 

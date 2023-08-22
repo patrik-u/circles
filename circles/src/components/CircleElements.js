@@ -537,7 +537,7 @@ export const NewSessionButton = ({ circle, onClick, ...props }) => {
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
     const inHeader = true;
-    const height = "28px";
+    const height = "24px";
 
     return (
         <Tooltip label="Create new chat session" aria-label="A tooltip">
@@ -587,6 +587,15 @@ export const CircleLink = ({ href, mentions, children, ...props }) => {
         return circle;
     }, [href, mentions]);
 
+    const circleTitle = useMemo(() => {
+        if (!circle) return null;
+        if (!children) return null;
+
+        let title = children.toString();
+        if (title.includes(circle.name)) return null;
+        return title + ": ";
+    }, [circle, children]);
+
     if (circle) {
         return (
             <Popover trigger="hover" gutter="0" isLazy>
@@ -599,6 +608,7 @@ export const CircleLink = ({ href, mentions, children, ...props }) => {
                         ml="2px"
                         onClick={() => openAboutCircle(circle, setToggleAbout)}
                     >
+                        {circleTitle && <Text marginRight="5px">{circleTitle}</Text>}
                         <CirclePicture circle={circle} size={30} hasPopover={false} />
                         <Text color="blue" ml="5px">
                             {circle.name}
@@ -1424,33 +1434,35 @@ export const OpenButton = ({ circle, ...props }) => {
     const height = "28px";
 
     return (
-        <Flex
-            height={height}
-            borderRadius="25px"
-            lineHeight="0"
-            backgroundColor="#389bf8"
-            color="white"
-            onClick={(event) => {
-                event.stopPropagation();
-                openCircle(navigate, circle);
-            }}
-            position="relative"
-            align="center"
-            justifyContent="center"
-            _hover={{
-                backgroundColor: "var(--chakra-colors-blue-600);",
-            }}
-            _active={{
-                backgroundColor: "var(--chakra-colors-blue-700);",
-            }}
-            cursor="pointer"
-            padding="0px 5px 0px 5px"
-            {...props}
-        >
-            <Text fontWeight="700" fontSize="13px" marginLeft="4px" marginRight="4px">
-                {i18n.t(`Open`)}
-            </Text>
-        </Flex>
+        <Tooltip label={"Enter into circle"} aria-label="A tooltip">
+            <Flex
+                height={height}
+                borderRadius="25px"
+                lineHeight="0"
+                backgroundColor="#389bf8"
+                color="white"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    openCircle(navigate, circle);
+                }}
+                position="relative"
+                align="center"
+                justifyContent="center"
+                _hover={{
+                    backgroundColor: "var(--chakra-colors-blue-600);",
+                }}
+                _active={{
+                    backgroundColor: "var(--chakra-colors-blue-700);",
+                }}
+                cursor="pointer"
+                padding="0px 5px 0px 5px"
+                {...props}
+            >
+                <Text fontWeight="700" fontSize="13px" marginLeft="4px" marginRight="4px">
+                    {i18n.t(`Open`)}
+                </Text>
+            </Flex>
+        </Tooltip>
     );
 };
 

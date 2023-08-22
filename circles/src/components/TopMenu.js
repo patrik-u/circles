@@ -1,6 +1,6 @@
 //#region imports
 import React from "react";
-import { Flex, Text, Box, Image, HStack } from "@chakra-ui/react";
+import { Flex, Text, Box, Image, HStack, Tooltip } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
 import Notifications from "components/Notifications";
 import Messages from "components/Messages";
@@ -34,21 +34,23 @@ export const TopMenu = ({ onLogoClick }) => {
     return (
         <>
             <Flex position="absolute" align="center" flexBasis={height} height={height} maxHeight={height} width="100%" zIndex="154" pointerEvents="none">
-                <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
-                    <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
-                    {circle?.type !== "set" && (
-                        <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
-                            {circle?.name}
-                        </Text>
-                    )}
-                    {circle?.type === "set" && (
-                        <Text fontSize={setTitleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={2}>
-                            {circle[circle.circle_ids[0]].name} &
-                            <br />
-                            {circle[circle.circle_ids[1]].name}
-                        </Text>
-                    )}
-                </Flex>
+                <Tooltip label="Click to switch circle" placement="bottom">
+                    <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
+                        <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
+                        {circle?.type !== "set" && (
+                            <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
+                                {circle?.name}
+                            </Text>
+                        )}
+                        {circle?.type === "set" && (
+                            <Text fontSize={setTitleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={2}>
+                                {circle[circle.circle_ids[0]].name} &
+                                <br />
+                                {circle[circle.circle_ids[1]].name}
+                            </Text>
+                        )}
+                    </Flex>
+                </Tooltip>
                 <AboutButton circle={circle} marginLeft="10px" pointerEvents="auto" />
                 <SettingsButton circle={circle} pointerEvents="auto" />
 

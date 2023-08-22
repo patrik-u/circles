@@ -1,7 +1,16 @@
 //#region imports
 import React, { useState, useEffect } from "react";
 import { Box, Flex, HStack, VStack, Text, Icon, Link } from "@chakra-ui/react";
-import { getDistanceString, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, isPastEvent, getEventTime, isConnected } from "components/Helpers";
+import {
+    getDistanceString,
+    getDateAndTimeLong,
+    fromFsDate,
+    getDateLong,
+    singleLineEllipsisStyle,
+    isPastEvent,
+    getEventTime,
+    isConnected,
+} from "components/Helpers";
 import {
     CirclePicture,
     CircleTags,

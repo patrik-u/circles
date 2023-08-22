@@ -46,7 +46,18 @@ import { Scrollbars } from "react-custom-scrollbars-2";
 import { Scrollbar } from "react-scrollbars-custom";
 import EmojiPicker from "components/EmojiPicker";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, circleAtom, chatCircleAtom, circlesAtom, signInStatusAtom, mentionedCirclesAtom } from "components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    circleAtom,
+    chatCircleAtom,
+    circlesFilterAtom,
+    toggleWidgetEventAtom,
+    circlesAtom,
+    signInStatusAtom,
+    mentionedCirclesAtom,
+} from "components/Atoms";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
 import { AboutButton, CircleLink } from "components/CircleElements";
@@ -465,6 +476,8 @@ export const CircleChat = ({ circle }) => {
     const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
     const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input message
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
 
     //SCROLL123
     // useEffect(() => {
@@ -576,7 +589,19 @@ export const CircleChat = ({ circle }) => {
                 .flat();
 
             const newMentions = allMentions.filter((mention) => !mentionedCircles.find((x) => x.id === mention.id));
-            setMentionedCircles([...mentionedCircles, ...newMentions]);
+
+            // if there are new mentions and last message is from AI then open the discover tab with the new mentions
+            if (newMentions.length > 0) {
+                setMentionedCircles([...mentionedCircles, ...newMentions]);
+
+                // if last message is from AI open discover panel
+                const lastMessage = newChatMessages[newChatMessages.length - 1];
+                if (lastMessage.user?.type === "ai_agent") {
+                    // open discover in mentioned category
+                    setCirclesFilter({ ...circlesFilter, categories: ["mentioned"] });
+                    setToggleWidgetEvent({ name: "discover", value: true });
+                }
+            }
             //chatMessagesUpdated(newChatMessages);
         });
 
@@ -585,7 +610,7 @@ export const CircleChat = ({ circle }) => {
                 unsubscribeGetChatMessages();
             }
         };
-    }, [circle?.id, user?.id, isAuthorized, chatSession, isAiRelationSet]);
+    }, [circle?.id, user?.id, isAuthorized, chatSession, isAiRelationSet, setMentionedCircles]);
 
     useEffect(() => {
         let circleId = circle?.id;

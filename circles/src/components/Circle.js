@@ -61,6 +61,7 @@ import CircleCreateNew from "components/settings/CircleCreateNew";
 import CircleVideo from "components/CircleVideo";
 import WidgetController from "components/WidgetController";
 import NavigationPanel from "components/NavigationPanel";
+import config from "Config";
 //#endregion
 
 export const globalCircle = {
@@ -74,7 +75,7 @@ export const globalCircle = {
     type: "circle",
     created: new Date(),
     created_by: "global",
-    chat_circle_ids: ["tN05inp7an26vZMaAAWw"],
+    chat_circle_ids: [config.ai_agent],
     updated: new Date(),
     updated_by: "global",
     connections: [],

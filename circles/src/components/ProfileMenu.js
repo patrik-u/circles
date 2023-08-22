@@ -1,6 +1,6 @@
 //#region imports
 import React from "react";
-import { Menu, MenuButton, MenuDivider, MenuItem, Button, Center, Avatar, MenuList, useDisclosure, Image } from "@chakra-ui/react";
+import { Menu, MenuButton, MenuDivider, MenuItem, Button, Center, Avatar, MenuList, useDisclosure, Image, Tooltip } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import { routes, openCircle } from "components/Navigation";
@@ -42,24 +42,26 @@ export const ProfileMenu = () => {
                 width={circlePictureSize}
                 height={circlePictureSize}
             >
-                <MenuButton
-                    as={Button}
-                    rounded={"full"}
-                    variant={"link"}
-                    cursor={"pointer"}
-                    width={circlePictureSize}
-                    height={circlePictureSize}
-                    margin="0px"
-                    padding="0px"
-                >
-                    <Image
-                        src={getImageKitUrl(user?.picture ?? defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
+                <Tooltip label={i18n.t("Profile menu")} placement="bottom">
+                    <MenuButton
+                        as={Button}
+                        rounded={"full"}
+                        variant={"link"}
+                        cursor={"pointer"}
                         width={circlePictureSize}
                         height={circlePictureSize}
-                        borderRadius="50%"
-                        fallbackSrc={getImageKitUrl(defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
-                    />
-                </MenuButton>
+                        margin="0px"
+                        padding="0px"
+                    >
+                        <Image
+                            src={getImageKitUrl(user?.picture ?? defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
+                            width={circlePictureSize}
+                            height={circlePictureSize}
+                            borderRadius="50%"
+                            fallbackSrc={getImageKitUrl(defaultUserPicture, circlePictureSizeInt, circlePictureSizeInt)}
+                        />
+                    </MenuButton>
+                </Tooltip>
                 <MenuList alignItems={"center"} borderRadius="20" zIndex="60">
                     <br />
                     <Center>
