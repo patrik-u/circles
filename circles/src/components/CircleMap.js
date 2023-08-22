@@ -45,7 +45,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         // longitude: 10.4035224563641,
         // latitude: 11.393780175539534,
         zoom: 1.8,
-        bearing: 10,
+        // bearing: 10,
     };
 
     const [, setIsMapInitialized] = useState(false);
