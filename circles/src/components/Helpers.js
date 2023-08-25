@@ -22,6 +22,7 @@ export const getDefaultCirclePicture = (type) => {
         case "event":
             return "/default-event-picture.png";
         default:
+        case "project":
         case "circle":
             return "/default-circle-picture.png";
         case "user":
@@ -531,6 +532,7 @@ export const getConnectLabel = (circleType, connectType) => {
         case "connected_mutually_to":
             switch (circleType) {
                 default:
+                case "project":
                 case "circle":
                     return i18n.t("Member");
                 case "user":

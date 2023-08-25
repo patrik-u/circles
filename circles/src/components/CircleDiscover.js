@@ -88,6 +88,9 @@ const CircleDiscover = ({ onClose, ...props }) => {
             case "events":
                 types = ["event"];
                 break;
+            case "projects":
+                types = ["project"];
+                break;
             default:
             case "all":
                 types = null;
@@ -166,6 +169,8 @@ const CircleDiscover = ({ onClose, ...props }) => {
                 return "Show circles";
             case "Events":
                 return "Show events";
+            case "Projects":
+                return "Show projects";
             default:
             case "All":
                 return "Show all types of circles";
@@ -235,6 +240,7 @@ const CircleDiscover = ({ onClose, ...props }) => {
                     <FilterButton label="Users" isActive={circlesFilter?.types?.includes("user")} />
                     <FilterButton label="Circles" isActive={circlesFilter?.types?.includes("circle")} />
                     <FilterButton label="Events" isActive={circlesFilter?.types?.includes("event")} />
+                    <FilterButton label="Projects" isActive={circlesFilter?.types?.includes("project")} />
                 </ButtonGroup>
                 <Box flexGrow="1" />
                 <LiveButton />

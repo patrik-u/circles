@@ -43,6 +43,7 @@ const configs = {
         algoliaCirclesIndex: "staging_circles",
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        ai_agent: "tN05inp7an26vZMaAAWw",
     },
     circles_prod: {
         environment: "prod",
@@ -64,6 +65,7 @@ const configs = {
         algoliaCirclesIndex: "circles",
         oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        ai_agent: "tN05inp7an26vZMaAAWw",
     },
     circles_devprod: {
         environment: "devprod",
@@ -85,6 +87,7 @@ const configs = {
         algoliaCirclesIndex: "circles",
         oneSignalAppId: "eaedf76e-ff64-4261-995b-5c6bdafb6548",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
+        ai_agent: "tN05inp7an26vZMaAAWw",
     },
     codo_devprod: {
         firebase: {

@@ -62,6 +62,7 @@ import CircleVideo from "components/CircleVideo";
 import WidgetController from "components/WidgetController";
 import NavigationPanel from "components/NavigationPanel";
 import config from "Config";
+import CircleGlobusMap from "components/CircleGlobusMap";
 //#endregion
 
 export const globalCircle = {
@@ -285,6 +286,7 @@ export const Circle = ({ isGlobal }) => {
                 {/* ONB123 */}
                 <Flex flexDirection="column" position="relative">
                     <Box width="100%" height={coverHeight + "px"} position="relative">
+                        {/* <CircleGlobusMap /> */}
                         <CircleMap height={coverHeight} />
                     </Box>
 

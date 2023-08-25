@@ -1224,11 +1224,11 @@ export const CirclePicture = ({
     const imageOffset = circleBorderColors.length * borderWidth;
 
     const isHexagon = (inCircle) => {
-        return inCircle?.type !== "user";
+        return inCircle?.type === "user";
     };
 
     const getShapeStyle = (inCircle) => {
-        if (inCircle?.type === "user") {
+        if (!isHexagon(inCircle)) {
             // circle
             return {
                 borderRadius: "50%",
@@ -1644,6 +1644,7 @@ export const getConnectLabel = (circleType, connectType) => {
         case "connected_mutually_to":
             switch (circleType) {
                 default:
+                case "project":
                 case "circle":
                     return i18n.t("Member");
                 case "user":
@@ -1684,6 +1685,7 @@ export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true,
         } else if (isConnected(userData, circle?.id, ["connected_mutually_to"])) {
             switch (circle?.type) {
                 default:
+                case "project":
                 case "circle":
                     return i18n.t("Member");
                 case "user":

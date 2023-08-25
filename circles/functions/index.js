@@ -45,8 +45,8 @@ const db = admin.firestore();
 
 const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
 
-const circleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent"];
-const indexCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "user"];
+const createCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "document", "project"]; // circle types that can be created by users
+const indexCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "user", "document", "project"]; // circle types that are indexed in vector database for semantic search
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -315,7 +315,11 @@ const upsertCirclesEmbeddings = async (circles) => {
             continue;
         }
 
-        let embeddingRequest = { circle: { id: circle.id, name: circle.name, type: circle.type }, embedding: null, text: null };
+        let embeddingRequest = {
+            circle: { id: circle.id, name: circle.name, type: circle.type, parent_id: circle.parent_circle?.id },
+            embedding: null,
+            text: null,
+        };
 
         // create textual representation of circle
         let text = getCircleText(circle);
@@ -333,7 +337,12 @@ const upsertCirclesEmbeddings = async (circles) => {
 
         // insert embeddings into pinecone
         pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
-            return { id: x.circle.id, metadata: { name: x.circle.name, type: x.circle.type }, values: embeddings[i] };
+            let metadata = { id: x.circle.id, name: x.circle.name, type: x.circle.type };
+            if (x.circle.parent_id) {
+                // id of the parent circle
+                metadata.parent_id = x.circle.parent_id;
+            }
+            return { id: x.circle.id, metadata: metadata, values: embeddings[i] };
         });
 
         // add 250 vectors at a time to pinecone
@@ -909,7 +918,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
     if (circleReq.type) {
-        if (!circleTypes.includes(circleReq.type)) {
+        if (!createCircleTypes.includes(circleReq.type)) {
             errors.type = "Invalid circle type";
         } else {
             circle.type = circleReq.type;
@@ -1120,7 +1129,7 @@ app.post("/circles", auth, async (req, res) => {
         errors.name = "Name must be between 1 and 50 characters";
     }
 
-    if (!circleTypes.includes(req.body.type)) {
+    if (!createCircleTypes.includes(req.body.type)) {
         errors.type = "Invalid circle type";
     }
 
@@ -1511,8 +1520,10 @@ app.get("/circles/:id/circles", async (req, res) => {
     const circleId = req.params.id;
 
     try {
+        // TODO when filtering for a specific category and type we can make the semantic search more specific to that as to yield more relevant results
+
         // get similar circles through semantic search
-        let similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event"], 6);
+        let similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event", "project", "document"], 11);
 
         // remove circle itself from similar circles
         similarCircles = similarCircles.filter((x) => x.id !== circleId);

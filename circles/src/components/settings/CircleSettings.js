@@ -45,6 +45,7 @@ const CircleSettings = ({ onClose }) => {
             case "link":
             case "room":
             case "circle":
+            case "project":
             case "post":
             case "event":
                 return [
