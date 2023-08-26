@@ -103,9 +103,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             <VStack align="start" spacing="0px">
                                                                 <Text fontWeight="700">{i18n.t("Document")}</Text>
                                                                 <Text textAlign="left">
-                                                                    {i18n.t(
-                                                                        "Written material that provides information. It can be a code of conduct, constitution & bylaws, meeting minutes, proposal, manifesto, party program, etc."
-                                                                    )}
+                                                                    {i18n.t("Code of conduct, constitution & bylaws, meeting minutes, manifesto, etc.")}
                                                                 </Text>
                                                             </VStack>
                                                         </HStack>
@@ -153,7 +151,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             </HStack>
                                                         </Radio>
                                                     )} */}
-
+                                                    {/* 
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="tag">
                                                             <HStack spacing="10px">
@@ -164,7 +162,7 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                                 </VStack>
                                                             </HStack>
                                                         </Radio>
-                                                    )}
+                                                    )} */}
                                                 </Stack>
                                             </RadioGroup>
                                             <FormErrorMessage>{form.errors.type}</FormErrorMessage>

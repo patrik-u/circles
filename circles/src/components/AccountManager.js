@@ -261,6 +261,7 @@ export const AccountManager = () => {
     }, [signInStatus, setSignInStatus, googleOneTapScript, googleOneTapDone]);
 
     useEffect(() => {
+        if (config.disableOnActive) return;
         if (!signInStatus.signedIn || !user?.id) return;
         if (userData?.incognito) return;
 

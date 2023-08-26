@@ -13,7 +13,7 @@ const configs = {
         },
         imageKitEndpoint: "https://ik.imagekit.io/circles/",
         googleId: "174159362871-juqvepnc0ej66ggdmfpbrt2483jtbkjj.apps.googleusercontent.com",
-        logLevel: 0, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
+        logLevel: -2, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
         algoliaId: "H6R3ISRTF9",
         algoliaSearchKey: "89840fecc26ff7698e9c7c6b08aa0475",
         algoliaCirclesIndex: "staging_circles",
@@ -21,6 +21,7 @@ const configs = {
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
         ai_agent: "tN05inp7an26vZMaAAWw",
+        disableOnActive: true,
     },
     circles_staging: {
         environment: "staging",

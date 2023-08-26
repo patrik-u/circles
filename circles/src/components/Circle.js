@@ -247,6 +247,7 @@ export const Circle = ({ isGlobal }) => {
     // }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
 
     useEffect(() => {
+        if (config.disableOnActive) return;
         if (!signInStatus.signedIn || !user?.id) return;
 
         try {

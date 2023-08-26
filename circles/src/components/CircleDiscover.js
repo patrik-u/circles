@@ -15,6 +15,7 @@ import CircleListItem, { CircleListItemNormal } from "./CircleListItem";
 import { openAboutCircle, openCircle } from "components/Navigation";
 import Lottie from "react-lottie";
 import liveAnimation from "assets/lottie/live.json";
+import { AiFillPropertySafety } from "react-icons/ai";
 //#endregion
 
 const LiveButton = () => {
@@ -91,6 +92,9 @@ const CircleDiscover = ({ onClose, ...props }) => {
             case "projects":
                 types = ["project"];
                 break;
+            case "documents":
+                types = ["document"];
+                break;
             default:
             case "all":
                 types = null;
@@ -142,7 +146,7 @@ const CircleDiscover = ({ onClose, ...props }) => {
         }
     };
 
-    const CategoryButton = ({ label, icon, isActive }) => (
+    const CategoryButton = ({ label, icon, isActive, ...AiFillPropertySafety }) => (
         <Tooltip label={getCategoryTooltipLabel(label)} aria-label="A tooltip">
             <Button
                 variant="ghost"
@@ -152,6 +156,7 @@ const CircleDiscover = ({ onClose, ...props }) => {
                 fontWeight={isActive ? "bold" : "normal"}
                 onClick={() => setActiveCategory(label.toLowerCase())}
                 _hover={{ borderColor: "blue.200", borderBottomWidth: "3px" }}
+                {...props}
             >
                 <VStack marginBottom="10px">
                     {showIcon && <Icon as={icon} boxSize={6} />}
@@ -171,15 +176,17 @@ const CircleDiscover = ({ onClose, ...props }) => {
                 return "Show events";
             case "Projects":
                 return "Show projects";
+            case "Documents":
+                return "Show documents";
             default:
             case "All":
                 return "Show all types of circles";
         }
     };
 
-    const FilterButton = ({ label, isActive }) => (
+    const FilterButton = ({ label, isActive, ...props }) => (
         <Tooltip label={getFilterTooltipLabel(label)} aria-label="A tooltip">
-            <Button size="sm" variant={isActive ? "solid" : "outline"} colorScheme="blue" onClick={() => setCircleTypeFilter(label.toLowerCase())}>
+            <Button size="sm" variant={isActive ? "solid" : "outline"} colorScheme="blue" onClick={() => setCircleTypeFilter(label.toLowerCase())} {...props}>
                 {label}
             </Button>
         </Tooltip>
@@ -234,15 +241,26 @@ const CircleDiscover = ({ onClose, ...props }) => {
                 <CategoryButton label="Mentioned" icon={MdChat} isActive={circlesFilter?.categories?.includes("mentioned")} />
                 <CategoryButton label="Search" icon={MdSearch} isActive={circlesFilter?.categories?.includes("search")} />
             </HStack>
+            <Flex flexDirection="row" align="center" mb={"0px"}>
+                {/* <ButtonGroup isAttached> */}
+                <FilterButton label="All" isActive={!circlesFilter?.types} borderRadius="7px 0px 0px 0px" borderRightWidth="0px" />
+                <FilterButton label="Users" isActive={circlesFilter?.types?.includes("user")} borderRadius="0px" borderRightWidth="0px" />
+                <FilterButton label="Circles" isActive={circlesFilter?.types?.includes("circle")} borderRadius="0px" borderRightWidth="0px" />
+                <FilterButton label="Events" isActive={circlesFilter?.types?.includes("event")} borderRadius="0px 7px 7px 0px" />
+                {/* </ButtonGroup> */}
+            </Flex>
             <Flex flexDirection="row" align="center">
                 <ButtonGroup isAttached>
-                    <FilterButton label="All" isActive={!circlesFilter?.types} />
-                    <FilterButton label="Users" isActive={circlesFilter?.types?.includes("user")} />
-                    <FilterButton label="Circles" isActive={circlesFilter?.types?.includes("circle")} />
-                    <FilterButton label="Events" isActive={circlesFilter?.types?.includes("event")} />
-                    <FilterButton label="Projects" isActive={circlesFilter?.types?.includes("project")} />
+                    <FilterButton
+                        label="Projects"
+                        isActive={circlesFilter?.types?.includes("project")}
+                        borderRadius="0px 0px 0px 7px"
+                        borderRightWidth="0px"
+                        borderTopWidth="0px"
+                    />
+                    <FilterButton label="Documents" isActive={circlesFilter?.types?.includes("document")} borderRadius="0px 0px 7px 0px" borderTopWidth="0px" />
                 </ButtonGroup>
-                <Box flexGrow="1" />
+                <Box flexGrow="1"></Box>
                 <LiveButton />
             </Flex>
 

@@ -119,6 +119,10 @@ export const circlesAtom = atom((get) => {
             existingCircle.categories.push("similar");
             // TODO maybe add color
         }
+
+        if (!similarCircle.name) {
+            log("similarCircle: " + JSON.stringify(similarCircle, null, 2), 0, true, similarCircle);
+        }
     }
 
     // add connected circles not in list
