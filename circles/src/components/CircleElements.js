@@ -92,6 +92,8 @@ import { TbMessage } from "react-icons/tb";
 import { getPreciseDistance } from "geolib";
 import { BiInfoCircle } from "react-icons/bi";
 import { IoInformationCircle } from "react-icons/io5";
+import ReactMarkdown from "react-markdown";
+import gfm from "remark-gfm";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -1663,6 +1665,27 @@ export const getConnectLabel = (circleType, connectType) => {
         default:
             return i18n.t("Connected");
     }
+};
+
+export const CircleRichText = ({ mentions, children }) => {
+    return (
+        <ReactMarkdown
+            className="embedMarkdownContent"
+            //plugins={[gfm]}
+            remarkPlugins={[gfm]}
+            components={{
+                a: ({ node, ...props }) => {
+                    return (
+                        <CircleLink href={props.href} mentions={mentions}>
+                            {props.children}
+                        </CircleLink>
+                    );
+                },
+            }}
+        >
+            {children}
+        </ReactMarkdown>
+    );
 };
 
 export const ConnectButton = ({ circle, inHeader = false, fadeBackground = true, hoverFadeColor = "#ddd8db", inPreview, ...props }) => {

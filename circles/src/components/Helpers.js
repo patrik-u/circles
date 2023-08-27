@@ -17,6 +17,10 @@ export const getSetId = (circleAId, circleBId) => {
     return setId;
 };
 
+export const toISODate = (date) => {
+    return fromFsDate(date)?.toISOString()?.split("T")[0];
+};
+
 export const getDefaultCirclePicture = (type) => {
     switch (type) {
         case "event":
@@ -519,6 +523,18 @@ export const adminCircles = (userConnections) => {
     if (!userConnections) return [];
     let circles = userConnections.filter((x) => x.types?.includes("owner_of") || x.types?.includes("admin_of"));
     return circles?.map((x) => x.target) ?? [];
+};
+
+export const debounce = (func, wait) => {
+    let timeout;
+    return function () {
+        const context = this,
+            args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            func.apply(context, args);
+        }, wait);
+    };
 };
 
 export const getConnectLabel = (circleType, connectType) => {

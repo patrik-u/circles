@@ -38,6 +38,16 @@ export const messageTokenAtom = atom(null);
 export const circleSettingsAtom = atomWithStorage({});
 export const navigationPanelPinnedAtom = atomWithStorage(false);
 
+// document
+export const documentTreeAtom = atom([]);
+export const documentNodesAtom = atom([]);
+export const triggerSaveDocumentAtom = atom(null);
+export const saveIdAtom = atom(null);
+export const triggerAiTextCompletionAtom = atom(false);
+export const aiTextCompletionActiveAtom = atom(false);
+export const triggerClearEditorAtom = atom(false);
+export const includeParagraphsAtom = atomWithStorage(true);
+
 // circle atoms
 export const circleAtom = atom(null);
 export const circleDataAtom = atom(null);

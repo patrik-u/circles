@@ -205,3 +205,15 @@ export const allQuestions = [
         type: ["user"],
     },
 ];
+
+export const documentExplorerWidth = 250;
+export const documentExplorerWidthPx = documentExplorerWidth + "px";
+
+export const notesPanelWidth = 250;
+export const notesPanelWidthPx = notesPanelWidth + "px";
+
+export const activeNotePanelWidth = 400;
+export const activeNotePanelWidthPx = activeNotePanelWidth + "px";
+
+export const navigationMenuWidth = 250;
+export const navigationMenuWidthPx = navigationMenuWidth + "px";

@@ -29,6 +29,22 @@ const theme = extendTheme({
             body: {
                 bg: "",
             },
+            // "h1": {
+            //     fontSize: "2rem",
+            //     fontWeight: "bold",
+            //   },
+            //   "h2": {
+            //     fontSize: "1.75rem",
+            //     fontWeight: "semibold",
+            //   },
+            //   "h3": {
+            //     fontSize: "1.75rem",
+            //     fontWeight: "semibold",
+            //   },
+            //   "h4": {
+            //     fontSize: "1.75rem",
+            //     fontWeight: "semibold",
+            //   },
         }),
     },
 });

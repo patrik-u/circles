@@ -876,7 +876,7 @@ app.get("/circles", auth, (req, res) => {
         });
 });
 
-// updates or inserts circle data
+// updates or inserts circle
 const upsertCircle = async (authCallerId, circleReq) => {
     let errors = {};
     const date = new Date();
@@ -1002,6 +1002,15 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
 
+    if (circle.type === "document") {
+        if (circleReq.lexical_content) {
+            circle.lexical_content = circleReq.lexical_content;
+        }
+        if (circleReq.version) {
+            circle.version = circleReq.version;
+        }
+    }
+
     if (circleReq.is_public !== undefined) {
         circle.is_public = circleReq.is_public === true;
     }
@@ -1042,6 +1051,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
         circle.created_at = date;
         circle.created_by = authCallerId;
         circle.creator = user;
+        circle.updated_at = date;
+        circle.version = 1;
 
         // add circle to circles collection
         const circleRes = await db.collection("circles").add(circle);
@@ -1067,9 +1078,11 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     } else {
         // update circle
-        await updateCircle(circle.id, circle);
-        let circleId = circle.id;
-        circle = await getCircle(circle.id);
+        let circleId = circleReq.id;
+        circle.updated_at = date;
+        circle.version = (circle.version ?? 0) + 1;
+        await updateCircle(circleId, circle);
+        circle = await getCircle(circleId);
 
         // update connection to parent if changed
         if (hasNewParent) {
@@ -1119,141 +1132,69 @@ const upsertCircle = async (authCallerId, circleReq) => {
     return circle;
 };
 
+// updates or inserts circle_data
+const upsertCircleData = async (authCallerId, circleDataReq) => {
+    let circleData = {};
+    let errors = {};
+
+    // check if user is owner or admin and allowed to update circle data
+    const isAuthorized = await isAdminOf(authCallerId, circleDataReq.id);
+    if (!isAuthorized) {
+        errors.circle = "User is not authorized to update circle";
+        return { errors };
+    }
+
+    if (!circleDataReq) {
+        return circleData;
+    }
+
+    if (circleDataReq.email) {
+        circleData.email = circleDataReq.email;
+    }
+    if (circleDataReq.agreed_to_tnc) {
+        circleData.agreed_to_tnc = new Date();
+    }
+    if (circleDataReq.agreed_to_email_updates) {
+        circleData.agreed_to_email_updates = circleDataReq.agreed_to_email_updates;
+    }
+    if (circleDataReq.completed_guide) {
+        circleData.completed_guide = new Date();
+    }
+    if (circleDataReq.skipped_setting_location !== undefined) {
+        circleData.skipped_setting_location = circleDataReq.skipped_setting_location;
+    }
+    if (circleDataReq.incognito !== undefined) {
+        circleData.incognito = circleDataReq.incognito;
+    }
+    if (circleDataReq.ai) {
+        if (circleDataReq.ai.system_message) {
+            circleData.ai = { system_message: circleDataReq.ai.system_message };
+        }
+    }
+
+    if (Object.keys(circleData).length > 0) {
+        db.collection("circle_data").doc(circleDataReq.id).set(circleData, { merge: true });
+    }
+
+    return circleData;
+};
+
 // create circle
 app.post("/circles", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
 
-    // validate request
-    let errors = {};
-    if (!req.body.name || req.body.name.length > 50) {
-        errors.name = "Name must be between 1 and 50 characters";
-    }
-
-    if (!createCircleTypes.includes(req.body.type)) {
-        errors.type = "Invalid circle type";
-    }
-
-    let description = req.body.description;
-    if (req.body.description && req.body.description > 200) {
-        errors.description = "Description needs to be between 0 and 200 characters";
-    }
-
-    if (req.body.content && req.body.content > 10000) {
-        errors.content = "Event content needs to be between 0 and 10000 characters";
-    }
-
-    // verify user is admin of parent circle
-    let parentId = req.body.parentCircle?.id;
-    let parent = null;
-    if (parentId) {
-        parent = await getCircle(parentId);
-        if (!parent?.is_public) {
-            // check if user is owner or admin and allowed to set circle parent
-            const isAuthorized = await isAdminOf(authCallerId, parentId);
-            if (!isAuthorized) {
-                errors.parentCircle = "User is not authorized to set parent circle";
-            }
-        }
-    }
-
-    if (Object.keys(errors).length !== 0) {
-        return res.json(errors);
-    }
-
     try {
-        const date = new Date();
-        const batch = db.batch();
-        const circleRes = db.collection("circles").doc();
-        let user = await getCircle(authCallerId);
-
-        if (req.body.type === "tag") {
-            // only super admins can create tags currently
-            let isAuthorized = await isSuperAdmin(authCallerId);
-            if (!isAuthorized) {
-                return res.status(403).json({ error: "unauthorized" });
-            }
+        if (req.body.id) {
+            return res.json({ error: "Circle id must not be set" });
         }
 
-        // create circle
-        const newCircle = {
-            name: req.body.name,
-            description: description,
-            language: req.body.language,
-            created_by: authCallerId,
-            created_at: date,
-            type: req.body.type,
-            is_public: req.body.isPublic === true,
-            creator: user,
-        };
-
-        if (parentId) {
-            newCircle.parent_circle = parent;
+        //  create circle
+        let circle = await upsertCircle(authCallerId, req.body);
+        if (circle.errors) {
+            return res.json({ errors: circle.errors });
         }
 
-        if (req.body.content) {
-            newCircle.content = req.body.content;
-        }
-        if (req.body.content_text) {
-            newCircle.content_text = req.body.content_text;
-        }
-        if (req.body.type === "event") {
-            newCircle.time = req.body.time;
-            newCircle.starts_at = new Date(req.body.startsAt);
-            newCircle.is_all_day = req.body.isAllDay;
-        } else if (req.body.type === "tag") {
-            newCircle.text = "#" + newCircle.name;
-        }
-
-        // does circle content contain links?
-        let links = null;
-        if (newCircle.type === "post") {
-            links = linkify.match(newCircle.content_text);
-            if (links) {
-                newCircle.has_links = true;
-            }
-        }
-
-        batch.set(circleRes, newCircle);
-
-        // add create circle activity
-        const newActivity = {
-            user,
-            circle: { id: circleRes.id, ...newCircle },
-            date: date,
-            activity: "create_circle",
-        };
-
-        const activityRes = db.collection("activities").doc();
-        batch.set(activityRes, newActivity);
-        await batch.commit();
-
-        // add preview images to circle
-        if (links && newCircle.type === "post") {
-            await addPreviewImages(circleRes, links);
-        }
-
-        // add connections to circle
-        let circle = await getCircle(circleRes.id);
-        await createConnection(user, circle, "owner_of", false, null, false);
-        await createConnection(circle, user, "owned_by", false, null, false);
-        await createConnection(user, circle, "creator_of", false, null, false);
-        await createConnection(circle, user, "created_by", false, null, false);
-        await createConnection(user, circle, "connected_to", false, null, false);
-
-        if (circle.type !== "tag") {
-            await createConnection(user, circle, "connected_mutually_to", false, null, false);
-            await createConnection(circle, user, "connected_mutually_to", false, null, false);
-        }
-
-        if (parent) {
-            await createConnection(parent, circle, "parent_of", false, null, false);
-            await createConnection(circle, parent, "parented_by", false, null, false);
-        }
-
-        // upsert embeddings
-        upsertCircleEmbedding(circle);
-
-        return res.json({ message: "Circle created", circle: { id: circleRes.id, ...circle } });
+        return res.json({ message: "Circle created", circle: circle });
     } catch (error) {
         functions.logger.error("Error while creating circle:", error);
         return res.json({ error: error });
@@ -1271,208 +1212,18 @@ app.put("/circles/:id", auth, async (req, res) => {
         if (!doc.exists) {
             return res.json({ error: "circle not found" });
         }
-        let circle = { id: doc.id, ...doc.data(), activity: {} };
-        let type = circle.type;
 
-        // check if user is owner or admin and allowed to update circle data
-        const isAuthorized = await isAdminOf(authCallerId, circleId);
-        if (!isAuthorized) {
-            return res.status(403).json({ error: "unauthorized" });
+        // update circle
+        let circle = await upsertCircle(authCallerId, { id: circleId, ...req.body.circleData });
+        if (circle.errors) {
+            return res.json({ errors: circle.errors });
         }
 
-        // TODO validate input
-        // update circle data, for now just update cover and logo image
-        var circleData = {};
-        let errors = {};
-        if (req.body.circleData?.cover) {
-            circleData.cover = req.body.circleData.cover;
-        }
-        if (req.body.circleData?.picture) {
-            circleData.picture = req.body.circleData.picture;
-        }
-        if (req.body.circleData?.base) {
-            circleData.base = req.body.circleData.base;
-        }
-        if (req.body.circleData?.name) {
-            circleData.name = req.body.circleData.name;
-        }
-        if (req.body.circleData?.description) {
-            circleData.description = req.body.circleData.description;
-        }
-        if (req.body.circleData?.content) {
-            circleData.content = req.body.circleData.content;
-        }
-        if (req.body.circleData?.content_text) {
-            circleData.content_text = req.body.circleData.content_text;
-        }
-        if (req.body.circleData?.language) {
-            circleData.language = req.body.circleData.language;
-        }
-        if (req.body.circleData?.social_media) {
-            circleData.social_media = req.body.circleData.social_media;
-        }
-        if (req.body.circleData?.jitsi_id) {
-            circleData.jitsi_id = req.body.circleData.jitsi_id;
-        }
-
-        if (req.body.circleData?.tags) {
-            if (!Array.isArray(req.body.circleData.tags)) {
-                errors.tags = "Invalid tags data";
-            }
-            // TODO validate tags data
-            let validatedTags = [];
-            for (const tag of req.body.circleData.tags) {
-                if (tag.is_custom) {
-                    // create tag if it doesn't exist
-                    let newTag = await getTagByName(tag.name, true);
-                    validatedTags.push(newTag);
-                } else {
-                    validatedTags.push(tag);
-                }
-            }
-
-            circleData.tags = validatedTags;
-        }
-        if (req.body.circleData?.questions) {
-            // TODO validate questions data
-            circleData.questions = req.body.circleData.questions;
-            if (circleData.questions.question0?.to_delete) {
-                circleData.questions.question0 = admin.firestore.FieldValue.delete();
-            }
-            if (circleData.questions.question1?.to_delete) {
-                circleData.questions.question1 = admin.firestore.FieldValue.delete();
-            }
-            if (circleData.questions.question2?.to_delete) {
-                circleData.questions.question2 = admin.firestore.FieldValue.delete();
-            }
-        }
-        if (req.body.circleData?.funding) {
-            circleData.funding = req.body.circleData.funding;
-        }
-
-        if (type === "event") {
-            if (req.body.circleData?.startsAt) {
-                circleData.starts_at = new Date(req.body.circleData.startsAt);
-            }
-            if (req.body.circleData?.isAllDay) {
-                circleData.is_all_day = req.body.circleData.isAllDay;
-            }
-            if (req.body.circleData?.time) {
-                circleData.time = req.body.circleData.time;
-            }
-        }
-
-        if (req.body.circleData?.isPublic !== undefined) {
-            circleData.is_public = req.body.circleData?.isPublic === true;
-        }
-
-        // verify user is admin of parent circle
-        let oldParentId = circle.parent_circle?.id;
-        let hasNewParent = false;
-        let parent = null;
-        if (req.body.circleData?.parentCircle !== undefined) {
-            let parentId = req.body.circleData.parentCircle?.id;
-            if (parentId !== oldParentId) {
-                hasNewParent = true;
-                if (parentId) {
-                    // check if user is owner or admin and allowed to set circle parent
-                    parent = await getCircle(parentId);
-                    if (!parent.is_public) {
-                        const isAuthorized = await isAdminOf(authCallerId, parentId);
-                        if (!isAuthorized) {
-                            errors.parentCircle = "User is not authorized to set parent circle";
-                        }
-                    }
-                }
-                circleData.parent_circle = parent ?? false;
-            }
-        }
-
-        if (Object.keys(errors).length !== 0) {
-            return res.json(errors);
-        }
-
-        if (Object.keys(circleData).length > 0) {
-            // update circle
-            await updateCircle(circleId, circleData);
-
-            // upsert embeddings
-            upsertCircleEmbedding(circleId);
-
-            // update connection to parent if changed
-            if (hasNewParent) {
-                circle = await getCircle(circleId);
-                if (oldParentId) {
-                    let oldParent = await getCircle(oldParentId);
-                    await deleteConnection(oldParent, circle, "parent_of");
-                    await deleteConnection(circle, oldParent, "parented_by");
-                }
-
-                // add new parent
-                if (parent) {
-                    await createConnection(parent, circle, "parent_of", false, null, false);
-                    await createConnection(circle, parent, "parented_by", false, null, false);
-                }
-            }
-
-            // update connection to tags
-            if (circleData.tags) {
-                // clear all connections to previous tags
-                if (circle.tags) {
-                    for (const tag of circle.tags) {
-                        let connectionsCircleToTag = await getAllConnections(circleId, tag.id, "connected_mutually_to");
-                        if (connectionsCircleToTag) {
-                            for (const connection of connectionsCircleToTag) {
-                                await deleteConnection(connection.source, connection.target, "connected_mutually_to");
-                            }
-                        }
-                        let connectionsTagToCircle = await getAllConnections(tag.id, circleId, "connected_mutually_to");
-                        if (connectionsTagToCircle) {
-                            for (const connection of connectionsTagToCircle) {
-                                await deleteConnection(connection.source, connection.target, "connected_mutually_to");
-                            }
-                        }
-                    }
-                }
-
-                // add connections to new tags
-                for (const tag of circleData.tags) {
-                    let tagId = tag.id;
-                    await createConnection(circleId, tagId, "connected_mutually_to");
-                    await createConnection(tagId, circleId, "connected_mutually_to");
-                }
-            }
-        }
-
-        if (req.body.circlePrivateData) {
-            // TODO validate input
-            let circlePrivateData = {};
-            if (req.body.circlePrivateData.email) {
-                circlePrivateData.email = req.body.circlePrivateData.email;
-            }
-            if (req.body.circlePrivateData.agreed_to_tnc) {
-                circlePrivateData.agreed_to_tnc = new Date();
-            }
-            if (req.body.circlePrivateData.agreed_to_email_updates) {
-                circlePrivateData.agreed_to_email_updates = req.body.circlePrivateData.agreed_to_email_updates;
-            }
-            if (req.body.circlePrivateData.completed_guide) {
-                circlePrivateData.completed_guide = new Date();
-            }
-            if (req.body.circlePrivateData.skipped_setting_location !== undefined) {
-                circlePrivateData.skipped_setting_location = req.body.circlePrivateData.skipped_setting_location;
-            }
-            if (req.body.circlePrivateData.incognito !== undefined) {
-                circlePrivateData.incognito = req.body.circlePrivateData.incognito;
-            }
-            if (req.body.circlePrivateData.ai) {
-                if (req.body.circlePrivateData.ai.system_message) {
-                    circlePrivateData.ai = { system_message: req.body.circlePrivateData.ai.system_message };
-                }
-            }
-
-            if (Object.keys(circlePrivateData).length > 0) {
-                db.collection("circle_data").doc(circleId).set(circlePrivateData, { merge: true });
+        // update circle data
+        if (req.body.circleData) {
+            let circleData = await upsertCircleData(authCallerId, { id: circleId, ...req.body.circlePrivateData });
+            if (circleData.errors) {
+                return res.json({ errors: circleData.errors });
             }
         }
 

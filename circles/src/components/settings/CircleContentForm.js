@@ -92,7 +92,11 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
             ?.concat(user ? [{ ...user, value: user.id, label: user.name }] : []);
         setParentCircles(latestParentCircles);
 
-        setSelectedParentCircle(parentCircle && latestParentCircles.some((x) => x.id === parentCircle?.id) ? { ...parentCircle, value: parentCircle.id, label: parentCircle.name } : null);
+        setSelectedParentCircle(
+            parentCircle && latestParentCircles.some((x) => x.id === parentCircle?.id)
+                ? { ...parentCircle, value: parentCircle.id, label: parentCircle.name }
+                : null
+        );
         setIsInitialized(true);
     }, [user, userConnections, setSelectedParentCircle, selectedParentCircle, circle?.parent_circle, isInitialized, isUpdateForm]);
 
@@ -342,7 +346,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                 </Flex>
                             )}
 
-                            {!isGuideForm && isUpdateForm && (
+                            {(circle?.type === "document" || (!isGuideForm && isUpdateForm)) && (
                                 <Field name="description">
                                     {({ field, form }) => (
                                         <FormControl isInvalid={form.errors.description && form.touched.description}>
@@ -352,7 +356,9 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                             </Text>
                                             <InputGroup>
                                                 <Textarea {...field} id="description" resize="none" maxLength="200" />
-                                                {!form.errors.description && form.touched.description && <InputRightElement children={<CheckIcon color="green.500" />} />}
+                                                {!form.errors.description && form.touched.description && (
+                                                    <InputRightElement children={<CheckIcon color="green.500" />} />
+                                                )}
                                             </InputGroup>
                                             <FormErrorMessage>{form.errors.description}</FormErrorMessage>
                                         </FormControl>
@@ -360,23 +366,32 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                 </Field>
                             )}
 
-                            <Field name="content">
-                                {({ field, form }) => (
-                                    <FormControl isInvalid={form.errors.content && form.touched.content}>
-                                        <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
-                                        <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                            {richContentCharCount} / 100 000
-                                        </Text>
-                                        <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="100px" maxWidth="100%" />
-                                        <FormErrorMessage>{form.errors.content}</FormErrorMessage>
-                                    </FormControl>
-                                )}
-                            </Field>
+                            {circle?.type !== "document" && (
+                                <Field name="content">
+                                    {({ field, form }) => (
+                                        <FormControl isInvalid={form.errors.content && form.touched.content}>
+                                            <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
+                                            <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
+                                                {richContentCharCount} / 100 000
+                                            </Text>
+                                            <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="100px" maxWidth="100%" />
+                                            <FormErrorMessage>{form.errors.content}</FormErrorMessage>
+                                        </FormControl>
+                                    )}
+                                </Field>
+                            )}
 
                             {!isGuideForm && parentCircles && (
                                 <Flex flexDirection="column" width="100%">
                                     <Text textAlign="start">{i18n.t(`Parent circle`)}</Text>
-                                    <Select options={parentCircles} components={{ Option: CircleOption }} value={selectedParentCircle} onChange={handleChange} textAlign="start" isClearable={true} />
+                                    <Select
+                                        options={parentCircles}
+                                        components={{ Option: CircleOption }}
+                                        value={selectedParentCircle}
+                                        onChange={handleChange}
+                                        textAlign="start"
+                                        isClearable={true}
+                                    />
                                 </Flex>
                             )}
 
@@ -391,7 +406,10 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                             </FormControl>
                                         )}
                                     </Field>
-                                    <Tooltip label={`If public anyone can connect the ${circle?.type} and chat without approval from admins.`} aria-label="A tooltip">
+                                    <Tooltip
+                                        label={`If public anyone can connect the ${circle?.type} and chat without approval from admins.`}
+                                        aria-label="A tooltip"
+                                    >
                                         <Flex flexDirection="row" align="center" marginLeft="10px">
                                             <Icon as={IoInformationCircleSharp} color="#3182ce" />
                                         </Flex>
@@ -416,8 +434,20 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         </VStack>
                         <Box>
                             <HStack align="center" marginTop="10px">
-                                <Button colorScheme="blue" mr={3} borderRadius="25px" isLoading={isSubmitting} type="submit" lineHeight="0" width={isGuideForm ? "150px" : "auto"}>
-                                    {isUpdateForm === true ? (isGuideForm ? i18n.t("Continue") : i18n.t("Save")) : i18n.t(`Create [${circle.type}] and continue`)}
+                                <Button
+                                    colorScheme="blue"
+                                    mr={3}
+                                    borderRadius="25px"
+                                    isLoading={isSubmitting}
+                                    type="submit"
+                                    lineHeight="0"
+                                    width={isGuideForm ? "150px" : "auto"}
+                                >
+                                    {isUpdateForm === true
+                                        ? isGuideForm
+                                            ? i18n.t("Continue")
+                                            : i18n.t("Save")
+                                        : i18n.t(`Create [${circle.type}] and continue`)}
                                 </Button>
                                 {isUpdateForm !== true && (
                                     <Button variant="ghost" borderRadius="25px" onClick={onCancel} isDisabled={isSubmitting} lineHeight="0">

@@ -23,6 +23,7 @@ import {
     MenuItem,
     Fade,
     Tooltip,
+    ButtonGroup,
     useDisclosure,
     useOutsideClick,
 } from "@chakra-ui/react";
@@ -83,6 +84,7 @@ import CircleCalendar from "components/CircleCalendar";
 import { DisplayModeButtons } from "./CircleElements";
 import CircleAdmin from "components/CircleAdmin";
 import CircleDiscover from "./CircleDiscover";
+import CircleDocument from "components/document/CircleDocument";
 //#endregion
 
 // Responsible for showing widgets such as Chat, Calendar, Video, Map, etc.
@@ -93,10 +95,10 @@ const WidgetController = () => {
     const [circle] = useAtom(circleAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const [previewCircle, setPreviewCircle] = useAtom(previewCircleAtom);
+    const [, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["chat"]);
-    const menuItems = useMemo(() => ["discover", "chat", "video", "calendar", "admin"], []);
+    const menuItems = useMemo(() => ["discover", "chat", "document", "video", "calendar", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -187,33 +189,6 @@ const WidgetController = () => {
         setToggleWidgetEvent(false);
     }, [toggleWidgetEvent, setToggleWidgetEvent, toggleWidget]);
 
-    const getWidgetClass = (component) => {
-        // activities always on the left
-
-        // about always on the right
-        // video always on the right
-        // calendar always on the right
-
-        let index = toggledWidgets.indexOf(component);
-        let fixedSize = false;
-        if (!isMobile) {
-            fixedSize = (toggledWidgets[0] === component || toggledWidgets[2] === component) && toggledWidgets.length !== 1;
-            if (component === "chat") {
-                fixedSize = true;
-                index = 0;
-            } else if (component === "about") {
-                fixedSize = true;
-                index = 2;
-            } else if (component === "discover") {
-                fixedSize = true;
-                index = 2;
-            } else if (component === "video") {
-                index = 1;
-            }
-        }
-        return `flex flex-col ${fixedSize ? "min-w-96 w-96 flex-shrink-0" : "flex-grow"} order-${index + 1}`;
-    };
-
     const onDiscoverClose = () => {
         toggleWidget("discover", false);
     };
@@ -230,6 +205,10 @@ const WidgetController = () => {
         toggleWidget("calendar", false);
     };
 
+    const onDocumentClose = () => {
+        toggleWidget("document", false);
+    };
+
     const onAdminClose = () => {
         toggleWidget("admin", false);
     };
@@ -240,6 +219,9 @@ const WidgetController = () => {
         }
         if (item === "admin") {
             return circle?.id === "global" && user?.is_admin;
+        }
+        if (item === "document") {
+            return circle?.type === "document";
         }
         return true;
     };
@@ -262,6 +244,8 @@ const WidgetController = () => {
                 return `Show admin panel for ${circle?.name}`;
             case "settings":
                 return `Show settings for ${circle?.name}`;
+            case "document":
+                return `Show and edit document ${circle?.name}`;
             default:
                 return "";
         }
@@ -290,60 +274,71 @@ const WidgetController = () => {
     // color: white
     // selected: #1e5785
 
+    const WidgetButton = ({ component, children, onClick = null, ...props }) => {
+        return (
+            <Button
+                py={1}
+                px={6}
+                color="#d4d4d4"
+                fontSize="14px"
+                borderRadius="30px"
+                height="30px"
+                fontWeight={"400"}
+                backgroundColor={toggledWidgets.includes(component) ? "#314b8f" : "#3c3d42"}
+                _hover={{
+                    backgroundColor: "#3175ad",
+                }}
+                onClick={onClick ?? (() => toggleWidget(component))}
+                {...props}
+            >
+                {children ?? component.charAt(0).toUpperCase() + component.slice(1)}
+            </Button>
+        );
+    };
+
     return (
-        <div className={`flex flex-col h-screen w-full z-1 absolute pointer-events-none`}>
-            <div className={`pt-5 pr-1 pl-1 ${isMobile ? "relative" : "absolute"} w-full pointer-events-auto`}>
-                <div className="flex justify-center flex-wrap gap-1" style={{ marginTop: isMobile ? "30px" : "" }}>
+        <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="1" pointerEvents="none">
+            <Box p={5} position={isMobile ? "relative" : "absolute"} w="full" pointerEvents="auto">
+                <Flex justifyContent="center" flexWrap="wrap" mt={isMobile ? "30px" : 0} gap={1}>
                     {menuItems
                         .filter((x) => shouldShowMenuItem(x))
                         .map((component) => (
                             <Tooltip key={component} label={getTooltip(component)} placement="bottom">
-                                <button
-                                    key={component}
-                                    className={`px-6 py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton${
-                                        toggledWidgets.includes(component) ? "-toggled-dark" : "-dark"
-                                    }`}
-                                    onClick={() => toggleWidget(component)}
-                                >
-                                    {component.charAt(0).toUpperCase() + component.slice(1)}
-                                </button>
+                                <Box>
+                                    <WidgetButton component={component} />
+                                </Box>
                             </Tooltip>
                         ))}
                     <Tooltip label="Create a new circle" placement="bottom">
-                        <button
-                            className={`${
-                                isMobile ? "px-3" : "px-6"
-                            } py-1 text-gray-200 hover:bg-navbuttonHoverDark transition-colors duration-200 rounded focus:outline-none navbutton navbutton-dark`}
-                            onClick={() => openCreateCircle()}
-                        >
-                            {isMobile ? "+" : "+ Create"}
-                        </button>
+                        <Box>
+                            <WidgetButton onClick={() => openCreateCircle()}>{isMobile ? "+" : "+ Create"}</WidgetButton>
+                        </Box>
                     </Tooltip>
-                </div>
-            </div>
+                </Flex>
+            </Box>
 
-            <Box className="flex flex-grow" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
+            <Flex flexGrow="1" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
                 {toggledWidgets.includes("discover") && (
-                    <div className={getWidgetClass("discover")}>
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3" className="min-w-96 w-96 flex-shrink-0">
                         <CircleDiscover onClose={onDiscoverClose} />
-                    </div>
+                    </Flex>
                 )}
 
                 {toggledWidgets.includes("about") && (
-                    <div className={getWidgetClass("about")}>
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3" className="min-w-96 w-96 flex-shrink-0">
                         <CircleAbout onClose={onAboutClose} />
-                    </div>
+                    </Flex>
                 )}
 
                 {toggledWidgets.includes("chat") && (
-                    <div className={getWidgetClass("chat")}>
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="1" className="min-w-96 w-96 flex-shrink-0">
                         <CircleChatWidget />
-                    </div>
+                    </Flex>
                 )}
                 {(toggledWidgets.includes("video") || inVideoConference) && (
-                    <div className="flex flex-col flex-grow order-2">
+                    <Flex flexDirection="column" flexGrow="1" order="2">
                         <CircleVideo isMinimized={videoMinimized} />
-                    </div>
+                    </Flex>
                 )}
                 {!(
                     isMobile ||
@@ -351,29 +346,36 @@ const WidgetController = () => {
                     toggledWidgets.includes("calendar") ||
                     toggledWidgets.includes("settings") ||
                     toggledWidgets.includes("admin") ||
+                    toggledWidgets.includes("document") ||
                     inVideoConference
-                ) && <div className="flex flex-col flex-grow order-2"></div>}
+                ) && <Flex flexDirection="column" flexGrow="1" order="2"></Flex>}
 
                 {toggledWidgets.includes("settings") && (
-                    <div className="flex flex-col flex-grow order-2">
+                    <Flex flexDirection="column" flexGrow="1" order="2">
                         <CircleSettings onClose={onSettingsClose} />
-                    </div>
+                    </Flex>
                 )}
 
                 {toggledWidgets.includes("calendar") && (
-                    <div className="flex flex-col flex-grow order-2">
+                    <Flex flexDirection="column" flexGrow="1" order="2">
                         <CircleCalendar onClose={onCalendarClose} />
-                    </div>
+                    </Flex>
+                )}
+
+                {toggledWidgets.includes("document") && (
+                    <Flex flexDirection="column" flexGrow="1" order="2">
+                        <CircleDocument onClose={onDocumentClose} />
+                    </Flex>
                 )}
 
                 {toggledWidgets.includes("admin") && (
-                    <div className="flex flex-col flex-grow order-2">
+                    <Flex flexDirection="column" flexGrow="1" order="2">
                         <CircleAdmin onClose={onAdminClose} />
-                    </div>
+                    </Flex>
                 )}
-            </Box>
+            </Flex>
             <DisplayModeButtons position={isMobile ? "static" : "absolute"} />
-        </div>
+        </Flex>
     );
 };
 

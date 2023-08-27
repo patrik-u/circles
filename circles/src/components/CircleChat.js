@@ -60,7 +60,7 @@ import {
 } from "components/Atoms";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "assets/lottie/talkdots.json";
-import { AboutButton, CircleLink } from "components/CircleElements";
+import { AboutButton, CircleLink, CircleRichText } from "components/CircleElements";
 import ReactMarkdown from "react-markdown";
 import Linkify from "linkify-it";
 import { CircleMention } from "components/CircleSearch";
@@ -301,23 +301,7 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                                 {/* Render chat message */}
                                                 {!item.is_ai_prompt && (
                                                     <Box lineHeight="20px" fontSize="14px" maxWidth="290px">
-                                                        <ReactMarkdown
-                                                            components={{
-                                                                a: ({ node, ...props }) => {
-                                                                    return (
-                                                                        <CircleLink href={props.href} mentions={item.mentions}>
-                                                                            {props.children}
-                                                                        </CircleLink>
-                                                                    );
-                                                                },
-                                                            }}
-                                                        >
-                                                            {item.formattedMessage}
-                                                        </ReactMarkdown>
-                                                        {/* <div
-                                                        className="embedChatHtmlContent"
-                                                        dangerouslySetInnerHTML={{ __html: item.formattedMessage }}
-                                                    /> */}
+                                                        <CircleRichText mentions={item.mentions}>{item.formattedMessage}</CircleRichText>
                                                     </Box>
                                                 )}
 
@@ -346,12 +330,9 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
 
                                                         {item.openai_response?.choices?.[0]?.text && (
                                                             <Box fontSize="14px" borderLeft="3px solid #7179a9" paddingLeft="5px">
-                                                                <div
-                                                                    className="embedChatHtmlContent"
-                                                                    dangerouslySetInnerHTML={{
-                                                                        __html: item.openai_response?.choices?.[0]?.text,
-                                                                    }}
-                                                                />
+                                                                <CircleRichText mentions={item.mentions}>
+                                                                    {item.openai_response?.choices?.[0]?.text}
+                                                                </CircleRichText>
                                                             </Box>
                                                         )}
                                                     </Box>

@@ -20,6 +20,7 @@ import {
     ShareButtonMenu,
     NotificationsBell,
     SimilarityIndicator,
+    CircleRichText,
 } from "components/CircleElements";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
@@ -432,11 +433,9 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             maxHeight={isExpanded ? "none" : "150px"}
                             position="relative"
                         >
-                            <div
-                                className="embedHtmlContent"
-                                dangerouslySetInnerHTML={{ __html: formattedContent }}
-                                style={{ marginBottom: isExpanded ? "30px" : "0px" }}
-                            />
+                            <Box marginBottom={isExpanded ? "30px" : "0px"}>
+                                <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
+                            </Box>
                             {/* Add fade out gradient */}
                             <Box
                                 position="absolute"

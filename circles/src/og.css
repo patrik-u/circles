@@ -1,16 +1,3 @@
-:root {
-    --grey0: rgb(45 45 45); /*dialog background*/
-    --grey1: #434244; /*dialog border*/
-    --grey2: #3f3f46; /*dialog header*/
-    --grey3: #bbbbbb; /*dialog font color*/
-    --grey4: #5e5e5e; /*hover color*/
-    --grey5: rgb(64, 59, 59); /*map button background*/
-    --grey6: #bfbfbf; /*map button icon color*/
-    --grey7: #707070; /*slider progress color*/
-    --grey8: #e2e2e2; /*text color*/
-    --blue0: #1700a9ee;
-}
-
 .og-map-button {
     height: 40px;
     width: 40px;

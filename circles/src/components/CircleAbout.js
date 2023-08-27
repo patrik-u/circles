@@ -5,10 +5,12 @@ import { log, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, twoLineE
 import { useAtom } from "jotai";
 import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom, userAtom } from "components/Atoms";
 import { useLocationNoUpdates } from "components/RouterUtils";
-import { CircleCover, CirclePicture, CircleHeader, QuickLinks, CircleMembersPanel } from "components/CircleElements";
+import { CircleCover, CirclePicture, CircleHeader, QuickLinks, CircleMembersPanel, CircleRichText } from "components/CircleElements";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { CircleTags } from "components/CircleElements";
 import { ActiveInCircle, RelationSetInfo } from "components/CirclePreview";
+import ReactMarkdown from "react-markdown";
+import { AboutButton, CircleLink } from "components/CircleElements";
 //#endregion
 
 const CircleAbout = ({ onClose }) => {
@@ -140,7 +142,7 @@ const CircleAbout = ({ onClose }) => {
 
                         {circle.description && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
-                                <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: circle.description }} />
+                                <CircleRichText mentions={circle.mentions}>{circle.description}</CircleRichText>
                             </Box>
                         )}
 
@@ -154,7 +156,7 @@ const CircleAbout = ({ onClose }) => {
                         {circle.content && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
                                 <Text fontWeight="bold">About</Text>
-                                <div className="embedHtmlContent" dangerouslySetInnerHTML={{ __html: circle.content }} />
+                                <CircleRichText mentions={circle.mentions}>{circle.content}</CircleRichText>
                             </Box>
                         )}
 
