@@ -96,7 +96,7 @@ import { MdArrowDropDown } from "react-icons/md";
 import "./DocumentEditor.css";
 //#endregion
 
-export const DocumentEditorPlaceholder = () => {
+export const DocumentEditorPlaceholder = ({ condensed }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const rightPanelWidth = notesPanelWidth;
     const rightPanelWidthPx = rightPanelWidth + "px";
@@ -105,7 +105,7 @@ export const DocumentEditorPlaceholder = () => {
     return (
         <Flex minHeight="100vh" width={isMobile ? "100%" : `calc(100% - ${navigationMenuWidth}px)`} flexGrow="0" flexShrink="0">
             {/* Document explorer */}
-            {!isMobile && (
+            {!condensed && !isMobile && (
                 <Box width={documentExplorerWidthPx} minWidth={documentExplorerWidthPx} height="100%" backgroundColor={panelBackground}>
                     <Skeleton width="150px" height="30px" marginLeft="20px" marginTop="20px" />
                     <Skeleton width="200px" height="25px" marginLeft="20px" marginTop="10px" />
@@ -202,17 +202,17 @@ export const DocumentEditorPlaceholder = () => {
 };
 
 // save document
-export const DocumentEditor = ({ initialDocument }) => {
+export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, document, setDocument, ...props }) => {
     const [user] = useAtom(userAtom);
     const navigate = useSaveAndNavigate();
-    const [document, setDocument] = useAtom(circleAtom);
+    //const [document, setDocument] = useAtom(circleAtom);
     const middlePanelRef = useRef(null);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [latestSaveId, setLatestSaveId] = useState(null);
     // const [activeNote] = useAtom(activeNoteAtom); // NOTES123
     const [isMobile] = useAtom(isMobileAtom);
     const [, setTitle] = useState(initialDocument?.name ?? "");
-    const [contentLength, setContentLength] = useState(initialDocument?.text_content?.length ?? 0);
+    const [contentLength, setContentLength] = useState(initialDocument?.content?.length ?? 0);
 
     const Placeholder = () => {
         return <div className="editor-placeholder">Start writing your document...</div>;
@@ -250,10 +250,10 @@ export const DocumentEditor = ({ initialDocument }) => {
                 },
             ],
             editorState:
-                document?.lexical_content ||
-                '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Untitled Document","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"heading","version":1,"tag":"h1"}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}',
+                document?.content ||
+                '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"heading","version":1,"tag":"h1"}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}',
         };
-    }, [document?.lexical_content]);
+    }, [document?.content]);
 
     useEffect(() => {
         if (!user?.id || !document?.id || !signInStatus.signedIn || !initialDocument?.id) return;
@@ -291,7 +291,7 @@ export const DocumentEditor = ({ initialDocument }) => {
     };
 
     if (!document?.id || !initialDocument?.id || initialDocument?.id !== document?.id) {
-        return <DocumentEditorPlaceholder />;
+        return <DocumentEditorPlaceholder condensed={condensed} />;
     }
 
     const panelBackground = "#ffffff"; //"#f4f4f4";
@@ -300,25 +300,24 @@ export const DocumentEditor = ({ initialDocument }) => {
 
     return (
         <LexicalComposer initialConfig={editorConfig}>
-            <Flex flexDirection="column" height="100%">
+            <Flex flexDirection="column" height="100%" {...props}>
                 {/* Toolbar */}
-                <Box flexBasis="45px" height="45px" minHeight="45px" minWidth="100px" width="100%" flexDirection="row">
-                    <Flex zIndex="10" align="center" backgroundColor="white" borderRadius="20px">
-                        <ToolbarPlugin />
+                <Box flexBasis="45px" height="45px" minHeight="45px" minWidth="100px" width="100%" flexDirection="row" borderBottom="1px solid #E2E8F0">
+                    <Flex zIndex="10" align="center">
+                        <ToolbarPlugin condensed={condensed} />
                     </Flex>
-                    <Box minWidth="100px" height="45px" minHeight="45px" />
                 </Box>
                 <Scrollbars autoHide>
                     <Flex flexGrow="1">
                         {/* Document outline */}
-                        {!isMobile && (
+                        {!isMobile && !condensed && (
                             <Box width={documentExplorerWidthPx} minWidth={documentExplorerWidthPx} height="100%" backgroundColor={panelBackground}>
                                 <DocumentTree />
                             </Box>
                         )}
 
                         {/* Editor panel */}
-                        <Flex ref={middlePanelRef} flexDirection="column" width="100%" maxWidth="100%">
+                        <Flex ref={middlePanelRef} flexDirection="column" width="100%" maxWidth="100%" minHeight="300px">
                             <Box className="editor-container">
                                 <Box className="editor-inner">
                                     <RichTextPlugin
@@ -333,11 +332,18 @@ export const DocumentEditor = ({ initialDocument }) => {
                                     <ListPlugin />
                                     <LinkPlugin />
                                     <AutoLinkPlugin />
-                                    <AutoSavePlugin latestSaveId={latestSaveId} setContentLength={setContentLength} setTitle={setTitle} />
+                                    <AutoSavePlugin
+                                        latestSaveId={latestSaveId}
+                                        setContentLength={setContentLength}
+                                        setTitle={setTitle}
+                                        disableAutoSave={disableAutoSave}
+                                        document={document}
+                                        setDocument={setDocument}
+                                    />
                                     <ListMaxIndentLevelPlugin maxDepth={7} />
                                     <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
                                     <FocusFirstNodeOnLoadPlugin />
-                                    <AiTextCompletionPlugin />
+                                    {/* <AiTextCompletionPlugin /> */}
                                     <CommandListenerPlugin />
                                     <FloatingTextFormatToolbarPlugin />
                                 </Box>
@@ -353,27 +359,29 @@ export const DocumentEditor = ({ initialDocument }) => {
                     </Flex>
                 </Scrollbars>
                 {/* Bottom panel */}
-                <Box backgroundColor="#f9f9f9" height="22px">
-                    <Flex height="22px" backgroundColor="#e5e5e5" align="center" flexDirection="row">
-                        <Button
-                            variant="ghost"
-                            size="xs"
-                            fontSize="12px"
-                            value={document.version}
-                            onChange={(e) => onSelectVersion(e.target.value)}
-                            height="22px"
-                            width="150px"
-                            // rightIcon={<MdArrowDropDown />}
-                            fontWeight="400"
-                        >
-                            v{toISODate(document?.updated_at)}.{document?.version}
-                            {/* If open get older versions */}
-                        </Button>
-                        <Text fontSize="12px" marginLeft="auto" marginRight="10px" color="#3f4357">
-                            Characters: <b>{contentLength}</b>
-                        </Text>
-                    </Flex>
-                </Box>
+                {!condensed && (
+                    <Box backgroundColor="#f9f9f9" height="22px">
+                        <Flex height="22px" backgroundColor="#e5e5e5" align="center" flexDirection="row">
+                            <Button
+                                variant="ghost"
+                                size="xs"
+                                fontSize="12px"
+                                value={document.version}
+                                onChange={(e) => onSelectVersion(e.target.value)}
+                                height="22px"
+                                width="150px"
+                                // rightIcon={<MdArrowDropDown />}
+                                fontWeight="400"
+                            >
+                                v{toISODate(document?.updated_at)}.{document?.version}
+                                {/* If open get older versions */}
+                            </Button>
+                            <Text fontSize="12px" marginLeft="auto" marginRight="10px" color="#3f4357">
+                                Characters: <b>{contentLength}</b>
+                            </Text>
+                        </Flex>
+                    </Box>
+                )}
             </Flex>
         </LexicalComposer>
     );
