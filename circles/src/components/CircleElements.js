@@ -51,6 +51,7 @@ import {
     isAdmin,
     getRelationSet,
 } from "components/Helpers";
+import { Scrollbars } from "react-custom-scrollbars-2";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { CirclePreview } from "components/CirclePreview";
 import { RiLinksLine, RiShareLine, RiLiveFill } from "react-icons/ri";
@@ -719,24 +720,38 @@ export const ModalPopup = ({ children, fullscreen, onClose, mapInteract = false,
     ) : (
         <>
             {!mapInteract && <Box position="fixed" width="100vw" height="100vh" backgroundColor="#181818b0" zIndex="99" top="0" />}
-            <Flex position="fixed" width="100vw" zIndex="100" justifyContent="center" top={mapInteract ? "auto" : "0"} bottom={mapInteract ? "20px" : "auto"}>
-                <Box
-                    position="relative"
-                    backgroundColor="white"
-                    borderRadius="25px"
-                    width="100%"
-                    maxWidth="570px"
-                    marginTop="60px"
-                    paddingLeft="25px"
-                    paddingRight="25px"
-                    paddingTop="15px"
-                    paddingBottom="15px"
-                    boxShadow="2px 3px 5px #999"
-                    {...props}
-                >
-                    {children}
-                    <CloseButton position="absolute" top="10px" right="10px" onClick={onClose} />
-                </Box>
+            <Flex
+                position="fixed"
+                width="100vw"
+                height="100vh"
+                zIndex="100"
+                justifyContent="center"
+                top={mapInteract ? "auto" : "0"}
+                bottom={mapInteract ? "20px" : "auto"}
+                pointerEvents={mapInteract ? "none" : "auto"}
+            >
+                <Scrollbars>
+                    <Flex width="100%" justifyContent={"center"}>
+                        <Box
+                            position="relative"
+                            backgroundColor="white"
+                            borderRadius="25px"
+                            maxWidth="570px"
+                            minWidth="570px"
+                            marginTop="60px"
+                            paddingLeft="25px"
+                            paddingRight="25px"
+                            paddingTop="15px"
+                            paddingBottom="15px"
+                            boxShadow="2px 3px 5px #999"
+                            pointerEvents="auto"
+                            {...props}
+                        >
+                            {children}
+                            <CloseButton position="absolute" top="10px" right="10px" onClick={onClose} />
+                        </Box>
+                    </Flex>
+                </Scrollbars>
             </Flex>
         </>
     );

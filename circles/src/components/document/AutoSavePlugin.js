@@ -51,26 +51,30 @@ const updateDocumentFromEditorState = (editorState, inDocument, setDocument, inS
 
     // get title from editorState
     let title = null;
-    let text_content = null;
     let content = null;
+    let lexical_content = null;
     editorState.read(() => {
         // update title if editorState is provided
         const root = $getRoot();
-        title = findTitle(root);
-        text_content = root.getTextContent();
+        if (inDocument.type === "document") {
+            title = findTitle(root);
+        }
         content = $convertToMarkdownString(TRANSFORMERS);
+        lexical_content = JSON.stringify(editorState);
     });
 
     //console.log("updating document content from updated editor state");
-    setDocument({
+    let newDocument = {
         ...inDocument,
-        name: title,
         content,
-        lexical_content: JSON.stringify(editorState),
-        text_content: text_content,
+        lexical_content: lexical_content,
         hasChanged: true,
         save_id: inSaveId,
-    });
+    };
+    if (inDocument.type === "document") {
+        newDocument.name = title;
+    }
+    setDocument(newDocument);
 };
 
 const autoSaveInterval = 800;
@@ -79,8 +83,7 @@ const debounceUpdateDocumentFromEditorState = debounce(updateDocumentFromEditorS
 const debouncedSave = debounce(save, autoSaveInterval);
 
 // saves the document if it's changed
-const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength }) => {
-    const [document, setDocument] = useAtom(circleAtom);
+const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength, disableAutoSave, document, setDocument }) => {
     const [loadedDocumentId, setLoadedDocumentId] = useState(null);
     const [saveId, setSaveId] = useAtom(saveIdAtom);
     const [triggerSaveDocument, setTriggerSaveDocument] = useAtom(triggerSaveDocumentAtom);
@@ -93,10 +96,15 @@ const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength }) => {
         if (document.hasChanged) {
             // document has been changed, save
             log("calling debounced save");
-            debouncedSave(document);
+            if (!disableAutoSave) {
+                debouncedSave(document);
+            }
             setDocument({ ...document, hasChanged: false });
+            if (disableAutoSave) {
+                setSaveId(null);
+            }
         }
-    }, [document, setDocument]);
+    }, [document, setDocument, disableAutoSave, setSaveId]);
 
     useEffect(() => {
         return () => {
@@ -107,12 +115,12 @@ const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength }) => {
     }, [document?.id, setSaveId]);
 
     useEffect(() => {
-        if (!triggerSaveDocument) return;
+        if (!triggerSaveDocument || disableAutoSave) return;
 
         log("save triggered", 0, true);
         setTriggerSaveDocument(false);
         debouncedSave(document);
-    }, [document, triggerSaveDocument, setTriggerSaveDocument]);
+    }, [document, triggerSaveDocument, setTriggerSaveDocument, disableAutoSave]);
 
     const onEditorChange = (editorState) => {
         //log("onEditorChange", 0, true);

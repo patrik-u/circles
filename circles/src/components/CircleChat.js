@@ -43,7 +43,6 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
 import { RiChatPrivateLine } from "react-icons/ri";
 import { Scrollbars } from "react-custom-scrollbars-2";
-import { Scrollbar } from "react-scrollbars-custom";
 import EmojiPicker from "components/EmojiPicker";
 import { useAtom } from "jotai";
 import {

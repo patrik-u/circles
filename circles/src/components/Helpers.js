@@ -251,8 +251,10 @@ export const isCircleOnline = (circle) => {
 
 export const isActiveInCircle = (circle) => {
     if (!circle) return false;
-    if (circle.id === "global" || circle.type === "user" || circle.type === "set") return false;
-    return isCircleActive(circle) && circle?.activity?.active_in_circle;
+    let activeInCircle = circle?.activity?.active_in_circle;
+    if (!activeInCircle) return false;
+    if (activeInCircle.id === "global" || activeInCircle.type === "user" || activeInCircle.type === "set") return false;
+    return isCircleActive(circle);
 };
 
 export const isActiveInVideoConference = (circle) => {
@@ -317,20 +319,20 @@ export const getDateWithoutTime = (date = new Date()) => {
 };
 
 export const getDayAndMonth = (date = new Date()) => {
-    return fromFsDate(date).toLocaleDateString(i18n.language, { month: "long", day: "numeric" });
+    return fromFsDate(date).toLocaleDateString(undefined, { month: "long", day: "numeric" });
 };
 
 export const getDateAndTimeLong = (date) => {
-    return `${fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
+    return `${fromFsDate(date)?.toLocaleDateString?.(undefined, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
         date
-    )?.toLocaleTimeString?.(i18n.language, {
+    )?.toLocaleTimeString?.(undefined, {
         hour: "2-digit",
         minute: "2-digit",
     })}`;
 };
 
 export const getDateLong = (date) => {
-    return fromFsDate(date)?.toLocaleDateString?.(i18n.language, { month: "long", day: "numeric" });
+    return fromFsDate(date)?.toLocaleDateString?.(undefined, { month: "long", day: "numeric" });
 };
 
 export const capFirstLetter = (string) => {

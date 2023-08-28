@@ -11,15 +11,13 @@ import { userAtom, toggleAboutAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
+import { CircleContentForm } from "components/settings/CircleContentForm";
+import { CircleImagesForm } from "components/settings/CircleImagesForm";
+import { CircleTagsForm } from "components/settings/CircleTagsForm";
+import { CircleBaseForm } from "components/settings/CircleBaseForm";
+import { CircleBasePopupForm } from "components/settings/CircleBasePopupForm";
+import { CircleTypeForm } from "components/settings/CircleTypeForm";
 //#endregion
-
-const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
-const CircleLinkForm = lazy(() => import("components/settings/CircleLinkForm"));
-const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
-const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
-const CircleBaseForm = lazy(() => import("components/settings/CircleBaseForm"));
-const CircleTypeForm = lazy(() => import("components/settings/CircleTypeForm"));
-const CircleBasePopupForm = lazy(() => import("components/settings/CircleBasePopupForm"));
 
 export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapInteract }) => {
     const [user] = useAtom(userAtom);
@@ -154,6 +152,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
     return (
         <Box>
             <Box marginTop="10px">{getActiveStepComponent()}</Box>
+
             <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
                 <HStack align="center">
                     {steps.map((x, i) => (

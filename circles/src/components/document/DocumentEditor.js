@@ -44,7 +44,6 @@ import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { TRANSFORMERS } from "@lexical/markdown";
 
 import ListMaxIndentLevelPlugin from "components/document/ListMaxIndentLevelPlugin";
 import CodeHighlightPlugin from "components/document/CodeHighlightPlugin";
@@ -94,6 +93,7 @@ import { defaultUserPicture } from "components/Constants";
 import { toastInfo, fromFsDate, toISODate } from "components/Helpers";
 import { MdArrowDropDown } from "react-icons/md";
 import "./DocumentEditor.css";
+import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 //#endregion
 
 export const DocumentEditorPlaceholder = ({ condensed }) => {
@@ -103,7 +103,7 @@ export const DocumentEditorPlaceholder = ({ condensed }) => {
     const panelBackground = "#ffffff"; //"#f4f4f4";
 
     return (
-        <Flex minHeight="100vh" width={isMobile ? "100%" : `calc(100% - ${navigationMenuWidth}px)`} flexGrow="0" flexShrink="0">
+        <Flex minHeight="100vh" width={"100%"} flexGrow="0" flexShrink="0" overflow="hidden">
             {/* Document explorer */}
             {!condensed && !isMobile && (
                 <Box width={documentExplorerWidthPx} minWidth={documentExplorerWidthPx} height="100%" backgroundColor={panelBackground}>
@@ -140,14 +140,18 @@ export const DocumentEditorPlaceholder = ({ condensed }) => {
                             <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
                             <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
                             <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="12px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="12px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
-                            <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                            {!condensed && (
+                                <>
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="12px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="12px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                    <Skeleton width="30px" height="30px" marginLeft="6px" marginTop="0px" />
+                                </>
+                            )}
                         </Box>
                     </Flex>
                     <Box minWidth="100px" height="45px" minHeight="45px" />
@@ -215,7 +219,7 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
     const [contentLength, setContentLength] = useState(initialDocument?.content?.length ?? 0);
 
     const Placeholder = () => {
-        return <div className="editor-placeholder">Start writing your document...</div>;
+        return <div className="editor-placeholder"></div>;
     };
 
     const editorConfig = useMemo(() => {
@@ -249,9 +253,7 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                     },
                 },
             ],
-            editorState:
-                document?.content ||
-                '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"heading","version":1,"tag":"h1"}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}',
+            editorState: () => $convertFromMarkdownString(document?.content, TRANSFORMERS),
         };
     }, [document?.content]);
 
@@ -290,8 +292,10 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
         // get old document from firestore
     };
 
-    if (!document?.id || !initialDocument?.id || initialDocument?.id !== document?.id) {
-        return <DocumentEditorPlaceholder condensed={condensed} />;
+    if (initialDocument?.id) {
+        if (!document?.id || !initialDocument?.id || initialDocument?.id !== document?.id) {
+            return <DocumentEditorPlaceholder condensed={condensed} />;
+        }
     }
 
     const panelBackground = "#ffffff"; //"#f4f4f4";

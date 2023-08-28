@@ -37,7 +37,7 @@ import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } fr
 
 const CircleDocument = ({ onClose }) => {
     const [isMobile] = useAtom(isMobileAtom);
-    const [circle] = useAtom(circleAtom);
+    const [circle, setCircle] = useAtom(circleAtom);
     const iconSize = 12;
 
     if (!circle) return;
@@ -65,7 +65,7 @@ const CircleDocument = ({ onClose }) => {
                 width="auto"
             >
                 <Flex flexGrow="1" height={isMobile ? "100%" : "100%"} position="relative" left="0px" flexDirection={"column"} top="0px">
-                    <DocumentEditor initialDocument={circle} />
+                    <DocumentEditor initialDocument={circle} document={circle} setDocument={setCircle} />
 
                     <Flex
                         width={iconSize + 8 + "px"}

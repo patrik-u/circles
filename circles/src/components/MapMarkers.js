@@ -106,9 +106,13 @@ export const CircleMapEdges = ({ circle, circles }) => {
         return circles
             .filter((x) => getLocation(x))
             .map((x) => {
+                //log(x.categories?.includes("similar").toString(), 0, true);
                 return {
                     type: "Feature",
-                    properties: { circle_types: getCircleTypes(circle.type, x.type) },
+                    properties: {
+                        circle_types: getCircleTypes(circle.type, x.type),
+                        similar: (x.categories?.[0] === "similar").toString(),
+                    },
                     geometry: {
                         type: "LineString",
                         coordinates: [getLngLatArray(getLocation(circle)), getLngLatArray(getLocation(x))],
@@ -139,7 +143,10 @@ export const CircleMapEdges = ({ circle, circles }) => {
             .map((x) => {
                 return {
                     type: "Feature",
-                    properties: { circle_types: getCircleTypes(x.source.type, x.target.type) },
+                    properties: {
+                        circle_types: getCircleTypes(x.source.type, x.target.type),
+                        similar: "false",
+                    },
                     geometry: {
                         type: "LineString",
                         coordinates: [getLngLatArray(getLocation(x.source)), getLngLatArray(getLocation(x.target))],
@@ -171,6 +178,7 @@ export const CircleMapEdges = ({ circle, circles }) => {
                     //"line-color": "rgba(116, 89, 41, 1)",
                     //"line-color": "rgba(35, 68, 255, 1)",
                     "line-width": 1,
+                    "line-dasharray": ["match", ["get", "similar"], "true", ["literal", [4, 8]], ["literal", [1, 0]]],
                 }}
             />
         </Source>

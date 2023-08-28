@@ -15,6 +15,9 @@ var jsonwebtoken = require("jsonwebtoken");
 var uuid = require("uuid-random");
 const PineconeClient = require("@pinecone-database/pinecone").PineconeClient;
 const Linkify = require("linkify-it");
+const TurndownService = require("turndown"); // HTML to Markdown for migrating old circle content
+
+const turndownService = new TurndownService();
 
 const linkify = new Linkify();
 linkify.tlds("earth", true);
@@ -167,6 +170,16 @@ const getMemberConnections = async (id) => {
         return [];
     }
     let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains", "connected_mutually_to");
+    let result = await query.get();
+    return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
+};
+
+// gets connections to circle that are relevant (parent and members)
+const getRelevantConnections = async (id) => {
+    if (!id) {
+        return [];
+    }
+    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains-any", ["connected_mutually_to", "parented_by"]);
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
@@ -939,8 +952,9 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.content) {
         circle.content = circleReq.content;
     }
-    if (circleReq.content_text) {
-        circle.content_text = circleReq.content_text;
+    if (circleReq.lexical_content) {
+        console.log("lexical_content: " + circleReq.lexical_content);
+        circle.lexical_content = circleReq.lexical_content;
     }
     if (circleReq.language) {
         circle.language = circleReq.language;
@@ -999,15 +1013,6 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
         if (circleReq.rrule) {
             circle.rrule = circleReq.rrule;
-        }
-    }
-
-    if (circle.type === "document") {
-        if (circleReq.lexical_content) {
-            circle.lexical_content = circleReq.lexical_content;
-        }
-        if (circleReq.version) {
-            circle.version = circleReq.version;
         }
     }
 
@@ -1080,7 +1085,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
         // update circle
         let circleId = circleReq.id;
         circle.updated_at = date;
-        circle.version = (circle.version ?? 0) + 1;
+        circle.version = admin.firestore.FieldValue.increment(1);
         await updateCircle(circleId, circle);
         circle = await getCircle(circleId);
 
@@ -1282,7 +1287,7 @@ app.get("/circles/:id/circles", async (req, res) => {
         // TODO similar circles can be cached per circleId and updated periodically
 
         // get circles connected to circle
-        const connections = await getMemberConnections(circleId);
+        const connections = await getRelevantConnections(circleId);
 
         // get up to date circle data for connections
         let circleIds = connections.map((x) => x.target.id);
@@ -3384,6 +3389,35 @@ app.post("/update", auth, async (req, res) => {
 
             let result = { count: `${snapshot.docs.length} ${type}s` };
             return res.json({ result });
+        } else if (commandArgs[0] === "markdown") {
+            let targetId = commandArgs[1];
+            if (!targetId) {
+                return res.json({ error: "invalid target" });
+            }
+            if (targetId === "all") {
+                // go through every circle and convert their HTML content to Markdown
+                let circleData = await db.collection("circles").get();
+                let count = 0;
+                circleData.forEach(async (doc) => {
+                    let circle = doc.data();
+                    circle.id = doc.id;
+                    if (circle.content?.startsWith("<")) {
+                        // convert HTML to Markdown
+                        let newContent = turndownService.turndown(circle.content);
+                        await upsertCircle(circle.id, { id: circle.id, content: newContent });
+                        ++count;
+                    }
+                });
+                return res.json({ message: "" + count + " circles updated" });
+            } else {
+                const circle = await getCircle(targetId);
+                if (!circle) {
+                    return res.json({ error: "invalid target" });
+                }
+
+                let newContent = turndownService.turndown(circle.content);
+                await upsertCircle(targetId, { id: targetId, content: newContent });
+            }
         } else {
             return res.json({ error: "command not recognized" });
         }

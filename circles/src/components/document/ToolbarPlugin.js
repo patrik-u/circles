@@ -203,10 +203,10 @@ function FloatingLinkEditor({ editor }) {
 
 function Select({ onChange, className, options, value }) {
     return (
-        <select className={className} onChange={onChange} value={value}>
-            <option hidden={true} value="" />
+        <select className={className} onChange={onChange} value={value} type="button">
+            <option hidden={true} value="" type="button" />
             {options.map((option) => (
-                <option key={option} value={option}>
+                <option key={option} value={option} type="button">
                     {option}
                 </option>
             ))}
@@ -488,7 +488,7 @@ export const AiAutoCompleteButton = ({ onClick, size = "", ...props }) => {
     );
 };
 
-export default function ToolbarPlugin() {
+export const ToolbarPlugin = ({ condensed }) => {
     const [editor] = useLexicalComposerContext();
     const toolbarRef = useRef(null);
     const [canUndo, setCanUndo] = useState(false);
@@ -638,6 +638,7 @@ export default function ToolbarPlugin() {
                 className="toolbar-item spaced"
                 aria-label="Undo"
                 style={{ marginLeft: isMobile ? "40px" : "0px" }}
+                type="button"
             >
                 <i className="format undo" />
             </button>
@@ -648,6 +649,7 @@ export default function ToolbarPlugin() {
                 }}
                 className="toolbar-item"
                 aria-label="Redo"
+                type="button"
             >
                 <i className="format redo" />
             </button>
@@ -658,6 +660,7 @@ export default function ToolbarPlugin() {
                         className="toolbar-item block-controls"
                         onClick={() => setShowBlockOptionsDropDown(!showBlockOptionsDropDown)}
                         aria-label="Formatting Options"
+                        type="button"
                     >
                         <span className={"icon block-type " + blockType} />
                         <span className="text">{blockTypeToBlockName[blockType]}</span>
@@ -678,7 +681,7 @@ export default function ToolbarPlugin() {
             )}
             {blockType === "code" ? (
                 <>
-                    <Select className="toolbar-item code-language" onChange={onCodeLanguageSelect} options={codeLanguges} value={codeLanguage} />
+                    <Select className="toolbar-item code-language" onChange={onCodeLanguageSelect} options={codeLanguges} value={codeLanguage} type="button" />
                     <i className="chevron-down inside" />
                 </>
             ) : (
@@ -689,6 +692,7 @@ export default function ToolbarPlugin() {
                         }}
                         className={"toolbar-item spaced " + (isBold ? "active" : "")}
                         aria-label="Format Bold"
+                        type="button"
                     >
                         <i className="format bold" />
                     </button>
@@ -698,6 +702,7 @@ export default function ToolbarPlugin() {
                         }}
                         className={"toolbar-item spaced " + (isItalic ? "active" : "")}
                         aria-label="Format Italics"
+                        type="button"
                     >
                         <i className="format italic" />
                     </button>
@@ -717,55 +722,64 @@ export default function ToolbarPlugin() {
                             }}
                             className={"toolbar-item spaced " + (isStrikethrough ? "active" : "")}
                             aria-label="Format Strikethrough"
+                            type="button"
                         >
                             <i className="format strikethrough" />
                         </button>
-                        <button onClick={insertLink} className={"toolbar-item spaced " + (isLink ? "active" : "")} aria-label="Insert Link">
+                        <button onClick={insertLink} className={"toolbar-item spaced " + (isLink ? "active" : "")} aria-label="Insert Link" type="button">
                             <i className="format link" />
                         </button>
                     </Flex>
                     {isLink && createPortal(<FloatingLinkEditor editor={editor} />, document.body)}
-                    <Flex flexDirection="row">
-                        <Divider />
-                        <button
-                            onClick={() => {
-                                editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
-                            }}
-                            className="toolbar-item spaced"
-                            aria-label="Left Align"
-                        >
-                            <i className="format left-align" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
-                            }}
-                            className="toolbar-item spaced"
-                            aria-label="Center Align"
-                        >
-                            <i className="format center-align" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
-                            }}
-                            className="toolbar-item spaced"
-                            aria-label="Right Align"
-                        >
-                            <i className="format right-align" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
-                            }}
-                            className="toolbar-item"
-                            aria-label="Justify Align"
-                        >
-                            <i className="format justify-align" />
-                        </button>
-                    </Flex>
+                    {!condensed && (
+                        <Flex flexDirection="row">
+                            <Divider />
+                            <button
+                                onClick={() => {
+                                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
+                                }}
+                                className="toolbar-item spaced"
+                                aria-label="Left Align"
+                                type="button"
+                            >
+                                <i className="format left-align" />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
+                                }}
+                                className="toolbar-item spaced"
+                                aria-label="Center Align"
+                                type="button"
+                            >
+                                <i className="format center-align" />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
+                                }}
+                                className="toolbar-item spaced"
+                                aria-label="Right Align"
+                                type="button"
+                            >
+                                <i className="format right-align" />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
+                                }}
+                                className="toolbar-item"
+                                aria-label="Justify Align"
+                                type="button"
+                            >
+                                <i className="format justify-align" />
+                            </button>
+                        </Flex>
+                    )}
                 </>
             )}
         </Box>
     );
-}
+};
+
+export default ToolbarPlugin;

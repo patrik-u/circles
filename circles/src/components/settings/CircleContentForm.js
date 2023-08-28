@@ -1,5 +1,5 @@
 //#region imports
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Form, Field, Formik } from "formik";
 import { components } from "react-select";
 import Select from "react-select";
@@ -33,20 +33,26 @@ import ReactQuill from "react-quill";
 import DatePicker from "react-datepicker";
 import { DatePickerInput } from "components/CircleElements";
 import { useAtom } from "jotai";
-import { userAtom, requestUserConnectionsAtom, userConnectionsAtom } from "components/Atoms";
+import { userAtom, requestUserConnectionsAtom, userConnectionsAtom, saveIdAtom } from "components/Atoms";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
 import CircleListItem from "components/CircleListItem";
 import { IoInformationCircleSharp } from "react-icons/io5";
+import DocumentEditor from "components/document/DocumentEditor";
 //#endregion
 
 export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const [user] = useAtom(userAtom);
+    const [saveId] = useAtom(saveIdAtom);
     const toast = useToast();
     const createCircleInitialRef = useRef();
-    const [richContent, setRichContent] = useState(circle?.content ?? "");
-    const [contentText, setContentText] = useState(circle?.content_text ?? "");
-    const [richContentCharCount, setRichContentCharCount] = useState(0);
+    const [richContent, setRichContent] = useState({
+        id: circle?.id,
+        content: circle?.content ?? "",
+        lexical_content: circle?.lexical_content,
+        version: circle?.version,
+    });
+    const richContentCharCount = useMemo(() => (richContent?.content ? richContent.content.trim().length : 0), [richContent]);
     const [isPublicSetting, setIsPublicSetting] = useState(circle?.is_public === true);
     const [pickedDate, setPickedDate] = useState(fromFsDate(circle.starts_at) ?? new Date());
     const [isAllDay, setIsAllDay] = useState(false);
@@ -68,16 +74,14 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
         );
     };
 
-    const onRichContentChange = (richText, delta, source, editor) => {
-        let text = editor.getText();
-        setContentText(text);
-        setRichContent(richText);
-        setRichContentCharCount(text ? text.trim().length : 0);
-    };
-
     useEffect(() => {
         setRequestUserConnections(true);
     }, [setRequestUserConnections]);
+
+    useEffect(() => {
+        log("setting rich content: " + richContent.content, 0, true);
+        log("setting rich lexical_content: " + richContent.lexical_content, 0, true);
+    }, [richContent]);
 
     useEffect(() => {
         if (selectedParentCircle || !userConnections || isInitialized) {
@@ -115,27 +119,30 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 time: circle.time ?? "12:00",
             }}
             onSubmit={async (values, actions) => {
+                log("submitting form", 0, true);
                 if (isUpdateForm) {
                     // update circle
                     let updatedCircleData = {
                         name: values.name,
                         description: values.description,
-                        parentCircle: selectedParentCircle,
-                        isPublic: isPublicSetting,
+                        parent_circle: selectedParentCircle,
+                        is_public: isPublicSetting,
                     };
 
                     if (circle.type === "event") {
-                        updatedCircleData.startsAt = combineDateAndTime(pickedDate, values.time);
+                        updatedCircleData.starts_at = combineDateAndTime(pickedDate, values.time);
                         updatedCircleData.time = values.time;
-                        updatedCircleData.isAllDay = isAllDay;
+                        updatedCircleData.is_all_day = isAllDay;
                     }
 
-                    updatedCircleData.content = richContent;
-                    if (contentText) {
-                        updatedCircleData.content_text = contentText;
+                    log("updating circle content" + richContent.content, 0, true);
+                    updatedCircleData.content = richContent.content;
+                    updatedCircleData.lexical_content = richContent.lexical_content;
+                    log("updating circle lexical_content" + richContent.lexical_content, 0, true);
+                    if (updatedCircleData.content) {
                         if (!updatedCircleData.description) {
                             // if no description, use first part of content
-                            updatedCircleData.description = contentText.substring(0, contentDescriptionLength);
+                            updatedCircleData.description = updatedCircleData.content.substring(0, contentDescriptionLength);
                             if (updatedCircleData.description.length >= contentDescriptionLength) {
                                 updatedCircleData.description += "...";
                             }
@@ -200,22 +207,22 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                     description: values.description,
                     language: values.language,
                     type: circle.type,
-                    parentCircle: selectedParentCircle,
-                    isPublic: isPublicSetting,
+                    parent_circle: selectedParentCircle,
+                    is_public: isPublicSetting,
                 };
 
                 if (circle.type === "event") {
-                    newCircleData.startsAt = combineDateAndTime(pickedDate, values.time);
+                    newCircleData.starts_at = combineDateAndTime(pickedDate, values.time);
                     newCircleData.time = values.time;
-                    newCircleData.isAllDay = isAllDay;
+                    newCircleData.is_all_day = isAllDay;
                 }
 
-                newCircleData.content = richContent;
-                if (contentText) {
-                    newCircleData.content_text = contentText;
+                newCircleData.content = richContent?.content ?? "";
+                newCircleData.lexical_content = richContent?.lexical_content;
+                if (newCircleData.content) {
                     if (!newCircleData.description) {
                         // if no description, use first part of content
-                        newCircleData.description = contentText.substring(0, contentDescriptionLength);
+                        newCircleData.description = newCircleData.content.substring(0, contentDescriptionLength);
                         if (newCircleData.description.length >= contentDescriptionLength) {
                             newCircleData.description += "...";
                         }
@@ -366,19 +373,23 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                 </Field>
                             )}
 
-                            {circle?.type !== "document" && (
-                                <Field name="content">
-                                    {({ field, form }) => (
-                                        <FormControl isInvalid={form.errors.content && form.touched.content}>
-                                            <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
-                                            <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                                {richContentCharCount} / 100 000
-                                            </Text>
-                                            <ReactQuill theme="snow" value={richContent} onChange={onRichContentChange} minHeight="100px" maxWidth="100%" />
-                                            <FormErrorMessage>{form.errors.content}</FormErrorMessage>
-                                        </FormControl>
-                                    )}
-                                </Field>
+                            {(true || circle?.type !== "document") && (
+                                <Box flexDirection="column" width="100%" position="relative">
+                                    <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
+                                    <DocumentEditor
+                                        disableAutoSave={true}
+                                        initialDocument={richContent}
+                                        document={richContent}
+                                        setDocument={setRichContent}
+                                        condensed={true}
+                                        height="300px"
+                                        border="1px solid #E2E8F0"
+                                        borderRadius="0.375rem"
+                                    />
+                                    <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
+                                        {richContentCharCount} / 100 000
+                                    </Text>
+                                </Box>
                             )}
 
                             {!isGuideForm && parentCircles && (
@@ -439,6 +450,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                                     mr={3}
                                     borderRadius="25px"
                                     isLoading={isSubmitting}
+                                    isDisabled={saveId}
                                     type="submit"
                                     lineHeight="0"
                                     width={isGuideForm ? "150px" : "auto"}

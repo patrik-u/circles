@@ -98,7 +98,7 @@ const WidgetController = () => {
     const [, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(["chat"]);
-    const menuItems = useMemo(() => ["discover", "chat", "document", "video", "calendar", "admin"], []);
+    const menuItems = useMemo(() => ["edit", "discover", "chat", "video", "calendar", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
@@ -206,7 +206,7 @@ const WidgetController = () => {
     };
 
     const onDocumentClose = () => {
-        toggleWidget("document", false);
+        toggleWidget("edit", false);
     };
 
     const onAdminClose = () => {
@@ -220,8 +220,8 @@ const WidgetController = () => {
         if (item === "admin") {
             return circle?.id === "global" && user?.is_admin;
         }
-        if (item === "document") {
-            return circle?.type === "document";
+        if (item === "edit") {
+            return circle?.type === "document" && isAdmin(circle, userData);
         }
         return true;
     };
@@ -244,8 +244,8 @@ const WidgetController = () => {
                 return `Show admin panel for ${circle?.name}`;
             case "settings":
                 return `Show settings for ${circle?.name}`;
-            case "document":
-                return `Show and edit document ${circle?.name}`;
+            case "edit":
+                return `Edit ${circle?.name}`;
             default:
                 return "";
         }
@@ -346,7 +346,7 @@ const WidgetController = () => {
                     toggledWidgets.includes("calendar") ||
                     toggledWidgets.includes("settings") ||
                     toggledWidgets.includes("admin") ||
-                    toggledWidgets.includes("document") ||
+                    toggledWidgets.includes("edit") ||
                     inVideoConference
                 ) && <Flex flexDirection="column" flexGrow="1" order="2"></Flex>}
 
@@ -362,7 +362,7 @@ const WidgetController = () => {
                     </Flex>
                 )}
 
-                {toggledWidgets.includes("document") && (
+                {toggledWidgets.includes("edit") && (
                     <Flex flexDirection="column" flexGrow="1" order="2">
                         <CircleDocument onClose={onDocumentClose} />
                     </Flex>

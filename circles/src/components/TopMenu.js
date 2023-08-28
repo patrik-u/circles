@@ -1,5 +1,5 @@
 //#region imports
-import React from "react";
+import React, { useMemo } from "react";
 import { Flex, Text, Box, Image, HStack, Tooltip } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "components/Helpers";
 import Notifications from "components/Notifications";
@@ -25,11 +25,20 @@ export const TopMenu = ({ onLogoClick }) => {
     const navigate = useNavigateNoUpdates();
     const height = isMobile ? "40px" : "90px";
     const logoHeight = isMobile ? 30 : 60; //68;
-    const titleSize = isMobile ? "16px" : "24px";
+
     const setTitleSize = isMobile ? "10px" : "18px";
     const logoHeightPx = `${logoHeight}px`;
     const logoWidth = isMobile ? 30 : 48; //157;
     const logoWidthPx = `${logoWidth}px`;
+
+    const titleSize = useMemo(() => {
+        const twoLines = circle?.name?.length > 18;
+        if (isMobile) {
+            return twoLines ? "10px" : "16px";
+        }
+
+        return twoLines ? "18px" : "24px";
+    }, [circle?.name, isMobile]);
 
     return (
         <>
@@ -38,7 +47,14 @@ export const TopMenu = ({ onLogoClick }) => {
                     <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer">
                         <CirclePicture circle={circle} size={logoWidth} hasPopover={false} parentCircleSizeRatio={3.75} parentCircleOffset={3} />
                         {circle?.type !== "set" && (
-                            <Text fontSize={titleSize} fontWeight="bold" color="white" marginLeft={isMobile ? "10px" : "20px"} noOfLines={1}>
+                            <Text
+                                fontSize={titleSize}
+                                fontWeight="bold"
+                                color="white"
+                                marginLeft={isMobile ? "10px" : "20px"}
+                                noOfLines={2}
+                                maxWidth={isMobile ? "150px" : "250px"}
+                            >
                                 {circle?.name}
                             </Text>
                         )}
@@ -51,7 +67,7 @@ export const TopMenu = ({ onLogoClick }) => {
                         )}
                     </Flex>
                 </Tooltip>
-                <AboutButton circle={circle} marginLeft="10px" pointerEvents="auto" />
+                <AboutButton circle={circle} marginLeft={isMobile ? "5px" : "10px"} pointerEvents="auto" />
                 <SettingsButton circle={circle} pointerEvents="auto" />
 
                 <Box flex="1" />

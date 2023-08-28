@@ -122,9 +122,7 @@ const CircleAbout = ({ onClose }) => {
                             </VStack>
                         </VStack>
 
-                        {isActiveInCircle(circle) && circle?.type !== "set" && (
-                            <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />
-                        )}
+                        {isActiveInCircle(circle) && <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />}
 
                         {circle?.id !== user?.id && (
                             <RelationSetInfo

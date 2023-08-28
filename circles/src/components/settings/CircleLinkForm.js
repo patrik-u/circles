@@ -119,9 +119,9 @@ export const CircleLinkForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                     };
 
                     if (circle.type === "event") {
-                        updatedCircleData.startsAt = combineDateAndTime(pickedDate, values.time);
+                        updatedCircleData.starts_at = combineDateAndTime(pickedDate, values.time);
                         updatedCircleData.time = values.time;
-                        updatedCircleData.isAllDay = isAllDay;
+                        updatedCircleData.is_all_day = isAllDay;
                     }
 
                     if (!isGuideForm) {
@@ -188,9 +188,9 @@ export const CircleLinkForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                 };
 
                 if (circle.type === "event") {
-                    newCircleData.startsAt = combineDateAndTime(pickedDate, values.time);
+                    newCircleData.starts_at = combineDateAndTime(pickedDate, values.time);
                     newCircleData.time = values.time;
-                    newCircleData.isAllDay = isAllDay;
+                    newCircleData.is_all_day = isAllDay;
                     newCircleData.content = richContent;
                 }
 

@@ -13,7 +13,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 const emptyEditorState =
     '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1}],"direction":null,"format":"","indent":0,"type":"root","version":1}}';
 
-// saves the document if it's changed
 const CommandListenerPlugin = () => {
     const [editor] = useLexicalComposerContext();
     const [triggerClearEditor, setTriggerClearEditor] = useAtom(triggerClearEditorAtom);
