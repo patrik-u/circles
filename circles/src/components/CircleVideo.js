@@ -85,11 +85,15 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
             setInVideoConference(circle?.id);
 
             // update user jitsiId in db
-            axios.put(`/circles/${user.id}`, {
-                circleData: {
-                    jitsi_id: event.id,
-                },
-            });
+            axios
+                .put(`/circles/${user.id}`, {
+                    circleData: {
+                        jitsi_id: event.id,
+                    },
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
         });
 
         // called when local user leaves video conference

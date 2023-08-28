@@ -191,18 +191,23 @@ export const Circle = ({ isGlobal }) => {
         });
 
         // get similar circles
-        axios.get(`/circles/${circleId}/circles`).then((response) => {
-            let similarCircles = response.data.similarCircles;
-            setSimilarCircles(similarCircles ?? []);
+        axios
+            .get(`/circles/${circleId}/circles`)
+            .then((response) => {
+                let similarCircles = response.data.similarCircles;
+                setSimilarCircles(similarCircles ?? []);
 
-            //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
+                //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
 
-            let connectedCircles = response.data.connectedCircles;
-            setConnectedCircles(connectedCircles ?? []);
+                let connectedCircles = response.data.connectedCircles;
+                setConnectedCircles(connectedCircles ?? []);
 
-            let mentionedCircles = response.data.mentionedCircles;
-            setMentionedCircles(mentionedCircles ?? []);
-        });
+                let mentionedCircles = response.data.mentionedCircles;
+                setMentionedCircles(mentionedCircles ?? []);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
 
         return () => {
             if (unsubscribeGetActiveCircles) {
@@ -241,22 +246,22 @@ export const Circle = ({ isGlobal }) => {
         if (config.disableOnActive) return;
         if (!signInStatus.signedIn || !user?.id) return;
 
-        try {
-            axios.put(`/circles/${circleId}/activity`, {
+        axios
+            .put(`/circles/${circleId}/activity`, {
                 active_in_video_conference: inVideoConference === circleId,
+            })
+            .catch((err) => {
+                console.error(err);
             });
-        } catch (err) {
-            console.error(err);
-        }
 
         const intervalId = setInterval(async () => {
-            try {
-                axios.put(`/circles/${circleId}/activity`, {
+            axios
+                .put(`/circles/${circleId}/activity`, {
                     active_in_video_conference: inVideoConference === circleId,
+                })
+                .catch((err) => {
+                    console.error(err);
                 });
-            } catch (err) {
-                console.error(err);
-            }
         }, 60000);
         return () => clearInterval(intervalId);
     }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);

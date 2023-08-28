@@ -72,11 +72,16 @@ export const CircleAiForm = ({ isUpdateForm, circle, circleData, isGuideForm, on
                 //console.log("updating circle data", updatedCircleData);
 
                 // update circle data
-                let putCircleResult = await axios.put(`/circles/${circle.id}`, {
-                    circlePrivateData: updatedCircleData,
-                });
+                let putCircleResult = null;
+                try {
+                    putCircleResult = await axios.put(`/circles/${circle.id}`, {
+                        circlePrivateData: updatedCircleData,
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
 
-                if (!putCircleResult.data?.error) {
+                if (putCircleResult && !putCircleResult.data?.error) {
                     toast({
                         title: i18n.t("Settings updated"),
                         status: "success",

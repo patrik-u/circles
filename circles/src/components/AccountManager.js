@@ -269,28 +269,28 @@ export const AccountManager = () => {
 
         let location = userLocation?.latitude && userLocation?.longitude ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
 
-        try {
-            axios.put(`/circles/${user.id}/activity`, {
+        axios
+            .put(`/circles/${user.id}/activity`, {
                 active_in_circle: circle,
                 active_in_video_conference: inVideoConference,
                 location: location,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            })
+            .catch((err) => {
+                console.error(err);
             });
-        } catch (err) {
-            console.error(err);
-        }
 
         const intervalId = setInterval(async () => {
-            try {
-                axios.put(`/circles/${user.id}/activity`, {
+            axios
+                .put(`/circles/${user.id}/activity`, {
                     active_in_circle: circle,
                     active_in_video_conference: inVideoConference,
                     location: location,
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                })
+                .catch((err) => {
+                    console.error(err);
                 });
-            } catch (err) {
-                console.error(err);
-            }
         }, 60000); // update every minute
         return () => clearInterval(intervalId);
     }, [signInStatus?.signedIn, user?.id, circle?.id, inVideoConference, userLocation, userData?.incognito]); // we only want to trigger if circle ID changes hence compiler warning
@@ -326,8 +326,9 @@ export const AccountManager = () => {
 
     useEffect(() => {
         if (!updateRelation) return;
-        log("calling /request_relation_update", 0, true);
-        axios.post(`/request_relation_update`, { circleId: updateRelation });
+        axios.post(`/request_relation_update`, { circleId: updateRelation }).catch((err) => {
+            console.error(err);
+        });
     }, [updateRelation]);
 
     return null;

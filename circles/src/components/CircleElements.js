@@ -295,7 +295,9 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
 
     const onOpenChat = () => {
         // init set circle
-        axios.post(`/circles/${circle.id}/init_set`);
+        axios.post(`/circles/${circle.id}/init_set`).catch((err) => {
+            console.error(err);
+        });
 
         let relationSet = getRelationSet(user, circle);
         openCircle(navigate, relationSet);
@@ -417,10 +419,14 @@ export const FavoriteButton = ({ circle, inPreview, ...props }) => {
         setFavoriteSetting(favorite);
 
         // update notification settings
-        axios.post(`/circles/${user.id}/settings`, {
-            circleId: circle.id,
-            settings: { favorite: favorite },
-        });
+        axios
+            .post(`/circles/${user.id}/settings`, {
+                circleId: circle.id,
+                settings: { favorite: favorite },
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     };
 
     if (!user?.id || (circle?.type !== "set" && !isConnected(userData, circle?.id, ["connected_mutually_to"]))) return;
@@ -672,10 +678,14 @@ export const NotificationsBell = ({ circle, inPreview, ...props }) => {
         setNotificationSetting(settings);
 
         // update notification settings
-        axios.post(`/circles/${user.id}/settings`, {
-            circleId: circle.id,
-            settings: { notifications: settings },
-        });
+        axios
+            .post(`/circles/${user.id}/settings`, {
+                circleId: circle.id,
+                settings: { notifications: settings },
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     };
 
     if (!user?.id || (circle?.type !== "set" && !isConnected(userData, circle?.id, ["connected_mutually_to"]))) return;
@@ -1037,14 +1047,20 @@ export const DisplayModeButtons = ({ ...props }) => {
     const toggleIncognitoMode = () => {
         let newIncognitoMode = !incognitoMode;
         // update user data
-        axios.put(`/circles/${user.id}`, {
-            circlePrivateData: {
-                incognito: !incognitoMode,
-            },
-        });
+        axios
+            .put(`/circles/${user.id}`, {
+                circlePrivateData: {
+                    incognito: !incognitoMode,
+                },
+            })
+            .catch((err) => {
+                console.error(err);
+            });
         // clear current activity
         if (newIncognitoMode) {
-            axios.delete(`/circles/${user.id}/activity`);
+            axios.delete(`/circles/${user.id}/activity`).catch((err) => {
+                console.error(err);
+            });
         }
         setCurrentIncognitoMode(newIncognitoMode);
     };

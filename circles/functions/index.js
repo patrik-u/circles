@@ -515,6 +515,10 @@ const deleteCircle = async (id) => {
         const docRef = db.collection("connections").doc(connectionDoc.id);
         await docRef.delete();
     });
+
+    // remove from pinecone
+    const index = pinecone.Index("circles");
+    await index.delete({ deleteRequest: { ids: [id] } });
 };
 
 // deletes chat message
@@ -896,6 +900,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
 
     let circle = {};
     let newCircle = circleReq.id ? false : true;
+    let type = circleReq.type;
     let currentCircle = null;
     if (!newCircle) {
         currentCircle = await getCircle(circleReq.id);
@@ -910,6 +915,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
                 return { errors };
             }
         }
+        type = currentCircle.type;
     }
 
     // required fields for new circles
@@ -931,7 +937,9 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
     if (circleReq.type) {
-        if (!createCircleTypes.includes(circleReq.type)) {
+        if (!newCircle && circleReq.type !== type) {
+            errors.type = "Cannot change type of existing circle";
+        } else if (!createCircleTypes.includes(circleReq.type)) {
             errors.type = "Invalid circle type";
         } else {
             circle.type = circleReq.type;
@@ -953,7 +961,6 @@ const upsertCircle = async (authCallerId, circleReq) => {
         circle.content = circleReq.content;
     }
     if (circleReq.lexical_content) {
-        console.log("lexical_content: " + circleReq.lexical_content);
         circle.lexical_content = circleReq.lexical_content;
     }
     if (circleReq.language) {
@@ -998,7 +1005,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
         circle.funding = circleReq.funding;
     }
 
-    if (circle.type === "event") {
+    if (type === "event") {
+        console.log(circleReq.starts_at);
         if (circleReq.starts_at) {
             circle.starts_at = new Date(circleReq.starts_at);
         }

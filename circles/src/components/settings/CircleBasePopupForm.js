@@ -48,9 +48,13 @@ export const CircleBasePopupForm = ({ circle, isUpdateForm, isGuideForm, onCance
             // update circle data
             let newBase = new GeoPoint(locationPickerPosition[1], locationPickerPosition[0]);
             let updatedCircleData = { base: newBase };
-            await axios.put(`/circles/${circle.id}`, {
-                circleData: updatedCircleData,
-            });
+            try {
+                await axios.put(`/circles/${circle.id}`, {
+                    circleData: updatedCircleData,
+                });
+            } catch (err) {
+                console.log(err);
+            }
 
             setIsSavingLocation(false);
 
@@ -59,9 +63,13 @@ export const CircleBasePopupForm = ({ circle, isUpdateForm, isGuideForm, onCance
             }
         } else if (isGuideForm) {
             let updatedCircleData = { skipped_setting_location: true };
-            await axios.put(`/circles/${circle.id}`, {
-                circlePrivateData: updatedCircleData,
-            });
+            try {
+                await axios.put(`/circles/${circle.id}`, {
+                    circlePrivateData: updatedCircleData,
+                });
+            } catch (err) {
+                console.log(err);
+            }
         }
 
         if (hasSetLocation() && isUpdateForm) {
@@ -90,7 +98,13 @@ export const CircleBasePopupForm = ({ circle, isUpdateForm, isGuideForm, onCance
             <Box>
                 <HStack align="center" marginTop="10px">
                     <Button colorScheme="blue" mr={3} borderRadius="25px" lineHeight="0" isLoading={isSavingLocation} onClick={onSaveBase}>
-                        {isUpdateForm ? (isGuideForm ? (!hasSetLocation() ? i18n.t("Skip") : i18n.t("Continue")) : i18n.t("Save")) : i18n.t(`Save and go to ${circle.type}`)}
+                        {isUpdateForm
+                            ? isGuideForm
+                                ? !hasSetLocation()
+                                    ? i18n.t("Skip")
+                                    : i18n.t("Continue")
+                                : i18n.t("Save")
+                            : i18n.t(`Save and go to ${circle.type}`)}
                     </Button>
                     {!isUpdateForm && (
                         <Button variant="ghost" borderRadius="25px" onClick={onCancel} lineHeight="0" isDisabled={isSavingLocation}>

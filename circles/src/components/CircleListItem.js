@@ -281,10 +281,14 @@ export const LikeButton = ({ circle }) => {
         setLikes(liked ? currentLikes + 1 : currentLikes - 1);
 
         // update liked settings
-        axios.post(`/circles/${user.id}/settings`, {
-            circleId: circle.id,
-            settings: { liked: liked },
-        });
+        axios
+            .post(`/circles/${user.id}/settings`, {
+                circleId: circle.id,
+                settings: { liked: liked },
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     };
 
     // TODO if chat is private and user isn't connected, show a lock icon on the chat button

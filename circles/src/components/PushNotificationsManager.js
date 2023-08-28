@@ -109,7 +109,9 @@ export const PushNotificationsManager = () => {
                         OneSignal.getUserId((userId) => {
                             log("player_id of the subscribed user is : " + userId, 0, true);
                             // Make a POST call to your server with the user ID
-                            axios.post(`/registerOneSignalUserId`, { userId: userId });
+                            axios.post(`/registerOneSignalUserId`, { userId: userId }).catch((err) => {
+                                console.error(err);
+                            });
                             setIsUserIdReported(true);
                         });
                     }
@@ -132,7 +134,9 @@ export const PushNotificationsManager = () => {
                 OneSignal.getUserId((userId) => {
                     log("player_id of the subscribed user is : " + userId, 0, true);
                     // Make a POST call to your server with the user ID
-                    axios.post(`/registerOneSignalUserId`, { userId: userId });
+                    axios.post(`/registerOneSignalUserId`, { userId: userId }).catch((err) => {
+                        console.error(err);
+                    });
                     setIsUserIdReported(true);
                 });
             }

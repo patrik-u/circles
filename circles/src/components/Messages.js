@@ -112,7 +112,11 @@ const Messages = () => {
         // if any unread message
         if (messages?.find((x) => !x.is_seen)) {
             // fire request to mark messages as read
-            await axios.put(`/chat_notifications`);
+            try {
+                await axios.put(`/chat_notifications`);
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 
@@ -149,7 +153,9 @@ const Messages = () => {
                 if (currentChatCircleMessage) {
                     currentChatCircleMessage.is_seen = true;
                     // mark new message as seen
-                    axios.put(`/chat_notifications`, { notification_id: currentChatCircleMessage.id });
+                    axios.put(`/chat_notifications`, { notification_id: currentChatCircleMessage.id }).catch((err) => {
+                        console.error(err);
+                    });
                 }
             }
 

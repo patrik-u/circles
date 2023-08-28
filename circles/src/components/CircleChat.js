@@ -141,7 +141,9 @@ export const CircleChatWidget = ({ item }) => {
         // if circle has more chat circles, fetch them
         if (user.show_ai && circle?.chat_circle_ids?.length > 0) {
             // initiate relation-sets with chat circles
-            axios.post(`/circles/init_sets`, { circle_ids: circle.chat_circle_ids });
+            axios.post(`/circles/init_sets`, { circle_ids: circle.chat_circle_ids }).catch((err) => {
+                console.error(err);
+            });
 
             // get relation-set ids
             let relationSetIds = circle.chat_circle_ids.map((id) => getSetId(user.id, id));
@@ -469,7 +471,9 @@ export const CircleChat = ({ circle }) => {
     const onNewSession = () => {
         setChatMessages([]);
         setIsLoadingMessages(true);
-        axios.post(`/chat_session`, { circle_id: circle.id });
+        axios.post(`/chat_session`, { circle_id: circle.id }).catch((err) => {
+            console.error(err);
+        });
     };
 
     const isAiRelationSet = useMemo(() => {
@@ -492,7 +496,9 @@ export const CircleChat = ({ circle }) => {
             if (!doc.exists || !newChatData) {
                 // create new chat session
                 log("creating new chat session", 0, true);
-                axios.post(`/chat_session`, { circle_id: circle.id });
+                axios.post(`/chat_session`, { circle_id: circle.id }).catch((err) => {
+                    console.error(err);
+                });
                 return;
             }
             newChatData.id = doc.id;
@@ -514,7 +520,9 @@ export const CircleChat = ({ circle }) => {
 
         if (circle?.id) {
             // mark messages as read
-            axios.put(`/chat_notifications`, { circle_id: circle?.id });
+            axios.put(`/chat_notifications`, { circle_id: circle?.id }).catch((err) => {
+                console.error(err);
+            });
         }
 
         return () => {
@@ -767,11 +775,16 @@ export const CircleChat = ({ circle }) => {
             setMessageToEdit(null);
 
             // send request to edit message
-            let postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
-                message: formattedMessage,
-            });
+            let postMessageResult = null;
+            try {
+                postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
+                    message: formattedMessage,
+                });
+            } catch (err) {
+                console.error(err);
+            }
 
-            if (postMessageResult.data?.error) {
+            if (!postMessageResult || postMessageResult.data?.error) {
                 // something went wrong
                 //console.log(JSON.stringify(postMessageResult.data, null, 2));
                 toast({
@@ -796,14 +809,19 @@ export const CircleChat = ({ circle }) => {
             setMessageToReply(null);
 
             // send request to send message
-            let postMessageResult = await axios.post(`/chat_messages`, req);
+            let postMessageResult = null;
+            try {
+                postMessageResult = await axios.post(`/chat_messages`, req);
+            } catch (err) {
+                console.error(err);
+            }
 
-            if (postMessageResult.data?.error) {
+            if (!postMessageResult || postMessageResult.data?.error) {
                 // something went wrong
                 //console.log(JSON.stringify(postMessageResult.data, null, 2));
                 toast({
                     title: i18n.t("Couldn't send message"),
-                    description: JSON.stringify(postMessageResult.data?.error, null, 2),
+                    description: JSON.stringify(postMessageResult?.data?.error, null, 2),
                     status: "error",
                     position: "top",
                     duration: 4500,
@@ -841,9 +859,14 @@ export const CircleChat = ({ circle }) => {
         confirmDeleteMessageOnClose();
 
         // send request to send message
-        let deleteMessageResult = await axios.delete(`/chat_messages/${messageToDelete.id}`);
+        let deleteMessageResult = null;
+        try {
+            deleteMessageResult = await axios.delete(`/chat_messages/${messageToDelete.id}`);
+        } catch (err) {
+            console.error(err);
+        }
 
-        if (deleteMessageResult.data?.error) {
+        if (!deleteMessageResult || deleteMessageResult.data?.error) {
             // something went wrong
             //console.log(JSON.stringify(postMessageResult.data, null, 2));
             toast({

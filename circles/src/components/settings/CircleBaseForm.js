@@ -38,9 +38,13 @@ export const CircleBaseForm = ({ circle, isUpdateForm, onCancel, onNext, onUpdat
             // update circle data
             let newBase = new GeoPoint(locationPickerPosition[1], locationPickerPosition[0]);
             let updatedCircleData = { base: newBase };
-            await axios.put(`/circles/${circle.id}`, {
-                circleData: updatedCircleData,
-            });
+            try {
+                await axios.put(`/circles/${circle.id}`, {
+                    circleData: updatedCircleData,
+                });
+            } catch (err) {
+                console.log(err);
+            }
 
             setIsSavingLocation(false);
 

@@ -97,12 +97,17 @@ export const CircleTagsForm = ({ isUpdateForm, circle, onCancel, onNext, onUpdat
         };
 
         // update circle data
-        let putCircleResult = await axios.put(`/circles/${circle.id}`, {
-            circleData: updatedCircleData,
-        });
+        let putCircleResult = null;
+        try {
+            putCircleResult = await axios.put(`/circles/${circle.id}`, {
+                circleData: updatedCircleData,
+            });
+        } catch (err) {
+            console.error(err);
+        }
 
         setIsSavingTags(false);
-        if (!putCircleResult.data?.error) {
+        if (putCircleResult && !putCircleResult.data?.error) {
             toast({
                 title: i18n.t("Settings updated"),
                 status: "success",

@@ -79,11 +79,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     }, [setRequestUserConnections]);
 
     useEffect(() => {
-        log("setting rich content: " + richContent.content, 0, true);
-        log("setting rich lexical_content: " + richContent.lexical_content, 0, true);
-    }, [richContent]);
-
-    useEffect(() => {
         if (selectedParentCircle || !userConnections || isInitialized) {
             return;
         }
@@ -133,12 +128,13 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         updatedCircleData.starts_at = combineDateAndTime(pickedDate, values.time);
                         updatedCircleData.time = values.time;
                         updatedCircleData.is_all_day = isAllDay;
+                        log("updatedCircleData: " + JSON.stringify(updatedCircleData.starts_at), 0, true);
                     }
 
-                    log("updating circle content" + richContent.content, 0, true);
+                    //log("updating circle content" + richContent.content, 0, true);
                     updatedCircleData.content = richContent.content;
                     updatedCircleData.lexical_content = richContent.lexical_content;
-                    log("updating circle lexical_content" + richContent.lexical_content, 0, true);
+                    //log("updating circle lexical_content" + richContent.lexical_content, 0, true);
                     if (updatedCircleData.content) {
                         if (!updatedCircleData.description) {
                             // if no description, use first part of content
@@ -166,11 +162,16 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                     //console.log("updating circle data", updatedCircleData);
 
                     // update circle data
-                    let putCircleResult = await axios.put(`/circles/${circle.id}`, {
-                        circleData: updatedCircleData,
-                    });
+                    let putCircleResult = null;
+                    try {
+                        putCircleResult = await axios.put(`/circles/${circle.id}`, {
+                            circleData: updatedCircleData,
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
 
-                    if (!putCircleResult.data?.error) {
+                    if (putCircleResult && !putCircleResult.data?.error) {
                         toast({
                             title: i18n.t("Settings updated"),
                             status: "success",
@@ -229,13 +230,18 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                     }
                 }
 
-                let putCircleResult = await axios.post(`/circles`, newCircleData);
+                let putCircleResult = null;
+                try {
+                    putCircleResult = await axios.post(`/circles`, newCircleData);
+                } catch (err) {
+                    console.error(err);
+                }
 
                 // console.log(
                 //     JSON.stringify(putCircleResult.data, null, 2)
                 // );
 
-                if (!putCircleResult.data?.error) {
+                if (putCircleResult && !putCircleResult.data?.error) {
                     toast({
                         title: i18n.t("Circle created"),
                         status: "success",
@@ -248,7 +254,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         onUpdate(putCircleResult.data.circle);
                     }
                 } else {
-                    log(JSON.stringify(putCircleResult.data.error, null, 2), 0, true);
                     toast({
                         title: i18n.t("Unable to create circle"),
                         status: "error",

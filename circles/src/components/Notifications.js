@@ -385,7 +385,11 @@ const Notifications = () => {
         // if any unread notification
         if (notifications?.find((x) => !x.is_read)) {
             // fire request to mark notifications as read
-            await axios.put(`/notifications`);
+            try {
+                await axios.put(`/notifications`);
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 

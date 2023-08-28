@@ -50,11 +50,16 @@ export const CircleQuickLinksForm = ({ circle }) => {
                     //console.log("updating user data", updatedUserData);
 
                     // update user data
-                    let putCircleResult = await axios.put(`/circles/${circle.id}`, {
-                        circleData: updatedCircleData,
-                    });
+                    let putCircleResult = null;
+                    try {
+                        putCircleResult = await axios.put(`/circles/${circle.id}`, {
+                            circleData: updatedCircleData,
+                        });
+                    } catch (err) {
+                        console.log(err);
+                    }
 
-                    if (!putCircleResult.data?.error) {
+                    if (putCircleResult && !putCircleResult.data?.error) {
                         toast({
                             title: i18n.t("Circle updated"),
                             status: "success",

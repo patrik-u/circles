@@ -74,9 +74,13 @@ export const CircleImagesForm = ({ circle, isUpdateForm, onCancel, onNext, onUpd
                         //console.log("updating circle data", updatedCircleData);
 
                         // update circle data
-                        await axios.put(`/circles/${circle.id}`, {
-                            circleData: updatedCircleData,
-                        });
+                        try {
+                            await axios.put(`/circles/${circle.id}`, {
+                                circleData: updatedCircleData,
+                            });
+                        } catch (err) {
+                            console.log(err);
+                        }
 
                         if (onUpdate) {
                             onUpdate(updatedCircleData);

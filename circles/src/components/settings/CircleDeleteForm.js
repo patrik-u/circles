@@ -27,14 +27,19 @@ export const CircleDeleteForm = ({ circle }) => {
                     navigate(routes.home);
 
                     // delete circle
-                    let putCircleResult = await axios.delete(`/circles/${circle.id}`, {
-                        data: { name_confirmation: values.name_confirmation },
-                    });
+                    let putCircleResult = null;
+                    try {
+                        putCircleResult = await axios.delete(`/circles/${circle.id}`, {
+                            data: { name_confirmation: values.name_confirmation },
+                        });
+                    } catch (err) {
+                        console.log(err);
+                    }
 
-                    if (putCircleResult.data?.error) {
+                    if (!putCircleResult || putCircleResult.data?.error) {
                         toast({
                             title: i18n.t("Circle couldn't be deleted"),
-                            description: putCircleResult.data.error,
+                            description: putCircleResult?.data?.error,
                             status: "error",
                             position: "top",
                             duration: 4500,

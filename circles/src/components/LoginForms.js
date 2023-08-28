@@ -131,10 +131,14 @@ export const LoginRegisterMenu = () => {
 
         // check if user just created a new account with name, email and password
         // update user data with firstname and lastname
-        axios.put(`/circles/${user.id}`, {
-            circleData: newUserData.circleData,
-            circlePrivateData: newUserData.circlePrivateData,
-        });
+        axios
+            .put(`/circles/${user.id}`, {
+                circleData: newUserData.circleData,
+                circlePrivateData: newUserData.circlePrivateData,
+            })
+            .catch((err) => {
+                console.error(err);
+            });
         setNewUserData(null);
     }, [newUserData, user?.id]);
 
