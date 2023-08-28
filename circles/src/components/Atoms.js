@@ -49,6 +49,7 @@ export const triggerClearEditorAtom = atom(false);
 export const includeParagraphsAtom = atomWithStorage(true);
 
 // circle atoms
+export const circleHistoryAtom = atom({ history: [], position: -1 });
 export const circleAtom = atom(null);
 export const circleDataAtom = atom(null);
 export const activeCirclesAtom = atom([]);

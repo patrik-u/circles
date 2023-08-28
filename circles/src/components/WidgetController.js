@@ -297,7 +297,7 @@ const WidgetController = () => {
     };
 
     return (
-        <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="1" pointerEvents="none">
+        <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="2" pointerEvents="none">
             <Box p={5} position={isMobile ? "relative" : "absolute"} w="full" pointerEvents="auto">
                 <Flex justifyContent="center" flexWrap="wrap" mt={isMobile ? "30px" : 0} gap={1}>
                     {menuItems
@@ -319,19 +319,19 @@ const WidgetController = () => {
 
             <Flex flexGrow="1" marginTop={isMobile ? "0px" : "90px"} zIndex="10">
                 {toggledWidgets.includes("discover") && (
-                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3" className="min-w-96 w-96 flex-shrink-0">
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3">
                         <CircleDiscover onClose={onDiscoverClose} />
                     </Flex>
                 )}
 
                 {toggledWidgets.includes("about") && (
-                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3" className="min-w-96 w-96 flex-shrink-0">
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3">
                         <CircleAbout onClose={onAboutClose} />
                     </Flex>
                 )}
 
                 {toggledWidgets.includes("chat") && (
-                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="1" className="min-w-96 w-96 flex-shrink-0">
+                    <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="1">
                         <CircleChatWidget />
                     </Flex>
                 )}

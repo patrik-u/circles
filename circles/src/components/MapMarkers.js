@@ -111,7 +111,7 @@ export const CircleMapEdges = ({ circle, circles }) => {
                     type: "Feature",
                     properties: {
                         circle_types: getCircleTypes(circle.type, x.type),
-                        similar: (x.categories?.[0] === "similar").toString(),
+                        similar: (x.categories?.length === 1 && x.categories?.[0] === "similar").toString(),
                     },
                     geometry: {
                         type: "LineString",

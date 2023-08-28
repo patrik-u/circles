@@ -179,7 +179,10 @@ const getRelevantConnections = async (id) => {
     if (!id) {
         return [];
     }
-    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains-any", ["connected_mutually_to", "parented_by"]);
+    let query = db
+        .collection("connections")
+        .where("source.id", "==", id)
+        .where("types", "array-contains-any", ["connected_mutually_to", "parented_by", "parent_of"]);
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
@@ -1287,7 +1290,12 @@ app.get("/circles/:id/circles", async (req, res) => {
         // TODO when filtering for a specific category and type we can make the semantic search more specific to that as to yield more relevant results
 
         // get similar circles through semantic search
-        let similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event", "project", "document"], 11);
+        let similarCircles = [];
+        try {
+            similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event", "project", "document"], 11);
+        } catch (error) {
+            functions.logger.error("Error while getting similar circles:", error);
+        }
 
         // remove circle itself from similar circles
         similarCircles = similarCircles.filter((x) => x.id !== circleId);
@@ -1298,7 +1306,7 @@ app.get("/circles/:id/circles", async (req, res) => {
         const connections = await getRelevantConnections(circleId);
 
         // get up to date circle data for connections
-        let circleIds = connections.map((x) => x.target.id);
+        let circleIds = connections.filter((x) => x.target.type !== "tag").map((x) => x.target.id);
         let connectedCircles = [];
         while (circleIds.length) {
             let circleIdsBatch = circleIds.splice(0, 10);

@@ -39,6 +39,7 @@ import {
     similarCirclesAtom,
     connectedCirclesAtom,
     mentionedCirclesAtom,
+    circleHistoryAtom,
 } from "components/Atoms";
 import { displayModes } from "components/Constants";
 import TopMenu from "components/TopMenu";
@@ -98,6 +99,7 @@ export const Circle = ({ isGlobal }) => {
     const [isPinned, setIsPinned] = useAtom(navigationPanelPinnedAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
+    const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
 
     const handlePinClick = () => {
         setIsPinned(!isPinned);
@@ -108,6 +110,30 @@ export const Circle = ({ isGlobal }) => {
         onOpen();
         log("opening navigation menu", -1);
     };
+
+    useEffect(() => {
+        if (!circle?.id) return;
+
+        // update history unless current circle is at the history position, for now just add circle to history
+        setCircleHistory((x) => {
+            // get circle at current position
+            const currentCircle = x.history?.[x.position];
+
+            // if circle is already at position do nothing
+            if (currentCircle?.id === circle.id) return x;
+
+            // if we're not at the end of the history, discard future circles
+            if (x.position < x.history.length - 1) {
+                return { position: x.position + 1, history: [...x.history.slice(0, x.position + 1), circle] };
+            }
+
+            // if we're at the end of the history, add circle to history
+            return { position: x.position + 1, history: [...x.history, circle] };
+
+            // if (x.history.length > 0 && x.history[x.length - 1] === circle.id) return x;
+            // return { position: x.position + 1, history: [...x.history, circle] };
+        });
+    }, [circle?.id, setCircleHistory]);
 
     useEffect(() => {
         log("Circle.useEffect", -1);
@@ -230,17 +256,6 @@ export const Circle = ({ isGlobal }) => {
             .then((x) => {})
             .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
-
-    //HISTORIC123
-    // useEffect(() => {
-    //     // set to show only active circles
-    //     if (circlesFilter.only_active !== !showHistoricCircles) {
-    //         setCirclesFilter({ ...circlesFilter, only_active: !showHistoricCircles });
-    //     }
-    //     if (!circlesFilter.types) return;
-    //     let { types: _, ...newFilter } = circlesFilter;
-    //     setCirclesFilter(newFilter);
-    // }, [circlesFilter, setCirclesFilter, showHistoricCircles]);
 
     useEffect(() => {
         if (config.disableOnActive) return;

@@ -1,10 +1,11 @@
 //#region imports
 import React, { useEffect, useMemo } from "react";
 import { Box, VStack, Text, Flex, HStack } from "@chakra-ui/react";
+import { openCircle } from "components/Navigation";
 import { log, getDateAndTimeLong, getDateLong, singleLineEllipsisStyle, twoLineEllipsisStyle, isActiveInCircle } from "components/Helpers";
 import { useAtom } from "jotai";
-import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom, userAtom } from "components/Atoms";
-import { useLocationNoUpdates } from "components/RouterUtils";
+import { isMobileAtom, circleAtom, circlesFilterAtom, previewCircleAtom, userAtom, toggleWidgetEventAtom } from "components/Atoms";
+import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleCover, CirclePicture, CircleHeader, QuickLinks, CircleMembersPanel, CircleRichText } from "components/CircleElements";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { CircleTags } from "components/CircleElements";
@@ -20,8 +21,10 @@ const CircleAbout = ({ onClose }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
+    const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const circle = useMemo(() => previewCircle ?? currentCircle, [previewCircle, currentCircle]);
     const location = useLocationNoUpdates();
+    const navigate = useNavigateNoUpdates();
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -61,20 +64,37 @@ const CircleAbout = ({ onClose }) => {
                         <CircleCover circle={circle} coverHeight={184} borderRadius="7px" />
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
-                        <Flex height="44px" width="100%" flexDirection="row" position="relative">
+                        <Flex height="54px" width="100%" flexDirection="row" position="relative">
                             <Box width="calc(50% - 38px)" overflow="hidden">
                                 {circle.type !== "set" && (
-                                    <Text
-                                        fontSize={getNameFontSize(circle.name)}
-                                        fontWeight="bold"
-                                        marginLeft="5px"
-                                        color="black"
-                                        style={twoLineEllipsisStyle}
-                                        marginTop="5px"
-                                        lineHeight="18px"
-                                    >
-                                        {circle.name}
-                                    </Text>
+                                    <Flex flexDirection={"column"} marginLeft="5px" marginTop="5px">
+                                        {circle?.parent_circle && (
+                                            <Text
+                                                fontSize={"12px"}
+                                                fontWeight="bold"
+                                                color="#5d5d5d"
+                                                _hover={{ color: "#904893" }}
+                                                noOfLines={1}
+                                                lineHeight="13px"
+                                                cursor="pointer"
+                                                onClick={() => {
+                                                    openCircle(navigate, circle.parent_circle);
+                                                    setToggleWidgetEvent({ name: "about", value: true });
+                                                }}
+                                            >
+                                                {circle?.parent_circle?.name}
+                                            </Text>
+                                        )}
+                                        <Text
+                                            fontSize={getNameFontSize(circle.name)}
+                                            fontWeight="bold"
+                                            color="black"
+                                            style={twoLineEllipsisStyle}
+                                            lineHeight="18px"
+                                        >
+                                            {circle.name}
+                                        </Text>
+                                    </Flex>
                                 )}
                             </Box>
                             <Box

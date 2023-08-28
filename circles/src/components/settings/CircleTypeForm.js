@@ -84,30 +84,34 @@ export const CircleTypeForm = ({ type, onCancel, onNext, onUpdate }) => {
                                                             </VStack>
                                                         </HStack>
                                                     </Radio>
-                                                    <Radio onChange={onChange} value="project">
-                                                        <HStack spacing="10px">
-                                                            <Image src="/circle-project-option.png" width="100px" height="100px" />
-                                                            <VStack align="start" spacing="0px">
-                                                                <Text fontWeight="700">{i18n.t("Project")}</Text>
-                                                                <Text textAlign="left">
-                                                                    {i18n.t(
-                                                                        "A collaborative endeavor aiming to achieve specific objectives, often within a set timeline."
-                                                                    )}
-                                                                </Text>
-                                                            </VStack>
-                                                        </HStack>
-                                                    </Radio>
-                                                    <Radio onChange={onChange} value="document">
-                                                        <HStack spacing="10px">
-                                                            <Image src="/circle-document-option.png" width="100px" height="100px" />
-                                                            <VStack align="start" spacing="0px">
-                                                                <Text fontWeight="700">{i18n.t("Document")}</Text>
-                                                                <Text textAlign="left">
-                                                                    {i18n.t("Code of conduct, constitution & bylaws, meeting minutes, manifesto, etc.")}
-                                                                </Text>
-                                                            </VStack>
-                                                        </HStack>
-                                                    </Radio>
+                                                    {user?.is_admin && (
+                                                        <Radio onChange={onChange} value="project">
+                                                            <HStack spacing="10px">
+                                                                <Image src="/circle-project-option.png" width="100px" height="100px" />
+                                                                <VStack align="start" spacing="0px">
+                                                                    <Text fontWeight="700">{i18n.t("Project")}</Text>
+                                                                    <Text textAlign="left">
+                                                                        {i18n.t(
+                                                                            "A collaborative endeavor aiming to achieve specific objectives, often within a set timeline."
+                                                                        )}
+                                                                    </Text>
+                                                                </VStack>
+                                                            </HStack>
+                                                        </Radio>
+                                                    )}
+                                                    {user?.is_admin && (
+                                                        <Radio onChange={onChange} value="document">
+                                                            <HStack spacing="10px">
+                                                                <Image src="/circle-document-option.png" width="100px" height="100px" />
+                                                                <VStack align="start" spacing="0px">
+                                                                    <Text fontWeight="700">{i18n.t("Document")}</Text>
+                                                                    <Text textAlign="left">
+                                                                        {i18n.t("Code of conduct, constitution & bylaws, meeting minutes, manifesto, etc.")}
+                                                                    </Text>
+                                                                </VStack>
+                                                            </HStack>
+                                                        </Radio>
+                                                    )}
                                                     {user?.is_admin && (
                                                         <Radio onChange={onChange} value="ai_agent">
                                                             <HStack spacing="10px">
