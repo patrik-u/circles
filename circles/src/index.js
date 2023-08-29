@@ -12,6 +12,7 @@ import config from "./Config";
 import axios from "axios";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
+import "@fontsource/libre-franklin";
 import App from "./App";
 //import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";

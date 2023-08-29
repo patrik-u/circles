@@ -1025,6 +1025,13 @@ dfn {
     /* border-bottom: 1px solid hsla(210, 18%, 87%, 1); */
 }
 
+.embedMarkdownContent h1:first-child,
+.embedMarkdownContent h2:first-child,
+.embedMarkdownContent h3:first-child,
+.embedMarkdownContent h4:first-child {
+    margin-top: 0;
+}
+
 mark {
     background-color: #fff8c5;
     color: #24292f;
@@ -1252,7 +1259,7 @@ kbd {
     color: #57606a;
 }
 
-.embedMarkdownContent p {
+.embedMarkdownContent p:not(:last-child) {
     margin-top: 0;
     margin-bottom: 10px;
 }
@@ -1355,7 +1362,7 @@ kbd {
     outline: none;
 }
 
-.embedMarkdownContent p,
+.embedMarkdownContent p:not(:last-child),
 .embedMarkdownContent blockquote,
 .embedMarkdownContent ul,
 .embedMarkdownContent ol,

@@ -322,7 +322,7 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                         {/* Editor panel */}
                         <Flex ref={middlePanelRef} flexDirection="column" width="100%" maxWidth="100%" minHeight="300px">
                             <Box className="editor-container">
-                                <Box className="editor-inner">
+                                <Box className="editor-inner embedMarkdownContent">
                                     <RichTextPlugin
                                         contentEditable={<ContentEditable className="editor-input" />}
                                         placeholder={<Placeholder />}

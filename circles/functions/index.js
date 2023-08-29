@@ -24,6 +24,7 @@ linkify.tlds("earth", true);
 
 // init pinecone client
 const pinecone = new PineconeClient();
+pinecone.projectName = "";
 pinecone
     .init({
         environment: process.env.PINECONE_ENVIRONMENT,
@@ -249,6 +250,21 @@ const getConfig = async () => {
     return configDoc.data();
 };
 
+// converts firestore date to javascript date
+const fromFsDate = (date) => {
+    if (!date) return date;
+
+    if (date._seconds) {
+        return new Date(date._seconds * 1000);
+    } else if (date.seconds) {
+        return new Date(date.seconds * 1000);
+    } else if (typeof date === "number") {
+        return new Date(date);
+    } else {
+        return date;
+    }
+};
+
 // create textual representation of circle
 const getCircleText = (circle, condensed = false) => {
     const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
@@ -267,7 +283,7 @@ const getCircleText = (circle, condensed = false) => {
     text += `URL: https://codo.earth/circles/${circle.id}\n`;
     if (circle.type === "event") {
         // add info about event
-        text += `Starts at: ${circle.starts_at}\n`;
+        text += `Starts at: ${fromFsDate(circle.starts_at)?.toISOString()}\n`;
     }
     if (!condensed) {
         let chars = text.length;
@@ -3165,6 +3181,11 @@ app.post("/update", auth, async (req, res) => {
                     args: "<type> <date>",
                     description: "Counts new circles of specified type that has created since date specified.",
                 },
+                {
+                    name: "circle_text",
+                    args: "<circle_id> ?<is_condensed true|false>",
+                    description: "Gets text representation of circle.",
+                },
             ];
             return res.json({ commands });
         } else if (commandArgs[0] === "delete_circle") {
@@ -3410,6 +3431,7 @@ app.post("/update", auth, async (req, res) => {
             let result = { count: `${snapshot.docs.length} ${type}s` };
             return res.json({ result });
         } else if (commandArgs[0] === "markdown") {
+            // converts HTML circle description to Markdown, can be removed once all circles have been converted
             let targetId = commandArgs[1];
             if (!targetId) {
                 return res.json({ error: "invalid target" });
@@ -3438,6 +3460,18 @@ app.post("/update", auth, async (req, res) => {
                 let newContent = turndownService.turndown(circle.content);
                 await upsertCircle(targetId, { id: targetId, content: newContent });
             }
+        } else if (commandArgs[0] === "circle_text") {
+            // gets circle text for a circle
+            let targetId = commandArgs[1];
+            let condensed = commandArgs[2] === "true";
+            if (!targetId) {
+                return res.json({ error: "invalid target" });
+            }
+            const circle = await getCircle(targetId);
+            if (!circle) {
+                return res.json({ error: "invalid target" });
+            }
+            return res.json({ circle_text: getCircleText(circle, condensed) });
         } else {
             return res.json({ error: "command not recognized" });
         }
