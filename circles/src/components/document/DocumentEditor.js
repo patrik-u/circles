@@ -215,7 +215,6 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
     const [latestSaveId, setLatestSaveId] = useState(null);
     // const [activeNote] = useAtom(activeNoteAtom); // NOTES123
     const [isMobile] = useAtom(isMobileAtom);
-    const [, setTitle] = useState(initialDocument?.name ?? "");
     const [contentLength, setContentLength] = useState(initialDocument?.content?.length ?? 0);
 
     const Placeholder = () => {
@@ -253,7 +252,7 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                     },
                 },
             ],
-            editorState: () => $convertFromMarkdownString(document?.content, TRANSFORMERS),
+            editorState: () => $convertFromMarkdownString(document?.content ?? "", TRANSFORMERS),
         };
     }, [document?.content]);
 
@@ -339,7 +338,6 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                                     <AutoSavePlugin
                                         latestSaveId={latestSaveId}
                                         setContentLength={setContentLength}
-                                        setTitle={setTitle}
                                         disableAutoSave={disableAutoSave}
                                         document={document}
                                         setDocument={setDocument}

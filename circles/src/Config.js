@@ -21,7 +21,7 @@ const configs = {
         oneSignalAppId: "7e05d942-3834-48dc-8e49-53f3512da179",
         mapBoxToken: "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
         ai_agent: "tN05inp7an26vZMaAAWw",
-        disableOnActive: false,
+        disableOnActive: true,
     },
     circles_staging: {
         environment: "staging",

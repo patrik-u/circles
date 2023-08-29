@@ -520,8 +520,12 @@ const deleteCircle = async (id) => {
     });
 
     // remove from pinecone
-    const index = pinecone.Index("circles");
-    await index.delete({ deleteRequest: { ids: [id] } });
+    try {
+        const index = pinecone.Index("circles");
+        await index.delete1({ deleteRequest: { ids: [id] } });
+    } catch (error) {
+        console.log(error);
+    }
 };
 
 // deletes chat message

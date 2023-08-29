@@ -36,6 +36,11 @@ code {
     top: 0;
 }
 
+/* Disable footnote label in markdown that says "Footnotes" */
+#footnote-label {
+    display: none;
+}
+
 .mapboxgl-map {
     font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 }
@@ -45,6 +50,7 @@ code {
     white-space: pre-line;
 }
 
+/* 
 .embedMarkdownContent {
     font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     color: var(--chakra-colors-gray-800);
@@ -78,7 +84,7 @@ code {
     font-weight: normal;
     font-family: "Roboto", "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
     color: #1c1c1c;
-}
+} */
 
 .embedHtmlContent a {
     color: #894384;
@@ -1011,7 +1017,7 @@ dfn {
     font-style: italic;
 }
 
-h1 {
+.embedMarkdownContent h1 {
     margin: 0.67em 0;
     font-weight: 600;
     padding-bottom: 0.3em;
@@ -1206,89 +1212,89 @@ kbd {
     box-shadow: inset 0 -1px 0 rgba(175, 184, 193, 0.2);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+.embedMarkdownContent h1,
+.embedMarkdownContent h2,
+.embedMarkdownContent h3,
+.embedMarkdownContent h4,
+.embedMarkdownContent h5,
+.embedMarkdownContent h6 {
     margin-top: 24px;
     margin-bottom: 16px;
     font-weight: 600;
     line-height: 1.25;
 }
 
-h2 {
+.embedMarkdownContent h2 {
     font-weight: 600;
     padding-bottom: 0.3em;
     font-size: 1.5em;
     /* border-bottom: 1px solid hsla(210, 18%, 87%, 1); */
 }
 
-h3 {
+.embedMarkdownContent h3 {
     font-weight: 600;
     font-size: 1.25em;
 }
 
-h4 {
+.embedMarkdownContent h4 {
     font-weight: 600;
     font-size: 1em;
 }
 
-h5 {
+.embedMarkdownContent h5 {
     font-weight: 600;
     font-size: 0.875em;
 }
 
-h6 {
+.embedMarkdownContent h6 {
     font-weight: 600;
     font-size: 0.85em;
     color: #57606a;
 }
 
-p {
+.embedMarkdownContent p {
     margin-top: 0;
     margin-bottom: 10px;
 }
 
-blockquote {
+.embedMarkdownContent blockquote {
     margin: 0;
     padding: 0 1em;
     color: #57606a;
     border-left: 0.25em solid #d0d7de;
 }
 
-ul,
-ol {
+.embedMarkdownContent ul,
+.embedMarkdownContent ol {
     margin-top: 0;
     margin-bottom: 0;
     padding-left: 2em !important;
 }
 
-ol ol,
-ul ol {
+.embedMarkdownContent ol ol,
+.embedMarkdownContent ul ol {
     list-style-type: lower-roman;
 }
 
-ul ul ol,
-ul ol ol,
-ol ul ol,
-ol ol ol {
+.embedMarkdownContent ul ul ol,
+.embedMarkdownContent ul ol ol,
+.embedMarkdownContent ol ul ol,
+.embedMarkdownContent ol ol ol {
     list-style-type: lower-alpha;
 }
 
-dd {
+.embedMarkdownContent dd {
     margin-left: 0;
 }
 
-tt,
-code,
-samp {
+.embedMarkdownContent tt,
+.embedMarkdownContent code,
+.embedMarkdownContent samp {
     font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
     font-size: 12px;
 }
 
-pre {
+.embedMarkdownContent pre {
     margin-top: 0;
     margin-bottom: 0;
     font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
@@ -1296,15 +1302,15 @@ pre {
     word-wrap: normal;
 }
 
-.octicon {
+.embedMarkdownContent .octicon {
     display: inline-block;
     overflow: visible !important;
     vertical-align: text-bottom;
     fill: currentColor;
 }
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
+.embedMarkdownContent input::-webkit-outer-spin-button,
+.embedMarkdownContent input::-webkit-inner-spin-button {
     margin: 0;
     -webkit-appearance: none;
     appearance: none;
@@ -1329,87 +1335,87 @@ input::-webkit-inner-spin-button {
     margin-bottom: 0 !important;
 }
 
-a:not([href]) {
+.embedMarkdownContent a:not([href]) {
     color: inherit;
     text-decoration: none;
 }
 
-.absent {
+.embedMarkdownContent .absent {
     color: #cf222e;
 }
 
-.anchor {
+.embedMarkdownContent .anchor {
     float: left;
     padding-right: 4px;
     margin-left: -20px;
     line-height: 1;
 }
 
-.anchor:focus {
+.embedMarkdownContent .anchor:focus {
     outline: none;
 }
 
-p,
-blockquote,
-ul,
-ol,
-dl,
-table,
-pre,
-details {
+.embedMarkdownContent p,
+.embedMarkdownContent blockquote,
+.embedMarkdownContent ul,
+.embedMarkdownContent ol,
+.embedMarkdownContent dl,
+.embedMarkdownContent table,
+.embedMarkdownContent pre,
+.embedMarkdownContent details {
     margin-top: 0;
     margin-bottom: 16px;
 }
 
-blockquote > :first-child {
+.embedMarkdownContent blockquote > :first-child {
     margin-top: 0;
 }
 
-blockquote > :last-child {
+.embedMarkdownContent blockquote > :last-child {
     margin-bottom: 0;
 }
 
-h1 .octicon-link,
-h2 .octicon-link,
-h3 .octicon-link,
-h4 .octicon-link,
-h5 .octicon-link,
-h6 .octicon-link {
+.embedMarkdownContent h1 .octicon-link,
+.embedMarkdownContent h2 .octicon-link,
+.embedMarkdownContent h3 .octicon-link,
+.embedMarkdownContent h4 .octicon-link,
+.embedMarkdownContent h5 .octicon-link,
+.embedMarkdownContent h6 .octicon-link {
     color: #24292f;
     vertical-align: middle;
     visibility: hidden;
 }
 
-h1:hover .anchor,
-h2:hover .anchor,
-h3:hover .anchor,
-h4:hover .anchor,
-h5:hover .anchor,
-h6:hover .anchor {
+.embedMarkdownContent h1:hover .anchor,
+.embedMarkdownContent h2:hover .anchor,
+.embedMarkdownContent h3:hover .anchor,
+.embedMarkdownContent h4:hover .anchor,
+.embedMarkdownContent h5:hover .anchor,
+.embedMarkdownContent h6:hover .anchor {
     text-decoration: none;
 }
 
-h1:hover .anchor .octicon-link,
-h2:hover .anchor .octicon-link,
-h3:hover .anchor .octicon-link,
-h4:hover .anchor .octicon-link,
-h5:hover .anchor .octicon-link,
-h6:hover .anchor .octicon-link {
+.embedMarkdownContent h1:hover .anchor .octicon-link,
+.embedMarkdownContent h2:hover .anchor .octicon-link,
+.embedMarkdownContent h3:hover .anchor .octicon-link,
+.embedMarkdownContent h4:hover .anchor .octicon-link,
+.embedMarkdownContent h5:hover .anchor .octicon-link,
+.embedMarkdownContent h6:hover .anchor .octicon-link {
     visibility: visible;
 }
 
-h1 tt,
-h1 code,
-h2 tt,
-h2 code,
-h3 tt,
-h3 code,
-h4 tt,
-h4 code,
-h5 tt,
-h5 code,
-h6 tt,
-h6 code {
+.embedMarkdownContent h1 tt,
+.embedMarkdownContent h1 code,
+.embedMarkdownContent h2 tt,
+.embedMarkdownContent h2 code,
+.embedMarkdownContent h3 tt,
+.embedMarkdownContent h3 code,
+.embedMarkdownContent h4 tt,
+.embedMarkdownContent h4 code,
+.embedMarkdownContent h5 tt,
+.embedMarkdownContent h5 code,
+.embedMarkdownContent h6 tt,
+.embedMarkdownContent h6 code {
     padding: 0 0.2em;
     font-size: inherit;
 }
@@ -1438,57 +1444,57 @@ summary h2 {
     border-bottom: 0;
 }
 
-ul.no-list,
-ol.no-list {
+.embedMarkdownContent ul.no-list,
+.embedMarkdownContent ol.no-list {
     padding: 0;
     list-style-type: none;
 }
 
-ol[type="a"] {
+.embedMarkdownContent ol[type="a"] {
     list-style-type: lower-alpha;
 }
 
-ol[type="A"] {
+.embedMarkdownContent ol[type="A"] {
     list-style-type: upper-alpha;
 }
 
-ol[type="i"] {
+.embedMarkdownContent ol[type="i"] {
     list-style-type: lower-roman;
 }
 
-ol[type="I"] {
+.embedMarkdownContent ol[type="I"] {
     list-style-type: upper-roman;
 }
 
-ol[type="1"] {
+.embedMarkdownContent ol[type="1"] {
     list-style-type: decimal;
 }
 
-div > ol:not([type]) {
+.embedMarkdownContent div > ol:not([type]) {
     list-style-type: decimal;
 }
 
-ul ul,
-ul ol,
-ol ol,
-ol ul {
+.embedMarkdownContent ul ul,
+.embedMarkdownContent ul ol,
+.embedMarkdownContent ol ol,
+.embedMarkdownContent ol ul {
     margin-top: 0;
     margin-bottom: 0;
 }
 
-li > p {
+.embedMarkdownContent li > p {
     margin-top: 16px;
 }
 
-li + li {
+.embedMarkdownContent li + li {
     margin-top: 0.25em;
 }
 
-dl {
+.embedMarkdownContent dl {
     padding: 0;
 }
 
-dl dt {
+.embedMarkdownContent dl dt {
     padding: 0;
     margin-top: 16px;
     font-size: 1em;
@@ -1496,54 +1502,54 @@ dl dt {
     font-weight: 600;
 }
 
-dl dd {
+.embedMarkdownContent dl dd {
     padding: 0 16px;
     margin-bottom: 16px;
 }
 
-table th {
+.embedMarkdownContent table th {
     font-weight: 600;
 }
 
-table th,
-table td {
+.embedMarkdownContent table th,
+.embedMarkdownContent table td {
     padding: 6px 13px;
     border: 1px solid #d0d7de;
 }
 
-table tr {
+.embedMarkdownContent table tr {
     background-color: #ffffff;
     border-top: 1px solid hsla(210, 18%, 87%, 1);
 }
 
-table tr:nth-child(2n) {
+.embedMarkdownContent table tr:nth-child(2n) {
     background-color: #f6f8fa;
 }
 
-table img {
+.embedMarkdownContent table img {
     background-color: transparent;
 }
 
-img[align="right"] {
+.embedMarkdownContent img[align="right"] {
     padding-left: 20px;
 }
 
-img[align="left"] {
+.embedMarkdownContent img[align="left"] {
     padding-right: 20px;
 }
 
-.emoji {
+.embedMarkdownContent .emoji {
     max-width: none;
     vertical-align: text-top;
     background-color: transparent;
 }
 
-span.frame {
+.embedMarkdownContent span.frame {
     display: block;
     overflow: hidden;
 }
 
-span.frame > span {
+.embedMarkdownContent span.frame > span {
     display: block;
     float: left;
     width: auto;
@@ -1553,81 +1559,81 @@ span.frame > span {
     border: 1px solid #d0d7de;
 }
 
-span.frame span img {
+.embedMarkdownContent span.frame span img {
     display: block;
     float: left;
 }
 
-span.frame span span {
+.embedMarkdownContent span.frame span span {
     display: block;
     padding: 5px 0 0;
     clear: both;
     color: #24292f;
 }
 
-span.align-center {
+.embedMarkdownContent span.align-center {
     display: block;
     overflow: hidden;
     clear: both;
 }
 
-span.align-center > span {
+.embedMarkdownContent span.align-center > span {
     display: block;
     margin: 13px auto 0;
     overflow: hidden;
     text-align: center;
 }
 
-span.align-center span img {
+.embedMarkdownContent span.align-center span img {
     margin: 0 auto;
     text-align: center;
 }
 
-span.align-right {
+.embedMarkdownContent span.align-right {
     display: block;
     overflow: hidden;
     clear: both;
 }
 
-span.align-right > span {
+.embedMarkdownContent span.align-right > span {
     display: block;
     margin: 13px 0 0;
     overflow: hidden;
     text-align: right;
 }
 
-span.align-right span img {
+.embedMarkdownContent span.align-right span img {
     margin: 0;
     text-align: right;
 }
 
-span.float-left {
+.embedMarkdownContent span.float-left {
     display: block;
     float: left;
     margin-right: 13px;
     overflow: hidden;
 }
 
-span.float-left span {
+.embedMarkdownContent span.float-left span {
     margin: 13px 0 0;
 }
 
-span.float-right {
+.embedMarkdownContent span.float-right {
     display: block;
     float: right;
     margin-left: 13px;
     overflow: hidden;
 }
 
-span.float-right > span {
+.embedMarkdownContent span.float-right > span {
     display: block;
     margin: 13px auto 0;
     overflow: hidden;
     text-align: right;
 }
 
-code,
-tt {
+.embedMarkdownContent code,
+.embedMarkdownContent tt {
     padding: 0.2em 0.4em;
     margin: 0;
     font-size: 85%;
@@ -1636,24 +1642,24 @@ tt {
     border-radius: 6px;
 }
 
-code br,
-tt br {
+.embedMarkdownContent code br,
+.embedMarkdownContent tt br {
     display: none;
 }
 
-del code {
+.embedMarkdownContent del code {
     text-decoration: inherit;
 }
 
-samp {
+.embedMarkdownContent samp {
     font-size: 85%;
 }
 
-pre code {
+.embedMarkdownContent pre code {
     font-size: 100%;
 }
 
-pre > code {
+.embedMarkdownContent pre > code {
     padding: 0;
     margin: 0;
     word-break: normal;
@@ -1662,17 +1668,17 @@ pre > code {
     border: 0;
 }
 
-.highlight {
+.embedMarkdownContent .highlight {
     margin-bottom: 16px;
 }
 
-.highlight pre {
+.embedMarkdownContent .highlight pre {
     margin-bottom: 0;
     word-break: normal;
 }
 
-.highlight pre,
-pre {
+.embedMarkdownContent .highlight pre,
+.embedMarkdownContent pre {
     padding: 16px;
     overflow: auto;
     font-size: 85%;
@@ -1681,8 +1687,8 @@ pre {
     border-radius: 6px;
 }
 
-pre code,
-pre tt {
+.embedMarkdownContent pre code,
+.embedMarkdownContent pre tt {
     display: inline;
     max-width: auto;
     padding: 0;
@@ -1694,8 +1700,8 @@ pre tt {
     border: 0;
 }
 
-.csv-data td,
-.csv-data th {
+.embedMarkdownContent .csv-data td,
+.embedMarkdownContent .csv-data th {
     padding: 5px;
     overflow: hidden;
     font-size: 12px;
@@ -1704,18 +1710,18 @@ pre tt {
     white-space: nowrap;
 }
 
-.csv-data .blob-num {
+.embedMarkdownContent .csv-data .blob-num {
     padding: 10px 8px 9px;
     text-align: right;
     background: #ffffff;
     border: 0;
 }
 
-.csv-data tr {
+.embedMarkdownContent .csv-data tr {
     border-top: 0;
 }
 
-.csv-data th {
+.embedMarkdownContent .csv-data th {
     font-weight: 600;
     background: #f6f8fa;
     border-top: 0;

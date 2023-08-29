@@ -10,29 +10,6 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 //#endregion
 
-const findTitle = (currentNode) => {
-    const nodeType = currentNode.getType();
-    if (nodeType === "text") {
-        const text = currentNode.getTextContent();
-        if (text.length > 0) {
-            const title = text.substring(0, 100);
-            return title;
-        } else {
-            return null;
-        }
-    }
-
-    const childNodes = currentNode.getChildren();
-    for (let i = 0; i < childNodes.length; i++) {
-        const childNode = childNodes[i];
-        let title = findTitle(childNode);
-        if (title !== null) {
-            return title;
-        }
-    }
-    return null;
-};
-
 const save = (inDocument) => {
     // save document
     log(`saving document ${inDocument.name} version ${inDocument.version}`);
@@ -50,15 +27,11 @@ const updateDocumentFromEditorState = (editorState, inDocument, setDocument, inS
     if (!inDocument) return;
 
     // get title from editorState
-    let title = null;
     let content = null;
     let lexical_content = null;
     editorState.read(() => {
         // update title if editorState is provided
         const root = $getRoot();
-        if (inDocument.type === "document") {
-            title = findTitle(root);
-        }
         content = $convertToMarkdownString(TRANSFORMERS);
         lexical_content = JSON.stringify(editorState);
     });
@@ -71,9 +44,6 @@ const updateDocumentFromEditorState = (editorState, inDocument, setDocument, inS
         hasChanged: true,
         save_id: inSaveId,
     };
-    if (inDocument.type === "document") {
-        newDocument.name = title;
-    }
     setDocument(newDocument);
 };
 
@@ -83,7 +53,7 @@ const debounceUpdateDocumentFromEditorState = debounce(updateDocumentFromEditorS
 const debouncedSave = debounce(save, autoSaveInterval);
 
 // saves the document if it's changed
-const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength, disableAutoSave, document, setDocument }) => {
+const AutoSavePlugin = ({ latestSaveId, setContentLength, disableAutoSave, document, setDocument }) => {
     const [loadedDocumentId, setLoadedDocumentId] = useState(null);
     const [saveId, setSaveId] = useAtom(saveIdAtom);
     const [triggerSaveDocument, setTriggerSaveDocument] = useAtom(triggerSaveDocumentAtom);
@@ -133,15 +103,12 @@ const AutoSavePlugin = ({ latestSaveId, setTitle, setContentLength, disableAutoS
         }
 
         // TODO see if this doesn't cause to much performance issues
-        let title = "";
         let text_content = "";
         editorState.read(() => {
             // update title if editorState is provided
             const root = $getRoot();
-            title = findTitle(root);
             text_content = root.getTextContent();
         });
-        setTitle(title);
         setContentLength(text_content.length);
 
         //setEditorState(editorState);

@@ -575,7 +575,7 @@ export const NewSessionButton = ({ circle, onClick, ...props }) => {
     );
 };
 
-export const CircleLink = ({ href, mentions, children, ...props }) => {
+export const CircleLink = ({ node, href, mentions, children, ...props }) => {
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
 
     const extractCircleId = (url) => {
@@ -584,17 +584,27 @@ export const CircleLink = ({ href, mentions, children, ...props }) => {
         return match ? match[1] : null;
     };
 
+    const hrefStr = useMemo(() => {
+        if (href === "javascript:void(0)") {
+            // parse href from node
+            let str = node?.properties?.href;
+            // format str
+            if (str.startsWith("%5B")) return str;
+        } else {
+            return href;
+        }
+    }, [href, node]);
+
     // check if link references a circle
     const circle = useMemo(() => {
-        if (!href) return null;
-
-        let circleId = extractCircleId(href);
+        if (!hrefStr) return null;
+        let circleId = extractCircleId(hrefStr);
         if (!circleId) return null;
 
         // find circle in circles
         let circle = mentions?.find((c) => c.id === circleId);
         return circle;
-    }, [href, mentions]);
+    }, [hrefStr, mentions]);
 
     const circleTitle = useMemo(() => {
         if (!circle) return null;
@@ -604,6 +614,10 @@ export const CircleLink = ({ href, mentions, children, ...props }) => {
         if (title.includes(circle.name)) return null;
         return title + ": ";
     }, [circle, children]);
+
+    useEffect(() => {
+        log(JSON.stringify(node?.properties?.href), 0, true);
+    }, [node]);
 
     if (circle) {
         return (
@@ -639,7 +653,7 @@ export const CircleLink = ({ href, mentions, children, ...props }) => {
         );
     } else {
         return (
-            <Link href={href} {...props} color="blue" isExternal>
+            <Link href={hrefStr} {...props} color="blue">
                 {children}
             </Link>
         );
@@ -1310,7 +1324,7 @@ export const CirclePicture = ({
         </>
     );
 
-    const circles = circle?.type === "set" ? circle.circle_ids.map((x) => circle[x]) : circle ? [circle] : [];
+    const circles = (circle?.type === "set" ? circle.circle_ids.map((x) => circle?.[x]) : circle ? [circle] : []).filter((x) => x?.id);
     const setOffset = size / 3;
     const width = circle?.type === "set" ? size * circles.length - setOffset : size;
     const height = size;
@@ -1707,7 +1721,7 @@ export const CircleRichText = ({ mentions, children }) => {
             components={{
                 a: ({ node, ...props }) => {
                     return (
-                        <CircleLink href={props.href} mentions={mentions}>
+                        <CircleLink node={node} href={props.href} mentions={mentions}>
                             {props.children}
                         </CircleLink>
                     );
