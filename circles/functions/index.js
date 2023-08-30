@@ -24,7 +24,6 @@ linkify.tlds("earth", true);
 
 // init pinecone client
 const pinecone = new PineconeClient();
-pinecone.projectName = "";
 pinecone
     .init({
         environment: process.env.PINECONE_ENVIRONMENT,
@@ -49,8 +48,8 @@ const db = admin.firestore();
 
 const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
 
-const createCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "document", "project"]; // circle types that can be created by users
-const indexCircleTypes = ["circle", "event", "tag", "room", "link", "post", "ai_agent", "user", "document", "project"]; // circle types that are indexed in vector database for semantic search
+const createCircleTypes = ["circle", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
+const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // circle types that are indexed in vector database for semantic search
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -2769,6 +2768,29 @@ const getLocalTimeInTimezone = (timezone) => {
     });
 };
 
+const toCommaSeparatedList = (items, last_separator = " and ") => {
+    switch (items.length) {
+        case 0:
+            return "";
+        case 1:
+            return items[0];
+        default:
+            const allButLast = items.slice(0, -1).join(", ");
+            return `${allButLast}${last_separator}${items[items.length - 1]}`;
+    }
+};
+
+const printMessage = (message) => {
+    if (!message) return;
+    if (message.function_call) {
+        console.log(`${message.role}: [Calling function ${message.function_call.name}]\n${JSON.stringify(message.function_call.arguments, null, 2)}`);
+    } else if (message.role === "function") {
+        console.log(`${message.name} response:\n`, JSON.stringify(message.content, null, 2));
+    } else {
+        console.log(`${message.role}: ${message.content}`);
+    }
+};
+
 const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefined) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
@@ -2816,7 +2838,20 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     let systemMessagePreamble = localDateAndTime
         ? `\n\nThe user's local date and time is ${localDateAndTime} (24 hour format). The universal time is ${date.toISOString()}.`
         : `\n\nThe current date and time is ${date.toLocaleString()} (user's local time may differ).`;
+
+    // add information about documents available that can be retrieved through the function getDocument for more details
+    let documents = agentCircleData?.ai?.documents ?? [];
+    if (documents.length > 0) {
+        systemMessagePreamble += `\n\nThese are some notable documents available (in format "<ID>:name - description") that can be retrieved through the function getDocument for more details:`;
+        for (const document of documents) {
+            systemMessagePreamble += `${document.id}: ${document.name} - ${document.description}\n`;
+        }
+    }
+
+    let systemMessage = { role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble };
     messages.push({ role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble });
+
+    printMessage(systemMessage);
 
     // add previous messages
     for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {
@@ -2877,7 +2912,9 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
         functions: [
             {
                 name: "semanticSearch",
-                description: "Does a search among circles for users, circles, tags and/or events that are semantically similar to the query.",
+                description: `Does a search among circles for ${toCommaSeparatedList(
+                    indexCircleTypes
+                )} that are semantically similar to the query and returns a summary of each result, if you want more information about a specific circle call getCircleDetails.`,
                 parameters: {
                     type: "object",
                     properties: {
@@ -2888,12 +2925,44 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                         filterTypes: {
                             type: "array",
                             items: { type: "string" },
-                            description:
-                                "Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: user, tag, event, circle.",
+                            description: `Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: ${toCommaSeparatedList(
+                                indexCircleTypes
+                            )}.`,
                         },
                         topK: { type: "number", description: "Number of results to return." },
                     },
                     required: ["query"],
+                },
+            },
+            {
+                name: "getDocument",
+                description: `Retrieves a document. These can be constitutions & bylaws, manifestos, policies, meeting minutes, party programs, code of conduct, etc.`,
+                parameters: {
+                    type: "object",
+                    properties: {
+                        documentId: {
+                            type: "string",
+                            description: `ID of document to retrieve. If you don't know the ID do a semantic search first.`,
+                        },
+                    },
+                    required: ["documentId"],
+                },
+            },
+            {
+                name: "getCircleDetails",
+                description: `Returns full details about a specific circle (${toCommaSeparatedList(indexCircleTypes, " or ")}).`,
+                parameters: {
+                    type: "object",
+                    properties: {
+                        circleId: {
+                            type: "string",
+                            description: `ID of circle (${toCommaSeparatedList(
+                                indexCircleTypes,
+                                " or "
+                            )}) to get details about. If you don't know the ID do a semantic search first.`,
+                        },
+                    },
+                    required: ["circleId"],
                 },
             },
             {
@@ -2930,9 +2999,12 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     let message = null;
     let mentions = [];
 
+    printMessage(messages[messages.length - 1]);
+
     try {
         while (functionCalls < 4) {
-            console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            //console.log(`request ${functionCalls}: ${JSON.stringify(request, null, 2)}`);
+            // print last message
             const response = await openai.createChatCompletion(request);
             messageData = response.data?.choices?.[0]?.message;
 
@@ -2941,11 +3013,12 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                 // AI wants to call a function
                 // append response message to messages
                 request.messages.push(messageData);
+                printMessage(messageData);
 
                 let functionName = messageData.function_call.name;
                 let parametersString = messageData.function_call.arguments;
                 let parameters = parametersString ? JSON.parse(parametersString) : null;
-                let results = null;
+                let results = "no results";
 
                 if (functionName === "semanticSearch") {
                     // get parameters
@@ -2956,16 +3029,48 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
 
                         // do semantic search
                         let searchResults = await semanticSearch(query, null, filterTypes, topK);
-                        let searchResultsMessage = `Search results for "${query}":\n\n`;
-                        for (var k = 0; k < searchResults.length; ++k) {
-                            let searchResult = searchResults[k];
-                            searchResultsMessage += `${getCircleText(searchResult, true)}\n\n`;
-                            mentions.mentioned_at = date;
-                            mentions.push(searchResult);
+                        if (searchResults.length <= 0) {
+                            results = `No results for "${query}".`;
+                        } else {
+                            let searchResultsMessage = `Search results for "${query}":\n\n`;
+                            for (var k = 0; k < searchResults.length; ++k) {
+                                let searchResult = searchResults[k];
+                                searchResultsMessage += `${getCircleText(searchResult, true)}\n\n`;
+                                searchResult.mentioned_at = date;
+                                mentions.push(searchResult);
+                            }
+                            results = searchResultsMessage;
                         }
-                        results = searchResultsMessage;
-                    } else {
-                        results = "no results";
+                    }
+                } else if (functionName === "getDocument") {
+                    // get parameters
+                    if (parameters) {
+                        let documentId = parameters.documentId;
+
+                        // get document
+                        let document = await getCircle(documentId);
+                        if (document) {
+                            results = getCircleText(document);
+                            document.mentioned_at = date;
+                            mentions.push(document);
+                        } else {
+                            results = `Document with id ${documentId} not found.`;
+                        }
+                    }
+                } else if (functionName === "getCircleDetails") {
+                    // get parameters
+                    if (parameters) {
+                        let circleId = parameters.circleId;
+
+                        // get circle details
+                        let circle = await getCircle(circleId);
+                        if (circle) {
+                            results = getCircleText(circle);
+                            circle.mentioned_at = date;
+                            mentions.push(circle);
+                        } else {
+                            results = `Circle with id ${circleId} not found.`;
+                        }
                     }
                 } else if (functionName === "createEvent") {
                     if (parameters) {
@@ -3008,8 +3113,10 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                     }
                 }
 
-                // update message with AI response
-                request.messages.push({ role: "function", name: functionName, content: results });
+                // update message with function response
+                let functionResponseMessage = { role: "function", name: functionName, content: results };
+                request.messages.push(functionResponseMessage);
+                printMessage(functionResponseMessage);
                 ++functionCalls;
             } else {
                 message = messageData?.content;
