@@ -147,16 +147,6 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
 
                     if (!isGuideForm) {
                         updatedCircleData.language = values.language;
-                    } else {
-                        if (circle.name === values.name && circle.content === updatedCircleData.content) {
-                            // nothing changed
-                            actions.setSubmitting(false);
-                            // proceed to next step
-                            if (onNext) {
-                                onNext();
-                            }
-                            return;
-                        }
                     }
 
                     //console.log("updating circle data", updatedCircleData);

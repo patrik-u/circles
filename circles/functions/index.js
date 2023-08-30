@@ -2842,7 +2842,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     // add information about documents available that can be retrieved through the function getDocument for more details
     let documents = agentCircleData?.ai?.documents ?? [];
     if (documents.length > 0) {
-        systemMessagePreamble += `\n\nThese are some notable documents available (in format "<ID>:name - description") that can be retrieved through the function getDocument for more details:`;
+        systemMessagePreamble += `\n\nThese are some notable documents available (in format "<ID>:name - description") that can be retrieved through the function getDocument for more details:\n`;
         for (const document of documents) {
             systemMessagePreamble += `${document.id}: ${document.name} - ${document.description}\n`;
         }

@@ -615,10 +615,6 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
         return title + ": ";
     }, [circle, children]);
 
-    useEffect(() => {
-        log(JSON.stringify(node?.properties?.href), 0, true);
-    }, [node]);
-
     if (circle) {
         return (
             <Popover trigger="hover" gutter="0" isLazy>

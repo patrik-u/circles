@@ -114,15 +114,15 @@ const getRelevantCircle = (user, circle) => {
     }
 };
 
-export const CircleChatWidget = ({ item }) => {
-    const [currentCircle] = useAtom(circleAtom);
-    const circle = useMemo(() => item || currentCircle, [item, currentCircle]);
+export const CircleChatWidget = () => {
+    const [circle] = useAtom(circleAtom);
     const [user] = useAtom(userAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [chatCircle, setChatCircle] = useState(null);
     const [chatCircles, setChatCircles] = useState([]);
 
     useEffect(() => {
+        log("CircleChat.useEffect1", -1);
         if (chatCircle) {
             if (!chatCircles.find((x) => x.id === chatCircle.id)) {
                 setChatCircle(circle);
@@ -130,9 +130,10 @@ export const CircleChatWidget = ({ item }) => {
         } else if (chatCircle === null && circle) {
             setChatCircle(circle);
         }
-    }, [circle, chatCircle, chatCircles]);
+    }, [circle?.id, chatCircle, chatCircles]); // we only want to set chatCircle once when circle id changes hence warning
 
     useEffect(() => {
+        log("CircleChat.useEffect2", -1);
         if (!user?.id || !signInStatus.signedIn) {
             return;
         }
@@ -171,7 +172,7 @@ export const CircleChatWidget = ({ item }) => {
         } else {
             setChatCircles([]);
         }
-    }, [user?.id, signInStatus.signedIn, circle?.id, circle?.chat_circle_ids]);
+    }, [user?.id, user?.show_ai, signInStatus.signedIn, circle?.id]); // we only want to set chatCircle once when circle id changes hence warning
 
     if (!circle?.id) return null;
 
@@ -205,6 +206,7 @@ export const CircleChatWidget = ({ item }) => {
                                 borderColor={chatCircle?.id === item?.id ? "#d6d4d6" : "transparent"}
                                 onClick={() => setChatCircle(item)}
                                 size="35px"
+                                marginLeft="5px"
                             />
                         </Tooltip>
                     ))}
@@ -224,11 +226,11 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
     const iconColor = "#fdfdfd";
 
     useEffect(() => {
-        log("ChatMessages.useEffect 1", -1);
+        log("ChatMessages.useEffect 1", -1, true);
         if (onRenderComplete) {
             onRenderComplete();
         }
-    }, [messages, onRenderComplete]);
+    }, [messages]); //adding onRenderComplete causes this to render unnecessarily hence warning
 
     return (
         <>
@@ -488,6 +490,7 @@ export const CircleChat = ({ circle }) => {
     }, [circle]);
 
     useEffect(() => {
+        log("CircleChat.useEffect 1", -1);
         if (!circle?.id) return;
         if (!isAiRelationSet) return;
 
@@ -516,6 +519,7 @@ export const CircleChat = ({ circle }) => {
 
     useEffect(() => {
         setChatCircle(circle?.id);
+        log("CircleChat.useEffect 2", -1);
 
         if (!user?.id) return;
         if (!signInStatus.signedIn) return;
@@ -533,7 +537,7 @@ export const CircleChat = ({ circle }) => {
     }, [user?.id, circle?.id, setChatCircle, signInStatus.signedIn]);
 
     useEffect(() => {
-        log("Chat.useEffect 2", -1);
+        log("CircleChat.useEffect 3", -1);
         let circleId = circle?.id;
         if (!circleId) {
             return;
@@ -603,6 +607,7 @@ export const CircleChat = ({ circle }) => {
     }, [circle?.id, user?.id, isAuthorized, chatSession, isAiRelationSet, setMentionedCircles]);
 
     useEffect(() => {
+        log("CircleChat.useEffect 4", -1);
         let circleId = circle?.id;
         if (!circleId) {
             return;
@@ -623,7 +628,7 @@ export const CircleChat = ({ circle }) => {
     }, [circle?.id, setIsAuthorized, circle?.is_public, userData, user?.id, circle?.circle_ids, circle?.type]);
 
     useEffect(() => {
-        log("Chat.useEffect 3", -1);
+        log("CircleChat.useEffect 5", -1);
         if (!unfilteredChatMessages) {
             setChatMessages([]);
             return;
@@ -698,7 +703,7 @@ export const CircleChat = ({ circle }) => {
     // }, [chatMessages, scrollToLast, scrollToLastSmooth]);
 
     useEffect(() => {
-        log("Chat.useEffect 5", -1);
+        log("CircleChat.useEffect 6", -1);
         let circleId = circle?.id;
         if (!user?.id || !circleId) return;
         if (!signInStatus.signedIn) return;
