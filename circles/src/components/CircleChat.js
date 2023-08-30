@@ -293,7 +293,9 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                                         <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                             {item.reply_to.user.name}
                                                         </Text>
-                                                        <Text noOfLines={1}>{item.reply_to.message}</Text>
+                                                        <Text fontSize="14px" noOfLines={1}>
+                                                            {item.reply_to.message}
+                                                        </Text>
                                                     </VStack>
                                                 </Box>
                                             )}
