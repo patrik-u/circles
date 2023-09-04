@@ -325,11 +325,12 @@ export const AccountManager = () => {
     };
 
     useEffect(() => {
+        if (!signInStatus.signedIn || !user?.id) return;
         if (!updateRelation) return;
         axios.post(`/request_relation_update`, { circleId: updateRelation }).catch((err) => {
             console.error(err);
         });
-    }, [updateRelation]);
+    }, [updateRelation, signInStatus.signedIn, user?.id]);
 
     return null;
 };

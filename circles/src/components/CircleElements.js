@@ -577,6 +577,7 @@ export const NewSessionButton = ({ circle, onClick, ...props }) => {
 
 export const CircleLink = ({ node, href, mentions, children, ...props }) => {
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
+    const [user] = useAtom(userAtom);
 
     const extractCircleId = (url) => {
         const regex = /.*codo\.earth\/circles\/([^\/?]+)/;
@@ -604,7 +605,7 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
         // find circle in circles
         let circle = mentions?.find((c) => c.id === circleId);
         return circle;
-    }, [hrefStr, mentions]);
+    }, [hrefStr, mentions]); // only need update if user.id changes hence warning
 
     const circleTitle = useMemo(() => {
         if (!circle) return null;

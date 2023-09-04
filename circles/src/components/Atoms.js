@@ -20,6 +20,7 @@ export const jitsiTokenAtom = atom(null);
 export const inVideoConferenceAtom = atom(false);
 export const toggleWidgetEventAtom = atom(null);
 export const updateRelationAtom = atom(null);
+export const serverConfigAtom = atom(null);
 
 // connection
 export const connectPopupAtom = atom(null);

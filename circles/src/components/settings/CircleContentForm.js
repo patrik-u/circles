@@ -54,6 +54,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     });
     const richContentCharCount = useMemo(() => (richContent?.content ? richContent.content.trim().length : 0), [richContent]);
     const [isPublicSetting, setIsPublicSetting] = useState(circle?.is_public === true);
+    const [aiSummarySetting, setAiSummarySetting] = useState(circle?.ai_summary === true);
     const [pickedDate, setPickedDate] = useState(fromFsDate(circle.starts_at) ?? new Date());
     const [isAllDay, setIsAllDay] = useState(false);
     const [, setRequestUserConnections] = useAtom(requestUserConnectionsAtom);
@@ -122,6 +123,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         description: values.description,
                         parent_circle: selectedParentCircle,
                         is_public: isPublicSetting,
+                        ai_summary: aiSummarySetting,
                     };
 
                     if (circle.type === "event") {
@@ -132,15 +134,17 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                     }
 
                     //log("updating circle content" + richContent.content, 0, true);
-                    updatedCircleData.content = richContent.content;
-                    updatedCircleData.lexical_content = richContent.lexical_content;
-                    //log("updating circle lexical_content" + richContent.lexical_content, 0, true);
-                    if (updatedCircleData.content) {
-                        if (!updatedCircleData.description) {
-                            // if no description, use first part of content
-                            updatedCircleData.description = updatedCircleData.content.substring(0, contentDescriptionLength);
-                            if (updatedCircleData.description.length >= contentDescriptionLength) {
-                                updatedCircleData.description += "...";
+                    if (circle?.type !== "document") {
+                        updatedCircleData.content = richContent.content;
+                        updatedCircleData.lexical_content = richContent.lexical_content;
+                        //log("updating circle lexical_content" + richContent.lexical_content, 0, true);
+                        if (updatedCircleData.content) {
+                            if (!updatedCircleData.description) {
+                                // if no description, use first part of content
+                                updatedCircleData.description = updatedCircleData.content.substring(0, contentDescriptionLength);
+                                if (updatedCircleData.description.length >= contentDescriptionLength) {
+                                    updatedCircleData.description += "...";
+                                }
                             }
                         }
                     }
@@ -196,6 +200,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 let newCircleData = {
                     name: values.name,
                     description: values.description,
+                    ai_summary: aiSummarySetting,
                     language: values.language,
                     type: circle.type,
                     parent_circle: selectedParentCircle,
@@ -270,11 +275,11 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 } else if (values.name.length > 50) {
                     errors.name = i18n.t("Name can't contain more than 50 characters");
                 }
-                if (values.description && values.description.length > 200) {
+                if (!aiSummarySetting && values.description && values.description.length > 200) {
                     errors.description = i18n.t("Description can't contain more than 200 characters");
                 }
 
-                if (richContentCharCount > 10000) {
+                if (circle?.type !== "document" && richContentCharCount > 10000) {
                     errors.content = i18n.t("Content can't contain more than 100 000 characters");
                 }
 
@@ -349,26 +354,59 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                             )}
 
                             {(circle?.type === "document" || (!isGuideForm && isUpdateForm)) && (
-                                <Field name="description">
-                                    {({ field, form }) => (
-                                        <FormControl isInvalid={form.errors.description && form.touched.description}>
-                                            <FormLabel>{i18n.t(`Description of [${circle.type}]`)}</FormLabel>
-                                            <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
-                                                {form?.values?.description ? form.values.description.length : 0} / 200
-                                            </Text>
-                                            <InputGroup>
-                                                <Textarea {...field} id="description" resize="none" maxLength="200" />
-                                                {!form.errors.description && form.touched.description && (
-                                                    <InputRightElement children={<CheckIcon color="green.500" />} />
-                                                )}
-                                            </InputGroup>
-                                            <FormErrorMessage>{form.errors.description}</FormErrorMessage>
-                                        </FormControl>
-                                    )}
-                                </Field>
+                                <>
+                                    <Field name="description">
+                                        {({ field, form }) => (
+                                            <FormControl isInvalid={form.errors.description && form.touched.description}>
+                                                <Flex flexDirection="row" alignSelf="start">
+                                                    <Text>{i18n.t(`Summary`)}</Text>
+                                                    <Tooltip
+                                                        label={
+                                                            circle?.type === "user" || circle?.type === "ai_agent"
+                                                                ? `Give others a quick snapshot of your essence.`
+                                                                : `Offer a brief description of this ${circle?.type}'s essence.`
+                                                        }
+                                                        aria-label="A tooltip"
+                                                    >
+                                                        <Flex flexDirection="row" align="center" marginLeft="5px">
+                                                            <Icon as={IoInformationCircleSharp} color="#3182ce" />
+                                                        </Flex>
+                                                    </Tooltip>
+                                                </Flex>
+                                                <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
+                                                    {form?.values?.description ? form.values.description.length : 0} / 200
+                                                </Text>
+                                                <InputGroup>
+                                                    <Textarea {...field} id="description" resize="none" maxLength="200" isDisabled={aiSummarySetting} />
+                                                    {!form.errors.description && form.touched.description && (
+                                                        <InputRightElement children={<CheckIcon color="green.500" />} />
+                                                    )}
+                                                </InputGroup>
+                                                <FormErrorMessage>{form.errors.description}</FormErrorMessage>
+                                                <Flex flexDirection="row" alignSelf="start" marginTop="5px">
+                                                    <Checkbox
+                                                        isChecked={aiSummarySetting}
+                                                        id="ai_summary"
+                                                        onChange={(e) => setAiSummarySetting(e.target.checked)}
+                                                    >
+                                                        {i18n.t(`AI generated summary`)}
+                                                    </Checkbox>
+                                                    <Tooltip
+                                                        label={`If checked AI will generate a summary. Existing summary will be overwritten on save.`}
+                                                        aria-label="A tooltip"
+                                                    >
+                                                        <Flex flexDirection="row" align="center" marginLeft="10px">
+                                                            <Icon as={IoInformationCircleSharp} color="#3182ce" />
+                                                        </Flex>
+                                                    </Tooltip>
+                                                </Flex>
+                                            </FormControl>
+                                        )}
+                                    </Field>
+                                </>
                             )}
 
-                            {(true || circle?.type !== "document") && (
+                            {circle?.type !== "document" && (
                                 <Box flexDirection="column" width="100%" position="relative">
                                     <FormLabel>{i18n.t(`[${circle.type}] content`)}</FormLabel>
                                     <DocumentEditor

@@ -19,6 +19,8 @@ import { CircleFundingForm } from "components/settings/CircleFundingForm";
 import { CircleDeleteForm } from "components/settings/CircleDeleteForm";
 import { CircleAiForm } from "components/settings/CircleAiForm";
 import { MdOutlineClose } from "react-icons/md";
+import { OffersAndNeedsForm } from "components/settings/OffersAndNeedsForm";
+import { CircleMissionForm } from "components/settings/CircleMissionForm";
 //#endregion
 
 // const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
@@ -51,8 +53,10 @@ const CircleSettings = ({ onClose }) => {
                 return [
                     { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
                     { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.mission, name: i18n.t("Mission") },
                     { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.offersandneeds, name: i18n.t("Offers & Needs") },
                     { route: routes.circle(circle).settings.socialmedia, name: i18n.t("Quick Links") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
                     // { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
@@ -62,8 +66,10 @@ const CircleSettings = ({ onClose }) => {
                 return [
                     { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
                     { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.mission, name: i18n.t("Mission") },
                     { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.offersandneeds, name: i18n.t("Offers & Needs") },
                     { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
                     // { route: routes.circle(circle).settings.funding, name: i18n.t("Funding") },
@@ -73,8 +79,10 @@ const CircleSettings = ({ onClose }) => {
                 return [
                     { route: routes.circle(circle).settings.about, name: i18n.t("circleadmin_about") },
                     { route: routes.circle(circle).settings.images, name: i18n.t("circleadmin_images") },
+                    { route: routes.circle(circle).settings.mission, name: i18n.t("Mission") },
                     { route: routes.circle(circle).settings.tags, name: i18n.t("Tags") },
                     { route: routes.circle(circle).settings.base, name: i18n.t("circleadmin_base") },
+                    { route: routes.circle(circle).settings.offersandneeds, name: i18n.t("Offers & Needs") },
                     { route: routes.circle(circle).settings.questions, name: i18n.t("Questions") },
                     { route: routes.circle(circle).settings.connections, name: i18n.t("Connection Requests") },
                     { route: routes.circle(circle).settings.ai, name: i18n.t("AI") },
@@ -107,11 +115,14 @@ const CircleSettings = ({ onClose }) => {
                     <Scrollbars autoHide>
                         <Box paddingLeft="15px" paddingRight="15px">
                             <Routes>
+                                <Route path="/" element={<CircleContentForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/" element={<CircleContentForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/images" element={<CircleImagesForm isUpdateForm={true} circle={circle} />} />
+                                <Route path="/settings/mission" element={<CircleMissionForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/tags" element={<CircleTagsForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/questions" element={<CircleQuestionsForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
+                                <Route path="/settings/offersandneeds" element={<OffersAndNeedsForm circle={circle} />} />
                                 <Route path="/settings/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
                                 <Route path="/settings/connections" element={<CircleConnectionsForm circle={circle} />} />
                                 <Route path="/settings/ai" element={<CircleAiForm circle={circle} circleData={circleData} isUpdateForm={true} />} />

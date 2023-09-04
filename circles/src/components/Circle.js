@@ -133,7 +133,7 @@ export const Circle = ({ isGlobal }) => {
             // if (x.history.length > 0 && x.history[x.length - 1] === circle.id) return x;
             // return { position: x.position + 1, history: [...x.history, circle] };
         });
-    }, [circle?.id, setCircleHistory]);
+    }, [circle?.id, setCircleHistory]); // ignore warning as we only want to update history when circle id changes
 
     useEffect(() => {
         log("Circle.useEffect", -1);

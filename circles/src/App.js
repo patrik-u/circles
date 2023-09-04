@@ -13,6 +13,7 @@ import ConnectPopup from "components/ConnectPopup";
 import NewUserPopup from "components/NewUserPopup";
 import CreateNewCirclePopup from "components/CreateNewCirclePopup";
 import PushNotificationsManager from "components/PushNotificationsManager";
+import ServerConfigManager from "components/ServerConfigManager";
 //#endregion
 
 const Circle = lazy(() => import("components/Circle"));
@@ -52,6 +53,7 @@ const App = () => {
             <AccountManager />
             <LocationManager />
             <PushNotificationsManager />
+            <ServerConfigManager />
 
             <Flex width="100%" height="100%" flexDirection="column">
                 <Suspense fallback={<Box></Box>}>

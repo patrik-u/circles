@@ -286,7 +286,7 @@ export const CircleQuickLinksForm = ({ circle }) => {
                             <Box>
                                 <HStack align="center" marginTop="10px">
                                     <Button colorScheme="blue" mr={3} borderRadius="25px" isLoading={isSubmitting} type="submit" lineHeight="0">
-                                        {i18n.t("Spara")}
+                                        {i18n.t("Save")}
                                     </Button>
                                 </HStack>
                             </Box>

@@ -79,7 +79,7 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
 
         setSteps(profileSteps);
         setActiveStep(profileSteps[0]);
-    }, [user?.id, userData?.agreed_to_tnc, userData?.completed_guide, user?.description, user?.picture, user?.cover, user?.tags, user?.questions, user?.base, hasBeenInitialized, allSteps, onClose]);
+    }, [user?.id, userData?.agreed_to_tnc, userData?.completed_guide, hasBeenInitialized, allSteps, onClose]); // ignore warning as we don't want this to update unless vital data changes
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
@@ -122,6 +122,9 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         // confirm user has completed guide
         axios
             .put(`/circles/${user.id}`, {
+                circleData: {
+                    ai_summary: true,
+                },
                 circlePrivateData: {
                     completed_guide: true,
                 },
@@ -140,7 +143,14 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                             <Text className="screenHeader" alignSelf="center">
                                 {i18n.t(`Terms  and conditions`)}
                             </Text>
-                            <Box width="100%" height="300px" borderRadius="5px" border="1px solid" borderColor="var(--chakra-colors-gray-200)" backgroundColor="#f7f7f7">
+                            <Box
+                                width="100%"
+                                height="300px"
+                                borderRadius="5px"
+                                border="1px solid"
+                                borderColor="var(--chakra-colors-gray-200)"
+                                backgroundColor="#f7f7f7"
+                            >
                                 <Scrollbars>
                                     <PrivacyPolicy omitHeader={true} />
                                 </Scrollbars>
@@ -286,7 +296,13 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
             <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
                 <HStack align="center">
                     {steps.map((x, i) => (
-                        <Box key={x.id} width="10px" height="10px" borderRadius="50%" backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}></Box>
+                        <Box
+                            key={x.id}
+                            width="10px"
+                            height="10px"
+                            borderRadius="50%"
+                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
+                        ></Box>
                     ))}
                 </HStack>
             </Flex>

@@ -171,6 +171,27 @@ const CircleAbout = ({ onClose }) => {
                             </Box>
                         )}
 
+                        {circle.mission && (
+                            <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
+                                <Text fontWeight="bold">Mission</Text>
+                                <CircleRichText mentions={circle.mentions}>{circle.mission}</CircleRichText>
+                            </Box>
+                        )}
+
+                        {circle.offers && (
+                            <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
+                                <Text fontWeight="bold">Offers</Text>
+                                <CircleRichText mentions={circle.mentions}>{circle.offers}</CircleRichText>
+                            </Box>
+                        )}
+
+                        {circle.needs && (
+                            <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
+                                <Text fontWeight="bold">Needs</Text>
+                                <CircleRichText mentions={circle.mentions}>{circle.needs}</CircleRichText>
+                            </Box>
+                        )}
+
                         {circle.content && (
                             <Box align="left" marginTop="10px" backgroundColor="#ffffffaa" borderRadius="7px" padding="5px">
                                 <Text fontWeight="bold">About</Text>

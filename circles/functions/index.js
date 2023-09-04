@@ -265,7 +265,7 @@ const fromFsDate = (date) => {
 };
 
 // create textual representation of circle
-const getCircleText = (circle, condensed = false) => {
+const getCircleText = (circle, condensed = false, ignoreSummary = false) => {
     const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
 
     // create textual representation of circle
@@ -276,17 +276,34 @@ const getCircleText = (circle, condensed = false) => {
     if (circle.score) {
         text += `Similarity score: ${circle.score}\n`;
     }
-    text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
-    text += `Location: ${circle.location?.name}\n`;
-    text += `Description: ${circle.description}\n`;
+    if (circle.tags?.length > 0) {
+        text += `Tags: ${circle.tags?.map((x) => x.name).join(", ")}\n`;
+    }
+    if (circle.location?.name) {
+        text += `Location: ${circle.location?.name}\n`;
+    }
+    if (!ignoreSummary && circle.description?.length > 0) {
+        text += `Description: ${circle.description}\n`;
+    }
     text += `URL: https://codo.earth/circles/${circle.id}\n`;
     if (circle.type === "event") {
         // add info about event
         text += `Starts at: ${fromFsDate(circle.starts_at)?.toISOString()}\n`;
     }
+    if (circle.mission?.length > 0) {
+        text += `Mission: ${circle.mission}\n`;
+    }
+    if (circle.offers?.length > 0) {
+        text += `Offers: ${circle.offers}\n`;
+    }
+    if (circle.needs?.length > 0) {
+        text += `Needs: ${circle.needs}\n`;
+    }
     if (!condensed) {
         let chars = text.length;
-        text += `Content: ${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
+        if (circle.content?.length > 0) {
+            text += `Content:\n${circle.content?.slice(0, maxTokens * 4 - chars)}\n`;
+        }
         if (circle.type === "user") {
             // add info about answered prompts
             let q0 = circle.questions?.question0?.label;
@@ -976,17 +993,26 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.base) {
         circle.base = circleReq.base;
     }
-    if (circleReq.description) {
+    if (circleReq.description !== undefined) {
         circle.description = circleReq.description;
     }
-    if (circleReq.content) {
+    if (circleReq.content !== undefined) {
         circle.content = circleReq.content;
     }
-    if (circleReq.lexical_content) {
+    if (circleReq.lexical_content !== undefined) {
         circle.lexical_content = circleReq.lexical_content;
     }
     if (circleReq.language) {
         circle.language = circleReq.language;
+    }
+    if (circleReq.mission !== undefined) {
+        circle.mission = circleReq.mission;
+    }
+    if (circleReq.offers !== undefined) {
+        circle.offers = circleReq.offers;
+    }
+    if (circleReq.needs !== undefined) {
+        circle.needs = circleReq.needs;
     }
     if (circleReq.social_media) {
         circle.social_media = circleReq.social_media;
@@ -1048,6 +1074,9 @@ const upsertCircle = async (authCallerId, circleReq) => {
 
     if (circleReq.is_public !== undefined) {
         circle.is_public = circleReq.is_public === true;
+    }
+    if (circleReq.ai_summary !== undefined) {
+        circle.ai_summary = circleReq.ai_summary === true;
     }
 
     // verify user is admin of parent circle
@@ -1164,7 +1193,40 @@ const upsertCircle = async (authCallerId, circleReq) => {
 
     // upsert embeddings
     upsertCircleEmbedding(circle.id);
+
+    // update summary if ai_summary is true
+    if (circle.ai_summary) {
+        await generateAiSummary(circle);
+    }
+
     return circle;
+};
+
+// generate AI summary
+const generateAiSummary = async (circle) => {
+    if (typeof circle === "string") {
+        circle = await getCircle(circle);
+    }
+    if (!circle) {
+        return;
+    }
+    let circleText = getCircleText(circle, false, true);
+    const summarySystemMessage = "You're a helpful assistant for a social networking platform for change makers and co-creators.";
+    let message = "";
+    if (circle.type === "user" || circle.type === "ai_agent") {
+        message = `In a single sentence, generate an expressive summary in the form of symbolic, poetic, and/or abstract phrase that captures the essence of the ${circle.type}, providing a deeper or more artistic representation rather than a direct summary. Do this without including the ${circle.type}'s name as it will already be displayed, and ensure the essential expression is under 200 characters: \n\n${circleText}`;
+    } else {
+        message = `In a single sentence, generate a concise summary of the ${circle.type}. The summary should be 200 characters max, and without including the ${circle.type}'s name as it will already be displayed before the summary.\n\n${circleText}`;
+    }
+    let summary = await getAiResponse(message, summarySystemMessage);
+    if (summary) {
+        // remove eventual quotes from summary
+        if (summary.startsWith('"') && summary.endsWith('"')) {
+            summary = summary.slice(1, -1);
+        }
+
+        await updateCircle(circle.id, { description: summary });
+    }
 };
 
 // updates or inserts circle_data
@@ -2791,6 +2853,41 @@ const printMessage = (message) => {
     }
 };
 
+// triggers AI response for a message
+const getAiResponse = async (messageIn, systemMessageStr) => {
+    let messages = [];
+    let systemMessage = { role: "system", content: systemMessageStr ?? "You are a helpful assistant." };
+    messages.push(systemMessage);
+    messages.push({ role: "user", content: messageIn });
+
+    // initiate AI response
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    let request = {
+        messages,
+        model: "gpt-4", // model
+    };
+
+    let messageData = null;
+    let message = null;
+    let mentions = [];
+
+    printMessage(messages[messages.length - 1]);
+
+    try {
+        const response = await openai.createChatCompletion(request);
+        return response.data?.choices?.[0]?.message?.content;
+    } catch (error) {
+        console.log("error: ", error);
+    }
+
+    return null;
+};
+
+// triggers AI agent response for latest user message in a chat session
 const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefined) => {
     if (typeof circle === "string") {
         circle = await getCircle(circle);
@@ -2848,9 +2945,11 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
         }
     }
 
-    let systemMessage = { role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble };
-    messages.push({ role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble });
+    // add information about the user the AI is interacting with
+    systemMessagePreamble += `\n\nThe user's profile summary is:\n${getCircleText(user, true)}`;
 
+    let systemMessage = { role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble };
+    messages.push(systemMessage);
     printMessage(systemMessage);
 
     // add previous messages
@@ -2914,7 +3013,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                 name: "semanticSearch",
                 description: `Does a search among circles for ${toCommaSeparatedList(
                     indexCircleTypes
-                )} that are semantically similar to the query and returns a summary of each result, if you want more information about a specific circle call getCircleDetails.`,
+                )} that are semantically similar to the query and returns a summary of each result, if you want more information about a specific circle call getCircleDetails. Make sure you add important context to the query, e.g. for temporal queries (upcoming events, etc) add the current universal time to the query, for queries relating to user's values, interests, mission, etc. add those specific values to the query. If you need more context about a user, event, circle, etc. call getCircleDetails with the relevant ID.`,
                 parameters: {
                     type: "object",
                     properties: {
