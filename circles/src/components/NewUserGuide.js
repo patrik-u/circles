@@ -1,12 +1,12 @@
 //#region imports
 import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack } from "@chakra-ui/react";
+import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack, Tabs, Tab, TabPanel, TabPanels, TabList } from "@chakra-ui/react";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
 import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
-import PrivacyPolicy from "components/PrivacyPolicy";
+import { PrivacyPolicy, TermsOfService } from "components/TermsOfService";
 import { userAtom, userDataAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 //#endregion
@@ -119,16 +119,20 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
     };
 
     const complete = () => {
+        let req = {
+            circlePrivateData: {
+                completed_guide: true,
+            },
+        };
+        if (!userData?.completed_guide) {
+            // if first time completed guide then update ai summary
+            req.circleData = {
+                ai_summary: true,
+            };
+        }
         // confirm user has completed guide
         axios
-            .put(`/circles/${user.id}`, {
-                circleData: {
-                    ai_summary: true,
-                },
-                circlePrivateData: {
-                    completed_guide: true,
-                },
-            })
+            .put(`/circles/${user.id}`, req)
             .then((x) => {})
             .catch((error) => {});
         next();
@@ -143,18 +147,41 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                             <Text className="screenHeader" alignSelf="center">
                                 {i18n.t(`Terms  and conditions`)}
                             </Text>
-                            <Box
-                                width="100%"
-                                height="300px"
-                                borderRadius="5px"
-                                border="1px solid"
-                                borderColor="var(--chakra-colors-gray-200)"
-                                backgroundColor="#f7f7f7"
-                            >
-                                <Scrollbars>
-                                    <PrivacyPolicy omitHeader={true} />
-                                </Scrollbars>
-                            </Box>
+                            <Tabs>
+                                <TabList>
+                                    <Tab>Terms of Service</Tab>
+                                    <Tab>Privacy Policy</Tab>
+                                </TabList>
+
+                                <TabPanels marginBottom="20px">
+                                    <TabPanel margin="10px" padding="0px">
+                                        <Box
+                                            width="100%"
+                                            height="300px"
+                                            borderRadius="5px"
+                                            border="1px solid"
+                                            borderColor="var(--chakra-colors-gray-200)"
+                                            backgroundColor="#f7f7f7"
+                                            overflow="auto"
+                                        >
+                                            <TermsOfService />
+                                        </Box>
+                                    </TabPanel>
+                                    <TabPanel margin="10px" padding="0px">
+                                        <Box
+                                            width="100%"
+                                            height="300px"
+                                            borderRadius="5px"
+                                            border="1px solid"
+                                            borderColor="var(--chakra-colors-gray-200)"
+                                            backgroundColor="#f7f7f7"
+                                            overflow="auto"
+                                        >
+                                            <PrivacyPolicy />
+                                        </Box>
+                                    </TabPanel>
+                                </TabPanels>
+                            </Tabs>
                             <Checkbox isChecked={agreedToTnc} onChange={(e) => setAgreedToTnc(e.target.checked)}>
                                 I agree to the Terms and Conditions and Privacy Policy
                             </Checkbox>

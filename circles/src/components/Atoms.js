@@ -21,6 +21,7 @@ export const inVideoConferenceAtom = atom(false);
 export const toggleWidgetEventAtom = atom(null);
 export const updateRelationAtom = atom(null);
 export const serverConfigAtom = atom(null);
+export const latestRefreshedVersionAtom = atomWithStorage("latestRefreshedVersion", null);
 
 // connection
 export const connectPopupAtom = atom(null);
@@ -28,16 +29,16 @@ export const isConnectingAtom = atom(false);
 
 // user account atoms
 export const uidAtom = atom(null);
-export const userAtom = atomWithStorage(null);
-export const userDataAtom = atomWithStorage(null);
+export const userAtom = atomWithStorage("user", null);
+export const userDataAtom = atomWithStorage("userData", null);
 export const showHistoricCirclesAtom = atom(false);
 export const userConnectionsAtom = atom(null);
 export const signInStatusAtom = atom(signInStatusValues.signingIn);
 export const userLocationAtom = atom({ latitude: undefined, longitude: undefined });
 export const requestUserConnectionsAtom = atom(false);
 export const messageTokenAtom = atom(null);
-export const circleSettingsAtom = atomWithStorage({});
-export const navigationPanelPinnedAtom = atomWithStorage(false);
+export const circleSettingsAtom = atomWithStorage("circleSettings", {});
+export const navigationPanelPinnedAtom = atomWithStorage("navigationPanelPinned", false);
 
 // document
 export const documentTreeAtom = atom([]);
@@ -47,7 +48,7 @@ export const saveIdAtom = atom(null);
 export const triggerAiTextCompletionAtom = atom(false);
 export const aiTextCompletionActiveAtom = atom(false);
 export const triggerClearEditorAtom = atom(false);
-export const includeParagraphsAtom = atomWithStorage(true);
+export const includeParagraphsAtom = atomWithStorage("includeParagraphs", true);
 
 // circle atoms
 export const circleHistoryAtom = atom({ history: [], position: -1 });

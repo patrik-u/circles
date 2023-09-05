@@ -91,6 +91,10 @@ const CircleSettings = ({ onClose }) => {
         }
     };
 
+    const isBaseSettings = () => {
+        return matchPath(routes.circle(circle).settings.base, location.pathname);
+    };
+
     const isMatch = adminNavigationItems().map((navItem) => matchPath(navItem.route, location.pathname) != null);
 
     const iconSize = 12;
@@ -107,7 +111,7 @@ const CircleSettings = ({ onClose }) => {
             pointerEvents="auto"
             position="relative"
             overflow="hidden"
-            height={isMatch[3] ? "200px" : "100%"}
+            height={isBaseSettings() ? "200px" : "100%"}
             width="auto"
         >
             <Flex flexGrow="1" height={isMobile ? "100%" : "100%"} position="relative" left="0px" flexDirection={isMobile ? "column" : "row"} top="0px">

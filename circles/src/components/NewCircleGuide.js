@@ -6,7 +6,7 @@ import axios from "axios";
 import { toastError, log } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
-import PrivacyPolicy from "components/PrivacyPolicy";
+import PrivacyPolicy from "components/TermsOfService";
 import { userAtom, toggleAboutAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 import { routes, openCircle, openAboutCircle } from "components/Navigation";
@@ -31,6 +31,8 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
             images: { id: "images", label: i18n.t("Images") },
             tags: { id: "tags", label: i18n.t("Tags") },
             location: { id: "location", label: i18n.t("base") },
+            mission: { id: "mission", label: i18n.t("Mission") },
+            offers_and_needs: { id: "offers_and_needs", label: i18n.t("Offers & Needs") },
             //            complete: { id: "complete", label: i18n.t("Congratulations") },
         }),
         []

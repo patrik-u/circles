@@ -290,8 +290,15 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                             maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
                                         >
                                             {item.reply_to && (
-                                                <Box padding="11px 11px 0px 11px">
-                                                    <VStack align="left" spacing="0px" flexGrow="1" borderLeft="3px solid #7179a9" paddingLeft="5px">
+                                                <Box padding="11px 11px 0px 11px" overflow="hidden">
+                                                    <VStack
+                                                        align="left"
+                                                        spacing="0px"
+                                                        flexGrow="1"
+                                                        borderLeft="3px solid #7179a9"
+                                                        paddingLeft="5px"
+                                                        maxWidth="290px"
+                                                    >
                                                         <Text fontSize="14px" color="#7880f8" fontWeight="700">
                                                             {item.reply_to.user.name}
                                                         </Text>

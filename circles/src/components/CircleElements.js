@@ -982,11 +982,11 @@ export const MetaData = ({ data }) => {
                                 ))}
                             <Text fontWeight="700">{meta.title}</Text>
                             <Text>{meta.description}</Text>
-                            {meta.images?.map((img, j) => (
-                                <Link key={j} href={meta.url} target="_blank">
-                                    <Image src={img} />
+                            {meta.images?.[0] && (
+                                <Link href={meta.url} target="_blank">
+                                    <Image src={meta.images[0]} />
                                 </Link>
-                            ))}
+                            )}
                         </Box>
                     </Box>
                 ) : null;

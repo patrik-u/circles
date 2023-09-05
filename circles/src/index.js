@@ -82,7 +82,7 @@ if (config.environment === "prod") {
 axios.defaults.baseURL = config.apiUrl;
 //#endregion
 
-const PrivacyPolicy = lazy(() => import("components/PrivacyPolicy"));
+const PrivacyPolicy = lazy(() => import("components/TermsOfService"));
 
 const root = createRoot(document.getElementById("root"));
 root.render(
@@ -100,9 +100,21 @@ root.render(
     </Router>
 );
 
+//let swRegistration;
+
 serviceWorkerRegistration.register();
+// serviceWorkerRegistration.register({
+//     onUpdate: (registration) => {
+//         swRegistration = registration;
+//     },
+//     onSuccess: (registration) => {
+//         swRegistration = registration;
+//     },
+// });
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+//export { swRegistration };
