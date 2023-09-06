@@ -1249,6 +1249,7 @@ const upsertCircleData = async (authCallerId, circleDataReq) => {
         circleData.email = circleDataReq.email;
     }
     if (circleDataReq.agreed_to_tnc) {
+        console.log("Updating agreed_to_tnc");
         circleData.agreed_to_tnc = new Date();
     }
     if (circleDataReq.agreed_to_email_updates) {
@@ -1317,7 +1318,7 @@ app.put("/circles/:id", auth, async (req, res) => {
         }
 
         // update circle data
-        if (req.body.circleData) {
+        if (req.body.circlePrivateData) {
             let circleData = await upsertCircleData(authCallerId, { id: circleId, ...req.body.circlePrivateData });
             if (circleData.errors) {
                 return res.json({ errors: circleData.errors });

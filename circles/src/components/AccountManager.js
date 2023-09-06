@@ -5,7 +5,7 @@ import db, { auth } from "components/Firebase";
 import * as Sentry from "@sentry/react";
 import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
-import { toastError, log } from "components/Helpers";
+import { toastError, log, fromFsDate } from "components/Helpers";
 import { collection, doc, onSnapshot, query, where, GeoPoint } from "firebase/firestore";
 import i18n from "i18n/Localization";
 import { useAtom } from "jotai";
@@ -26,6 +26,7 @@ import {
 } from "components/Atoms";
 import config from "Config";
 import useScript from "components/useScript";
+import { tnsLastUpdate } from "components/TermsOfService";
 //#endregion
 
 // signs out user
@@ -185,11 +186,16 @@ export const AccountManager = () => {
 
                 let alwaysShowGuide = config.alwaysShowGuide;
 
+                log("agreed_to_tnc: " + fromFsDate(data.userData.agreed_to_tnc), 0, true);
+                log("tnsLastUpdate: " + fromFsDate(tnsLastUpdate), 0, true);
+                log("agreed_to_tnc < tnsLastUpdate:" + (fromFsDate(data.userData.agreed_to_tnc) < fromFsDate(tnsLastUpdate)).toString(), 0, true);
+
                 // show new profile guide
                 if (
                     !data.userData.agreed_to_tnc ||
                     !data.userData.completed_guide ||
                     (!data.user.base && !data.userData.skipped_setting_location) ||
+                    fromFsDate(data.userData.agreed_to_tnc) < fromFsDate(tnsLastUpdate) ||
                     alwaysShowGuide
                 ) {
                     setNewUserPopup(true);

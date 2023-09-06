@@ -288,6 +288,8 @@ export const fromFsDate = (date) => {
         return new Date(date.seconds * 1000);
     } else if (typeof date === "number") {
         return new Date(date);
+    } else if (typeof date === "string") {
+        return new Date(date);
     } else {
         return date;
     }

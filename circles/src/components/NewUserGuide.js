@@ -3,10 +3,10 @@ import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack, Tabs, Tab, TabPanel, TabPanels, TabList } from "@chakra-ui/react";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
-import { toastError, log } from "components/Helpers";
+import { toastError, log, fromFsDate } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
-import { PrivacyPolicy, TermsOfService } from "components/TermsOfService";
+import { PrivacyPolicy, TermsOfService, tnsLastUpdate } from "components/TermsOfService";
 import { userAtom, userDataAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 //#endregion
@@ -24,6 +24,7 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         () => ({
             default: { id: "default", label: "Default" },
             tnc: { id: "tnc", label: i18n.t("Terms and conditions") },
+            tnc_update: { id: "tnc_update", label: i18n.t("Terms and conditions") },
             welcome: { id: "welcome", label: i18n.t("Welcome") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
@@ -48,13 +49,15 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         if (!user?.id || hasBeenInitialized) return;
         setHasBeenInitialized(true);
         let ignoreCheck = config.alwaysShowGuide;
-        let profileSteps = [];
+        let tocProfileStep = null;
         if (!userData?.agreed_to_tnc || ignoreCheck) {
             // user hasn't agreed to terms and conditions
-            profileSteps.push(allSteps.tnc);
+            tocProfileStep = allSteps.tnc;
+        } else if (fromFsDate(userData?.completed_guide) < fromFsDate(tnsLastUpdate)) {
+            tocProfileStep = allSteps.tnc_update;
         }
 
-        profileSteps.push(allSteps.welcome);
+        let profileSteps = [];
         if (!user.description || ignoreCheck) {
             profileSteps.push(allSteps.about);
         }
@@ -70,9 +73,14 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
             profileSteps.push(allSteps.questions);
         }
-
-        profileSteps.push(allSteps.complete);
-
+        if (profileSteps.length > 0) {
+            // if any profile steps added, include welcome and complete steps
+            profileSteps.unshift(allSteps.welcome);
+            profileSteps.push(allSteps.complete);
+        }
+        if (tocProfileStep) {
+            profileSteps.unshift(tocProfileStep);
+        }
         if (profileSteps.length <= 0) {
             onClose();
         }
@@ -88,6 +96,21 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         } else {
             setActiveStep(steps[nextIndex]);
         }
+    };
+
+    const onAgreeToTncUpdateClick = () => {
+        // update user data
+        axios
+            .put(`/circles/${user.id}`, {
+                circlePrivateData: {
+                    agreed_to_tnc: true,
+                },
+            })
+            .catch((error) => {
+                log("NewUserGuide.onAgreeToTncUpdateClick error", 2);
+            });
+
+        next();
     };
 
     const onAgreeToTncClick = () => {
@@ -203,6 +226,67 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                 position="relative"
                             >
                                 {isSaving ? <Spinner /> : <Text>{i18n.t(`Confirm`)}</Text>}
+                            </Button>
+                        </Flex>
+                    </Box>
+                );
+
+            case allSteps.tnc_update.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Text className="screenHeader" alignSelf="center">
+                                {i18n.t(`Terms  and conditions has been updated`)}
+                            </Text>
+                            <Tabs>
+                                <TabList>
+                                    <Tab>Terms of Service</Tab>
+                                    <Tab>Privacy Policy</Tab>
+                                </TabList>
+
+                                <TabPanels marginBottom="20px">
+                                    <TabPanel margin="10px" padding="0px">
+                                        <Box
+                                            width="100%"
+                                            height="300px"
+                                            borderRadius="5px"
+                                            border="1px solid"
+                                            borderColor="var(--chakra-colors-gray-200)"
+                                            backgroundColor="#f7f7f7"
+                                            overflow="auto"
+                                        >
+                                            <TermsOfService />
+                                        </Box>
+                                    </TabPanel>
+                                    <TabPanel margin="10px" padding="0px">
+                                        <Box
+                                            width="100%"
+                                            height="300px"
+                                            borderRadius="5px"
+                                            border="1px solid"
+                                            borderColor="var(--chakra-colors-gray-200)"
+                                            backgroundColor="#f7f7f7"
+                                            overflow="auto"
+                                        >
+                                            <PrivacyPolicy />
+                                        </Box>
+                                    </TabPanel>
+                                </TabPanels>
+                            </Tabs>
+                        </VStack>
+                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
+                            <Button
+                                marginTop="10px"
+                                width="150px"
+                                colorScheme="blue"
+                                borderRadius="25px"
+                                lineHeight="0"
+                                backgroundColor="#389bf8"
+                                color="white"
+                                onClick={onAgreeToTncUpdateClick}
+                                position="relative"
+                            >
+                                <Text>{i18n.t(`Confirm`)}</Text>
                             </Button>
                         </Flex>
                     </Box>

@@ -2,6 +2,7 @@ import i18n from "i18n/Localization";
 import { Text, Box, Flex } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 
+export const tnsLastUpdate = "2023-09-05";
 let termsOfService = `# Terms of Service
 ## Welcome to co:do!
 
