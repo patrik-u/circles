@@ -186,9 +186,9 @@ export const AccountManager = () => {
 
                 let alwaysShowGuide = config.alwaysShowGuide;
 
-                log("agreed_to_tnc: " + fromFsDate(data.userData.agreed_to_tnc), 0, true);
-                log("tnsLastUpdate: " + fromFsDate(tnsLastUpdate), 0, true);
-                log("agreed_to_tnc < tnsLastUpdate:" + (fromFsDate(data.userData.agreed_to_tnc) < fromFsDate(tnsLastUpdate)).toString(), 0, true);
+                // log("agreed_to_tnc: " + fromFsDate(data.userData.agreed_to_tnc), 0, true);
+                // log("tnsLastUpdate: " + fromFsDate(tnsLastUpdate), 0, true);
+                // log("agreed_to_tnc < tnsLastUpdate:" + (fromFsDate(data.userData.agreed_to_tnc) < fromFsDate(tnsLastUpdate)).toString(), 0, true);
 
                 // show new profile guide
                 if (

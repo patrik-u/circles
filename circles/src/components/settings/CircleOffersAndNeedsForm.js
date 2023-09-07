@@ -41,7 +41,7 @@ import { IoInformationCircleSharp } from "react-icons/io5";
 import DocumentEditor from "components/document/DocumentEditor";
 //#endregion
 
-export const OffersAndNeedsForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
+export const CircleOffersAndNeedsForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const [user] = useAtom(userAtom);
     const [saveId] = useAtom(saveIdAtom);
     const toast = useToast();
@@ -62,6 +62,17 @@ export const OffersAndNeedsForm = ({ isUpdateForm, circle, isGuideForm, onNext, 
             }}
             onSubmit={async (values, actions) => {
                 log("submitting form", 0, true);
+
+                if (isGuideForm) {
+                    if (circle.offers === values.offers && circle.needs === values.needs) {
+                        // nothing changed
+                        if (onNext) {
+                            onNext();
+                        }
+                        actions.setSubmitting(false);
+                        return;
+                    }
+                }
 
                 // update circle
                 let updatedCircleData = {
@@ -190,7 +201,13 @@ export const OffersAndNeedsForm = ({ isUpdateForm, circle, isGuideForm, onNext, 
                         <Box>
                             <HStack align="center" marginTop="10px">
                                 <Button colorScheme="blue" mr={3} borderRadius="25px" isLoading={isSubmitting} type="submit" lineHeight="0">
-                                    {i18n.t("Save")}
+                                    {isUpdateForm === true
+                                        ? isGuideForm
+                                            ? !values?.needs && !values?.offers
+                                                ? i18n.t("Skip")
+                                                : i18n.t("Continue")
+                                            : i18n.t("Save")
+                                        : i18n.t("Save and continue")}
                                 </Button>
                             </HStack>
                         </Box>
@@ -201,4 +218,4 @@ export const OffersAndNeedsForm = ({ isUpdateForm, circle, isGuideForm, onNext, 
     );
 };
 
-export default OffersAndNeedsForm;
+export default CircleOffersAndNeedsForm;

@@ -9,13 +9,14 @@ import config from "Config";
 import { PrivacyPolicy, TermsOfService, tnsLastUpdate } from "components/TermsOfService";
 import { userAtom, userDataAtom } from "components/Atoms";
 import { useAtom } from "jotai";
+import CircleContentForm from "components/settings/CircleContentForm";
+import CircleImagesForm from "components/settings/CircleImagesForm";
+import CircleTagsForm from "components/settings/CircleTagsForm";
+import CircleMissionForm from "components/settings/CircleMissionForm";
+import CircleOffersAndNeedsForm from "components/settings/CircleOffersAndNeedsForm";
+import CircleQuestionsForm from "components/settings/CircleQuestionsForm";
+import CircleBasePopupForm from "components/settings/CircleBasePopupForm";
 //#endregion
-
-const CircleContentForm = lazy(() => import("components/settings/CircleContentForm"));
-const CircleImagesForm = lazy(() => import("components/settings/CircleImagesForm"));
-const CircleTagsForm = lazy(() => import("components/settings/CircleTagsForm"));
-const CircleQuestionsForm = lazy(() => import("components/settings/CircleQuestionsForm"));
-const CircleBasePopupForm = lazy(() => import("components/settings/CircleBasePopupForm"));
 
 export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
     const [user] = useAtom(userAtom);
@@ -28,7 +29,9 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
             welcome: { id: "welcome", label: i18n.t("Welcome") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
+            mission: { id: "mission", label: i18n.t("Mission") },
             tags: { id: "tags", label: i18n.t("Tags") },
+            offers_and_needs: { id: "offers_and_needs", label: i18n.t("Offers & Needs") },
             questions: { id: "questions", label: i18n.t("Questions") },
             location: { id: "location", label: i18n.t("base") },
             complete: { id: "complete", label: i18n.t("Congratulations") },
@@ -64,8 +67,14 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         if ((!user.picture && !user.cover) || ignoreCheck) {
             profileSteps.push(allSteps.images);
         }
+        if (!user.mission || ignoreCheck) {
+            profileSteps.push(allSteps.mission);
+        }
         if (!user.tags || user.tags?.length <= 0 || ignoreCheck) {
             profileSteps.push(allSteps.tags);
+        }
+        if (!user.offers || !user.needs || ignoreCheck) {
+            profileSteps.push(allSteps.offers_and_needs);
         }
         if (!user.base || ignoreCheck) {
             profileSteps.push(allSteps.location);
@@ -339,12 +348,34 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     </Box>
                 );
 
+            case allSteps.mission.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleMissionForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
             case allSteps.tags.id:
                 return (
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleTagsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
+            case allSteps.offers_and_needs.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleOffersAndNeedsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
                             </Suspense>
                         </VStack>
                     </Box>

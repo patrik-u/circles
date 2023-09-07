@@ -55,6 +55,17 @@ export const CircleMissionForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
             onSubmit={async (values, actions) => {
                 log("submitting form", 0, true);
 
+                if (isGuideForm) {
+                    if (circle.mission === values.mission) {
+                        // nothing changed
+                        if (onNext) {
+                            onNext();
+                        }
+                        actions.setSubmitting(false);
+                        return;
+                    }
+                }
+
                 // update circle
                 let updatedCircleData = {
                     mission: values.mission,
@@ -112,26 +123,16 @@ export const CircleMissionForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                 <Form style={{ width: "100%" }}>
                     <VStack align="center">
                         <Text className="screenHeader">{i18n.t("Mission")}</Text>
+                        <Text>
+                            {circle?.type === "user" || circle?.type === "ai_agent"
+                                ? `Define your personal purpose or the impact you aim to create. What drives you and guides your actions in this community?`
+                                : `Articulate the core purpose or goal of this ${circle?.type}. What unites its participants and directs its endeavors?`}
+                        </Text>
 
                         <VStack align="center" spacing="25px" width="100%" marginLeft="25px" marginRight="25px">
                             <Field name="mission">
                                 {({ field, form }) => (
                                     <FormControl isInvalid={form.errors.mission && form.touched.mission}>
-                                        <Flex flexDirection="row" alignSelf="start">
-                                            <Text>{i18n.t(`Mission`)}</Text>
-                                            <Tooltip
-                                                label={
-                                                    circle?.type === "user" || circle?.type === "ai_agent"
-                                                        ? `Define your personal purpose or the impact you aim to create. What drives you and guides your actions in this community?`
-                                                        : `Articulate the core purpose or goal of this ${circle?.type}. What unites its participants and directs its endeavors?`
-                                                }
-                                                aria-label="A tooltip"
-                                            >
-                                                <Flex flexDirection="row" align="center" marginLeft="5px">
-                                                    <Icon as={IoInformationCircleSharp} color="#3182ce" />
-                                                </Flex>
-                                            </Tooltip>
-                                        </Flex>
                                         <Text position="absolute" right="0px" top="5px" fontSize="12px" color="#bbb">
                                             {form?.values?.mission ? form.values.mission.length : 0} / 1000
                                         </Text>
@@ -147,7 +148,13 @@ export const CircleMissionForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
                         <Box>
                             <HStack align="center" marginTop="10px">
                                 <Button colorScheme="blue" mr={3} borderRadius="25px" isLoading={isSubmitting} type="submit" lineHeight="0">
-                                    {i18n.t("Save")}
+                                    {isUpdateForm === true
+                                        ? isGuideForm
+                                            ? !values?.mission
+                                                ? i18n.t("Skip")
+                                                : i18n.t("Continue")
+                                            : i18n.t("Save")
+                                        : i18n.t("Save and continue")}
                                 </Button>
                             </HStack>
                         </Box>

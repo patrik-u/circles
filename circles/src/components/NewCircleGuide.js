@@ -13,7 +13,9 @@ import { routes, openCircle, openAboutCircle } from "components/Navigation";
 import { useNavigateNoUpdates } from "components/RouterUtils";
 import { CircleContentForm } from "components/settings/CircleContentForm";
 import { CircleImagesForm } from "components/settings/CircleImagesForm";
+import { CircleMissionForm } from "components/settings/CircleMissionForm";
 import { CircleTagsForm } from "components/settings/CircleTagsForm";
+import { CircleOffersAndNeedsForm } from "components/settings/CircleOffersAndNeedsForm";
 import { CircleBaseForm } from "components/settings/CircleBaseForm";
 import { CircleBasePopupForm } from "components/settings/CircleBasePopupForm";
 import { CircleTypeForm } from "components/settings/CircleTypeForm";
@@ -29,20 +31,20 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
             type: { id: "type", label: i18n.t("Type") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
-            tags: { id: "tags", label: i18n.t("Tags") },
-            location: { id: "location", label: i18n.t("base") },
             mission: { id: "mission", label: i18n.t("Mission") },
+            tags: { id: "tags", label: i18n.t("Tags") },
             offers_and_needs: { id: "offers_and_needs", label: i18n.t("Offers & Needs") },
-            //            complete: { id: "complete", label: i18n.t("Congratulations") },
+            location: { id: "location", label: i18n.t("base") },
         }),
         []
     );
-    const [steps] = useState([allSteps.type, allSteps.about, allSteps.images, allSteps.tags, allSteps.location]);
+    const [steps] = useState([allSteps.type, allSteps.about, allSteps.images, allSteps.mission, allSteps.tags, allSteps.offers_and_needs, allSteps.location]);
     const [activeStep, setActiveStep] = useState(allSteps.type);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
         if (nextIndex >= steps.length) {
+            complete();
             onClose();
             openCircle(navigate, createdCircle);
             openAboutCircle(createdCircle, setToggleAbout);
@@ -53,6 +55,18 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
 
     const onUpdate = (updatedCircleData) => {
         setCreatedCircle((previusCreatedCircle) => ({ ...previusCreatedCircle, ...updatedCircleData }));
+    };
+
+    const complete = () => {
+        if (!circle?.id) return;
+        let req = {
+            circleData: {
+                ai_summary: true,
+            },
+        };
+        axios.put(`/circles/${circle.id}`, req).catch((error) => {
+            console.error(error);
+        });
     };
 
     const getActiveStepComponent = () => {
@@ -111,6 +125,24 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                     </Box>
                 );
 
+            case allSteps.mission.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleMissionForm
+                                    isUpdateForm={false}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
             case allSteps.tags.id:
                 return (
                     <Box>
@@ -118,6 +150,24 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                             <Suspense fallback={<Spinner />}>
                                 <CircleTagsForm
                                     isUpdateForm={true}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+
+            case allSteps.offers_and_needs.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleOffersAndNeedsForm
+                                    isUpdateForm={false}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}

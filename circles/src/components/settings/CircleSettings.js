@@ -19,7 +19,7 @@ import { CircleFundingForm } from "components/settings/CircleFundingForm";
 import { CircleDeleteForm } from "components/settings/CircleDeleteForm";
 import { CircleAiForm } from "components/settings/CircleAiForm";
 import { MdOutlineClose } from "react-icons/md";
-import { OffersAndNeedsForm } from "components/settings/OffersAndNeedsForm";
+import { CircleOffersAndNeedsForm } from "components/settings/CircleOffersAndNeedsForm";
 import { CircleMissionForm } from "components/settings/CircleMissionForm";
 //#endregion
 
@@ -126,7 +126,7 @@ const CircleSettings = ({ onClose }) => {
                                 <Route path="/settings/tags" element={<CircleTagsForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/questions" element={<CircleQuestionsForm isUpdateForm={true} circle={circle} />} />
                                 <Route path="/settings/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
-                                <Route path="/settings/offersandneeds" element={<OffersAndNeedsForm circle={circle} />} />
+                                <Route path="/settings/offersandneeds" element={<CircleOffersAndNeedsForm circle={circle} />} />
                                 <Route path="/settings/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
                                 <Route path="/settings/connections" element={<CircleConnectionsForm circle={circle} />} />
                                 <Route path="/settings/ai" element={<CircleAiForm circle={circle} circleData={circleData} isUpdateForm={true} />} />

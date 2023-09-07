@@ -202,7 +202,7 @@ export const CircleImagesForm = ({ circle, isUpdateForm, onCancel, onNext, onUpd
                                     <Field name="picture">
                                         {({ field, form }) => (
                                             <FormControl isInvalid={form.errors.picture && form.touched.picture}>
-                                                <FormLabel>{i18n.t("Logo")}</FormLabel>
+                                                <FormLabel>{circle?.type === "user" ? "Profile picture" : i18n.t("Logo")}</FormLabel>
                                                 <InputGroup>
                                                     <input
                                                         name="picture"

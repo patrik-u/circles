@@ -1196,7 +1196,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
 
     // update summary if ai_summary is true
     if (circle.ai_summary) {
-        await generateAiSummary(circle);
+        generateAiSummary(circle); // do this in background so we don't have to wait for it
     }
 
     return circle;
@@ -1220,6 +1220,19 @@ const generateAiSummary = async (circle) => {
     }
     let summary = await getAiResponse(message, summarySystemMessage);
     if (summary) {
+        // remove eventual quotes from summary
+        if (summary.startsWith('"') && summary.endsWith('"')) {
+            summary = summary.slice(1, -1);
+        }
+
+        if (summary.length > 250) {
+            console.log("Too long summary: " + summary);
+            message = `The summary you provided is too long. Please please make it a bit more concise:\n\n${summary}`;
+            summary = await getAiResponse(message, summarySystemMessage);
+
+            console.log("Condensed summary: " + summary);
+        }
+
         // remove eventual quotes from summary
         if (summary.startsWith('"') && summary.endsWith('"')) {
             summary = summary.slice(1, -1);
@@ -2872,10 +2885,6 @@ const getAiResponse = async (messageIn, systemMessageStr) => {
         model: "gpt-4", // model
     };
 
-    let messageData = null;
-    let message = null;
-    let mentions = [];
-
     printMessage(messages[messages.length - 1]);
 
     try {
@@ -2926,9 +2935,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     let agentCircleData = await getCircleData(aiCircleId);
 
     // create preamble that includes current time and date, it can include the users current profile summary and other data that can be useful for the assistant to know about
-
     // if user has timezone stored use it otherwise use system time
-
     let localDateAndTime = null;
     if (userData?.timezone) {
         localDateAndTime = getLocalDateTimeInTimezone(userData.timezone);

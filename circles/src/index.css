@@ -1032,51 +1032,51 @@ dfn {
     margin-top: 0;
 }
 
-mark {
+.embedMarkdownContent mark {
     background-color: #fff8c5;
     color: #24292f;
 }
 
-small {
+.embedMarkdownContent small {
     font-size: 90%;
 }
 
-sub,
-sup {
+.embedMarkdownContent sub,
+.embedMarkdownContent sup {
     font-size: 75%;
     line-height: 0;
     position: relative;
     vertical-align: baseline;
 }
 
-sub {
+.embedMarkdownContent sub {
     bottom: -0.25em;
 }
 
-sup {
+.embedMarkdownContent sup {
     top: -0.5em;
 }
 
-img {
+.embedMarkdownContent img {
     border-style: none;
     max-width: 100%;
     box-sizing: content-box;
     background-color: #ffffff;
 }
 
-code,
-kbd,
-pre,
-samp {
+.embedMarkdownContent code,
+.embedMarkdownContent kbd,
+.embedMarkdownContent pre,
+.embedMarkdownContent samp {
     font-family: monospace;
     font-size: 1em;
 }
 
-figure {
+.embedMarkdownContent figure {
     margin: 1em 40px;
 }
 
-hr {
+.embedMarkdownContent hr {
     box-sizing: content-box;
     overflow: hidden;
     background: transparent;
@@ -1088,7 +1088,7 @@ hr {
     border: 0;
 }
 
-input {
+.embedMarkdownContent input {
     font: inherit;
     margin: 0;
     overflow: visible;
