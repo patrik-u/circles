@@ -104,121 +104,7 @@ const linkifyMarkdown = (input) => {
     return result;
 };
 
-// gets target circle if relation-set
-const getRelevantCircle = (user, circle) => {
-    if (!circle) return null;
-    if (circle?.type === "set") {
-        return circle[circle.circle_ids[0]].id === user?.id ? circle[circle.circle_ids[1]] : circle[circle.circle_ids[0]];
-    } else {
-        return circle;
-    }
-};
-
-export const CircleChatWidget = () => {
-    const [circle] = useAtom(circleAtom);
-    const [user] = useAtom(userAtom);
-    const [signInStatus] = useAtom(signInStatusAtom);
-    const [chatCircle, setChatCircle] = useState(null);
-    const [chatCircles, setChatCircles] = useState([]);
-
-    useEffect(() => {
-        log("CircleChat.useEffect1", -1);
-        if (chatCircle) {
-            if (!chatCircles.find((x) => x.id === chatCircle.id)) {
-                setChatCircle(circle);
-            }
-        } else if (chatCircle === null && circle) {
-            setChatCircle(circle);
-        }
-    }, [circle?.id, chatCircle, chatCircles]); // we only want to set chatCircle once when circle id changes hence warning
-
-    useEffect(() => {
-        log("CircleChat.useEffect2", -1);
-        if (!user?.id || !signInStatus.signedIn) {
-            return;
-        }
-
-        // TODO for now disable Cody chat
-        // if circle has more chat circles, fetch them
-        if (user.show_ai && circle?.chat_circle_ids?.length > 0) {
-            // initiate relation-sets with chat circles
-            axios.post(`/circles/init_sets`, { circle_ids: circle.chat_circle_ids }).catch((err) => {
-                console.error(err);
-            });
-
-            // get relation-set ids
-            let relationSetIds = circle.chat_circle_ids.map((id) => getSetId(user.id, id));
-
-            // subscribe to chat circles
-            const chatCirclesQuery = query(collection(db, "circles"), where(documentId(), "in", relationSetIds));
-            const unsubscribeGetChatCircles = onSnapshot(chatCirclesQuery, (snap) => {
-                const circles = snap.docs.map((doc) => {
-                    return {
-                        id: doc.id,
-                        ...doc.data(),
-                    };
-                });
-                //log(JSON.stringify(circles, null, 2), 0, true);
-                setChatCircles(circles);
-            });
-
-            return () => {
-                if (unsubscribeGetChatCircles) {
-                    unsubscribeGetChatCircles();
-                    setChatCircles([]);
-                    setChatCircle(null);
-                }
-            };
-        } else {
-            setChatCircles([]);
-        }
-    }, [user?.id, user?.show_ai, signInStatus.signedIn, circle?.id]); // we only want to set chatCircle once when circle id changes hence warning
-
-    if (!circle?.id) return null;
-
-    return (
-        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto" flexDirection="column">
-            {/* top menu to switch between AI chat and member chat */}
-            {chatCircles.length > 0 && (
-                <Box pl={2} pointerEvents="auto" zIndex="10" marginBottom="5px">
-                    <Tooltip label={`Chat with ${circle?.name} members`} aria-label="A tooltip">
-                        <IconButton
-                            aria-label="Members Chat"
-                            icon={<CirclePicture circle={circle} size={35} disableClick={true} />}
-                            isRound
-                            ml={2}
-                            colorScheme="transparent"
-                            overflow="hidden"
-                            borderWidth="2px"
-                            borderColor={chatCircle?.id === circle?.id ? "#d6d4d6" : "transparent"}
-                            onClick={() => setChatCircle(circle)}
-                            size="35px"
-                        />
-                    </Tooltip>
-                    {chatCircles.map((item) => (
-                        <Tooltip key={item.id} label={`Chat with ${getRelevantCircle(user, item)?.name}`} aria-label="A tooltip">
-                            <IconButton
-                                icon={<CirclePicture circle={getRelevantCircle(user, item)} size={35} disableClick={true} />}
-                                isRound
-                                colorScheme="transparent"
-                                borderWidth="2px"
-                                overflow="hidden"
-                                borderColor={chatCircle?.id === item?.id ? "#d6d4d6" : "transparent"}
-                                onClick={() => setChatCircle(item)}
-                                size="35px"
-                                marginLeft="5px"
-                            />
-                        </Tooltip>
-                    ))}
-                </Box>
-            )}
-
-            <CircleChat circle={chatCircle} />
-        </Flex>
-    );
-};
-
-const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChatMessage, editChatMessage }) => {
+const ChatMessages = ({ messages, onRenderComplete }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [user] = useAtom(userAtom);
@@ -236,14 +122,6 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
         <>
             {messages?.map((item) => (
                 <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
-                    {item.type === "date" && (
-                        <Box backgroundColor="#3c3d42" borderRadius="20px" marginTop="10px">
-                            <Text marginLeft="10px" marginRight="10px" fontSize="14px" color="#ffffff">
-                                {item.date}
-                            </Text>
-                        </Box>
-                    )}
-
                     {item.type === "message" && (
                         <Flex
                             flexDirection="row"
@@ -333,22 +211,6 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                                 )}
 
                                                 <MetaData data={item.meta_data} />
-
-                                                {item.is_ai_prompt && (
-                                                    <Box paddingRight="10px" lineHeight="20px" fontSize="14px">
-                                                        <Text>
-                                                            <b>/ai</b> {item.message}
-                                                        </Text>
-
-                                                        {item.openai_response?.choices?.[0]?.text && (
-                                                            <Box fontSize="14px" borderLeft="3px solid #7179a9" paddingLeft="5px">
-                                                                <CircleRichText mentions={item.mentions}>
-                                                                    {item.openai_response?.choices?.[0]?.text}
-                                                                </CircleRichText>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
-                                                )}
 
                                                 {item.isLast && (
                                                     <Box paddingBottom="4px" paddingTop="2px">
@@ -441,7 +303,7 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
     );
 };
 
-export const CircleChat = ({ circle }) => {
+export const AiChat = ({ circle }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
@@ -452,8 +314,7 @@ export const CircleChat = ({ circle }) => {
     const [message, setMessage] = useState("");
     const [, setIsSending] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
-    const [scrollToLast, setScrollToLast] = useState(true);
-    const [scrollToLastSmooth, setScrollToLastSmooth] = useState(false);
+    const [, setScrollToLast] = useState(true);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const scrollLastRef = useRef();
     const scrollbarsRef = useRef();
@@ -461,7 +322,6 @@ export const CircleChat = ({ circle }) => {
     const [isAuthorized, setIsAuthorized] = useState(true);
     const [, setCaretIndex] = useState(0);
     const textAreaRef = useRef();
-    const { windowWidth, windowHeight } = useWindowDimensions();
     const [circles] = useAtom(circlesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [chatData, setChatData] = useState(null);
@@ -471,13 +331,6 @@ export const CircleChat = ({ circle }) => {
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input message
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
-
-    //SCROLL123
-    // useEffect(() => {
-    //     log("Chat.useEffect 1", -1);
-    //     setScrollToLastSmooth(false);
-    //     window.scrollTo(0, document.body.scrollHeight);
-    // }, []);
 
     const onNewSession = () => {
         setChatMessages([]);
@@ -694,41 +547,6 @@ export const CircleChat = ({ circle }) => {
         setChatMessages(filteredChatMessages);
     }, [unfilteredChatMessages, user?.id, isMobile]);
 
-    //SCROLL123
-    // useEffect(() => {
-    //     log("Chat.useEffect 4", -1);
-    //     if (scrollLastRef.current && scrollToLast && chatMessages.length > 0) {
-    //         requestAnimationFrame(() => {
-    //             var behavior = scrollToLastSmooth ? "smooth" : "auto";
-    //             scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "nearest" });
-    //         });
-
-    //         // var behavior = scrollToLastSmooth ? "smooth" : "auto";
-    //         // scrollLastRef.current.scrollIntoView({ behavior: behavior, block: "end" });
-    //         //setScrollToLastSmooth((current) => true);
-    //     }
-    // }, [chatMessages, scrollToLast, scrollToLastSmooth]);
-
-    useEffect(() => {
-        log("CircleChat.useEffect 6", -1);
-        let circleId = circle?.id;
-        if (!user?.id || !circleId) return;
-        if (!signInStatus.signedIn) return;
-
-        updateSeen(circleId);
-    }, [user?.id, circle?.id, signInStatus.signedIn]);
-
-    const updateSeen = (circleId) => {
-        // mark circles as seen
-        axios
-            .post(`/seen`, {
-                category: "chat",
-                circleId: circleId,
-            })
-            .then((x) => {})
-            .catch((error) => {});
-    };
-
     const handleMessageChange = (e) => {
         setMessage(e.target.value);
 
@@ -862,70 +680,6 @@ export const CircleChat = ({ circle }) => {
         //textAreaRef.current.setSelectionRange(cursorPosition, cursorPosition)}
     };
 
-    const [messageToDelete, setMessageToDelete] = useState(null);
-    const deleteChatMessage = (item) => {
-        if (!item.isSelf) return;
-        setMessageToDelete(item);
-        confirmDeleteMessageOnOpen();
-    };
-
-    const confirmDeleteMessage = async () => {
-        confirmDeleteMessageOnClose();
-
-        // send request to send message
-        let deleteMessageResult = null;
-        try {
-            deleteMessageResult = await axios.delete(`/chat_messages/${messageToDelete.id}`);
-        } catch (err) {
-            console.error(err);
-        }
-
-        if (!deleteMessageResult || deleteMessageResult.data?.error) {
-            // something went wrong
-            //console.log(JSON.stringify(postMessageResult.data, null, 2));
-            toast({
-                title: i18n.t("Couldn't delete message"),
-                status: "error",
-                position: "top",
-                duration: 4500,
-                isClosable: true,
-            });
-        }
-    };
-
-    const { isOpen: confirmDeleteMessageIsOpen, onOpen: confirmDeleteMessageOnOpen, onClose: confirmDeleteMessageOnClose } = useDisclosure();
-    const confirmDeleteMessageInitialRef = useRef(null);
-
-    const [isEditingMessage, setIsEditingMessage] = useState(false);
-    const [messageToEdit, setMessageToEdit] = useState(null);
-    const editChatMessage = (item) => {
-        if (!item.isSelf) return;
-        setMessage(item.message);
-        setMessageToEdit(item);
-        setIsEditingMessage(true);
-        setIsReplyingMessage(false);
-    };
-
-    const closeEdit = () => {
-        setMessage("");
-        setIsEditingMessage(false);
-        setMessageToEdit(null);
-    };
-
-    const [isReplyingMessage, setIsReplyingMessage] = useState(false);
-    const [messageToReply, setMessageToReply] = useState(null);
-    const replyChatMessage = (item) => {
-        setMessageToReply(item);
-        setIsReplyingMessage(true);
-        setIsEditingMessage(false);
-        setMessageToEdit(item);
-    };
-
-    const closeReply = () => {
-        setIsReplyingMessage(false);
-        setMessageToReply(null);
-    };
-
     const transformMessageWithMentions = (rawMessage) => {
         let transformedMessage = rawMessage;
 
@@ -972,107 +726,17 @@ export const CircleChat = ({ circle }) => {
         <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
-                    {!isAuthorized && (
-                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px" color="white">
-                            <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
-                        </Box>
-                    )}
-                    {!circle?.is_public && (
-                        <Flex borderRadius="5px" width="100%" align="center" marginBottom="5px">
-                            {isAiRelationSet && <NewSessionButton circle={circle} onClick={onNewSession} marginLeft="10px" />}
-                            <Box flexGrow="1" />
-                            <AboutButton circle={getRelevantCircle(user, circle)} />
-                            <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
-                                <Box>
-                                    <RiChatPrivateLine color="white" size="20px" />
-                                </Box>
-                            </Tooltip>
-                        </Flex>
-                    )}
-
                     {isAuthorized && (
                         <>
                             <Box flexGrow="1" overflow="hidden" marginBottom="-1px">
                                 <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
                                     <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
-                                        <ChatMessages
-                                            messages={chatMessages}
-                                            onRenderComplete={onMessagesRenderComplete}
-                                            replyChatMessage={replyChatMessage}
-                                            deleteChatMessage={deleteChatMessage}
-                                            editChatMessage={editChatMessage}
-                                        />
-
-                                        {!chatMessages?.length && !isLoadingMessages && (
-                                            <Text color="white" marginLeft="12px">
-                                                {i18n.t("No messages")}
-                                            </Text>
-                                        )}
+                                        <ChatMessages messages={chatMessages} onRenderComplete={onMessagesRenderComplete} />
                                         {isLoadingMessages && <Spinner marginLeft="12px" color="white" />}
                                     </VStack>
                                     {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
                                 </Scrollbars>
                             </Box>
-
-                            {isEditingMessage && (
-                                <Flex
-                                    height="60px"
-                                    backgroundColor="#f9f9f9"
-                                    align="center"
-                                    boxSizing="border-box"
-                                    marginTop="auto"
-                                    position="relative"
-                                    flexDirection="row"
-                                    width="100%"
-                                    overflow="hidden"
-                                >
-                                    <Box marginLeft="10px" marginRight="10px">
-                                        <MdModeEdit size="30px" color="#7880f8" />
-                                    </Box>
-
-                                    <VStack align="left" spacing="0px" flexGrow="1">
-                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                            {i18n.t("Edit message")}
-                                        </Text>
-                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} noOfLines={1}>
-                                            {messageToEdit.message}
-                                        </Text>
-                                    </VStack>
-                                    <Box marginLeft="10px" marginRight="10px">
-                                        <MdOutlineClose size="30px" color="#161616" onClick={closeEdit} cursor="pointer" />
-                                    </Box>
-                                </Flex>
-                            )}
-
-                            {isReplyingMessage && (
-                                <Flex
-                                    height="60px"
-                                    backgroundColor="#f9f9f9"
-                                    align="center"
-                                    boxSizing="border-box"
-                                    marginTop="auto"
-                                    position="relative"
-                                    flexDirection="row"
-                                    width="100%"
-                                    overflow="hidden"
-                                >
-                                    <Box marginLeft="10px" marginRight="10px">
-                                        <BsReplyFill size="30px" color="#7880f8" />
-                                    </Box>
-
-                                    <VStack align="left" spacing="0px" flexGrow="1">
-                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                            {messageToReply.user.name}
-                                        </Text>
-                                        <Text width={isMobile ? `${windowWidth - 100}px` : "335px"} noOfLines={1}>
-                                            {messageToReply.message}
-                                        </Text>
-                                    </VStack>
-                                    <Box marginLeft="10px" marginRight="10px">
-                                        <MdOutlineClose size="30px" color="#161616" onClick={closeReply} cursor="pointer" />
-                                    </Box>
-                                </Flex>
-                            )}
 
                             <Box
                                 align="flex-end"
@@ -1102,26 +766,6 @@ export const CircleChat = ({ circle }) => {
                                     disabled={user?.id ? false : true}
                                     backgroundColor="white"
                                 />
-                                <Popover trigger="click" gutter="0" enabled={false}>
-                                    {user && (
-                                        <PopoverTrigger>
-                                            <Box position="absolute" top="18px" right="10px" width="30px" height="30px" flexShrink="0" cursor="pointer">
-                                                <HiOutlineEmojiHappy size="30px" color={user ? "#ffffff" : "#e6e6e6"} />
-                                            </Box>
-                                        </PopoverTrigger>
-                                    )}
-                                    {!user && (
-                                        <Box position="absolute" top="18px" right="10px" width="30px" height="30px" flexShrink="0">
-                                            <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
-                                        </Box>
-                                    )}
-                                    <PopoverContent backgroundColor="transparent" borderColor="transparent" width="352px" height="435px">
-                                        <Box zIndex="100" width="352px" height="435px">
-                                            <PopoverArrow />
-                                            <EmojiPicker setMessage={setMessage} />
-                                        </Box>
-                                    </PopoverContent>
-                                </Popover>
                                 {isMobile && (
                                     <Box position="absolute" top="21px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
                                         <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
@@ -1131,30 +775,9 @@ export const CircleChat = ({ circle }) => {
                         </>
                     )}
                 </Flex>
-
-                {/* Modal popup - delete message */}
-                <Modal initialFocusRef={confirmDeleteMessageInitialRef} isOpen={confirmDeleteMessageIsOpen} onClose={confirmDeleteMessageOnClose} size="lg">
-                    <ModalOverlay />
-                    <ModalContent borderRadius="25px">
-                        <ModalHeader>{i18n.t("Delete the message")}</ModalHeader>
-                        <ModalCloseButton />
-                        <ModalBody>
-                            <Text fontSize="18px">{i18n.t("Do you want to delete the message?")}</Text>
-                        </ModalBody>
-
-                        <ModalFooter>
-                            <Button colorScheme="blue" mr={3} borderRadius="25px" onClick={confirmDeleteMessage}>
-                                {i18n.t("Yes")}
-                            </Button>
-                            <Button ref={confirmDeleteMessageInitialRef} colorScheme="blue" mr={3} borderRadius="25px" onClick={confirmDeleteMessageOnClose}>
-                                {i18n.t("Cancel")}
-                            </Button>
-                        </ModalFooter>
-                    </ModalContent>
-                </Modal>
             </Flex>
         </Flex>
     );
 };
 
-export default CircleChat;
+export default AiChat;

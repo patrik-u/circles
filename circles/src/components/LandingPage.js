@@ -71,25 +71,9 @@ export const LandingPage = () => {
     return (
         <Flex justifyContent="center" align="center" flexDirection="row" height="100%" pointerEvents="none">
             <Flex justifyContent="center" align="center" flexDirection="column" fontSize="80px" color="white" fontWeight="700" marginBottom="100px">
-                {/* <Image src={getImageKitUrl("/splash.jpg")} width="100%" height="100%" position="absolute" top="0px" left="0px" /> */}
-                <Flex flexDirection="row" align="center" zIndex="100">
-                    <Text textShadow="-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">What do you</Text>
-                    <Flex flexDirection="column" alignItems="center" width="210px" marginLeft="0px" marginRight="0px">
-                        <Text color="#ffffb9" textShadow="-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">
-                            <AnimatePresence mode="wait">
-                                <motion.span
-                                    key={index}
-                                    initial={{ opacity: 0, rotateX: 180 }}
-                                    animate={{ opacity: 1, rotateX: 0 }}
-                                    exit={{ opacity: 0, rotateX: -180 }}
-                                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                                >
-                                    {words[index]}
-                                </motion.span>
-                            </AnimatePresence>
-                        </Text>
-                    </Flex>
-                    <Text textShadow="-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">for?</Text>
+                <Image src={getImageKitUrl("/splash.jpg")} width="100%" height="100%" position="absolute" top="0px" left="0px" />
+                <Flex flexDirection="row" align="center" zIndex="100" width="700px">
+                    <Text fontSize="40px">Hej! Jag är Cody, din digitala guide. Vill du skapa förändring i världen?</Text>
                 </Flex>
                 <Box position="relative">
                     <Input
