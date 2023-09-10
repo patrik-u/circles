@@ -24,15 +24,7 @@ linkify.tlds("earth", true);
 
 // init pinecone client
 const pinecone = new PineconeClient();
-pinecone
-    .init({
-        environment: process.env.PINECONE_ENVIRONMENT,
-        apiKey: process.env.PINECONE_API_KEY,
-    })
-    .catch((err) => {
-        console.log(err);
-    });
-
+let pineconeInitialized = false;
 admin.initializeApp();
 
 const express = require("express");
@@ -46,7 +38,7 @@ app.use(cors());
 
 const db = admin.firestore();
 
-const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+let oneSignalClient = null;
 
 const createCircleTypes = ["circle", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
 const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // circle types that are indexed in vector database for semantic search
@@ -110,6 +102,31 @@ const auth = async (req, res, next) => {
 //#endregion
 
 //#region helper functions
+
+const getOneSignalClient = () => {
+    if (!oneSignalClient) {
+        oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
+    }
+    return oneSignalClient;
+};
+
+const getPinecone = async () => {
+    if (pineconeInitialized) {
+        return pinecone;
+    } else {
+        try {
+            await pinecone.init({
+                environment: process.env.PINECONE_ENVIRONMENT,
+                apiKey: process.env.PINECONE_API_KEY,
+            });
+            pineconeInitialized = true;
+            return pinecone;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    }
+};
 
 const sha256 = (input) => {
     return crypto.createHash("sha256").update(input).digest("hex");
@@ -394,9 +411,10 @@ const upsertCirclesEmbeddings = async (circles) => {
         });
 
         // add 250 vectors at a time to pinecone
+        let pineconeService = await getPinecone();
         while (pineconeEmbeddings.length) {
             let batchedVectors = pineconeEmbeddings.splice(0, 250);
-            const index = pinecone.Index("circles");
+            const index = pineconeService.Index("circles");
             let pineconeResponse = await index.upsert({ upsertRequest: { vectors: batchedVectors } });
             insertBatches.push(pineconeResponse);
         }
@@ -553,7 +571,8 @@ const deleteCircle = async (id) => {
 
     // remove from pinecone
     try {
-        const index = pinecone.Index("circles");
+        let pineconeService = await getPinecone();
+        const index = pineconeService.Index("circles");
         await index.delete1({ deleteRequest: { ids: [id] } });
     } catch (error) {
         console.log(error);
@@ -2506,7 +2525,8 @@ const getCirclesFromIds = async (circleIds) => {
 
 // do semantic search either by query or by circle id
 const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20) => {
-    const index = pinecone.Index("circles");
+    let pineconeService = await getPinecone();
+    const index = pineconeService.Index("circles");
 
     let pineconeRequest = { queryRequest: { topK: topK } };
     if (filterTypes) {
@@ -2803,7 +2823,8 @@ const sendPushNotification = async (sender, receiver, message, circle, bigPictur
         // functions.logger.log("onesignal-api-key: " + process.env.ONESIGNAL_API_KEY?.substring(0, 5));
 
         //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
-        const res = await oneSignalClient.createNotification(notification);
+        let oneSignalClientService = getOneSignalClient();
+        const res = await oneSignalClientService.createNotification(notification);
         //console.log("push notification sent, response: ", res);
     } catch (error) {
         if (error instanceof OneSignal.HTTPError) {
@@ -3548,15 +3569,16 @@ app.post("/update", auth, async (req, res) => {
 
             try {
                 //const oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
-                let res = await oneSignalClient.createNotification(notification2);
+                let oneSignalClientService = getOneSignalClient();
+                let res = await oneSignalClientService.createNotification(notification2);
                 console.log("push notification sent, response: ", res);
-                res = await oneSignalClient.createNotification(notification3);
+                res = await oneSignalClientService.createNotification(notification3);
                 console.log("push notification sent, response: ", res);
-                res = await oneSignalClient.createNotification(notification4);
+                res = await oneSignalClientService.createNotification(notification4);
                 console.log("push notification sent, response: ", res);
-                res = await oneSignalClient.createNotification(notification5);
+                res = await oneSignalClientService.createNotification(notification5);
                 console.log("push notification sent, response: ", res);
-                res = await oneSignalClient.createNotification(notification6);
+                res = await oneSignalClientService.createNotification(notification6);
                 console.log("push notification sent, response: ", res);
             } catch (error) {
                 if (error instanceof OneSignal.HTTPError) {
