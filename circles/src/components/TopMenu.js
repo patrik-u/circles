@@ -178,8 +178,8 @@ export const TopMenu = ({ onLogoClick }) => {
                         />
                         {showNavButtons && !isMobile && <NavigationButtons />}
                     </Box>
-                    <Tooltip label="Click to switch circle" placement="bottom">
-                        {circle?.type !== "set" && (
+                    {circle?.type !== "set" && (
+                        <Tooltip label="Click to switch circle" placement="bottom">
                             <Flex flexDirection="column" position="relative" marginLeft={isMobile ? "10px" : "20px"} maxWidth={isMobile ? "150px" : "250px"}>
                                 {circle?.parent_circle && (
                                     <Text
@@ -202,21 +202,23 @@ export const TopMenu = ({ onLogoClick }) => {
                                     {circle?.name}
                                 </Text>
                             </Flex>
-                        )}
-                    </Tooltip>
+                        </Tooltip>
+                    )}
                     {circle?.type === "set" && (
-                        <Text
-                            fontSize={setTitleSize}
-                            fontWeight="bold"
-                            color="white"
-                            marginLeft={isMobile ? "10px" : "20px"}
-                            noOfLines={2}
-                            onClick={onLogoClick}
-                        >
-                            {circle[circle.circle_ids[0]].name} &
-                            <br />
-                            {circle[circle.circle_ids[1]].name}
-                        </Text>
+                        <Tooltip label="Click to switch circle" placement="bottom">
+                            <Text
+                                fontSize={setTitleSize}
+                                fontWeight="bold"
+                                color="white"
+                                marginLeft={isMobile ? "10px" : "20px"}
+                                noOfLines={2}
+                                onClick={onLogoClick}
+                            >
+                                {circle[circle.circle_ids[0]].name} &
+                                <br />
+                                {circle[circle.circle_ids[1]].name}
+                            </Text>
+                        </Tooltip>
                     )}
                 </Flex>
                 <AboutButton circle={circle} marginLeft={isMobile ? "5px" : "10px"} pointerEvents="auto" />

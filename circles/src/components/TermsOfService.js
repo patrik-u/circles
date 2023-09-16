@@ -1,5 +1,5 @@
 import i18n from "i18n/Localization";
-import { Text, Box, Flex } from "@chakra-ui/react";
+import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack, Tabs, Tab, TabPanel, TabPanels, TabList } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 
 export const tnsLastUpdate = "2023-09-05";
@@ -147,5 +147,45 @@ export const PrivacyPolicy = () => {
                 <ReactMarkdown className="embedMarkdownContent">{privacyPolicy}</ReactMarkdown>
             </Box>
         </Flex>
+    );
+};
+
+export const Tnc = ({ showPrivacyPolicy }) => {
+    return (
+        <Tabs defaultIndex={showPrivacyPolicy ? 1 : 0}>
+            <TabList>
+                <Tab>Terms of Service</Tab>
+                <Tab>Privacy Policy</Tab>
+            </TabList>
+
+            <TabPanels>
+                <TabPanel margin="10px" padding="0px">
+                    <Box
+                        width="100%"
+                        height="calc(100vh - 65px)"
+                        borderRadius="5px"
+                        border="1px solid"
+                        borderColor="var(--chakra-colors-gray-200)"
+                        backgroundColor="#f7f7f7"
+                        overflow="auto"
+                    >
+                        <TermsOfService />
+                    </Box>
+                </TabPanel>
+                <TabPanel margin="10px" padding="0px">
+                    <Box
+                        width="100%"
+                        height="calc(100vh - 65px)"
+                        borderRadius="5px"
+                        border="1px solid"
+                        borderColor="var(--chakra-colors-gray-200)"
+                        backgroundColor="#f7f7f7"
+                        overflow="auto"
+                    >
+                        <PrivacyPolicy />
+                    </Box>
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
     );
 };

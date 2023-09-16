@@ -307,7 +307,7 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                 {/* Toolbar */}
                 <Box flexBasis="45px" height="45px" minHeight="45px" minWidth="100px" width="100%" flexDirection="row" borderBottom="1px solid #E2E8F0">
                     <Flex zIndex="10" align="center">
-                        <ToolbarPlugin condensed={condensed} />
+                        <ToolbarPlugin condensed={condensed} document={document} />
                     </Flex>
                 </Box>
                 <Scrollbars autoHide>
@@ -333,8 +333,8 @@ export const DocumentEditor = ({ initialDocument, disableAutoSave, condensed, do
                                     <AutoFocusPlugin />
                                     <CodeHighlightPlugin />
                                     <ListPlugin />
-                                    <LinkPlugin />
-                                    <AutoLinkPlugin />
+                                    {/* <LinkPlugin /> */}
+                                    {/* <AutoLinkPlugin /> */}
                                     <AutoSavePlugin
                                         latestSaveId={latestSaveId}
                                         setContentLength={setContentLength}

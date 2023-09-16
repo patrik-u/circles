@@ -1,114 +1,120 @@
 // #region imports
-import React, { useEffect, useState, lazy } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     Box,
-    Image,
+    Tooltip,
+    IconButton,
+    Textarea,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalFooter,
+    ModalBody,
+    ModalCloseButton,
     Flex,
-    SimpleGrid,
-    Text,
-    Input,
+    HStack,
     VStack,
+    Text,
+    Spinner,
+    Image,
+    Icon,
+    Link,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
     Button,
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogContent,
-    AlertDialogOverlay,
     useDisclosure,
+    PopoverArrow,
+    useToast,
 } from "@chakra-ui/react";
-import { CirclePicture } from "components/CircleElements";
-import { getImageKitUrl, log, singleLineEllipsisStyle } from "components/Helpers";
-import { openCircle } from "components/Navigation";
-import { useNavigateNoUpdates } from "components/RouterUtils";
-import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, homeExpandedAtom, searchResultsShownAtom } from "components/Atoms";
-import CircleSearchBox from "components/CircleSearch";
-import { motion, AnimatePresence } from "framer-motion";
+import useWindowDimensions from "components/useWindowDimensions";
+import i18n from "i18n/Localization";
+import db from "components/Firebase";
+import axios from "axios";
+import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId, getImageKitUrl } from "components/Helpers";
+import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId, doc } from "firebase/firestore";
+import { CirclePicture, MetaData, NewSessionButton } from "components/CircleElements";
+import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
+import { AiOutlineUser } from "react-icons/ai";
+import { BsReplyFill, BsFillCircleFill, BsGlobeAmericas } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
+import { MdDelete, MdModeEdit, MdOutlineClose } from "react-icons/md";
+import { RiChatPrivateLine } from "react-icons/ri";
+import { Scrollbars } from "react-custom-scrollbars-2";
+import EmojiPicker from "components/EmojiPicker";
+import { useAtom } from "jotai";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    circleAtom,
+    chatCircleAtom,
+    circlesFilterAtom,
+    toggleWidgetEventAtom,
+    circlesAtom,
+    signInStatusAtom,
+    mentionedCirclesAtom,
+} from "components/Atoms";
+import Lottie from "react-lottie";
+import talkdotsAnimation from "assets/lottie/talkdots.json";
+import { AboutButton, CircleLink, CircleRichText } from "components/CircleElements";
+import ReactMarkdown from "react-markdown";
+import Linkify from "linkify-it";
+import { CircleMention } from "components/CircleSearch";
+import { AiChat } from "components/AiChat";
+import { globalCircle } from "components/Circle";
 // #endregion
-
-const Circle = lazy(() => import("components/Circle"));
 
 export const LandingPage = () => {
     log("LandingPage.render", -1);
-    const [index, setIndex] = useState(0);
-    const words = ["fight", "hope", "long"];
-    const showNew = true;
-    const navigate = useNavigateNoUpdates();
-    const [conversation, setConversation] = useState([]);
-    const [step, setStep] = useState(0);
-    const [answers, setAnswers] = useState([]);
-    const [input, setInput] = useState("");
-
-    const sendMessage = async () => {
-        // Save user answer
-        setAnswers([...answers, { text: input, from: "user" }]);
-        setConversation([...conversation, { text: input, from: "user" }]);
-
-        // Make API call
-        try {
-            // clear input
-            setInput("");
-
-            //const response = await apiClient.post("/ai-conversation", { message: input, conversationId: conversationId });
-
-            // Save AI response
-            //setConversation([...conversation, { text: response.data.message, from: "assistant" }]);
-            setStep(step + 1);
-        } catch (error) {
-            console.error("Error in sendMessage:", error);
-        }
-    };
+    const [user] = useAtom(userAtom);
+    const [signInStatus] = useAtom(signInStatusAtom);
+    const [aiChatCircle, setAiChatCircle] = useState(null);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((index + 1) % words.length);
-        }, 6500);
-        return () => clearInterval(interval);
-    }, [index, words.length]);
+        log("LandingPage.useEffect 1", -1);
+
+        if (!user?.id || !signInStatus.signedIn) {
+            return;
+        }
+
+        // initiate AI chat circle
+        axios
+            .post(`/circles/${globalCircle.chat_circle_ids[0]}/init_set`)
+            .then((x) => {
+                // log(JSON.stringify(x.data, null, 2), 0, true);
+
+                if (x?.data?.error) return;
+                setAiChatCircle(x.data.circle);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    }, [user?.id, signInStatus.signedIn]); // we only want to set chatCircle once when circle id changes hence warning
 
     return (
-        <Flex justifyContent="center" align="center" flexDirection="row" height="100%" pointerEvents="none">
-            <Flex justifyContent="center" align="center" flexDirection="column" fontSize="80px" color="white" fontWeight="700" marginBottom="100px">
-                <Image src={getImageKitUrl("/splash.jpg")} width="100%" height="100%" position="absolute" top="0px" left="0px" />
-                <Flex flexDirection="row" align="center" zIndex="100" width="700px">
-                    <Text fontSize="40px">Hej! Jag är Cody, din digitala guide. Vill du skapa förändring i världen?</Text>
-                </Flex>
-                <Box position="relative">
-                    <Input
-                        pointerEvents="auto"
-                        variant="outline"
-                        zIndex="100"
-                        textAlign="center"
-                        fontSize="30px"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        width="400px"
-                        height="50px"
-                        style={{ caretShape: "block" }}
-                        color="#fafafa"
-                        autoFocus={true}
-                        borderRadius="35px"
-                        border="1px solid #adad97"
-                        _focus={{
-                            border: "1px solid #ffffea",
-                        }}
-                        margin="0px"
-                        padding="0px"
-                        // backgroundColor="#f2fff814"
-                        backgroundColor="#0000005c"
-                        // #3c3d42b8
-                        paddingLeft="20px"
-                        paddingRight="50px"
-                        placeholder={`Type a response`}
-                    />
-
-                    <Box position="absolute" right="20px" bottom="32px" zIndex="100" width="26px" height="26px" flexShrink="0" cursor="pointer">
-                        <IoMdSend size="26px" color="#ffffdc" onClick={sendMessage} />
-                    </Box>
-                </Box>
-            </Flex>
+        <Flex justifyContent="center" alignItems="center" height="100%" pointerEvents="none">
+            {/* <Image src={getImageKitUrl("/splash.jpg")} width="100%" height="100%" position="absolute" top="0px" left="0px" /> */}
+            <video
+                autoPlay
+                muted
+                loop
+                style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: "translate(-50%, -50%)",
+                    zIndex: "-1",
+                }}
+            >
+                <source src={"/earth-video-background3.mp4"} type="video/mp4" />
+            </video>
+            <AiChat circle={aiChatCircle} />
         </Flex>
     );
 };

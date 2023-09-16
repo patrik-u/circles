@@ -549,6 +549,11 @@ code {
     padding: 11px;
 }
 
+.text-stroke {
+    -webkit-text-stroke: 1px black;
+    color: white;
+}
+
 .messageInput {
 }
 

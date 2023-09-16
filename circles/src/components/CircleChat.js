@@ -138,9 +138,8 @@ export const CircleChatWidget = () => {
             return;
         }
 
-        // TODO for now disable Cody chat
         // if circle has more chat circles, fetch them
-        if (user.show_ai && circle?.chat_circle_ids?.length > 0) {
+        if (circle?.chat_circle_ids?.length > 0) {
             // initiate relation-sets with chat circles
             axios.post(`/circles/init_sets`, { circle_ids: circle.chat_circle_ids }).catch((err) => {
                 console.error(err);

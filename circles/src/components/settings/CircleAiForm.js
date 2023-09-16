@@ -131,7 +131,7 @@ export const CircleAiForm = ({ isUpdateForm, circle, circleData, isGuideForm, on
                                             {form?.values?.system_message ? form.values.system_message.length : 0} / 10000
                                         </Text>
                                         <InputGroup>
-                                            <Textarea {...field} id="system_message" resize="none" maxLength="200" />
+                                            <Textarea {...field} id="system_message" resize="none" maxLength="10000" />
                                             {!form.errors.system_message && form.touched.system_message && (
                                                 <InputRightElement children={<CheckIcon color="green.500" />} />
                                             )}

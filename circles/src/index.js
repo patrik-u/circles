@@ -53,21 +53,21 @@ const theme = extendTheme({
 if (config.environment === "prod") {
     Sentry.init({
         dsn: "https://8215e7c90308434ca191ecfddf8c7813@o1111584.ingest.sentry.io/6140853",
-        beforeSend(event, hint) {
-            // Check if it is an exception, and if so, show the report dialog
-            if (event.exception) {
-                let reportDialogOptions = { eventId: event.event_id };
-                if (event.user) {
-                    reportDialogOptions.user = {
-                        email: event.user?.email,
-                        name: event.user?.username,
-                    };
-                }
+        // beforeSend(event, hint) {
+        //     // Check if it is an exception, and if so, show the report dialog
+        //     if (event.exception) {
+        //         let reportDialogOptions = { eventId: event.event_id };
+        //         if (event.user) {
+        //             reportDialogOptions.user = {
+        //                 email: event.user?.email,
+        //                 name: event.user?.username,
+        //             };
+        //         }
 
-                Sentry.showReportDialog(reportDialogOptions);
-            }
-            return event;
-        },
+        //         Sentry.showReportDialog(reportDialogOptions);
+        //     }
+        //     return event;
+        // },
         release: `${process.env.REACT_APP_NAME}@${process.env.REACT_APP_VERSION}`,
         environment: config.environment,
         integrations: [new Integrations.BrowserTracing()],

@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { $getRoot } from "lexical";
 import axios from "axios";
 import { useAtom } from "jotai";
-import { circleAtom, saveIdAtom, triggerSaveDocumentAtom } from "components/Atoms";
+import { circleAtom, saveIdAtom, triggerSaveDocumentAtom, documentTreeAtom, documentNodesAtom } from "components/Atoms";
 import { debounce } from "components/Helpers";
 import { log } from "components/Helpers";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { $convertFromMarkdownString, $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+import { convertToTree } from "components/document/DocumentTree";
 //#endregion
 
 const save = (inDocument) => {

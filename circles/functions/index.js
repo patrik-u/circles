@@ -40,8 +40,11 @@ const db = admin.firestore();
 
 let oneSignalClient = null;
 
+const defaultSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // default search types when not specified by user
+const defaultAiSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "project"]; // default search types when not specified by AI
 const createCircleTypes = ["circle", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
-const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // circle types that are indexed in vector database for semantic search
+const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project", "chunk"]; // circle types that are indexed in vector database for semantic search
+const indexCircleChunkTypes = ["document_chunk"]; // circle chunk types that are indexed in vector database for semantic search
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
 // const mailTransport = nodemailer.createTransport(
@@ -281,6 +284,23 @@ const fromFsDate = (date) => {
     }
 };
 
+// create textual representation of chunk
+const getCircleChunkText = (chunk) => {
+    const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
+
+    // create textual representation of chunk
+    let text = `ID: ${chunk.id}\n`;
+    text += `Chunk Type: ${chunk.type}\n`;
+    text += `Context: ${chunk.context}\n`;
+    if (chunk.score) {
+        text += `Similarity score: ${chunk.score}\n`;
+    }
+    if (chunk.content?.length > 0) {
+        text += `Content:\n${chunk.content?.slice(0, maxTokens)}\n`;
+    }
+    return text;
+};
+
 // create textual representation of circle
 const getCircleText = (circle, condensed = false, ignoreSummary = false) => {
     const maxTokens = 8192 - 192; // ada-02 supports max 8192 tokens, and we add some margin for inaccuracy when estimating tokens
@@ -425,6 +445,64 @@ const upsertCirclesEmbeddings = async (circles) => {
     }
 };
 
+const upsertCircleChunksEmbeddings = async (chunks, circle) => {
+    // loops through all chunks and creates embeddings for them and stores them in the pinecone database
+    let chunkEmbeddingRequests = [];
+
+    // loop through circles and get embedding text
+    for (var i = 0; i < chunks.length; ++i) {
+        let chunk = chunks[i];
+        let chunkType = circle.type + "_chunk";
+        if (!indexCircleChunkTypes.includes(chunkType)) {
+            continue;
+        }
+
+        let embeddingRequest = {
+            circle: { id: "circles/" + circle.id + "/chunks/" + chunk.id, name: chunk.context, type: chunkType, parent_id: circle.id },
+            embedding: null,
+            text: null,
+        };
+
+        // create textual representation of chunk
+        let text = getCircleChunkText(chunk);
+
+        embeddingRequest.text = text;
+        chunkEmbeddingRequests.push(embeddingRequest);
+    }
+
+    // create embeddings using openai
+    let embeddings = null;
+    let insertBatches = [];
+    let pineconeEmbeddings = null;
+    try {
+        embeddings = await getEmbeddings(chunkEmbeddingRequests.map((x) => x.text));
+
+        // insert embeddings into pinecone
+        pineconeEmbeddings = chunkEmbeddingRequests.map((x, i) => {
+            let metadata = { id: x.circle.id, name: x.circle.name, type: x.circle.type };
+            if (x.circle.parent_id) {
+                // id of the parent circle
+                metadata.parent_id = x.circle.parent_id;
+            }
+            return { id: x.circle.id, metadata: metadata, values: embeddings[i] };
+        });
+
+        // add 250 vectors at a time to pinecone
+        let pineconeService = await getPinecone();
+        while (pineconeEmbeddings.length) {
+            let batchedVectors = pineconeEmbeddings.splice(0, 250);
+            const index = pineconeService.Index("circles");
+            let pineconeResponse = await index.upsert({ upsertRequest: { vectors: batchedVectors } });
+            insertBatches.push(pineconeResponse);
+        }
+
+        return insertBatches;
+    } catch (error) {
+        console.log(error);
+        return { error: error };
+    }
+};
+
 const isSuperAdmin = async (authCallerId) => {
     let config = await getConfig();
     return config.admins.includes(authCallerId);
@@ -498,6 +576,27 @@ const propagateCircleUpdate = async (id) => {
     }
 
     batchArray.forEach(async (batch) => await batch.commit());
+
+    // update relation-sets that this circle is part of
+    const setDocs = await db.collection("circles").where("circle_ids", "array-contains", id).get();
+    batchArray = [db.batch()];
+    operationCounter = 0;
+    batchIndex = 0;
+
+    // loop through sets and update them
+    for (var i = 0; i < setDocs.docs.length; ++i) {
+        let setRef = db.collection("circles").doc(setDocs.docs[i].id);
+
+        batchArray[batchIndex].set(setRef, { [id]: circleData }, { merge: true });
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
 };
 
 // updates circle data
@@ -552,6 +651,29 @@ const updateChatMessage = async (id, chatMessage) => {
 const deleteCircle = async (id) => {
     const circleRef = db.collection("circles").doc(id);
 
+    // delete circle chunks
+    const chunksRef = circleRef.collection("chunks");
+    const snapshots = await chunksRef.get();
+    const chunkIdsToDelete = snapshots.docs.map((doc) => "circles/" + id + "/chunks/" + doc.id);
+
+    // delete chunks from pinecone using fetched IDs
+    if (chunkIdsToDelete.length > 0) {
+        try {
+            let pineconeService = await getPinecone();
+            const index = pineconeService.Index("circles");
+            await index.delete1({ ids: chunkIdsToDelete });
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    // delete chunks from firestore
+    const batch = db.batch();
+    snapshots.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+
     // delete circle
     await circleRef.delete();
 
@@ -573,7 +695,7 @@ const deleteCircle = async (id) => {
     try {
         let pineconeService = await getPinecone();
         const index = pineconeService.Index("circles");
-        await index.delete1({ deleteRequest: { ids: [id] } });
+        await index.delete1({ ids: [id] });
     } catch (error) {
         console.log(error);
     }
@@ -1214,7 +1336,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
     upsertCircleEmbedding(circle.id);
 
     // update summary if ai_summary is true
-    if (circle.ai_summary) {
+    if (circle.ai_summary && circle.type !== "document") {
+        // disable AI summaries for documents for now as they change frequently during editing
         generateAiSummary(circle); // do this in background so we don't have to wait for it
     }
 
@@ -1237,27 +1360,31 @@ const generateAiSummary = async (circle) => {
     } else {
         message = `In a single sentence, generate a concise summary of the ${circle.type}. The summary should be 200 characters max, and without including the ${circle.type}'s name as it will already be displayed before the summary.\n\n${circleText}`;
     }
-    let summary = await getAiResponse(message, summarySystemMessage);
-    if (summary) {
-        // remove eventual quotes from summary
-        if (summary.startsWith('"') && summary.endsWith('"')) {
-            summary = summary.slice(1, -1);
+    let summaryResponse = await getAiResponse(message, summarySystemMessage);
+    if (summaryResponse?.responseMessage) {
+        let summary = summaryResponse.responseMessage.content;
+        if (summary) {
+            if (summary.length > 250) {
+                //console.log("Too long summary: " + summary);
+                message = `The summary you provided is too long. Please please make it a bit more concise.`;
+                let newSummary = await getNextAiResponse(summaryResponse.messages, message)?.responseMessage?.content;
+                if (!newSummary) {
+                    // truncate summary
+                    summary = summary.substring(0, 200) + "...";
+                } else {
+                    summary = newSummary;
+                }
+
+                //console.log("Condensed summary: " + summary);
+            }
+
+            // remove eventual quotes from summary
+            if (summary.startsWith('"') && summary.endsWith('"')) {
+                summary = summary.slice(1, -1);
+            }
+
+            await updateCircle(circle.id, { description: summary });
         }
-
-        if (summary.length > 250) {
-            console.log("Too long summary: " + summary);
-            message = `The summary you provided is too long. Please please make it a bit more concise:\n\n${summary}`;
-            summary = await getAiResponse(message, summarySystemMessage);
-
-            console.log("Condensed summary: " + summary);
-        }
-
-        // remove eventual quotes from summary
-        if (summary.startsWith('"') && summary.endsWith('"')) {
-            summary = summary.slice(1, -1);
-        }
-
-        await updateCircle(circle.id, { description: summary });
     }
 };
 
@@ -1396,6 +1523,75 @@ app.delete("/circles/:id", auth, async (req, res) => {
     }
 });
 
+// update circle chunks
+app.put("/circles/:id/chunks", auth, async (req, res) => {
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+    const chunks = req.body.chunks;
+
+    try {
+        const circleRef = db.collection("circles").doc(circleId);
+        const doc = await circleRef.get();
+        if (!doc.exists) {
+            return res.json({ error: "circle not found" });
+        }
+        const circle = doc.data();
+        circle.id = doc.id;
+
+        // check if user is owner or admin and allowed to update circle data
+        const isAuthorized = await isAdminOf(authCallerId, circleId);
+        if (!isAuthorized) {
+            return res.json({ error: "circle chunks only be updated by owner or admin" });
+        }
+
+        // get existing chunks from firestore
+        const chunksRef = circleRef.collection("chunks");
+        const snapshots = await chunksRef.get();
+        const chunkIdsToDelete = snapshots.docs.map((doc) => "circles/" + circle.id + "/chunks/" + doc.id);
+
+        // delete chunks from pinecone using fetched IDs
+        if (chunkIdsToDelete.length > 0) {
+            try {
+                let pineconeService = await getPinecone();
+                const index = pineconeService.Index("circles");
+                await index.delete1({ ids: chunkIdsToDelete });
+            } catch (error) {
+                console.log(error);
+                return res.json({ error: error });
+            }
+        }
+
+        // delete chunks from firestore
+        const batch = db.batch();
+        snapshots.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // upload new chunks to firestore
+        for (let chunk of chunks) {
+            chunk.type = circle.type;
+            chunk.parent_id = circleId;
+
+            const chunkDoc = await chunksRef.add(chunk);
+            const chunkId = chunkDoc.id;
+            chunk.id = chunkId;
+        }
+
+        // upload new embeddings for chunks to pinecone
+        let upsertResponse = await upsertCircleChunksEmbeddings(chunks, circle);
+        if (upsertResponse.error) {
+            functions.logger.error("Error while updating circle chunks data:", upsertResponse.error);
+            return res.json({ error: upsertResponse.error });
+        }
+
+        return res.json({ message: "circle chunks updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating circle chunks data:", error);
+        return res.json({ error: error });
+    }
+});
+
 // get circles relevant to circle
 app.get("/circles/:id/circles", async (req, res) => {
     const circleId = req.params.id;
@@ -1493,8 +1689,8 @@ app.post("/circles/:id/init_set", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
 
     try {
-        await createSet(circleId, authCallerId);
-        return res.json({ message: "circle set initialized" });
+        let set = await createSet(circleId, authCallerId);
+        return res.json({ circle: set });
     } catch (error) {
         functions.logger.error("Error while initializing set:", error);
         return res.json({ error: error });
@@ -2029,8 +2225,8 @@ app.post("/seen", auth, async (req, res) => {
 const validateChatMessageRequest = (message) => {
     // validate request
     let errors = {};
-    if (!message || typeof message !== "string" || message.length > 650) {
-        errors.message = "Message must be between 1 and 650 characters";
+    if (!message || typeof message !== "string" || message.length > 6500) {
+        errors.message = "Message must be between 1 and 6500 characters";
     }
     return errors;
 };
@@ -2039,6 +2235,7 @@ const validateChatMessageRequest = (message) => {
 app.post("/chat_session", auth, async (req, res) => {
     const authCallerId = req.user.user_id;
     const circleId = req.body.circle_id;
+    const triggerAi = req.body.trigger_ai;
     const date = new Date();
 
     try {
@@ -2048,11 +2245,10 @@ app.post("/chat_session", auth, async (req, res) => {
         }
 
         // verify user is allowed to create chat session
-        if (circle.type === "set") {
+        let isAiRelationSet =
+            circle.type === "set" && (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
+        if (isAiRelationSet) {
             if (!circle.circle_ids?.includes(authCallerId)) {
-                return res.status(403).json({ error: "unauthorized" });
-            }
-            if (!(circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent")) {
                 return res.status(403).json({ error: "unauthorized" });
             }
         } else {
@@ -2068,33 +2264,40 @@ app.post("/chat_session", auth, async (req, res) => {
 
         // check if chat exists
         const doc = await chatRef.get();
+        let sessionId = uuid();
         if (doc.exists) {
             // create new session within chat
             let sessions = doc.data().sessions;
             let newSession = {
-                id: uuid(),
+                id: sessionId,
                 created_at: date,
                 user_id: authCallerId,
             };
             sessions.push(newSession);
             await chatRef.update({ sessions: sessions });
-            return res.json({ message: "Chat session created", id: newSession.id });
+        } else {
+            let newChat = {
+                circle_id: circleId,
+                created_at: date,
+                sessions: [
+                    {
+                        id: sessionId,
+                        created_at: date,
+                        user_id: authCallerId,
+                    },
+                ],
+            };
+
+            await chatRef.set(newChat);
         }
 
-        let newChat = {
-            circle_id: circleId,
-            created_at: date,
-            sessions: [
-                {
-                    id: uuid(),
-                    created_at: date,
-                    user_id: authCallerId,
-                },
-            ],
-        };
+        // trigger AI to initiate conversation in chat session
+        if (triggerAi && isAiRelationSet) {
+            // ai circle
+            triggerAiAgentResponse(circle, authCallerId, sessionId);
+        }
 
-        await chatRef.set(newChat);
-        return res.json({ message: "Chat session created", id: newChat.sessions[0].id });
+        return res.json({ message: "Chat session created", id: sessionId });
     } catch (error) {
         functions.logger.error("Error while creating chat session:", error);
         return res.json({ error: error });
@@ -2524,13 +2727,16 @@ const getCirclesFromIds = async (circleIds) => {
 };
 
 // do semantic search either by query or by circle id
-const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20) => {
+const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20, parentIds = [], searchChunks = false) => {
     let pineconeService = await getPinecone();
     const index = pineconeService.Index("circles");
 
     let pineconeRequest = { queryRequest: { topK: topK } };
     if (filterTypes) {
         pineconeRequest.queryRequest.filter = { type: { $in: filterTypes } };
+        if (parentIds.length > 0) {
+            pineconeRequest.queryRequest.filter.parent_id = { $in: parentIds };
+        }
     }
     if (query) {
         // get embeddings from openai
@@ -2548,23 +2754,32 @@ const semanticSearch = async (query = null, circleId = null, filterTypes = null,
     //console.log("pineconeRequest", JSON.stringify(pineconeRequest, null, 2));
     let pineconeResponse = await index.query(pineconeRequest);
 
-    // get circle data from response
+    //console.log("pineconeResponse", JSON.stringify(pineconeResponse, null, 2));
+
+    // get circle (or chunk) data from response
     let circleIds = pineconeResponse.matches.map((x) => x.id);
     let circles = [];
     while (circleIds.length) {
         let circleIdsBatch = circleIds.splice(0, 10);
-        let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+        let circleDocs;
 
-        // add score to circle
+        if (searchChunks) {
+            circleDocs = await db.collectionGroup("chunks").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+        } else {
+            circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+        }
+
+        // add score to circle or chunk
         for (var i = 0; i < circleDocs.docs.length; ++i) {
             let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
-            let match = pineconeResponse.matches.find((x) => x.id === circle.id);
+            let match = pineconeResponse.matches.find((x) => x.id?.endsWith(circle.id)); // endsWith because chunks ends with the chunk id
+
             circle.score = match?.score;
             circles.push(circle);
         }
     }
 
-    // order circles by score
+    // order circles (or chunks) by score
     circles = circles.sort((a, b) => b.score - a.score);
     return circles;
 };
@@ -2585,34 +2800,37 @@ const createSet = async (circleAId, circleBId) => {
     const sortedIds = [circleAId, circleBId].sort();
     const setId = getSetId(circleAId, circleBId);
 
-    const existingSet = await getCircle(setId);
-    if (existingSet !== null) {
-        return existingSet;
+    let existingSet = await getCircle(setId);
+    if (existingSet === null) {
+        const circleA = await getCircle(circleAId);
+        const circleB = await getCircle(circleBId);
+        let set = {
+            type: "set",
+            created_at: new Date(),
+            is_public: false,
+            circle_ids: sortedIds,
+            set_size: 2,
+            circle_types: getCircleTypes(circleA, circleB),
+            //need_update: true,
+        };
+        set[circleAId] = circleA;
+        set[circleBId] = circleB;
+
+        // add connected_mutually_to in set circle data
+        const circleRef = db.collection("circles").doc(setId);
+        await circleRef.set(set);
+        existingSet = { id: setId, ...set };
     }
 
-    const circleA = await getCircle(circleAId);
-    const circleB = await getCircle(circleBId);
-    let set = {
-        type: "set",
-        created_at: new Date(),
-        is_public: false,
-        circle_ids: sortedIds,
-        set_size: 2,
-        circle_types: getCircleTypes(circleA, circleB),
-        //need_update: true,
-    };
-    set[circleAId] = circleA;
-    set[circleBId] = circleB;
+    // check if set has circle data
+    const existingSetData = await getCircleData(setId);
+    if (existingSetData === null) {
+        // add set data
+        const userDataRef = db.collection("circle_data").doc(setId);
+        await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(circleAId, circleBId), circle_id: setId }, { merge: true });
+    }
 
-    // add connected_mutually_to in set circle data
-    const circleRef = db.collection("circles").doc(setId);
-    await circleRef.set(set);
-
-    // add connection to circle
-    const userDataRef = db.collection("circle_data").doc(setId);
-    await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion([circleAId, circleBId]), circle_id: setId }, { merge: true });
-
-    return { id: setId, ...set };
+    return existingSet;
 };
 
 const getSet = async (authCallerId, circleId, updateDescription) => {
@@ -2647,7 +2865,7 @@ app.post("/search", auth, async (req, res) => {
     const query = req.body.query;
     const circleId = req.body.circleId;
     const topK = req.body.topK ?? 10;
-    const filterTypes = req.body.filterTypes;
+    const filterTypes = req.body.filterTypes ?? defaultSearchTypes;
 
     try {
         let searchResults = await semanticSearch(query, circleId ?? authCallerId, filterTypes, topK);
@@ -2910,7 +3128,43 @@ const getAiResponse = async (messageIn, systemMessageStr) => {
 
     try {
         const response = await openai.createChatCompletion(request);
-        return response.data?.choices?.[0]?.message?.content;
+        let responseMessage = response.data?.choices?.[0]?.message;
+        if (responseMessage) {
+            messages.push(responseMessage);
+        }
+        return { messages: messages, responseMessage: responseMessage };
+    } catch (error) {
+        console.log("error: ", error);
+    }
+
+    return null;
+};
+
+const getNextAiResponse = async (messages, nextMessage) => {
+    // initiate AI response
+    const configuration = new Configuration({
+        apiKey: process.env.OPENAI,
+    });
+
+    const openai = new OpenAIApi(configuration);
+    let request = {
+        messages,
+        model: "gpt-4", // model
+    };
+
+    if (nextMessage) {
+        messages.push({ role: "user", content: nextMessage });
+    }
+
+    printMessage(messages[messages.length - 1]);
+
+    try {
+        const response = await openai.createChatCompletion(request);
+        let responseMessage = response.data?.choices?.[0]?.message;
+        if (responseMessage) {
+            messages.push(responseMessage);
+        }
+        return { messages: messages, responseMessage: responseMessage };
     } catch (error) {
         console.log("error: ", error);
     }
@@ -2968,7 +3222,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     // add information about documents available that can be retrieved through the function getDocument for more details
     let documents = agentCircleData?.ai?.documents ?? [];
     if (documents.length > 0) {
-        systemMessagePreamble += `\n\nThese are some notable documents available (in format "<ID>:name - description") that can be retrieved through the function getDocument for more details:\n`;
+        systemMessagePreamble += `\n\nThese are some notable documents available (in format "<ID>:name - description") that can be searched with the function searchDocument for more details:\n`;
         for (const document of documents) {
             systemMessagePreamble += `${document.id}: ${document.name} - ${document.description}\n`;
         }
@@ -2994,8 +3248,21 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
 
     //console.log("messages: ", JSON.stringify(messages, null, 2));
 
+    //ONBOARDING123
+    // if (agentCircleData?.ai?.onboarding) {
+    //     // ai supports onboarding
+    //     // see where the user is at in onboarding and send appropriate message
+    //     let chatCircleData = await getCircleData(circleId);
+    //     let onboardingStatus = chatCircleData?.onboarding_status; // 0 incomplete, 1 complete
+    //     if (onboardingStatus !== "complete") {
+    //         triggerAiOnboarding(chatCircleData, aiCircle, circleId, user, session_id, messages);
+    //         return;
+    //     }
+    // }
+
     // if last message isn't a user message we should not trigger AI agent
     if (messages.length <= 0 || messages[messages.length - 1].role !== "user") {
+        // if user is onboarding we want to trigger AI agent
         return;
     }
 
@@ -3041,7 +3308,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
             {
                 name: "semanticSearch",
                 description: `Does a search among circles for ${toCommaSeparatedList(
-                    indexCircleTypes
+                    defaultAiSearchTypes
                 )} that are semantically similar to the query and returns a summary of each result, if you want more information about a specific circle call getCircleDetails. Make sure you add important context to the query, e.g. for temporal queries (upcoming events, etc) add the current universal time to the query, for queries relating to user's values, interests, mission, etc. add those specific values to the query. If you need more context about a user, event, circle, etc. call getCircleDetails with the relevant ID.`,
                 parameters: {
                     type: "object",
@@ -3054,7 +3321,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                             type: "array",
                             items: { type: "string" },
                             description: `Array containing the types of circles to include in search (if not specified all is included). Types that can be specified: ${toCommaSeparatedList(
-                                indexCircleTypes
+                                defaultAiSearchTypes
                             )}.`,
                         },
                         topK: { type: "number", description: "Number of results to return." },
@@ -3063,17 +3330,17 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                 },
             },
             {
-                name: "getDocument",
-                description: `Retrieves a document. These can be constitutions & bylaws, manifestos, policies, meeting minutes, party programs, code of conduct, etc.`,
+                name: "searchDocuments",
+                description: `Does a semantic search among the available documents and retrieves relevant document content. These documents can be constitutions & bylaws, manifestos, policies, meeting minutes, party programs, code of conduct, etc.`,
                 parameters: {
                     type: "object",
                     properties: {
-                        documentId: {
+                        query: {
                             type: "string",
-                            description: `ID of document to retrieve. If you don't know the ID do a semantic search first.`,
+                            description: `Query in natural language that will be used in search. Results are ranked by relevance to the query.`,
                         },
                     },
-                    required: ["documentId"],
+                    required: ["query"],
                 },
             },
             {
@@ -3152,7 +3419,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                     // get parameters
                     if (parameters) {
                         let query = parameters.query;
-                        let filterTypes = parameters.filterTypes ?? [];
+                        let filterTypes = parameters.filterTypes ?? defaultAiSearchTypes;
                         let topK = parameters.topK ?? 5;
 
                         // do semantic search
@@ -3170,19 +3437,32 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                             results = searchResultsMessage;
                         }
                     }
-                } else if (functionName === "getDocument") {
+                } else if (functionName === "searchDocuments") {
                     // get parameters
                     if (parameters) {
-                        let documentId = parameters.documentId;
+                        let query = parameters.query;
+                        let filterTypes = ["document_chunk"];
 
-                        // get document
-                        let document = await getCircle(documentId);
-                        if (document) {
-                            results = getCircleText(document);
-                            document.mentioned_at = date;
-                            mentions.push(document);
+                        // do semantic search
+                        let searchResults = await semanticSearch(
+                            query,
+                            null,
+                            filterTypes,
+                            5,
+                            documents.map((x) => x.id),
+                            true
+                        );
+
+                        // results should include a bunch of document chunks, get their content
+                        if (searchResults.length <= 0) {
+                            results = `No results for "${query}".`;
                         } else {
-                            results = `Document with id ${documentId} not found.`;
+                            let searchResultsMessage = `Search results for "${query}":\n\n`;
+                            for (var z = 0; z < searchResults.length; ++z) {
+                                let searchResult = searchResults[z];
+                                searchResultsMessage += `${getCircleChunkText(searchResult)}\n\n`;
+                            }
+                            results = searchResultsMessage;
                         }
                     }
                 } else if (functionName === "getCircleDetails") {
@@ -3259,11 +3539,85 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     chatMessageRef.update({
         awaits_response: false,
         openai_response: messageData ?? {},
+        openai_request: request,
         message: message ?? "No response.",
         mentions: mentions,
         has_mentions: mentions.length > 0,
         sent_at: new Date(),
     });
+};
+
+const triggerAiOnboarding = async (chatCircleData, aiCircle, circleId, user, session_id, messages) => {
+    let date = new Date();
+    let onboardingStage = chatCircleData?.onboarding_stage;
+    let onboardingStages = ["mission", "mission2", "needs", "offers", "profile"];
+
+    let currentIndex = onboardingStages.indexOf(onboardingStage);
+    if (currentIndex < 0) {
+        currentIndex = 0;
+    }
+
+    console.log("messages:" + JSON.stringify(messages, null, 2));
+
+    // if last message is from user we move to next stage in onboarding
+    if (messages.length > 0 && messages[messages.length - 1].role === "user") {
+        ++currentIndex;
+    } else if (messages.length > 0 && messages[messages.length - 1].role === "system") {
+        // initiate onboarding
+        currentIndex = 0;
+    } else {
+        // something went wrong, we should not trigger AI agent
+        return;
+    }
+
+    console.log("current onboarding stage: " + onboardingStage);
+    let currentStage = onboardingStages[currentIndex];
+    console.log("next onboarding stage: " + currentStage);
+
+    const chatMessageRef = db.collection("chat_messages").doc();
+    const newMessage = {
+        circle_id: circleId,
+        user: aiCircle,
+        sent_at: date,
+        session_id: session_id,
+        awaits_response: true,
+    };
+
+    switch (currentStage) {
+        default:
+        case "mission":
+            // start onboarding with first message
+            newMessage.message = "What do you **fight** for?";
+            newMessage.awaits_response = false;
+            await chatMessageRef.set(newMessage);
+            break;
+        case "mission2":
+            // continue onboarding with second message
+            // add message that will be filled with AI response
+            await chatMessageRef.set(newMessage);
+            messages.push({ role: "system", content: "Give an encouraging response in one sentence." });
+            //messages.push({ role: "system", content: `Provide an quote, inspiring to changemakers, relating to the user's last response.` });
+            let aiResponse = await getNextAiResponse(messages);
+            if (aiResponse?.responseMessage) {
+                newMessage.message = aiResponse.responseMessage.content;
+                newMessage.awaits_response = false;
+                chatMessageRef.update(newMessage);
+            }
+            break;
+        case "offers":
+            //messages.push({ role: "user", content: "What do you offer?" });
+            break;
+        case "profile":
+            //messages.push({ role: "user", content: "What is your profile summary?" });
+            break;
+    }
+
+    // update onboarding status
+    let updatedCircle = {
+        onboarding_stage: currentStage,
+    };
+    // update circle data
+    await db.collection("circle_data").doc(circleId).set(updatedCircle, { merge: true });
 };
 
 //#region OpenAI functions
@@ -3404,6 +3758,7 @@ app.post("/update", auth, async (req, res) => {
                 { name: "list", description: "Lists all commands." },
                 { name: "delete_circle", args: "<circle_id>", description: "Delete circle." },
                 { name: "search", args: "<query> | circle <circle_id> ?<type>", description: "Does semantic search using either query or circle ID." },
+                { name: "ai_search_docs", args: "<agent_id> <query>", description: "Does semantic search among documents similar to what the AI does." },
                 { name: "upsert_embeddings", description: "Goes through all circles and upserts embeddings into pinecone database." },
                 {
                     name: "connect",
@@ -3421,10 +3776,25 @@ app.post("/update", auth, async (req, res) => {
                     args: "<circle_id> ?<is_condensed true|false>",
                     description: "Gets text representation of circle.",
                 },
+                {
+                    name: "get_emails",
+                    args: "<?date>",
+                    description: "Gets a list of emails for all users that have signed up for the newsletter.",
+                },
             ];
             return res.json({ commands });
         } else if (commandArgs[0] === "delete_circle") {
             await deleteCircle(commandArgs[1]);
+        } else if (commandArgs[0] === "get_emails") {
+            // loops through all circles and creates embeddings for them and stores them in the pinecone database
+            let date = new Date(commandArgs[2] ?? "2020-01-01");
+            let circleDocs = await db.collection("circle_data").where("created_at", ">=", date).get();
+            let circleData = [];
+            for (var j = 0; j < circleDocs.docs.length; ++j) {
+                circleData.push({ id: circleDocs.docs[j].id, ...circleDocs.docs[j].data() });
+            }
+            let emails = circleData.filter((x) => x.agreed_to_email_updates && x.email).map((x) => x.email);
+            return res.json({ emails });
         } else if (commandArgs[0] === "search") {
             // do semantic search using either query or circle ID
             let query = null;
@@ -3443,7 +3813,7 @@ app.post("/update", auth, async (req, res) => {
             }
 
             try {
-                let result = await semanticSearch(query, circleId, filterType ? [filterType] : null, 20);
+                let result = await semanticSearch(query, circleId, filterType ? [filterType] : defaultSearchTypes, 20);
                 return res.json({
                     data: result.map((x) => {
                         return { name: x.name, description: x.description, type: x.type, score: x.score };
@@ -3452,6 +3822,41 @@ app.post("/update", auth, async (req, res) => {
             } catch (error) {
                 return res.json({ error: error });
             }
+        } else if (commandArgs[0] === "ai_search_docs") {
+            let agentId = commandArgs[1];
+            let query = commandArgs.slice(2).join(" ");
+            let filterTypes = ["document_chunk"];
+            let agentCircleData = await getCircleData(agentId);
+            let documents = agentCircleData?.ai?.documents ?? [];
+            if (documents.length <= 0) {
+                return res.json({ error: "No documents available for agent." });
+            }
+
+            console.log("searching in documents: " + JSON.stringify(documents));
+
+            // do semantic search
+            let searchResults = await semanticSearch(
+                query,
+                null,
+                filterTypes,
+                5,
+                documents.map((x) => x.id),
+                true
+            );
+
+            // results should include a bunch of document chunks, get their content
+            let results = "";
+            if (searchResults.length <= 0) {
+                results = `No results for "${query}".`;
+            } else {
+                let searchResultsMessage = `Search results for "${query}":\n\n`;
+                for (var z = 0; z < searchResults.length; ++z) {
+                    let searchResult = searchResults[z];
+                    searchResultsMessage += `${getCircleChunkText(searchResult)}\n\n`;
+                }
+                results = searchResultsMessage;
+            }
+            return res.json({ results });
         } else if (commandArgs[0] === "upsert_embeddings") {
             // loops through all circles and creates embeddings for them and stores them in the pinecone database
             let circleDocs = await db.collection("circles").get();

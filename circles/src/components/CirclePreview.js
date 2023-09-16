@@ -189,6 +189,7 @@ export const RelationSetInfo = ({ circle, ...props }) => {
     }, [user, circle, setId, relationDescription, setUpdateRelation]);
 
     if (user?.id === circle?.id) return null;
+    if (!user?.id) return null;
 
     return (
         <Flex

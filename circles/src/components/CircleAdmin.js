@@ -6,6 +6,8 @@ import { log } from "components/Helpers";
 import { useAtom } from "jotai";
 import { isMobileAtom, circleAtom, toggleAboutAtom } from "components/Atoms";
 import { MdOutlineClose } from "react-icons/md";
+import { CircleRichText } from "components/CircleElements";
+import Scrollbars from "react-custom-scrollbars-2";
 //#endregion
 
 const CircleAdmin = ({ onClose }) => {
@@ -28,7 +30,7 @@ const CircleAdmin = ({ onClose }) => {
             let postTestResult = await axios.post(`/update`, { command });
             if (postTestResult.data?.error) {
                 //console.log(JSON.stringify(postFollowerResult, null, 2));
-                setCommandOutput(JSON.stringify(postTestResult.data, null, 2));
+                setCommandOutput(JSON.stringify(postTestResult.data, null, 2)?.replace(/\\n/g, "\n\n"));
                 toast({
                     title: "Error running command",
                     status: "error",
@@ -38,7 +40,7 @@ const CircleAdmin = ({ onClose }) => {
                 });
             } else {
                 //setCommand("");
-                setCommandOutput(JSON.stringify(postTestResult.data, null, 2));
+                setCommandOutput(JSON.stringify(postTestResult.data, null, 2)?.replace(/\\n/g, "\n\n"));
                 toast({
                     title: "Command executed",
                     status: "success",
@@ -48,7 +50,7 @@ const CircleAdmin = ({ onClose }) => {
                 });
             }
         } catch (error) {
-            setCommandOutput(JSON.stringify(error, null, 2));
+            setCommandOutput(JSON.stringify(error, null, 2)?.replace(/\\n/g, "\n\n"));
             toast({
                 title: "Error running command",
                 status: "error",
@@ -100,7 +102,14 @@ const CircleAdmin = ({ onClose }) => {
                         </Box>
                     </HStack>
                     <Box marginTop="10px" flexGrow="1" width="100%">
-                        <Textarea value={commandOutput} height="100%" backgroundColor="white" readOnly />
+                        <Box height="100%" backgroundColor="white">
+                            <Scrollbars>
+                                <CircleRichText height="100%" backgroundColor="white">
+                                    {commandOutput}
+                                </CircleRichText>
+                            </Scrollbars>
+                        </Box>
+                        {/* <Textarea value={commandOutput} height="100%" backgroundColor="white" readOnly /> */}
                     </Box>
 
                     <Flex

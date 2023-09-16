@@ -24,13 +24,16 @@ import { createPortal } from "react-dom";
 import { $createHeadingNode, $createQuoteNode, $isHeadingNode } from "@lexical/rich-text";
 import { $createCodeNode, $isCodeNode, getDefaultCodeLanguage, getCodeLanguages } from "@lexical/code";
 import { useAtom } from "jotai";
-import { isMobileAtom, isDarkAtom, activeNoteAtom, triggerAiTextCompletionAtom, aiTextCompletionActiveAtom } from "components/Atoms";
+import { isMobileAtom, isDarkAtom, activeNoteAtom, triggerAiTextCompletionAtom, aiTextCompletionActiveAtom, documentNodesAtom } from "components/Atoms";
 import { MdAutoFixNormal, MdAutoFixOff, MdAutoFixHigh } from "react-icons/md";
 import { ImMagicWand } from "react-icons/im";
 import { activeNotePanelWidth, notesPanelWidth } from "components/Constants";
 import { log } from "components/Helpers";
 import useWindowDimensions from "components/useWindowDimensions";
-import { toastInfo } from "components/Helpers";
+import { toastInfo, toastError, toastSuccess } from "components/Helpers";
+import { GrDocumentUpdate } from "react-icons/gr";
+import { convertToTree } from "components/document/DocumentTree";
+import axios from "axios";
 //#endregion
 
 const LowPriority = 1;
@@ -48,6 +51,127 @@ const blockTypeToBlockName = {
     paragraph: "Normal",
     quote: "Quote",
     ul: "Bulleted List",
+};
+
+export const getDocumentChunks = (documentTree) => {
+    const result = [];
+
+    const traverse = (node, context = []) => {
+        // Extend the current context with the node's name.
+        // ignore root in context
+        let currentContext;
+        if (node.category === "root") {
+            currentContext = context;
+        } else {
+            currentContext = context.concat(node.name);
+        }
+
+        // If the node is a heading, collect its paragraphs and create a document chunk.
+        let hasParagraph = false;
+        let text = `# ${node.name}\n`;
+
+        // Iterate over its children looking for paragraphs.
+        for (const child of node.children) {
+            if (child.category === "paragraph") {
+                text += "\n" + child.name;
+                hasParagraph = true;
+            } else if (child.category === "misc") {
+                switch (child.type) {
+                    case "link":
+                        let test = { ...child };
+                        test.parent = null;
+                        test.children = null;
+                        // log(JSON.stringify(test, null, 2), 0, true);
+                        text += `[${child.name}](${child.url})`;
+                        break;
+                    case "listitem":
+                        text += `\n- ${child.name}\n`;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        if (hasParagraph) {
+            result.push({
+                context: currentContext.join(" > "),
+                content: text.trim(),
+            });
+        }
+
+        // Continue traversing the children.
+        for (const child of node.children) {
+            traverse(child, currentContext);
+        }
+    };
+
+    // Start the traversal for each root node.
+    for (const node of documentTree) {
+        traverse(node);
+    }
+
+    return result;
+};
+
+export const AiUpdateButton = ({ onClick, document, ...props }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [documentNodes] = useAtom(documentNodesAtom);
+    const iconSize = 19;
+    const iconSizePx = iconSize + "px";
+    const toast = useToast();
+
+    const upsertDocumentChunks = () => {
+        if (!document?.id) return;
+
+        // get document chunks
+        setIsLoading(true);
+        let documentTree = convertToTree(documentNodes, true, true);
+        let documentChunks = getDocumentChunks(documentTree);
+
+        log(JSON.stringify(documentChunks, null, 2), 0, true);
+        log(`upserting document chunks`);
+
+        // save document chunks
+        axios
+            .put(`/circles/${document.id}/chunks`, {
+                chunks: documentChunks,
+            })
+            .then((res) => {
+                setIsLoading(false);
+                if (res.data.error) {
+                    toastError(toast, "Error uploading document for AI", `Error uploading document ${document.name} for AI`);
+                } else {
+                    toastSuccess(toast, "Document uploaded for AI", `Document ${document.name} uploaded for AI`);
+                }
+            })
+            .catch((err) => {
+                setIsLoading(false);
+                toastError(toast, "Error uploading document for AI", `Error uploading document ${document.name} for AI`);
+            });
+    };
+
+    return (
+        <Tooltip label={"Upload document for AI"} aria-label="A tooltip" borderRadius="50px">
+            <Flex
+                width="36px"
+                height="36px"
+                position="relative"
+                justifyContent="center"
+                alignItems="center"
+                onClick={upsertDocumentChunks}
+                cursor="pointer"
+                // className={aiTextCompletionActive && isLoading ? "aiButtonActive" : "aiButton"}
+                {...props}
+            >
+                {isLoading ? (
+                    <Image src="/Spinner-1s-20px.gif" style={{ display: "inline", width: "1em", height: "1em" }} zIndex="10" />
+                ) : (
+                    <Icon width={iconSizePx} height={iconSizePx} color="#666666" as={GrDocumentUpdate} zIndex="10" />
+                )}
+            </Flex>
+        </Tooltip>
+    );
 };
 
 function Divider() {
@@ -488,7 +612,7 @@ export const AiAutoCompleteButton = ({ onClick, size = "", ...props }) => {
     );
 };
 
-export const ToolbarPlugin = ({ condensed }) => {
+export const ToolbarPlugin = ({ document, condensed }) => {
     const [editor] = useLexicalComposerContext();
     const toolbarRef = useRef(null);
     const [canUndo, setCanUndo] = useState(false);
@@ -775,6 +899,12 @@ export const ToolbarPlugin = ({ condensed }) => {
                                 <i className="format justify-align" />
                             </button>
                         </Flex>
+                    )}
+                    {document?.id && (
+                        <>
+                            <Divider />
+                            <AiUpdateButton document={document} />
+                        </>
                     )}
                 </>
             )}

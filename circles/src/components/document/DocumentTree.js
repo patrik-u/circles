@@ -6,7 +6,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { Tree } from "react-arborist";
 import { MdArrowDropDown, MdArrowRight } from "react-icons/md";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { singleLineEllipsisStyle } from "components/Helpers";
+import { singleLineEllipsisStyle, log } from "components/Helpers";
 import { useAtom } from "jotai";
 import { includeParagraphsAtom, documentTreeAtom, documentNodesAtom } from "components/Atoms";
 import useWindowDimensions from "components/useWindowDimensions";
@@ -29,6 +29,59 @@ export const isNodeSelected = (node, selection) => {
         }
     }
     return false;
+};
+
+export const convertToTree = (nodes, includeParagraphs, includeMisc) => {
+    const rootNodes = [];
+    let curParent = nodes?.[0];
+
+    // iterate through the list of nodes
+    for (const node of nodes) {
+        if (node.category === "misc" && (!includeMisc || !includeParagraphs)) {
+            if (node.isSelected && curParent) {
+                curParent.isSelected = true;
+            }
+            continue;
+        }
+        if (node.type === "paragraph" && !includeParagraphs) {
+            if (node.isSelected && curParent) {
+                curParent.isSelected = true;
+            }
+            continue;
+        }
+        if (!node.name) {
+            if (node.isSelected && curParent) {
+                curParent.isSelected = true;
+            }
+            continue;
+        }
+
+        // Create a new tree node for the current element
+        const treeNode = {
+            ...node,
+            children: [],
+        };
+
+        if (curParent && curParent.level < node.level) {
+            curParent.children.push(treeNode);
+        } else {
+            while (curParent && curParent.level >= node.level) {
+                curParent = curParent.parent;
+            }
+            if (curParent) {
+                curParent.children.push(treeNode);
+            } else {
+                rootNodes.push(treeNode);
+            }
+        }
+
+        treeNode.parent = curParent;
+
+        // Set the previous node to be the current node
+        curParent = treeNode;
+    }
+
+    return rootNodes;
 };
 
 export const getSelectedNode = (documentTree, includeText = false) => {
@@ -110,6 +163,8 @@ const DocumentTree = () => {
     };
 
     const DocumentTreeNode = ({ node, style }) => {
+        const isSmallHeader = node.data.type === "paragraph" || node.data.type === "listitem" || node.data.type === "link";
+
         return (
             <Flex
                 style={style}
@@ -160,11 +215,11 @@ const DocumentTree = () => {
                     <FolderArrow node={node} />
                     {node.data.type === "document-heading" && <NodeIcon category={node.data.category} />}
                     <Text
-                        color={node.data.type === "paragraph" ? "#a3a3a3" : "#5f5f5f"}
-                        fontSize={node.data.type === "paragraph" ? "14px" : "16px"}
+                        color={isSmallHeader ? "#a3a3a3" : "#5f5f5f"}
+                        fontSize={isSmallHeader ? "14px" : "16px"}
                         style={singleLineEllipsisStyle}
                         height="21px"
-                        fontWeight={node.data.type === "paragraph" ? "400" : "400"}
+                        fontWeight={isSmallHeader ? "400" : "400"}
                     >
                         {node.data.name}
                     </Text>
@@ -179,8 +234,11 @@ const DocumentTree = () => {
         const nodeType = currentNode.getType();
 
         let isHeading = false;
-        let node = { id: nodeKey, key: nodeKey, type: nodeType, isSelected: isNodeSelected(currentNode, selection) };
+        let node = { id: nodeKey, key: nodeKey, type: nodeType, isSelected: isNodeSelected(currentNode, selection), url: "" };
         let category = "text";
+        if (nodeType === "link") {
+            node.url = currentNode.getURL()?.toString();
+        }
 
         let level = 0;
         if (nodeType === "document-heading") {
@@ -224,6 +282,14 @@ const DocumentTree = () => {
             isHeading = true;
             level = 7;
             category = "paragraph";
+        } else if (nodeType === "listitem") {
+            isHeading = true;
+            level = 7;
+            category = "misc";
+        } else if (nodeType === "link") {
+            isHeading = true;
+            level = 7;
+            category = "misc";
         } else if (nodeType === "root") {
             level = 0;
             node.name = "root";
@@ -233,91 +299,36 @@ const DocumentTree = () => {
             category = "text";
             node.format = currentNode.getFormat();
         } else {
+            log("unmanaged node: " + node.type, ", name: " + node.name, 0, true);
             level = 7;
         }
 
         node.level = level;
         node.category = category;
+        node.type = nodeType;
 
         nodes.push(node);
 
+        let noName = !node.name;
         childNodes.forEach((childNode, i) => {
-            // if node is a heading then the first child text is its name
-            if (isHeading && !node.name) {
+            if (noName) {
                 const childNodeType = childNode.getType();
-                if (childNodeType === "text") {
-                    const childNodeText = childNode.getTextContent();
-                    node.name = childNodeText;
+                // if node has no name itself it is a placeholder for child content - add it to the name
+                if (isHeading) {
+                    if (childNodeType === "text" || childNodeType === "link") {
+                        const childNodeText = childNode.getTextContent();
+                        node.name = (node.name ?? "") + childNodeText;
 
-                    // if node is a heading and it has a single selected text then this node is selected
-                    if (isNodeSelected(childNode, selection)) {
-                        node.isSelected = true;
+                        // if node is a heading and it has a single selected text then this node is selected
+                        if (isNodeSelected(childNode, selection)) {
+                            node.isSelected = true;
+                        }
                     }
                 }
             }
 
-            // let childNodeData = { id: childNodeKey, type: childNodeType, name: `${childNodeKey}:${childNodeType}`, children: [] };
-            // currentNodeData.children.push(childNodeData);
-
             visitTree(childNode, nodes, selection);
-
-            // TODO we visit all nodes and get their text, might not be efficient for large documents but if we don't do this then
-            // it might have implications on functioanlity that needs information about the text nodes so we need to revisit this
-
-            // if ($isElementNode(childNode)) {
-            //     visitTree(childNode, nodes, selection);
-            // } else {
-            //     //console.log("not element node");
-            // }
         });
-    };
-
-    const convertToTree = (nodes, includeParagraphs) => {
-        const rootNodes = [];
-        let curParent = nodes?.[0];
-
-        // iterate through the list of nodes
-        for (const node of nodes) {
-            if (node.type === "paragraph" && !includeParagraphs) {
-                if (node.isSelected && curParent) {
-                    curParent.isSelected = true;
-                }
-                continue;
-            }
-            if (!node.name) {
-                // skip nodes without name
-                if (node.isSelected && curParent) {
-                    curParent.isSelected = true;
-                }
-                continue;
-            }
-
-            // Create a new tree node for the current element
-            const treeNode = {
-                ...node,
-                children: [],
-            };
-
-            if (curParent && curParent.level < node.level) {
-                curParent.children.push(treeNode);
-            } else {
-                while (curParent && curParent.level >= node.level) {
-                    curParent = curParent.parent;
-                }
-                if (curParent) {
-                    curParent.children.push(treeNode);
-                } else {
-                    rootNodes.push(treeNode);
-                }
-            }
-
-            treeNode.parent = curParent;
-
-            // Set the previous node to be the current node
-            curParent = treeNode;
-        }
-
-        return rootNodes;
     };
 
     const onEditorChange = (editorState) => {

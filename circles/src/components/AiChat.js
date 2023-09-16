@@ -32,7 +32,7 @@ import useWindowDimensions from "components/useWindowDimensions";
 import i18n from "i18n/Localization";
 import db from "components/Firebase";
 import axios from "axios";
-import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId } from "components/Helpers";
+import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId, fromFsDate } from "components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId, doc } from "firebase/firestore";
 import { CirclePicture, MetaData, NewSessionButton } from "components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
@@ -104,12 +104,168 @@ const linkifyMarkdown = (input) => {
     return result;
 };
 
-const ChatMessages = ({ messages, onRenderComplete }) => {
+const MessageInputBox = ({ sendMessage, onNewMention, messages }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const [, setCaretIndex] = useState(0);
+    const textAreaRef = useRef();
+    const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
+    const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
+    const [message, setMessage] = useState("");
+    const [user] = useAtom(userAtom);
+    const awaitsResponse = useMemo(() => {
+        // get last message
+        if (!messages) return null;
+        let lastMessage = messages[messages.length - 1];
+        if (!lastMessage) return false;
+
+        if (lastMessage.user?.id === user?.id) {
+            return true;
+        } else {
+            return lastMessage.awaits_response;
+        }
+    }, [messages, user?.id]);
+
+    const handleMessageChange = (e) => {
+        setMessage(e.target.value);
+        if (isMentioning) {
+            const queryMatch = e.target.value.match(/(?:^|\s)@(\w*)$/); // This regex matches "@" only if it's at the start or after a space
+            if (queryMatch) {
+                setMentionQuery(queryMatch[1]);
+            }
+        }
+        // check if user is mentioning someone
+        let value = e.target.value;
+        let newMention = value.endsWith("@") && (value === "@" || value[value.length - 2] === " ");
+        if (newMention) {
+            log("mentioning", 0, true);
+            setIsMentioning(true);
+        } else if (e.target.value.endsWith(" ") || e.target.value.endsWith("\n")) {
+            log("not mentioning", 0, true);
+            setIsMentioning(false);
+        }
+    };
+
+    const handleMessageKeyDown = async (e) => {
+        if (!isMobile && e.keyCode === 13 && !e.shiftKey) {
+            e.preventDefault();
+            let messageValue = message;
+            setMessage("");
+            await sendMessage(messageValue);
+        } else {
+            return;
+        }
+    };
+
+    const onMessageBlur = () => {
+        setCaretIndex(textAreaRef.current.selectionEnd);
+    };
+
+    const onMention = (mentionedCircle) => {
+        log("mentioning circle: " + mentionedCircle.name, 0, true);
+        const updatedMessage = message.replace(`@${mentionQuery}`, `@${mentionedCircle.name} `);
+        setMessage(updatedMessage);
+
+        // add the mentioned circle to the mentions list
+        const newMention = {
+            id: mentionedCircle.objectID,
+            name: `@${mentionedCircle.name}`,
+            picture: mentionedCircle.picture,
+        };
+
+        onNewMention(newMention);
+
+        setIsMentioning(false);
+        setMentionQuery("");
+
+        // Set focus back to the textarea and set cursor position
+        const newPosition = updatedMessage.length; // Get the length of the updated message
+        textAreaRef.current.focus(); // Focus the textarea
+        textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
+    };
+
+    if (awaitsResponse || !user?.id) return <Box paddingTop="45px" height="50px" width="500px" />;
+
+    return (
+        <Box
+            align="flex-end"
+            boxSizing="border-box"
+            height="100px"
+            paddingTop="45px"
+            marginTop="auto"
+            position="relative"
+            width="100%"
+            maxWidth="500px"
+            alignSelf="center"
+        >
+            {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
+            <Textarea
+                ref={textAreaRef}
+                id="message"
+                className="messageInput"
+                width={"100%"}
+                height="50px"
+                value={message}
+                onChange={handleMessageChange}
+                onKeyDown={handleMessageKeyDown}
+                resize="none"
+                maxLength="6500"
+                rows="1"
+                borderRadius="12px"
+                placeholder={user?.id ? i18n.t("I fight for...") : i18n.t("Log in to chat")}
+                onBlur={onMessageBlur}
+                disabled={!awaitsResponse && user?.id ? false : true}
+                // backgroundColor="#393939"
+                backgroundColor="#dfdfdf"
+                paddingTop="13px"
+                color="black"
+            />
+            <Box position="absolute" bottom="17px" right="17px" width="26px" height="26px" flexShrink="0" cursor="pointer" zIndex="5">
+                <IoMdSend size="26px" color={"#493030"} onClick={sendMessage} />
+                {/* #376739 */}
+            </Box>
+        </Box>
+    );
+};
+
+const ChatMessages = ({ messages, onRenderComplete, width }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [user] = useAtom(userAtom);
+    const message = useMemo(() => {
+        // get last message that isn't from the user
+        if (!messages) return null;
+        messages.find((x) => x.user?.id !== user?.id && x.type === "message");
+        for (let i = messages.length - 1; i >= 0; i--) {
+            let item = messages[i];
+            if (item.user?.id !== user?.id && item.type === "message") {
+                return item;
+            }
+        }
+        return null;
+    }, [messages, user?.id]);
+
     const popoverBg = "#3f47796b";
     const iconColor = "#fdfdfd";
+
+    const getFontSize = (message) => {
+        if (!message) return "18px";
+        let length = message.length;
+        if (length < 30) {
+            return "68px";
+        } else {
+            return "24px";
+        }
+    };
+
+    const getFontPadding = (message) => {
+        if (!message) return "0px";
+        let length = message.length;
+        if (length < 30) {
+            return "0px 20px 0px 20px";
+        } else {
+            return "5px 10px 5px 10px";
+        }
+    };
 
     useEffect(() => {
         log("ChatMessages.useEffect 1", -1, true);
@@ -119,187 +275,56 @@ const ChatMessages = ({ messages, onRenderComplete }) => {
     }, [messages]); //adding onRenderComplete causes this to render unnecessarily hence warning
 
     return (
-        <>
-            {messages?.map((item) => (
-                <Box key={item.id} alignSelf={item.type === "date" ? "center" : "auto"}>
-                    {item.type === "message" && (
-                        <Flex
-                            flexDirection="row"
-                            align="end"
-                            borderRadius="50px"
-                            role="group"
-                            color="black"
-                            spacing="12px"
-                            bg="transparent"
-                            marginTop={item.isFirst ? "10px" : "0px"}
-                            marginBottom={!item.isLast ? "2px" : "0px"}
-                        >
-                            {item.isLast ? (
-                                <Box align="top" width="33px" height="37.5px" flexShrink="0">
-                                    <CirclePicture circle={item.user} size={33} hasPopover={true} inChat={true} />
-                                </Box>
-                            ) : (
-                                <Box className="circle-chat-picture" flexShrink="0" />
-                            )}
-
-                            <Popover
-                                isLazy
-                                trigger={isMobile ? "click" : "hover"}
-                                gutter="0"
-                                //placement="center-end"
-                                placement="bottom-start"
-                                closeOnBlur={true}
+        <Box
+            minHeight="92px"
+            //        maxWidth={} // should adjust to the size of the message
+        >
+            {message && (
+                <Flex flexDirection="row" align="center" borderRadius="50px" role="group" color="black" spacing="12px" bg="transparent">
+                    {/* <Box alignSelf="center" width="80px" height="60px" flexShrink="0">
+                        <CirclePicture circle={message.user} size={60} hasPopover={true} inChat={true} />
+                    </Box> */}
+                    <Box borderRadius="12px" color="white" overflow="hidden" bg={"#ff7676"} padding={getFontPadding(message.formattedMessage)} maxWidth="900px">
+                        {/* #088b4f */}
+                        {/* #8b0808 */}
+                        {/* #e9ff76 + black text*/}
+                        {/* borderRadius="28px" */}
+                        {/* bgGradient={"linear(to-r,#ebebeb,#ffffff)"} */}
+                        <Box overflow="hidden">
+                            {/* Render chat message */}
+                            <Box
+                                fontSize={getFontSize(message.formattedMessage)}
+                                // textShadow="-2px -2px 0 #000,
+                                //     0   -2px 0 #000,
+                                //     2px -2px 0 #000,
+                                //     2px  0   0 #000,
+                                //     2px  2px 0 #000,
+                                //     0    2px 0 #000,
+                                //    -2px  2px 0 #000,
+                                //    -2px  0   0 #000"
                             >
-                                <PopoverTrigger>
-                                    <VStack
-                                        align="left"
-                                        marginLeft="10px"
-                                        flexGrow="1"
-                                        spacing="4px"
-                                        maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                        overflow="hidden"
-                                    >
-                                        <Box
-                                            borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${item.isLast ? "10px" : "2px"}`}
-                                            bgGradient={item.isSelf ? "linear(to-r,#d3d1d3,#ffffff)" : "linear(to-r,#d3d1d3,#ffffff)"}
-                                            color={item.user.id !== user?.id ? "black" : "black"}
-                                            marginRight="auto"
-                                            overflow="hidden"
-                                            maxWidth={isMobile ? `${windowWidth - 60}px` : "330px"}
-                                        >
-                                            {item.reply_to && (
-                                                <Box padding="11px 11px 0px 11px" overflow="hidden">
-                                                    <VStack
-                                                        align="left"
-                                                        spacing="0px"
-                                                        flexGrow="1"
-                                                        borderLeft="3px solid #7179a9"
-                                                        paddingLeft="5px"
-                                                        maxWidth="290px"
-                                                    >
-                                                        <Text fontSize="14px" color="#7880f8" fontWeight="700">
-                                                            {item.reply_to.user.name}
-                                                        </Text>
-                                                        <Text fontSize="14px" noOfLines={1}>
-                                                            {item.reply_to.message}
-                                                        </Text>
-                                                    </VStack>
-                                                </Box>
-                                            )}
+                                <CircleRichText mentions={message.mentions}>{message.formattedMessage}</CircleRichText>
+                            </Box>
 
-                                            <Box padding={`11px 11px ${item.isLast ? "0px" : "11px"} 11px`} overflow="hidden">
-                                                {/* Render chat message */}
-                                                {!item.is_ai_prompt && (
-                                                    <Box lineHeight="20px" fontSize="14px" maxWidth="290px">
-                                                        <CircleRichText mentions={item.mentions}>{item.formattedMessage}</CircleRichText>
-                                                    </Box>
-                                                )}
-
-                                                {item.awaits_response && (
-                                                    <Lottie
-                                                        options={{
-                                                            loop: true,
-                                                            autoplay: true,
-                                                            animationData: talkdotsAnimation,
-                                                            rendererSettings: {
-                                                                preserveAspectRatio: "xMidYMid slice",
-                                                            },
-                                                        }}
-                                                        height={50}
-                                                        width={50}
-                                                    />
-                                                )}
-
-                                                <MetaData data={item.meta_data} />
-
-                                                {item.isLast && (
-                                                    <Box paddingBottom="4px" paddingTop="2px">
-                                                        {!item.awaits_response && (
-                                                            <Text
-                                                                align="right"
-                                                                className="circle-list-title"
-                                                                paddingRight="0px"
-                                                                lineHeight="10px"
-                                                                fontSize="10px"
-                                                                color={!item.isSelf ? "#9f9f9f" : "#818181"}
-                                                            >
-                                                                {item.sent_at.toDate().toLocaleString([], {
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit",
-                                                                })}
-                                                            </Text>
-                                                        )}
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </Box>
-                                    </VStack>
-                                </PopoverTrigger>
-
-                                <PopoverContent backgroundColor="transparent" borderColor="transparent" boxShadow="none">
-                                    <Box zIndex="160" height="12px" backgroundColor="transparent" align="center" position="relative">
-                                        <HStack
-                                            align="center"
-                                            position="absolute"
-                                            top="-14px"
-                                            left="10px"
-                                            paddingLeft="5px"
-                                            paddingRight="5px"
-                                            paddingTop="3px"
-                                            paddingBottom="3px"
-                                            backgroundColor={popoverBg}
-                                            borderRadius="50px"
-                                        >
-                                            {!item.isSelf && (
-                                                <Icon
-                                                    width="18px"
-                                                    height="18px"
-                                                    color={iconColor}
-                                                    as={BsReplyFill}
-                                                    cursor="pointer"
-                                                    onClick={() => replyChatMessage(item)}
-                                                />
-                                            )}
-
-                                            {item.isSelf && (
-                                                <>
-                                                    <Icon
-                                                        width="18px"
-                                                        height="18px"
-                                                        color={iconColor}
-                                                        as={MdDelete}
-                                                        cursor="pointer"
-                                                        onClick={() => deleteChatMessage(item)}
-                                                    />
-                                                    <Icon
-                                                        width="18px"
-                                                        height="18px"
-                                                        color={iconColor}
-                                                        as={MdModeEdit}
-                                                        cursor="pointer"
-                                                        onClick={() => editChatMessage(item)}
-                                                    />
-                                                </>
-                                            )}
-
-                                            {/* {!item.isSelf && (
-                                                <Icon
-                                                    width="18px"
-                                                    height="18px"
-                                                    color={iconColor}
-                                                    as={MdAddReaction}
-                                                    cursor="pointer"
-                                                />
-                                            )} */}
-                                        </HStack>
-                                    </Box>
-                                </PopoverContent>
-                            </Popover>
-                        </Flex>
-                    )}
-                </Box>
-            ))}
-        </>
+                            {message.awaits_response && (
+                                <Lottie
+                                    options={{
+                                        loop: true,
+                                        autoplay: true,
+                                        animationData: talkdotsAnimation,
+                                        rendererSettings: {
+                                            preserveAspectRatio: "xMidYMid slice",
+                                        },
+                                    }}
+                                    height={50}
+                                    width={50}
+                                />
+                            )}
+                        </Box>
+                    </Box>
+                </Flex>
+            )}
+        </Box>
     );
 };
 
@@ -311,7 +336,6 @@ export const AiChat = ({ circle }) => {
     const [unfilteredChatMessages, setUnfilteredChatMessages] = useState([]);
     const [mentionedCircles, setMentionedCircles] = useAtom(mentionedCirclesAtom);
     const [chatMessages, setChatMessages] = useState([]);
-    const [message, setMessage] = useState("");
     const [, setIsSending] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
     const [, setScrollToLast] = useState(true);
@@ -320,14 +344,15 @@ export const AiChat = ({ circle }) => {
     const scrollbarsRef = useRef();
     const toast = useToast();
     const [isAuthorized, setIsAuthorized] = useState(true);
-    const [, setCaretIndex] = useState(0);
-    const textAreaRef = useRef();
+
     const [circles] = useAtom(circlesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [chatData, setChatData] = useState(null);
-    const chatSession = useMemo(() => chatData?.sessions[chatData?.sessions.length - 1], [chatData]);
-    const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
-    const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
+    const chatSession = useMemo(() => {
+        // get latest session created (created_at)
+        if (!chatData?.sessions) return null;
+        return chatData.sessions.sort((a, b) => fromFsDate(b.created_at) - fromFsDate(a.created_at))[0];
+    }, [chatData]);
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input message
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
@@ -339,6 +364,25 @@ export const AiChat = ({ circle }) => {
             console.error(err);
         });
     };
+
+    const onNewMention = (newMention) => {
+        setMentionsList((prevMentions) => [...prevMentions, newMention]);
+    };
+
+    useEffect(() => {
+        log("AiChat.useEffect 1", -1);
+        if (!circle?.id) return;
+
+        // create new chat session
+        setChatMessages([]);
+        setIsLoadingMessages(true);
+
+        // TODO don't create new session unless certain conditions are met
+        log("Creating new chat session ***", 0, true);
+        axios.post(`/chat_session`, { circle_id: circle.id, trigger_ai: true }).catch((err) => {
+            console.error(err);
+        });
+    }, [circle?.id]);
 
     const isAiRelationSet = useMemo(() => {
         // check if circle is a relation-set with user and AI as members
@@ -360,12 +404,13 @@ export const AiChat = ({ circle }) => {
             var newChatData = doc.data();
             if (!doc.exists || !newChatData) {
                 // create new chat session
-                log("creating new chat session", 0, true);
+                log("###### creating new chat session ######", 0, true);
                 axios.post(`/chat_session`, { circle_id: circle.id }).catch((err) => {
                     console.error(err);
                 });
                 return;
             }
+            log("creating new chat data: " + JSON.stringify(newChatData, null, 2), 0, true);
             newChatData.id = doc.id;
             setChatData(newChatData);
         });
@@ -418,6 +463,8 @@ export const AiChat = ({ circle }) => {
                 orderBy("sent_at", "desc"),
                 limit(50)
             );
+
+            log("listening to chat messages,session: " + chatSession?.id + ", circle_id: " + circle.id, 0, true);
         } else {
             chatMessagesQuery = query(collection(db, "chat_messages"), where("circle_id", "==", circle.id), orderBy("sent_at", "desc"), limit(50));
         }
@@ -432,9 +479,6 @@ export const AiChat = ({ circle }) => {
             });
             setUnfilteredChatMessages(newChatMessages.reverse());
             setIsLoadingMessages(false);
-            if (user?.id) {
-                updateSeen(circleId);
-            }
 
             // update mentioned circles list with new mentions
             const allMentions = newChatMessages
@@ -547,26 +591,7 @@ export const AiChat = ({ circle }) => {
         setChatMessages(filteredChatMessages);
     }, [unfilteredChatMessages, user?.id, isMobile]);
 
-    const handleMessageChange = (e) => {
-        setMessage(e.target.value);
-
-        if (isMentioning) {
-            const queryMatch = e.target.value.match(/(?:^|\s)@(\w*)$/); // This regex matches "@" only if it's at the start or after a space
-            if (queryMatch) {
-                setMentionQuery(queryMatch[1]);
-            }
-        }
-
-        if (e.target.value.match(/(?:^|\s)@$/)) {
-            log("mentioning", 0, true);
-            setIsMentioning(true);
-        } else if (e.target.value.endsWith(" ") || e.target.value.endsWith("\n")) {
-            log("not mentioning", 0, true);
-            setIsMentioning(false);
-        }
-    };
-
-    const sendMessage = async () => {
+    const sendMessage = async (message) => {
         if (!user?.id) {
             return;
         }
@@ -587,97 +612,43 @@ export const AiChat = ({ circle }) => {
         };
 
         setScrollToLast(true);
-        if (isReplyingMessage) {
-            newChatMessage.reply_to = messageToReply;
-        }
-
-        if (!isEditingMessage) {
-            setUnfilteredChatMessages([...unfilteredChatMessages, newChatMessage]);
-            setMessageIndex(messageIndex + 1);
-        }
-
+        setUnfilteredChatMessages([...unfilteredChatMessages, newChatMessage]);
+        setMessageIndex(messageIndex + 1);
         //console.log("Sending message: " + message);
 
         // clear message
-        setMessage("");
         setMentionsList([]);
 
-        if (isEditingMessage) {
-            setIsEditingMessage(false);
-            setMessageToEdit(null);
+        let req = {
+            circle_id: circle.id,
+            message: formattedMessage,
+            session_id: chatSession?.id,
+        };
 
-            // send request to edit message
-            let postMessageResult = null;
-            try {
-                postMessageResult = await axios.put(`/chat_messages/${messageToEdit.id}`, {
-                    message: formattedMessage,
-                });
-            } catch (err) {
-                console.error(err);
-            }
-
-            if (!postMessageResult || postMessageResult.data?.error) {
-                // something went wrong
-                //console.log(JSON.stringify(postMessageResult.data, null, 2));
-                toast({
-                    title: i18n.t("Couldn't edit message"),
-                    status: "error",
-                    position: "top",
-                    duration: 4500,
-                    isClosable: true,
-                });
-            }
-        } else {
-            let req = {
-                circle_id: circle.id,
-                message: formattedMessage,
-                session_id: chatSession?.id,
-            };
-            if (isReplyingMessage) {
-                req.replyToId = messageToReply?.id;
-            }
-
-            setIsReplyingMessage(false);
-            setMessageToReply(null);
-
-            // send request to send message
-            let postMessageResult = null;
-            try {
-                postMessageResult = await axios.post(`/chat_messages`, req);
-            } catch (err) {
-                console.error(err);
-            }
-
-            if (!postMessageResult || postMessageResult.data?.error) {
-                // something went wrong
-                //console.log(JSON.stringify(postMessageResult.data, null, 2));
-                toast({
-                    title: i18n.t("Couldn't send message"),
-                    description: JSON.stringify(postMessageResult?.data?.error, null, 2),
-                    status: "error",
-                    position: "top",
-                    duration: 4500,
-                    isClosable: true,
-                });
-
-                // TODO failed messages should still show up in messages list with some indicator that message wasn't sent
-            }
+        // send request to send message
+        let postMessageResult = null;
+        try {
+            postMessageResult = await axios.post(`/chat_messages`, req);
+        } catch (err) {
+            console.error(err);
         }
-    };
 
-    const handleMessageKeyDown = async (e) => {
-        if (!isMobile && e.keyCode === 13 && !e.shiftKey) {
-            e.preventDefault();
-            await sendMessage();
-            setIsSending(false);
-        } else {
-            return;
+        if (!postMessageResult || postMessageResult.data?.error) {
+            // something went wrong
+            //console.log(JSON.stringify(postMessageResult.data, null, 2));
+            toast({
+                title: i18n.t("Couldn't send message"),
+                description: JSON.stringify(postMessageResult?.data?.error, null, 2),
+                status: "error",
+                position: "top",
+                duration: 4500,
+                isClosable: true,
+            });
+
+            // TODO failed messages should still show up in messages list with some indicator that message wasn't sent
         }
-    };
 
-    const onMessageBlur = () => {
-        setCaretIndex(textAreaRef.current.selectionEnd);
-        //textAreaRef.current.setSelectionRange(cursorPosition, cursorPosition)}
+        setIsSending(false);
     };
 
     const transformMessageWithMentions = (rawMessage) => {
@@ -691,89 +662,30 @@ export const AiChat = ({ circle }) => {
         return transformedMessage;
     };
 
-    const onMention = (mentionedCircle) => {
-        log("mentioning circle: " + mentionedCircle.name, 0, true);
-        const updatedMessage = message.replace(`@${mentionQuery}`, `@${mentionedCircle.name} `);
-        setMessage(updatedMessage);
-
-        // add the mentioned circle to the mentions list
-        const newMention = {
-            id: mentionedCircle.objectID,
-            name: `@${mentionedCircle.name}`,
-            picture: mentionedCircle.picture,
-        };
-
-        setMentionsList((prevMentions) => [...prevMentions, newMention]);
-
-        setIsMentioning(false);
-        setMentionQuery("");
-
-        // Set focus back to the textarea and set cursor position
-        const newPosition = updatedMessage.length; // Get the length of the updated message
-        textAreaRef.current.focus(); // Focus the textarea
-        textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
-    };
-
     const onMessagesRenderComplete = () => {
         if (scrollbarsRef.current) {
             scrollbarsRef.current.scrollToBottom();
         }
     };
 
+    const chatWidth = 700;
+    const chatWidthPx = chatWidth + "px";
+
     if (!circle) return null;
+    if (!isAuthorized) return null;
 
     return (
-        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
+        <Flex width="100%" position="relative" pointerEvents="auto">
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
-                    {isAuthorized && (
-                        <>
-                            <Box flexGrow="1" overflow="hidden" marginBottom="-1px">
-                                <Scrollbars ref={scrollbarsRef} className="chatScrollbars" autoHide>
-                                    <VStack align="left" spacing="0px" marginTop="30px" marginLeft="18px" marginRight="8px">
-                                        <ChatMessages messages={chatMessages} onRenderComplete={onMessagesRenderComplete} />
-                                        {isLoadingMessages && <Spinner marginLeft="12px" color="white" />}
-                                    </VStack>
-                                    {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
-                                </Scrollbars>
-                            </Box>
+                    <Box flexGrow="1">
+                        <VStack align="center" spacing="0px">
+                            <ChatMessages messages={chatMessages} onRenderComplete={onMessagesRenderComplete} />
+                        </VStack>
+                        {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
+                    </Box>
 
-                            <Box
-                                align="flex-end"
-                                boxSizing="border-box"
-                                height="60px"
-                                paddingTop="15px"
-                                paddingLeft="5px"
-                                paddingRight="10px"
-                                marginTop="auto"
-                                position="relative"
-                            >
-                                {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
-                                <Textarea
-                                    ref={textAreaRef}
-                                    id="message"
-                                    className="messageInput"
-                                    width={isMobile ? "calc(100% - 80px)" : "calc(100% - 50px)"}
-                                    value={message}
-                                    onChange={handleMessageChange}
-                                    onKeyDown={handleMessageKeyDown}
-                                    resize="none"
-                                    maxLength="650"
-                                    rows="1"
-                                    borderRadius="40px"
-                                    placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}
-                                    onBlur={onMessageBlur}
-                                    disabled={user?.id ? false : true}
-                                    backgroundColor="white"
-                                />
-                                {isMobile && (
-                                    <Box position="absolute" top="21px" right="50px" width="26px" height="26px" flexShrink="0" cursor="pointer">
-                                        <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} onClick={sendMessage} />
-                                    </Box>
-                                )}
-                            </Box>
-                        </>
-                    )}
+                    <MessageInputBox sendMessage={sendMessage} onNewMention={onNewMention} messages={chatMessages} />
                 </Flex>
             </Flex>
         </Flex>
