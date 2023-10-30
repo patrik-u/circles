@@ -289,7 +289,7 @@ export const Circle = ({ isGlobal }) => {
     return (
         <Flex flexDirection="row">
             {isPinned && !isMobile && (
-                <Box backgroundColor="blue" width="300px" height="100vh">
+                <Box width="300px" height="100vh">
                     <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} />
                 </Box>
             )}

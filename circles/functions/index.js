@@ -1602,7 +1602,9 @@ app.get("/circles/:id/circles", async (req, res) => {
         // get similar circles through semantic search
         let similarCircles = [];
         try {
-            similarCircles = await semanticSearch(null, circleId, ["circle", "user", "event", "project", "document"], 11);
+            similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
+            similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
+            similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["event", "project", "document"], 7));
         } catch (error) {
             functions.logger.error("Error while getting similar circles:", error);
         }
@@ -2291,10 +2293,27 @@ app.post("/chat_session", auth, async (req, res) => {
             await chatRef.set(newChat);
         }
 
-        // trigger AI to initiate conversation in chat session
-        if (triggerAi && isAiRelationSet) {
-            // ai circle
-            triggerAiAgentResponse(circle, authCallerId, sessionId);
+        // trigger AI to initiate conversation in chat session if not already done
+        if (isAiRelationSet) {
+            // get ai circle
+            let agentCircleId = circle.circle_ids.find((x) => x !== authCallerId);
+            let agentCircleData = await getCircleData(agentCircleId);
+
+            // see if initial prompt has been sent
+            let setCircleData = await getCircleData(circleId);
+            if (!setCircleData?.initial_prompt_sent) {
+                // add initial prompt
+                triggerAiAgentResponse(circle, authCallerId, sessionId, agentCircleData?.ai?.initial_prompt ?? "Give a short welcome message");
+
+                // set initial prompt sent
+                // const circleDataRef = db.collection("circle_data").doc(circleId);
+                // await circleDataRef.set(
+                //     {
+                //         initial_prompt_sent: true,
+                //     },
+                //     { merge: true }
+                // );
+            }
         }
 
         return res.json({ message: "Chat session created", id: sessionId });
@@ -3247,9 +3266,7 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     }
 
     //console.log("messages: ", JSON.stringify(messages, null, 2));
-
-    //ONBOARDING123
-    // if (agentCircleData?.ai?.onboarding) {
+    // ONBOARDING123
     //     // ai supports onboarding
     //     // see where the user is at in onboarding and send appropriate message
     //     let chatCircleData = await getCircleData(circleId);

@@ -128,6 +128,8 @@ export const CircleChatWidget = () => {
                 setChatCircle(circle);
             }
         } else if (chatCircle === null && circle) {
+            log("Chat circle set to: " + JSON.stringify(circle, null, 2), 0, true);
+
             setChatCircle(circle);
         }
     }, [circle?.id, chatCircle, chatCircles]); // we only want to set chatCircle once when circle id changes hence warning
@@ -158,7 +160,12 @@ export const CircleChatWidget = () => {
                     };
                 });
                 //log(JSON.stringify(circles, null, 2), 0, true);
+                // set default chat circle if specified
                 setChatCircles(circles);
+                if (circle?.default_chat_id) {
+                    let defaultSetId = getSetId(user.id, circle.default_chat_id);
+                    setChatCircle(circles.find((x) => x.id === defaultSetId));
+                }
             });
 
             return () => {
@@ -981,7 +988,10 @@ export const CircleChat = ({ circle }) => {
                             {isAiRelationSet && <NewSessionButton circle={circle} onClick={onNewSession} marginLeft="10px" />}
                             <Box flexGrow="1" />
                             <AboutButton circle={getRelevantCircle(user, circle)} />
-                            <Tooltip label={i18n.t("This is a private chat")} aria-label="A tooltip">
+                            <Tooltip
+                                label={"This is a private chat" + (isAiRelationSet ? ". Your interactions can be used to train and improve the AI." : "")}
+                                aria-label="A tooltip"
+                            >
                                 <Box>
                                     <RiChatPrivateLine color="white" size="20px" />
                                 </Box>
