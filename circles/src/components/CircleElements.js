@@ -650,7 +650,7 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
         );
     } else {
         return (
-            <Link href={hrefStr} {...props} color="blue">
+            <Link href={hrefStr} {...props} color="blue" target="_blank">
                 {children}
             </Link>
         );

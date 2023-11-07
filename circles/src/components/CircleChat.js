@@ -1103,7 +1103,7 @@ export const CircleChat = ({ circle }) => {
                                     onChange={handleMessageChange}
                                     onKeyDown={handleMessageKeyDown}
                                     resize="none"
-                                    maxLength="650"
+                                    maxLength="65000"
                                     rows="1"
                                     borderRadius="40px"
                                     placeholder={user?.id ? i18n.t("Message...") : i18n.t("Log in to chat")}

@@ -2946,7 +2946,7 @@ app.post("/request_relation_update", auth, async (req, res) => {
         const openai = new OpenAIApi(configuration);
         let request = {
             messages,
-            model: "gpt-4", // model
+            model: "gpt-4-1106-preview", // model GPT4 Turbo
         };
 
         let messageData = null;
@@ -3696,7 +3696,7 @@ const sendOpenAIChatPrompt = async (prompt, temperature = undefined, max_tokens 
             },
             { role: "user", content: prompt },
         ],
-        model: "gpt-4", // model
+        model: "gpt-4-1106-preview", // model
     };
     if (temperature !== undefined) {
         request.temperature = temperature;
