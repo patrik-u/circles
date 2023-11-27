@@ -54,6 +54,7 @@ import {
 } from "components/Atoms";
 import { JitsiMeeting } from "@jitsi/react-sdk";
 import config from "Config";
+import { ZoomMeeting } from "components/ZoomMeeting";
 //#endregion
 
 export const CircleVideo = ({ isMinimized, width, height }) => {
@@ -69,7 +70,8 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
 
     useEffect(() => {
         if (!inVideoConference && circle?.id) {
-            let roomId = circle.id === "global" ? "Global 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`;
+            let roomId =
+                circle.id === "global" ? "Global 2f5077c8dd4b11edb5ea0242ac120002" : `${circle.name} ${circle.id}`;
             roomId = roomId.replace(/[^a-z0-9åäö\s]/gi, ""); // remove non-alphanumeric characters
             setRoomName(roomId);
         }
@@ -115,7 +117,7 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
         };
     };
 
-    log("roomName: " + roomName + ", jitsiToken: " + jitsiToken, 0, true);
+    // log("roomName: " + roomName + ", jitsiToken: " + jitsiToken, 0, true);
 
     if (!circle || !roomName || !jitsiToken || !user?.id) return null;
 
@@ -127,53 +129,57 @@ export const CircleVideo = ({ isMinimized, width, height }) => {
             pointerEvents="auto"
             marginLeft={isMinimized ? "auto" : "0px"}
         >
-            <JitsiMeeting
-                domain={"jitsi.codo.earth"}
-                appId={"codo"}
-                roomName={roomName}
-                jwt={jitsiToken}
-                // configOverwrite={{
-                //     startWithAudioMuted: true,
-                //     startScreenSharing: false,
-                //     enableEmailInStats: false,
-                //     logging: {
-                //         defaultLogLevel: "error",
-                //     },
-                // }}
-                // interfaceConfigOverwrite={{
-                //     SHOW_CHROME_EXTENSION_BANNER: false,
-                //     DISPLAY_WELCOME_PAGE_CONTENT: false,
-                //     SHOW_JITSI_WATERMARK: false,
-                //     SHOW_BRAND_WATERMARK: false,
-                //     SHOW_WATERMARK_FOR_GUESTS: false,
-                //     // TOOLBAR_BUTTONS: [
-                //     //     "microphone",
-                //     //     "camera",
-                //     //     "closedcaptions",
-                //     //     "desktop",
-                //     //     "fullscreen",
-                //     //     "recording",
-                //     //     "sharedvideo",
-                //     //     "settings",
-                //     //     "raisehand",
-                //     //     "filmstrip",
-                //     //     "invite",
-                //     //     "stats",
-                //     //     "shortcuts",
-                //     //     "tileview",
-                //     //     "hangup",
-                //     //     "participants-pane",
-                //     // ],
-                // }}
-                userInfo={{
-                    displayName: user?.name,
-                }}
-                getIFrameRef={(node) => {
-                    node.style.height = "100%";
-                    node.style.width = "100%";
-                }}
-                onApiReady={handleOnApiReady}
-            />
+            {circle.use_zoom ? (
+                <ZoomMeeting />
+            ) : (
+                <JitsiMeeting
+                    domain={"jitsi.codo.earth"}
+                    appId={"codo"}
+                    roomName={roomName}
+                    jwt={jitsiToken}
+                    // configOverwrite={{
+                    //     startWithAudioMuted: true,
+                    //     startScreenSharing: false,
+                    //     enableEmailInStats: false,
+                    //     logging: {
+                    //         defaultLogLevel: "error",
+                    //     },
+                    // }}
+                    // interfaceConfigOverwrite={{
+                    //     SHOW_CHROME_EXTENSION_BANNER: false,
+                    //     DISPLAY_WELCOME_PAGE_CONTENT: false,
+                    //     SHOW_JITSI_WATERMARK: false,
+                    //     SHOW_BRAND_WATERMARK: false,
+                    //     SHOW_WATERMARK_FOR_GUESTS: false,
+                    //     // TOOLBAR_BUTTONS: [
+                    //     //     "microphone",
+                    //     //     "camera",
+                    //     //     "closedcaptions",
+                    //     //     "desktop",
+                    //     //     "fullscreen",
+                    //     //     "recording",
+                    //     //     "sharedvideo",
+                    //     //     "settings",
+                    //     //     "raisehand",
+                    //     //     "filmstrip",
+                    //     //     "invite",
+                    //     //     "stats",
+                    //     //     "shortcuts",
+                    //     //     "tileview",
+                    //     //     "hangup",
+                    //     //     "participants-pane",
+                    //     // ],
+                    // }}
+                    userInfo={{
+                        displayName: user?.name,
+                    }}
+                    getIFrameRef={(node) => {
+                        node.style.height = "100%";
+                        node.style.width = "100%";
+                    }}
+                    onApiReady={handleOnApiReady}
+                />
+            )}
         </Flex>
     );
 };

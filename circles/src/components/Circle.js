@@ -1,9 +1,24 @@
 //#region imports
 import React, { useEffect, lazy, useRef, useState, useCallback } from "react";
-import { Flex, Box, Drawer, DrawerBody, DrawerOverlay, DrawerContent, DrawerCloseButton, Button, useDisclosure } from "@chakra-ui/react";
+import {
+    Flex,
+    Box,
+    Drawer,
+    DrawerBody,
+    DrawerOverlay,
+    DrawerContent,
+    DrawerCloseButton,
+    Button,
+    useDisclosure,
+} from "@chakra-ui/react";
 import db from "components/Firebase";
 import axios from "axios";
-import { log, fromFsDate, getDateWithoutTime, isConnected } from "components/Helpers";
+import {
+    log,
+    fromFsDate,
+    getDateWithoutTime,
+    isConnected,
+} from "components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
 import { defaultCoverHeight } from "components/Constants";
@@ -47,7 +62,10 @@ import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
 import { useSpring, animated } from "react-spring";
 import useWindowDimensions from "components/useWindowDimensions";
 import { Home } from "components/Home";
-import { useLocationNoUpdates, useNavigateNoUpdates } from "components/RouterUtils";
+import {
+    useLocationNoUpdates,
+    useNavigateNoUpdates,
+} from "components/RouterUtils";
 import { routes } from "components/Navigation";
 import { DataProviderFactory } from "services/DataProviderFactory";
 import CircleMap from "components/CircleMap";
@@ -59,10 +77,11 @@ import CircleGlobusMap from "components/CircleGlobusMap";
 
 export const globalCircle = {
     id: "global",
-    name: "co:do Network",
-    description: "Welcome, this is the global view of our social networking platform for change makers.",
+    name: "Circles",
+    description:
+        "Welcome, this is the global view of our social networking platform for change makers.",
     content:
-        "Here, you can explore all the communities, users, events, and projects that make up our greater community.\n\nOn the map, you'll see pins representing different communities, each with their own unique missions and causes. You’ll also see pins representing people, events, chats and a whole lot more. Every pin is a circle with its own profile. Click on a circle to dive into its profile and connect with like-minded individuals working towards a common goal.\n\nBut co:do isn't just about individuals and communities. It's also about the connections between them. Our platform is designed to foster collaboration and cross-pollination between different groups and here is where you can see these connections come to life.\n\nFrom local grassroots initiatives to global movements, co:do has it all. Whether you're looking to join a community, organize an event, or simply stay up to date on the latest developments in the world of social change, this is a good place to start. So come explore, join the movement and let’s co-create a better world together.",
+        "Here, you can explore all the communities, users, events, and projects that make up our greater community.\n\nOn the map, you'll see pins representing different communities, each with their own unique missions and causes. You’ll also see pins representing people, events, chats and a whole lot more. Every pin is a circle with its own profile. Click on a circle to dive into its profile and connect with like-minded individuals working towards a common goal.\n\nBut Circles isn't just about individuals and communities. It's also about the connections between them. Our platform is designed to foster collaboration and cross-pollination between different groups and here is where you can see these connections come to life.\n\nFrom local grassroots initiatives to global movements, Circles has it all. Whether you're looking to join a community, organize an event, or simply stay up to date on the latest developments in the world of social change, this is a good place to start. So come explore, join the movement and let’s co-create a better world together.",
     picture: "/codo-logo.svg",
     cover: "/splash.jpg",
     type: "circle",
@@ -92,7 +111,9 @@ export const Circle = ({ isGlobal }) => {
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const [showHistoricCircles, setShowHistoricCircles] = useAtom(showHistoricCirclesAtom);
+    const [showHistoricCircles, setShowHistoricCircles] = useAtom(
+        showHistoricCirclesAtom
+    );
     const { windowWidth, windowHeight } = useWindowDimensions();
     const navigate = useNavigateNoUpdates();
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -124,11 +145,17 @@ export const Circle = ({ isGlobal }) => {
 
             // if we're not at the end of the history, discard future circles
             if (x.position < x.history.length - 1) {
-                return { position: x.position + 1, history: [...x.history.slice(0, x.position + 1), circle] };
+                return {
+                    position: x.position + 1,
+                    history: [...x.history.slice(0, x.position + 1), circle],
+                };
             }
 
             // if we're at the end of the history, add circle to history
-            return { position: x.position + 1, history: [...x.history, circle] };
+            return {
+                position: x.position + 1,
+                history: [...x.history, circle],
+            };
 
             // if (x.history.length > 0 && x.history[x.length - 1] === circle.id) return x;
             // return { position: x.position + 1, history: [...x.history, circle] };
@@ -138,18 +165,16 @@ export const Circle = ({ isGlobal }) => {
     useEffect(() => {
         log("Circle.useEffect", -1);
 
-        if (isGlobal || circleId === "global") {
-            setCircle(globalCircle);
-            return;
-        }
-
         if (!circleId) return;
 
         const dataProvider = DataProviderFactory.createDataProvider(hostId);
         if (dataProvider.supportsSubscription()) {
-            let unsubscribe = dataProvider.subscribeToCircle(circleId, (newCircle) => {
-                setCircle(newCircle);
-            });
+            let unsubscribe = dataProvider.subscribeToCircle(
+                circleId,
+                (newCircle) => {
+                    setCircle(newCircle);
+                }
+            );
 
             return () => {
                 if (unsubscribe) {
@@ -169,24 +194,39 @@ export const Circle = ({ isGlobal }) => {
 
         // if user is administrator subscribe to circle private data
         const dataProvider = DataProviderFactory.createDataProvider(hostId);
-        let isAdmin = user.id === circle.id || userData.admin_of?.includes(circle.id) || userData.owner_of?.includes(circle.id);
+        let isAdmin =
+            user.id === circle.id ||
+            userData.admin_of?.includes(circle.id) ||
+            userData.owner_of?.includes(circle.id);
         if (isAdmin) {
             if (dataProvider.supportsSubscription()) {
-                let unsubscribeData = dataProvider.subscribeToCircleData(circle.id, (newCircleData) => {
-                    setCircleData(newCircleData);
-                });
+                let unsubscribeData = dataProvider.subscribeToCircleData(
+                    circle.id,
+                    (newCircleData) => {
+                        setCircleData(newCircleData);
+                    }
+                );
                 return () => {
                     if (unsubscribeData) {
                         unsubscribeData();
                     }
                 };
             } else {
-                dataProvider.getCircleData(circle.id).then((fetchedCircleData) => {
-                    setCircleData(fetchedCircleData);
-                });
+                dataProvider
+                    .getCircleData(circle.id)
+                    .then((fetchedCircleData) => {
+                        setCircleData(fetchedCircleData);
+                    });
             }
         }
-    }, [hostId, userData?.admin_of, userData?.owner_of, circle?.id, user?.id, setCircleData]);
+    }, [
+        hostId,
+        userData?.admin_of,
+        userData?.owner_of,
+        circle?.id,
+        user?.id,
+        setCircleData,
+    ]);
 
     useEffect(() => {
         if (!circleId && !isGlobal) return;
@@ -202,9 +242,16 @@ export const Circle = ({ isGlobal }) => {
         // subscribe to active circles
         let everything = circleId === "global" || isGlobal;
         if (everything) {
-            q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
+            q = query(
+                collection(db, "circles"),
+                where("activity.last_activity", ">=", lastXMinutes)
+            );
         } else {
-            q = query(collection(db, "circles"), where("activity.active_in_circle.id", "==", circleId), where("activity.last_activity", ">=", lastXMinutes));
+            q = query(
+                collection(db, "circles"),
+                where("activity.active_in_circle.id", "==", circleId),
+                where("activity.last_activity", ">=", lastXMinutes)
+            );
             // TODO here we might want to get active in sub-circles as well
         }
 
@@ -240,7 +287,15 @@ export const Circle = ({ isGlobal }) => {
                 unsubscribeGetActiveCircles();
             }
         };
-    }, [circleId, setActiveCircles, setCircleConnections, isGlobal, setSimilarCircles, setConnectedCircles, setMentionedCircles]);
+    }, [
+        circleId,
+        setActiveCircles,
+        setCircleConnections,
+        isGlobal,
+        setSimilarCircles,
+        setConnectedCircles,
+        setMentionedCircles,
+    ]);
 
     useEffect(() => {
         log("Circle.useEffect 2", -1);
@@ -290,14 +345,23 @@ export const Circle = ({ isGlobal }) => {
         <Flex flexDirection="row">
             {isPinned && !isMobile && (
                 <Box width="300px" height="100vh">
-                    <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} />
+                    <NavigationPanel
+                        isPinned={isPinned}
+                        setIsPinned={setIsPinned}
+                    />
                 </Box>
             )}
             <Box flexGrow="1" position="relative">
-                {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
+                {displayMode !== displayModes.map_only && (
+                    <TopMenu onLogoClick={onLogoClick} />
+                )}
                 {/* ONB123 */}
                 <Flex flexDirection="column" position="relative">
-                    <Box width="100%" height={coverHeight + "px"} position="relative">
+                    <Box
+                        width="100%"
+                        height={coverHeight + "px"}
+                        position="relative"
+                    >
                         {/* <CircleGlobusMap /> */}
                         <CircleMap height={coverHeight} />
                     </Box>
@@ -306,11 +370,21 @@ export const Circle = ({ isGlobal }) => {
                     {/* ONB123 */}
                 </Flex>
                 {(!isPinned || isMobile) && (
-                    <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={isMobile ? "full" : "xs"} closeOnOverlayClick={!isPinned}>
+                    <Drawer
+                        isOpen={isOpen}
+                        onClose={onClose}
+                        placement="left"
+                        size={isMobile ? "full" : "xs"}
+                        closeOnOverlayClick={!isPinned}
+                    >
                         <DrawerOverlay />
                         <DrawerContent padding="0">
                             <DrawerBody padding="0">
-                                <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} onClose={onClose} />
+                                <NavigationPanel
+                                    isPinned={isPinned}
+                                    setIsPinned={setIsPinned}
+                                    onClose={onClose}
+                                />
                             </DrawerBody>
                         </DrawerContent>
                     </Drawer>

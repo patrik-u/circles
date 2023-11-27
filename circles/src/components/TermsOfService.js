@@ -1,62 +1,77 @@
 import i18n from "i18n/Localization";
-import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack, Tabs, Tab, TabPanel, TabPanels, TabList } from "@chakra-ui/react";
+import {
+    Flex,
+    Box,
+    Text,
+    Spinner,
+    Button,
+    Checkbox,
+    useToast,
+    HStack,
+    VStack,
+    Tabs,
+    Tab,
+    TabPanel,
+    TabPanels,
+    TabList,
+} from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 
 export const tnsLastUpdate = "2023-09-05";
 let termsOfService = `# Terms of Service
-## Welcome to co:do!
+## Welcome to Circles!
 
-Co:do is an open-source social networking platform for co-creators and changemakers. It functions as an open-source ecosystem, connecting individuals, movements, and political entities globally, while rooting activism and the co-creative spirit locally. By using the co:do platform, you agree to these Terms of Service.
+Circles is an open-source social networking platform for co-creators and changemakers. It functions as an open-source ecosystem, connecting individuals, movements, and political entities globally, while rooting activism and the co-creative spirit locally. By using the Circles platform, you agree to these Terms of Service.
 
 ## 1. Acceptance of Terms
 
-By accessing or using the co:do platform (“co:do”), you acknowledge that you have read, understood, and agree to be bound by these Terms of Service (the “Terms”). If you do not accept the Terms in their entirety, you are not authorized to use co:do.
+By accessing or using the Circles platform (“Circles”), you acknowledge that you have read, understood, and agree to be bound by these Terms of Service (the “Terms”). If you do not accept the Terms in their entirety, you are not authorized to use Circles.
 
 ## 2. Ownership of Content
 
-All content uploaded by users remains the intellectual property of the original creator. However, by uploading content to co:do, you grant co:do a non-exclusive, royalty-free, worldwide license to use, display, and distribute said content on the platform for the purpose of delivering our services. If you delete your account or specific content, we will make every effort to remove it from the platform, but you acknowledge that caching or references may still exist.
+All content uploaded by users remains the intellectual property of the original creator. However, by uploading content to Circles, you grant Circles a non-exclusive, royalty-free, worldwide license to use, display, and distribute said content on the platform for the purpose of delivering our services. If you delete your account or specific content, we will make every effort to remove it from the platform, but you acknowledge that caching or references may still exist.
 
 ## 3. Availability of Service
 
-Co:do is provided “as is” and “as available”. We do not guarantee that co:do will be available at all times. We may suspend or discontinue co:do at any time, including the availability of any feature of co:do, without notice or liability.
+Circles is provided “as is” and “as available”. We do not guarantee that Circles will be available at all times. We may suspend or discontinue Circles at any time, including the availability of any feature of Circles, without notice or liability.
 
 ## 4. Loss of Data
 
-Co:do is not responsible for any loss of data due to technical or other issues. We recommend that you back up your data regularly.
+Circles is not responsible for any loss of data due to technical or other issues. We recommend that you back up your data regularly.
 
 ## 5. User Account
 
-To fully utilize co:do and its features, you need to create a User Account. You commit to providing accurate and current information during the registration process and updating such information to keep it accurate. You are solely responsible for safeguarding your co:do password and for any activities or actions under your account, whether or not you have authorized such activities or actions. Notify us immediately of any unauthorized use of your account to help ensure your security. We cannot and will not be liable for any loss or damage arising from your failure to comply with the above.
+To fully utilize Circles and its features, you need to create a User Account. You commit to providing accurate and current information during the registration process and updating such information to keep it accurate. You are solely responsible for safeguarding your Circles password and for any activities or actions under your account, whether or not you have authorized such activities or actions. Notify us immediately of any unauthorized use of your account to help ensure your security. We cannot and will not be liable for any loss or damage arising from your failure to comply with the above.
 
 ## 6. Content Exposure
                 
-Using co:do means you might come across content from other users that you find offensive, indecent, or objectionable. Understand that content on co:do represents the views of its users and not necessarily those of the co:do platform. We disclaim all liability in connection with user-generated content.
+Using Circles means you might come across content from other users that you find offensive, indecent, or objectionable. Understand that content on Circles represents the views of its users and not necessarily those of the Circles platform. We disclaim all liability in connection with user-generated content.
 
 ## 7. Prohibited Uses
 
-You commit to using co:do responsibly. Specifically, you must not use co:do for any illegal or unauthorized activities. This includes violating any local, state, national, or international laws, or sharing content that's harmful or offensive. You are solely accountable for all content you post or share on co:do. We reserve the right to review and remove content and may suspend or terminate user accounts that breach these Terms.
+You commit to using Circles responsibly. Specifically, you must not use Circles for any illegal or unauthorized activities. This includes violating any local, state, national, or international laws, or sharing content that's harmful or offensive. You are solely accountable for all content you post or share on Circles. We reserve the right to review and remove content and may suspend or terminate user accounts that breach these Terms.
 
 ## 8. Subscription (Potential Future Changes)
 
-While co:do is currently available to users without a premium subscription fee, we reserve the right to implement a subscription-based model in the future. This could provide access to premium features or additional benefits not available to free-tier users.
+While Circles is currently available to users without a premium subscription fee, we reserve the right to implement a subscription-based model in the future. This could provide access to premium features or additional benefits not available to free-tier users.
 
-**8.1** Should co:do launch a subscription service in the future, some features that are currently available to all users may become exclusive to premium subscribers. We will notify all users of any such changes and provide a clear distinction between free and premium-exclusive features.
+**8.1** Should Circles launch a subscription service in the future, some features that are currently available to all users may become exclusive to premium subscribers. We will notify all users of any such changes and provide a clear distinction between free and premium-exclusive features.
 
-**8.2** Subscribers will agree to pay the fees associated with the subscription as outlined in the pricing information on the co:do website at that time.
+**8.2** Subscribers will agree to pay the fees associated with the subscription as outlined in the pricing information on the Circles website at that time.
 
 **8.3** Users will be responsible for any taxes, fees, or other charges incurred as a result of using any future subscription service.
 
 **8.4** Information on cancellation policies, potential fee changes, and any disputes arising from the use of the subscription service will be provided if and when such a subscription service is implemented.
 
-**8.5** Users will be notified of any changes to co:do's service model and given ample opportunity to review and accept new terms before any premium-exclusive features or subscription-based model takes effect.
+**8.5** Users will be notified of any changes to Circles's service model and given ample opportunity to review and accept new terms before any premium-exclusive features or subscription-based model takes effect.
 
 ## 9. Termination
 
-We reserve the right, in our sole discretion, to terminate your access to the platform or any related services at any time, without notice, for conduct that we believe violates these Terms of Service or is harmful to other users of co:do, us, or third parties, or for any other reason.
+We reserve the right, in our sole discretion, to terminate your access to the platform or any related services at any time, without notice, for conduct that we believe violates these Terms of Service or is harmful to other users of Circles, us, or third parties, or for any other reason.
 
 ## 10. Changes to Terms of Service
 
-Co:do reserves the right to modify these Terms of Service at any time. We will notify users of any significant changes via email or notifications on the platform. Your continued use of co:do after any changes to the Terms of Service will constitute your agreement to the modified Terms of Service. It's your responsibility to review the Terms of Service periodically.
+Circles reserves the right to modify these Terms of Service at any time. We will notify users of any significant changes via email or notifications on the platform. Your continued use of Circles after any changes to the Terms of Service will constitute your agreement to the modified Terms of Service. It's your responsibility to review the Terms of Service periodically.
 
 ## 11. Contacting Us
 
@@ -64,16 +79,16 @@ If you have any questions, concerns, or comments about our Terms of Service, ple
 
 These Terms of Service were last updated on 2023-09-05.
 
-By using co:do, you agree to these Terms of Service.
+By using Circles, you agree to these Terms of Service.
 
-Thank you for using co:do!
+Thank you for using Circles!
 `;
 
 let privacyPolicy = `# Privacy Policy
 
 ## About this privacy policy
 
-Welcome to Co:do, the geobased social networking platform for changemakers and co-creators. This Privacy Policy is designed to help you understand how we collect, use, disclose, and safeguard your personal data.
+Welcome to Circles, the geobased social networking platform for changemakers and co-creators. This Privacy Policy is designed to help you understand how we collect, use, disclose, and safeguard your personal data.
 
 ## What information do we collect?
 
@@ -81,7 +96,7 @@ Welcome to Co:do, the geobased social networking platform for changemakers and c
 
 **b. Active Geolocation:** If authorized the app will collect your geolocation in the background and store it in the database. 
 
-**c. Content and Conversations:** This encompasses all messages within Co:do, including one-on-one private messages, circle chat and video, and AI conversations.
+**c. Content and Conversations:** This encompasses all messages within Circles, including one-on-one private messages, circle chat and video, and AI conversations.
 
 ## How do we use your information?
 
@@ -134,7 +149,9 @@ export const TermsOfService = () => {
     return (
         <Flex flexDirection="column" justifyContent="center" align="center">
             <Box maxWidth="700px" marginLeft="10px" marginRight="10px">
-                <ReactMarkdown className="embedMarkdownContent">{termsOfService}</ReactMarkdown>
+                <ReactMarkdown className="embedMarkdownContent">
+                    {termsOfService}
+                </ReactMarkdown>
             </Box>
         </Flex>
     );
@@ -144,7 +161,9 @@ export const PrivacyPolicy = () => {
     return (
         <Flex flexDirection="column" justifyContent="center" align="center">
             <Box maxWidth="700px" marginLeft="10px" marginRight="10px">
-                <ReactMarkdown className="embedMarkdownContent">{privacyPolicy}</ReactMarkdown>
+                <ReactMarkdown className="embedMarkdownContent">
+                    {privacyPolicy}
+                </ReactMarkdown>
             </Box>
         </Flex>
     );

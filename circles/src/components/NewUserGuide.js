@@ -1,12 +1,31 @@
 //#region imports
 import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack, Tabs, Tab, TabPanel, TabPanels, TabList } from "@chakra-ui/react";
+import {
+    Flex,
+    Box,
+    Text,
+    Spinner,
+    Button,
+    Checkbox,
+    useToast,
+    HStack,
+    VStack,
+    Tabs,
+    Tab,
+    TabPanel,
+    TabPanels,
+    TabList,
+} from "@chakra-ui/react";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import axios from "axios";
 import { toastError, log, fromFsDate } from "components/Helpers";
 import i18n from "i18n/Localization";
 import config from "Config";
-import { PrivacyPolicy, TermsOfService, tnsLastUpdate } from "components/TermsOfService";
+import {
+    PrivacyPolicy,
+    TermsOfService,
+    tnsLastUpdate,
+} from "components/TermsOfService";
 import { userAtom, userDataAtom } from "components/Atoms";
 import { useAtom } from "jotai";
 import CircleContentForm from "components/settings/CircleContentForm";
@@ -25,13 +44,19 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         () => ({
             default: { id: "default", label: "Default" },
             tnc: { id: "tnc", label: i18n.t("Terms and conditions") },
-            tnc_update: { id: "tnc_update", label: i18n.t("Terms and conditions") },
+            tnc_update: {
+                id: "tnc_update",
+                label: i18n.t("Terms and conditions"),
+            },
             welcome: { id: "welcome", label: i18n.t("Welcome") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
             mission: { id: "mission", label: i18n.t("Mission") },
             tags: { id: "tags", label: i18n.t("Tags") },
-            offers_and_needs: { id: "offers_and_needs", label: i18n.t("Offers & Needs") },
+            offers_and_needs: {
+                id: "offers_and_needs",
+                label: i18n.t("Offers & Needs"),
+            },
             questions: { id: "questions", label: i18n.t("Questions") },
             location: { id: "location", label: i18n.t("base") },
             complete: { id: "complete", label: i18n.t("Congratulations") },
@@ -56,7 +81,9 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         if (!userData?.agreed_to_tnc || ignoreCheck) {
             // user hasn't agreed to terms and conditions
             tocProfileStep = allSteps.tnc;
-        } else if (fromFsDate(userData?.completed_guide) < fromFsDate(tnsLastUpdate)) {
+        } else if (
+            fromFsDate(userData?.completed_guide) < fromFsDate(tnsLastUpdate)
+        ) {
             tocProfileStep = allSteps.tnc_update;
         }
 
@@ -79,7 +106,13 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
         if (!user.base || ignoreCheck) {
             profileSteps.push(allSteps.location);
         }
-        if (!user.questions || !user.questions?.question0 || !user.questions?.question1 || !user.questions?.question2 || ignoreCheck) {
+        if (
+            !user.questions ||
+            !user.questions?.question0 ||
+            !user.questions?.question1 ||
+            !user.questions?.question2 ||
+            ignoreCheck
+        ) {
             profileSteps.push(allSteps.questions);
         }
         if (profileSteps.length > 0) {
@@ -96,7 +129,14 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
 
         setSteps(profileSteps);
         setActiveStep(profileSteps[0]);
-    }, [user?.id, userData?.agreed_to_tnc, userData?.completed_guide, hasBeenInitialized, allSteps, onClose]); // ignore warning as we don't want this to update unless vital data changes
+    }, [
+        user?.id,
+        userData?.agreed_to_tnc,
+        userData?.completed_guide,
+        hasBeenInitialized,
+        allSteps,
+        onClose,
+    ]); // ignore warning as we don't want this to update unless vital data changes
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
@@ -214,14 +254,31 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                     </TabPanel>
                                 </TabPanels>
                             </Tabs>
-                            <Checkbox isChecked={agreedToTnc} onChange={(e) => setAgreedToTnc(e.target.checked)}>
-                                I agree to the Terms and Conditions and Privacy Policy
+                            <Checkbox
+                                isChecked={agreedToTnc}
+                                onChange={(e) =>
+                                    setAgreedToTnc(e.target.checked)
+                                }
+                            >
+                                I agree to the Terms and Conditions and Privacy
+                                Policy
                             </Checkbox>
-                            <Checkbox isChecked={agreedToEmailUpdates} onChange={(e) => setAgreedToEmailUpdates(e.target.checked)}>
-                                I agree to be sent email updates from co:do (optional)
+                            <Checkbox
+                                isChecked={agreedToEmailUpdates}
+                                onChange={(e) =>
+                                    setAgreedToEmailUpdates(e.target.checked)
+                                }
+                            >
+                                I agree to be sent email updates from Circles
+                                (optional)
                             </Checkbox>
                         </VStack>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
+                        <Flex
+                            flexDirection="column"
+                            flexGrow="1"
+                            align="center"
+                            marginTop="10px"
+                        >
                             <Button
                                 marginTop="10px"
                                 width="150px"
@@ -234,7 +291,11 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                 onClick={onAgreeToTncClick}
                                 position="relative"
                             >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Confirm`)}</Text>}
+                                {isSaving ? (
+                                    <Spinner />
+                                ) : (
+                                    <Text>{i18n.t(`Confirm`)}</Text>
+                                )}
                             </Button>
                         </Flex>
                     </Box>
@@ -245,7 +306,9 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Text className="screenHeader" alignSelf="center">
-                                {i18n.t(`Terms  and conditions has been updated`)}
+                                {i18n.t(
+                                    `Terms  and conditions has been updated`
+                                )}
                             </Text>
                             <Tabs>
                                 <TabList>
@@ -283,7 +346,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                 </TabPanels>
                             </Tabs>
                         </VStack>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
+                        <Flex
+                            flexDirection="column"
+                            flexGrow="1"
+                            align="center"
+                            marginTop="10px"
+                        >
                             <Button
                                 marginTop="10px"
                                 width="150px"
@@ -304,11 +372,23 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
             case allSteps.welcome.id:
                 return (
                     <Box>
-                        <Text className="screenHeader" alignSelf="center" textAlign="center">
+                        <Text
+                            className="screenHeader"
+                            alignSelf="center"
+                            textAlign="center"
+                        >
                             {i18n.t(`Welcome`)}
                         </Text>
-                        <Text>Welcome to co:do, please take a few minutes to fill out your change maker profile. </Text>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
+                        <Text>
+                            Welcome to Circles, please take a few minutes to
+                            fill out your change maker profile.{" "}
+                        </Text>
+                        <Flex
+                            flexDirection="column"
+                            flexGrow="1"
+                            align="center"
+                            marginTop="10px"
+                        >
                             <Button
                                 width="150px"
                                 colorScheme="blue"
@@ -320,7 +400,11 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                 onClick={next}
                                 position="relative"
                             >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Continue`)}</Text>}
+                                {isSaving ? (
+                                    <Spinner />
+                                ) : (
+                                    <Text>{i18n.t(`Continue`)}</Text>
+                                )}
                             </Button>
                         </Flex>
                     </Box>
@@ -331,7 +415,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleContentForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleContentForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -342,7 +431,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleImagesForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleImagesForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -353,7 +447,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleMissionForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleMissionForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -364,7 +463,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleTagsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleTagsForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -375,7 +479,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleOffersAndNeedsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleOffersAndNeedsForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -386,7 +495,13 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleBasePopupForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} toggleMapInteract={toggleMapInteract} />
+                                <CircleBasePopupForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                    toggleMapInteract={toggleMapInteract}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -397,7 +512,12 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleQuestionsForm isUpdateForm={true} circle={user} isGuideForm={true} onNext={next} />
+                                <CircleQuestionsForm
+                                    isUpdateForm={true}
+                                    circle={user}
+                                    isGuideForm={true}
+                                    onNext={next}
+                                />
                             </Suspense>
                         </VStack>
                     </Box>
@@ -406,11 +526,24 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
             case allSteps.complete.id:
                 return (
                     <Box>
-                        <Text className="screenHeader" alignSelf="center" textAlign="center">
+                        <Text
+                            className="screenHeader"
+                            alignSelf="center"
+                            textAlign="center"
+                        >
                             {i18n.t(`Congratulations`)}
                         </Text>
-                        <Text>Thank you for completing your change maker profile. You can change your settings at any time in your user settings.</Text>
-                        <Flex flexDirection="column" flexGrow="1" align="center" marginTop="10px">
+                        <Text>
+                            Thank you for completing your change maker profile.
+                            You can change your settings at any time in your
+                            user settings.
+                        </Text>
+                        <Flex
+                            flexDirection="column"
+                            flexGrow="1"
+                            align="center"
+                            marginTop="10px"
+                        >
                             <Button
                                 width="150px"
                                 colorScheme="blue"
@@ -422,7 +555,11 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                                 onClick={complete}
                                 position="relative"
                             >
-                                {isSaving ? <Spinner /> : <Text>{i18n.t(`Let's get started`)}</Text>}
+                                {isSaving ? (
+                                    <Spinner />
+                                ) : (
+                                    <Text>{i18n.t(`Let's get started`)}</Text>
+                                )}
                             </Button>
                         </Flex>
                     </Box>
@@ -435,7 +572,13 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
     return (
         <Box>
             <Box marginTop="10px">{getActiveStepComponent()}</Box>
-            <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
+            <Flex
+                flexDirection="column"
+                flexGrow="1"
+                align="center"
+                marginBottom="20px"
+                marginTop="20px"
+            >
                 <HStack align="center">
                     {steps.map((x, i) => (
                         <Box
@@ -443,7 +586,11 @@ export const NewUserGuide = ({ onClose, toggleMapInteract }) => {
                             width="10px"
                             height="10px"
                             borderRadius="50%"
-                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
+                            backgroundColor={
+                                i <= steps.indexOf(activeStep)
+                                    ? "#5062ff"
+                                    : "#d3d3d3"
+                            }
                         ></Box>
                     ))}
                 </HStack>

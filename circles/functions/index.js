@@ -16,6 +16,7 @@ var uuid = require("uuid-random");
 const PineconeClient = require("@pinecone-database/pinecone").PineconeClient;
 const Linkify = require("linkify-it");
 const TurndownService = require("turndown"); // HTML to Markdown for migrating old circle content
+const axios = require("axios").default;
 
 const turndownService = new TurndownService();
 
@@ -63,7 +64,10 @@ const indexCircleChunkTypes = ["document_chunk"]; // circle chunk types that are
 
 // authorize user
 const auth = async (req, res, next) => {
-    if ((!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) && !(req.cookies && req.cookies.__session)) {
+    if (
+        (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) &&
+        !(req.cookies && req.cookies.__session)
+    ) {
         functions.logger.error(
             "No Firebase ID token was passed as a Bearer token in the Authorization header.",
             "Make sure you authorize your request by providing the following HTTP header:",
@@ -145,7 +149,10 @@ const getCircleData = async (circleId) => {
     const circleDataDirectRef = db.collection("circle_data").doc(circleId);
     const circleDataDirectSnapshot = await circleDataDirectRef.get();
     if (circleDataDirectSnapshot.exists) {
-        return { id: circleDataDirectSnapshot.id, ...circleDataDirectSnapshot.data() };
+        return {
+            id: circleDataDirectSnapshot.id,
+            ...circleDataDirectSnapshot.data(),
+        };
     }
 
     // see if indirect reference exist
@@ -180,7 +187,10 @@ const getTagByName = async (name, createIfNotExist = false) => {
 };
 
 const getAdminConnections = async (id) => {
-    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains-any", ["owned_by", "admin_by"]);
+    let query = db
+        .collection("connections")
+        .where("source.id", "==", id)
+        .where("types", "array-contains-any", ["owned_by", "admin_by"]);
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
@@ -189,7 +199,10 @@ const getMemberConnections = async (id) => {
     if (!id) {
         return [];
     }
-    let query = db.collection("connections").where("source.id", "==", id).where("types", "array-contains", "connected_mutually_to");
+    let query = db
+        .collection("connections")
+        .where("source.id", "==", id)
+        .where("types", "array-contains", "connected_mutually_to");
     let result = await query.get();
     return result?.docs?.map((doc) => ({ ...doc.data(), id: doc.id }));
 };
@@ -238,7 +251,10 @@ const getAllConnections = async (sourceId, targetId, type = null) => {
 };
 
 const getConnection = async (sourceId, targetId) => {
-    let connectionsRef = db.collection("connections").where("source.id", "==", sourceId).where("target.id", "==", targetId);
+    let connectionsRef = db
+        .collection("connections")
+        .where("source.id", "==", sourceId)
+        .where("target.id", "==", targetId);
     let connectionsSnapshot = await connectionsRef.get();
     if (connectionsSnapshot.docs.length <= 0) return null;
     const connectionDocId = connectionsSnapshot.docs[0].id;
@@ -401,7 +417,12 @@ const upsertCirclesEmbeddings = async (circles) => {
         }
 
         let embeddingRequest = {
-            circle: { id: circle.id, name: circle.name, type: circle.type, parent_id: circle.parent_circle?.id },
+            circle: {
+                id: circle.id,
+                name: circle.name,
+                type: circle.type,
+                parent_id: circle.parent_circle?.id,
+            },
             embedding: null,
             text: null,
         };
@@ -422,12 +443,20 @@ const upsertCirclesEmbeddings = async (circles) => {
 
         // insert embeddings into pinecone
         pineconeEmbeddings = circleEmbeddingRequests.map((x, i) => {
-            let metadata = { id: x.circle.id, name: x.circle.name, type: x.circle.type };
+            let metadata = {
+                id: x.circle.id,
+                name: x.circle.name,
+                type: x.circle.type,
+            };
             if (x.circle.parent_id) {
                 // id of the parent circle
                 metadata.parent_id = x.circle.parent_id;
             }
-            return { id: x.circle.id, metadata: metadata, values: embeddings[i] };
+            return {
+                id: x.circle.id,
+                metadata: metadata,
+                values: embeddings[i],
+            };
         });
 
         // add 250 vectors at a time to pinecone
@@ -435,7 +464,9 @@ const upsertCirclesEmbeddings = async (circles) => {
         while (pineconeEmbeddings.length) {
             let batchedVectors = pineconeEmbeddings.splice(0, 250);
             const index = pineconeService.Index("circles");
-            let pineconeResponse = await index.upsert({ upsertRequest: { vectors: batchedVectors } });
+            let pineconeResponse = await index.upsert({
+                upsertRequest: { vectors: batchedVectors },
+            });
             insertBatches.push(pineconeResponse);
         }
 
@@ -458,7 +489,12 @@ const upsertCircleChunksEmbeddings = async (chunks, circle) => {
         }
 
         let embeddingRequest = {
-            circle: { id: "circles/" + circle.id + "/chunks/" + chunk.id, name: chunk.context, type: chunkType, parent_id: circle.id },
+            circle: {
+                id: "circles/" + circle.id + "/chunks/" + chunk.id,
+                name: chunk.context,
+                type: chunkType,
+                parent_id: circle.id,
+            },
             embedding: null,
             text: null,
         };
@@ -479,12 +515,20 @@ const upsertCircleChunksEmbeddings = async (chunks, circle) => {
 
         // insert embeddings into pinecone
         pineconeEmbeddings = chunkEmbeddingRequests.map((x, i) => {
-            let metadata = { id: x.circle.id, name: x.circle.name, type: x.circle.type };
+            let metadata = {
+                id: x.circle.id,
+                name: x.circle.name,
+                type: x.circle.type,
+            };
             if (x.circle.parent_id) {
                 // id of the parent circle
                 metadata.parent_id = x.circle.parent_id;
             }
-            return { id: x.circle.id, metadata: metadata, values: embeddings[i] };
+            return {
+                id: x.circle.id,
+                metadata: metadata,
+                values: embeddings[i],
+            };
         });
 
         // add 250 vectors at a time to pinecone
@@ -492,7 +536,9 @@ const upsertCircleChunksEmbeddings = async (chunks, circle) => {
         while (pineconeEmbeddings.length) {
             let batchedVectors = pineconeEmbeddings.splice(0, 250);
             const index = pineconeService.Index("circles");
-            let pineconeResponse = await index.upsert({ upsertRequest: { vectors: batchedVectors } });
+            let pineconeResponse = await index.upsert({
+                upsertRequest: { vectors: batchedVectors },
+            });
             insertBatches.push(pineconeResponse);
         }
 
@@ -740,7 +786,13 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
 
         // add type to existing connection
         connectionRef = db.collection("connections").doc(connection.id);
-        await connectionRef.set({ types: admin.firestore.FieldValue.arrayUnion(type), [type + "_data"]: { created_at } }, { merge: true });
+        await connectionRef.set(
+            {
+                types: admin.firestore.FieldValue.arrayUnion(type),
+                [type + "_data"]: { created_at },
+            },
+            { merge: true }
+        );
     } else {
         // create new connection
         connectionRef = db.collection("connections").doc();
@@ -758,7 +810,13 @@ const createConnection = async (source, target, type, notify, authCallerId, prop
             connections: admin.firestore.FieldValue.increment(1),
         };
 
-        if (source.type === "tag" || target.type === "tag" || type === "connected_mutually_to_request" || type === "connected_to" || !propagateChanges) {
+        if (
+            source.type === "tag" ||
+            target.type === "tag" ||
+            type === "connected_mutually_to_request" ||
+            type === "connected_to" ||
+            !propagateChanges
+        ) {
             // for performance reasons we don't propagate changes if:
             // earth circle is connected
             // tags are connected
@@ -840,16 +898,24 @@ const deleteConnection = async (source, target, type, updateNotifications = true
     if (type === "connected_mutually_to_request" && updateNotifications) {
         let date = new Date();
         // update notifications
-        const notificationsDocs = await db.collection("notifications").where("connection_id", "==", connection.id).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("connection_id", "==", connection.id)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
-            await docRef.update({ request_status: "denied", request_updated_at: date });
+            await docRef.update({
+                request_status: "denied",
+                request_updated_at: date,
+            });
         });
     }
 
     // remove target circle from source circle's list of connections
     const circleDataRef = db.collection("circle_data").doc(connection.source.id);
-    await circleDataRef.update({ [type]: admin.firestore.FieldValue.arrayRemove(connection.target.id) });
+    await circleDataRef.update({
+        [type]: admin.firestore.FieldValue.arrayRemove(connection.target.id),
+    });
 
     // CONNECT123 here we might want to update latest_connections as well
 };
@@ -863,6 +929,65 @@ const deleteConnectionByObject = async (connection) => {
     await circleRef.update({
         connections: admin.firestore.FieldValue.increment(-1),
     });
+};
+
+const createZoomMeeting = async (circle) => {
+    // check if circle is ID or object
+    if (typeof circle === "string") {
+        circle = await getCircle(circle);
+    }
+
+    // Meeting does not exist, so create one
+    const zoomUserId = "me"; // Or the specific Zoom user ID if needed
+    const apiKey = process.env.ZOOM_SDK_KEY;
+    const apiSecret = process.env.ZOOM_SDK_SECRET;
+
+    // print out part of the apiKey and apiSecret
+    console.log("apiKey: " + apiKey?.substring(0, 5) + "...");
+    console.log("apiSecret: " + apiSecret?.substring(0, 5) + "...");
+
+    const token = jsonwebtoken.sign({ iss: apiKey, exp: new Date().getTime() + 5000 }, apiSecret);
+
+    const createMeetingResponse = await axios.post(
+        `https://api.zoom.us/v2/users/${zoomUserId}/meetings`,
+        {
+            topic: `${circle.name} Meeting`,
+            type: 8, // 8 for a recurring meeting with no fixed time
+            settings: {
+                join_before_host: true,
+                // ... additional settings
+            },
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+
+    let meetingNumber = createMeetingResponse?.data?.id;
+    if (meetingNumber) {
+        await updateCircle(circle.id, { zoom_meeting_number: meetingNumber });
+    }
+    return meetingNumber;
+};
+
+const generateZoomToken = (apiKey, secret, meetingNumber, role) => {
+    const iat = Math.round(new Date().getTime() / 1000) - 30;
+    const exp = iat + 60 * 60 * 48; // Signature valid for 48 hours
+
+    // JWT payload for Zoom Meeting SDK
+    const payload = {
+        appKey: apiKey,
+        iat,
+        exp,
+        tokenExp: exp,
+        tpc: meetingNumber, // Topic (Meeting Number)
+        role,
+    };
+
+    return jsonwebtoken.sign(payload, secret);
 };
 
 const generateJitsiToken = (privateKey, { id, name, email, avatar, appId, domain, kid }) => {
@@ -925,7 +1050,11 @@ const sendMessageNotification = async (target, circle, message, bigPicture, cate
     //"[circle] Tim: Hey blah blah..." (number of unread messages)
 
     let notificationRef = null;
-    const notificationsSnapshot = await db.collection("chat_notifications").where("user_id", "==", target.id).where("circle_id", "==", message.circle_id).get();
+    const notificationsSnapshot = await db
+        .collection("chat_notifications")
+        .where("user_id", "==", target.id)
+        .where("circle_id", "==", message.circle_id)
+        .get();
     if (notificationsSnapshot.docs.length <= 0) {
         notificationRef = db.collection("chat_notifications").doc();
     } else {
@@ -1161,6 +1290,9 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.jitsi_id) {
         circle.jitsi_id = circleReq.jitsi_id;
     }
+    if (circleReq.zoom_meeting_number) {
+        circle.zoom_meeting_number = circleReq.zoom_meeting_number;
+    }
 
     if (circleReq.tags) {
         if (!Array.isArray(circleReq.tags)) {
@@ -1353,7 +1485,8 @@ const generateAiSummary = async (circle) => {
         return;
     }
     let circleText = getCircleText(circle, false, true);
-    const summarySystemMessage = "You're a helpful assistant for a social networking platform for change makers and co-creators.";
+    const summarySystemMessage =
+        "You're a helpful assistant for a social networking platform for change makers and co-creators.";
     let message = "";
     if (circle.type === "user" || circle.type === "ai_agent") {
         message = `In a single sentence, generate an expressive summary in the form of symbolic, poetic, and/or abstract phrase that captures the essence of the ${circle.type}, providing a deeper or more artistic representation rather than a direct summary. Do this without including the ${circle.type}'s name as it will already be displayed, and ensure the essential expression is under 200 characters: \n\n${circleText}`;
@@ -1471,14 +1604,20 @@ app.put("/circles/:id", auth, async (req, res) => {
         }
 
         // update circle
-        let circle = await upsertCircle(authCallerId, { id: circleId, ...req.body.circleData });
+        let circle = await upsertCircle(authCallerId, {
+            id: circleId,
+            ...req.body.circleData,
+        });
         if (circle.errors) {
             return res.json({ errors: circle.errors });
         }
 
         // update circle data
         if (req.body.circlePrivateData) {
-            let circleData = await upsertCircleData(authCallerId, { id: circleId, ...req.body.circlePrivateData });
+            let circleData = await upsertCircleData(authCallerId, {
+                id: circleId,
+                ...req.body.circlePrivateData,
+            });
             if (circleData.errors) {
                 return res.json({ errors: circleData.errors });
             }
@@ -1541,7 +1680,9 @@ app.put("/circles/:id/chunks", auth, async (req, res) => {
         // check if user is owner or admin and allowed to update circle data
         const isAuthorized = await isAdminOf(authCallerId, circleId);
         if (!isAuthorized) {
-            return res.json({ error: "circle chunks only be updated by owner or admin" });
+            return res.json({
+                error: "circle chunks only be updated by owner or admin",
+            });
         }
 
         // get existing chunks from firestore
@@ -1604,7 +1745,9 @@ app.get("/circles/:id/circles", async (req, res) => {
         try {
             similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
             similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
-            similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["event", "project", "document"], 7));
+            similarCircles = similarCircles.concat(
+                await semanticSearch(null, circleId, ["event", "project", "document"], 7)
+            );
         } catch (error) {
             functions.logger.error("Error while getting similar circles:", error);
         }
@@ -1622,9 +1765,15 @@ app.get("/circles/:id/circles", async (req, res) => {
         let connectedCircles = [];
         while (circleIds.length) {
             let circleIdsBatch = circleIds.splice(0, 10);
-            let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+            let circleDocs = await db
+                .collection("circles")
+                .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+                .get();
             for (let i = 0; i < circleDocs.docs.length; i++) {
-                let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+                let circle = {
+                    id: circleDocs.docs[i].id,
+                    ...circleDocs.docs[i].data(),
+                };
                 connectedCircles.push(circle);
             }
         }
@@ -1662,9 +1811,57 @@ app.get("/circles/:id/circles", async (req, res) => {
             }
         }
 
-        return res.json({ similarCircles: similarCircles, connectedCircles: connectedCircles, mentionedCircles: mentionedCircles });
+        return res.json({
+            similarCircles: similarCircles,
+            connectedCircles: connectedCircles,
+            mentionedCircles: mentionedCircles,
+        });
     } catch (error) {
         functions.logger.error("Error while getting circles:", error);
+        return res.json({ error: error });
+    }
+});
+
+// gets zoom credentials for circle
+app.get("/circles/:id/zoom-credentials", auth, async (req, res) => {
+    functions.logger.log("Fetching zoom credentials");
+    console.log("Fetching zoom credentials");
+
+    const circleId = req.params.id;
+    const authCallerId = req.user.user_id;
+
+    try {
+        // see if user is admin of circle
+        const circle = await getCircle(circleId);
+        if (!circle) {
+            return res.json({ error: "circle not found" });
+        }
+        const isAdmin = await isAdminOf(authCallerId, circleId);
+
+        const role = isAdmin ? 1 : 0; // 1 for host, 0 for attendee
+        const user = await getCircle(authCallerId);
+        const userData = await getCircleData(authCallerId);
+        let meetingNumber = circle.zoom_meeting_number;
+
+        if (!meetingNumber) {
+            // create new zoom meeting
+            meetingNumber = await createZoomMeeting(circle, authCallerId);
+        }
+
+        const apiKey = process.env.ZOOM_SDK_KEY;
+        const secret = process.env.ZOOM_SDK_SECRET;
+
+        let signature = generateZoomToken(apiKey, secret, meetingNumber, role);
+
+        return res.json({
+            signature,
+            apiKey,
+            meetingNumber,
+            userName: user.name,
+            userEmail: userData.email,
+        });
+    } catch (error) {
+        functions.logger.error("Error while getting zoom credentials:", error);
         return res.json({ error: error });
     }
 });
@@ -1846,7 +2043,12 @@ app.post("/circles/:id/connections", auth, async (req, res) => {
                 let targetCircle = await getCircle(targetId);
 
                 // TODO for now auto approve event, link and tag connections
-                if (targetCircleData?.is_public || targetCircle?.type === "event" || targetCircle?.type === "tag" || targetCircle?.type === "link") {
+                if (
+                    targetCircleData?.is_public ||
+                    targetCircle?.type === "event" ||
+                    targetCircle?.type === "tag" ||
+                    targetCircle?.type === "link"
+                ) {
                     await createConnection(sourceId, targetId, "connected_mutually_to", true, authCallerId);
                     await createConnection(targetId, sourceId, "connected_mutually_to");
                     await updateTags(sourceId, targetId, "add");
@@ -1890,7 +2092,12 @@ app.delete("/circles/:id/connections", auth, async (req, res) => {
     if (sourceId === targetId) {
         return res.json({ error: "source and target can't be the same" });
     }
-    if (type !== "connected_to" && type !== "connected_mutually_to" && type !== "connected_mutually_to_request" && type !== "admin_by_request") {
+    if (
+        type !== "connected_to" &&
+        type !== "connected_mutually_to" &&
+        type !== "connected_mutually_to_request" &&
+        type !== "admin_by_request"
+    ) {
         return res.json({ error: "invalid connection type" });
     }
 
@@ -1953,7 +2160,10 @@ app.post("/connections/:id/approve", auth, async (req, res) => {
             .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
-            await docRef.update({ request_status: "approved", request_updated_at: date });
+            await docRef.update({
+                request_status: "approved",
+                request_updated_at: date,
+            });
         });
 
         // remove request
@@ -2001,7 +2211,10 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
             .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             const docRef = db.collection("notifications").doc(notificationDoc.id);
-            await docRef.update({ request_status: "denied", request_updated_at: date });
+            await docRef.update({
+                request_status: "denied",
+                request_updated_at: date,
+            });
         });
 
         // remove request
@@ -2037,7 +2250,11 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
     }
 
     let circle = await getCircle(targetCircleId);
-    newSettings.circle = { id: circle.id, name: circle.name, type: circle.type }; // store basic info about circle
+    newSettings.circle = {
+        id: circle.id,
+        name: circle.name,
+        type: circle.type,
+    }; // store basic info about circle
     if (circle.picture) {
         newSettings.circle.picture = circle.picture;
     }
@@ -2075,13 +2292,17 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
     if (favoriteSet) {
         let previousFavorite = circleData?.circle_settings?.[targetCircleId]?.favorite;
         if (previousFavorite !== settings.favorite) {
-            likeFavoriteData.favorites = settings.favorite ? admin.firestore.FieldValue.increment(1) : admin.firestore.FieldValue.increment(-1);
+            likeFavoriteData.favorites = settings.favorite
+                ? admin.firestore.FieldValue.increment(1)
+                : admin.firestore.FieldValue.increment(-1);
         }
     }
     if (likedSet) {
         let previousLiked = circleData?.circle_settings?.[targetCircleId]?.liked;
         if (previousLiked !== settings.liked) {
-            likeFavoriteData.likes = settings.liked ? admin.firestore.FieldValue.increment(1) : admin.firestore.FieldValue.increment(-1);
+            likeFavoriteData.likes = settings.liked
+                ? admin.firestore.FieldValue.increment(1)
+                : admin.firestore.FieldValue.increment(-1);
         }
     }
 
@@ -2193,7 +2414,11 @@ app.post("/registerOneSignalUserId", auth, async (req, res) => {
         } else {
             // add new one signal id
             let created_at = new Date();
-            oneSignalIds.push({ user_id: userId, created_at: created_at, updated_at: created_at });
+            oneSignalIds.push({
+                user_id: userId,
+                created_at: created_at,
+                updated_at: created_at,
+            });
         }
 
         const circleRef = db.collection("circle_data").doc(authCallerId);
@@ -2248,7 +2473,9 @@ app.post("/chat_session", auth, async (req, res) => {
 
         // verify user is allowed to create chat session
         let isAiRelationSet =
-            circle.type === "set" && (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
+            circle.type === "set" &&
+            (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" ||
+                circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
         if (isAiRelationSet) {
             if (!circle.circle_ids?.includes(authCallerId)) {
                 return res.status(403).json({ error: "unauthorized" });
@@ -2303,7 +2530,12 @@ app.post("/chat_session", auth, async (req, res) => {
             let setCircleData = await getCircleData(circleId);
             if (!setCircleData?.initial_prompt_sent) {
                 // add initial prompt
-                triggerAiAgentResponse(circle, authCallerId, sessionId, agentCircleData?.ai?.initial_prompt ?? "Give a short welcome message");
+                triggerAiAgentResponse(
+                    circle,
+                    authCallerId,
+                    sessionId,
+                    agentCircleData?.ai?.initial_prompt ?? "Give a short welcome message"
+                );
 
                 // set initial prompt sent
                 // const circleDataRef = db.collection("circle_data").doc(circleId);
@@ -2348,7 +2580,9 @@ app.post("/chat_messages", auth, async (req, res) => {
         // verify user is allowed to post chat messages
         let circle = await getCircle(circleId);
         let aiChatSession =
-            circle?.type === "set" && (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" || circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
+            circle?.type === "set" &&
+            (circle[circle?.circle_ids?.[0]]?.type === "ai_agent" ||
+                circle[circle?.circle_ids?.[1]]?.type === "ai_agent");
         if (!circle) {
             return res.json({ error: "circle not found" });
         }
@@ -2502,7 +2736,9 @@ app.put("/chat_messages/:id", auth, async (req, res) => {
         }
 
         if (message.user.id !== authCallerId) {
-            return res.json({ error: "chat message can only be edited by owner" });
+            return res.json({
+                error: "chat message can only be edited by owner",
+            });
         }
 
         // validate request
@@ -2547,7 +2783,9 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
         }
 
         if (message.user.id !== authCallerId) {
-            return res.json({ error: "chat message can only be deleted by owner" });
+            return res.json({
+                error: "chat message can only be deleted by owner",
+            });
         }
 
         // delete chat message
@@ -2684,11 +2922,18 @@ app.put("/chat_notifications", auth, async (req, res) => {
                 .get();
             if (notificationsSnapshot.docs.length > 0) {
                 notificationRef = db.collection("chat_notifications").doc(notificationsSnapshot.docs[0].id);
-                await notificationRef.update({ is_seen: true, unread_messages: 0 });
+                await notificationRef.update({
+                    is_seen: true,
+                    unread_messages: 0,
+                });
             }
         } else {
             // set all chat notifications to user as read
-            const notificationsDocs = await db.collection("chat_notifications").where("user_id", "==", authCallerId).where("is_seen", "==", false).get();
+            const notificationsDocs = await db
+                .collection("chat_notifications")
+                .where("user_id", "==", authCallerId)
+                .where("is_seen", "==", false)
+                .get();
             notificationsDocs.forEach(async (notificationDoc) => {
                 // set notification as read
                 const docRef = db.collection("chat_notifications").doc(notificationDoc.id);
@@ -2713,7 +2958,11 @@ app.put("/notifications", auth, async (req, res) => {
 
     try {
         // get all unread notifications for user
-        const notificationsDocs = await db.collection("notifications").where("user_id", "==", authCallerId).where("is_read", "==", false).get();
+        const notificationsDocs = await db
+            .collection("notifications")
+            .where("user_id", "==", authCallerId)
+            .where("is_read", "==", false)
+            .get();
         notificationsDocs.forEach(async (notificationDoc) => {
             // set notification as read
             const docRef = db.collection("notifications").doc(notificationDoc.id);
@@ -2735,10 +2984,16 @@ const getCirclesFromIds = async (circleIds) => {
     let circles = [];
     while (circleIds?.length) {
         let circleIdsBatch = circleIds.splice(0, 10);
-        let circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+        let circleDocs = await db
+            .collection("circles")
+            .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+            .get();
 
         for (var i = 0; i < circleDocs.docs.length; ++i) {
-            let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+            let circle = {
+                id: circleDocs.docs[i].id,
+                ...circleDocs.docs[i].data(),
+            };
             circles.push(circle);
         }
     }
@@ -2746,7 +3001,14 @@ const getCirclesFromIds = async (circleIds) => {
 };
 
 // do semantic search either by query or by circle id
-const semanticSearch = async (query = null, circleId = null, filterTypes = null, topK = 20, parentIds = [], searchChunks = false) => {
+const semanticSearch = async (
+    query = null,
+    circleId = null,
+    filterTypes = null,
+    topK = 20,
+    parentIds = [],
+    searchChunks = false
+) => {
     let pineconeService = await getPinecone();
     const index = pineconeService.Index("circles");
 
@@ -2783,14 +3045,23 @@ const semanticSearch = async (query = null, circleId = null, filterTypes = null,
         let circleDocs;
 
         if (searchChunks) {
-            circleDocs = await db.collectionGroup("chunks").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+            circleDocs = await db
+                .collectionGroup("chunks")
+                .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+                .get();
         } else {
-            circleDocs = await db.collection("circles").where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch).get();
+            circleDocs = await db
+                .collection("circles")
+                .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+                .get();
         }
 
         // add score to circle or chunk
         for (var i = 0; i < circleDocs.docs.length; ++i) {
-            let circle = { id: circleDocs.docs[i].id, ...circleDocs.docs[i].data() };
+            let circle = {
+                id: circleDocs.docs[i].id,
+                ...circleDocs.docs[i].data(),
+            };
             let match = pineconeResponse.matches.find((x) => x.id?.endsWith(circle.id)); // endsWith because chunks ends with the chunk id
 
             circle.score = match?.score;
@@ -2846,7 +3117,13 @@ const createSet = async (circleAId, circleBId) => {
     if (existingSetData === null) {
         // add set data
         const userDataRef = db.collection("circle_data").doc(setId);
-        await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(circleAId, circleBId), circle_id: setId }, { merge: true });
+        await userDataRef.set(
+            {
+                connected_mutually_to: admin.firestore.FieldValue.arrayUnion(circleAId, circleBId),
+                circle_id: setId,
+            },
+            { merge: true }
+        );
     }
 
     return existingSet;
@@ -2918,7 +3195,9 @@ app.post("/request_relation_update", auth, async (req, res) => {
         let relationData = userData.circle_settings?.[setId]?.relation;
         if (relationData) {
             // TODO check if relation data is already up to date
-            return res.json({ message: "relation description already up to date" });
+            return res.json({
+                message: "relation description already up to date",
+            });
         }
 
         // prompt AI to find relation between circles
@@ -3117,7 +3396,13 @@ const toCommaSeparatedList = (items, last_separator = " and ") => {
 const printMessage = (message) => {
     if (!message) return;
     if (message.function_call) {
-        console.log(`${message.role}: [Calling function ${message.function_call.name}]\n${JSON.stringify(message.function_call.arguments, null, 2)}`);
+        console.log(
+            `${message.role}: [Calling function ${message.function_call.name}]\n${JSON.stringify(
+                message.function_call.arguments,
+                null,
+                2
+            )}`
+        );
     } else if (message.role === "function") {
         console.log(`${message.name} response:\n`, JSON.stringify(message.content, null, 2));
     } else {
@@ -3128,7 +3413,10 @@ const printMessage = (message) => {
 // triggers AI response for a message
 const getAiResponse = async (messageIn, systemMessageStr) => {
     let messages = [];
-    let systemMessage = { role: "system", content: systemMessageStr ?? "You are a helpful assistant." };
+    let systemMessage = {
+        role: "system",
+        content: systemMessageStr ?? "You are a helpful assistant.",
+    };
     messages.push(systemMessage);
     messages.push({ role: "user", content: messageIn });
 
@@ -3220,7 +3508,12 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
             .limit(30)
             .get();
     } else {
-        chatMessagesDocs = await db.collection("chat_messages").where("circle_id", "==", circle.id).orderBy("sent_at", "asc").limit(30).get();
+        chatMessagesDocs = await db
+            .collection("chat_messages")
+            .where("circle_id", "==", circle.id)
+            .orderBy("sent_at", "asc")
+            .limit(30)
+            .get();
     }
 
     let messages = [];
@@ -3250,14 +3543,20 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
     // add information about the user the AI is interacting with
     systemMessagePreamble += `\n\nThe user's profile summary is:\n${getCircleText(user, true)}`;
 
-    let systemMessage = { role: "system", content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble };
+    let systemMessage = {
+        role: "system",
+        content: (agentCircleData?.ai?.system_message ?? "You are a helpful assistant.") + systemMessagePreamble,
+    };
     messages.push(systemMessage);
     printMessage(systemMessage);
 
     // add previous messages
     for (var i = 0; i < chatMessagesDocs.docs.length; ++i) {
         let message = chatMessagesDocs.docs[i].data();
-        messages.push({ role: message.user.id === user.id ? "user" : "assistant", content: message.message });
+        messages.push({
+            role: message.user.id === user.id ? "user" : "assistant",
+            content: message.message,
+        });
     }
 
     // add custom prompt if specified
@@ -3332,7 +3631,8 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                     properties: {
                         query: {
                             type: "string",
-                            description: "Query in natural language that will be used in search. Results are ranked by relevance to the query.",
+                            description:
+                                "Query in natural language that will be used in search. Results are ranked by relevance to the query.",
                         },
                         filterTypes: {
                             type: "array",
@@ -3341,7 +3641,10 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                                 defaultAiSearchTypes
                             )}.`,
                         },
-                        topK: { type: "number", description: "Number of results to return." },
+                        topK: {
+                            type: "number",
+                            description: "Number of results to return.",
+                        },
                     },
                     required: ["query"],
                 },
@@ -3362,7 +3665,10 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
             },
             {
                 name: "getCircleDetails",
-                description: `Returns full details about a specific circle (${toCommaSeparatedList(indexCircleTypes, " or ")}).`,
+                description: `Returns full details about a specific circle (${toCommaSeparatedList(
+                    indexCircleTypes,
+                    " or "
+                )}).`,
                 parameters: {
                     type: "object",
                     properties: {
@@ -3384,20 +3690,37 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                     type: "object",
                     properties: {
                         name: { type: "string", description: "Name of event." },
-                        content: { type: "string", description: "Full description of event (markdown allowed)." },
+                        content: {
+                            type: "string",
+                            description: "Full description of event (markdown allowed).",
+                        },
                         starts_at: {
                             type: "string",
-                            description: "Start date and time of event in ISO 8601 format. Please specify in Coordinated Universal Time (UTC).",
+                            description:
+                                "Start date and time of event in ISO 8601 format. Please specify in Coordinated Universal Time (UTC).",
                         },
-                        duration: { type: "number", description: "Duration of event in minutes." },
-                        is_all_day: { type: "boolean", description: "If event is all day." },
-                        parent_circle_id: { type: "string", description: "Id of circle (user, circle, event ,etc) that event belongs to." },
+                        duration: {
+                            type: "number",
+                            description: "Duration of event in minutes.",
+                        },
+                        is_all_day: {
+                            type: "boolean",
+                            description: "If event is all day.",
+                        },
+                        parent_circle_id: {
+                            type: "string",
+                            description: "Id of circle (user, circle, event ,etc) that event belongs to.",
+                        },
                         tags: {
                             type: "array",
                             items: { type: "string" },
-                            description: "Array of tags signifying causes, topics or values the event is associated with.",
+                            description:
+                                "Array of tags signifying causes, topics or values the event is associated with.",
                         },
-                        rrule: { type: "string", description: "Recurring rule for event in RFC 5545 format." },
+                        rrule: {
+                            type: "string",
+                            description: "Recurring rule for event in RFC 5545 format.",
+                        },
                     },
                     required: ["name", "starts_at"],
                 },
@@ -3539,7 +3862,11 @@ const triggerAiAgentResponse = async (circle, user, session_id, prompt = undefin
                 }
 
                 // update message with function response
-                let functionResponseMessage = { role: "function", name: functionName, content: results };
+                let functionResponseMessage = {
+                    role: "function",
+                    name: functionName,
+                    content: results,
+                };
                 request.messages.push(functionResponseMessage);
                 printMessage(functionResponseMessage);
                 ++functionCalls;
@@ -3612,7 +3939,10 @@ const triggerAiOnboarding = async (chatCircleData, aiCircle, circleId, user, ses
             // continue onboarding with second message
             // add message that will be filled with AI response
             await chatMessageRef.set(newMessage);
-            messages.push({ role: "system", content: "Give an encouraging response in one sentence." });
+            messages.push({
+                role: "system",
+                content: "Give an encouraging response in one sentence.",
+            });
             //messages.push({ role: "system", content: `Provide an quote, inspiring to changemakers, relating to the user's last response.` });
             let aiResponse = await getNextAiResponse(messages);
             if (aiResponse?.responseMessage) {
@@ -3639,7 +3969,17 @@ const triggerAiOnboarding = async (chatCircleData, aiCircle, circleId, user, ses
 
 //#region OpenAI functions
 
-const createEvent = async (authCallerId, name, content, starts_at, duration, is_all_day, parent_circle_id, tags, rrule) => {
+const createEvent = async (
+    authCallerId,
+    name,
+    content,
+    starts_at,
+    duration,
+    is_all_day,
+    parent_circle_id,
+    tags,
+    rrule
+) => {
     // const date = new Date();
     // const circleId = parent_circle_id;
 
@@ -3674,9 +4014,18 @@ const fn_getMemberData = async (circleId) => {
     const members = memberConnections
         .filter((x) => x.target.type === "user")
         .map((x) => {
-            return { id: x.target.id, name: x.target.name, description: x.target.description, content: x.target.content };
+            return {
+                id: x.target.id,
+                name: x.target.name,
+                description: x.target.description,
+                content: x.target.content,
+            };
         });
-    return { members: members, total_count: 120, on_codo_platform: members.length };
+    return {
+        members: members,
+        total_count: 120,
+        on_codo_platform: members.length,
+    };
 };
 
 //#endregion
@@ -3773,16 +4122,35 @@ app.post("/update", auth, async (req, res) => {
             // list all commants
             let commands = [
                 { name: "list", description: "Lists all commands." },
-                { name: "delete_circle", args: "<circle_id>", description: "Delete circle." },
-                { name: "search", args: "<query> | circle <circle_id> ?<type>", description: "Does semantic search using either query or circle ID." },
-                { name: "ai_search_docs", args: "<agent_id> <query>", description: "Does semantic search among documents similar to what the AI does." },
-                { name: "upsert_embeddings", description: "Goes through all circles and upserts embeddings into pinecone database." },
+                {
+                    name: "delete_circle",
+                    args: "<circle_id>",
+                    description: "Delete circle.",
+                },
+                {
+                    name: "search",
+                    args: "<query> | circle <circle_id> ?<type>",
+                    description: "Does semantic search using either query or circle ID.",
+                },
+                {
+                    name: "ai_search_docs",
+                    args: "<agent_id> <query>",
+                    description: "Does semantic search among documents similar to what the AI does.",
+                },
+                {
+                    name: "upsert_embeddings",
+                    description: "Goes through all circles and upserts embeddings into pinecone database.",
+                },
                 {
                     name: "connect",
                     args: "<source_id> connected_mutually_to/admin_of/admin_by <target_id>",
                     description: "Creates a connection between two circles.",
                 },
-                { name: "get_connections", args: "<circle_id>", description: "Gets all connections for a circle." },
+                {
+                    name: "get_connections",
+                    args: "<circle_id>",
+                    description: "Gets all connections for a circle.",
+                },
                 {
                     name: "count_new_circles",
                     args: "<type> <date>",
@@ -3808,7 +4176,10 @@ app.post("/update", auth, async (req, res) => {
             let circleDocs = await db.collection("circle_data").where("created_at", ">=", date).get();
             let circleData = [];
             for (var j = 0; j < circleDocs.docs.length; ++j) {
-                circleData.push({ id: circleDocs.docs[j].id, ...circleDocs.docs[j].data() });
+                circleData.push({
+                    id: circleDocs.docs[j].id,
+                    ...circleDocs.docs[j].data(),
+                });
             }
             let emails = circleData.filter((x) => x.agreed_to_email_updates && x.email).map((x) => x.email);
             return res.json({ emails });
@@ -3833,7 +4204,12 @@ app.post("/update", auth, async (req, res) => {
                 let result = await semanticSearch(query, circleId, filterType ? [filterType] : defaultSearchTypes, 20);
                 return res.json({
                     data: result.map((x) => {
-                        return { name: x.name, description: x.description, type: x.type, score: x.score };
+                        return {
+                            name: x.name,
+                            description: x.description,
+                            type: x.type,
+                            score: x.score,
+                        };
                     }),
                 });
             } catch (error) {
@@ -3879,7 +4255,10 @@ app.post("/update", auth, async (req, res) => {
             let circleDocs = await db.collection("circles").get();
             let circles = [];
             for (var j = 0; j < circleDocs.docs.length; ++j) {
-                circles.push({ id: circleDocs.docs[j].id, ...circleDocs.docs[j].data() });
+                circles.push({
+                    id: circleDocs.docs[j].id,
+                    ...circleDocs.docs[j].data(),
+                });
             }
             let response = await upsertCirclesEmbeddings(circles);
 
@@ -3912,7 +4291,9 @@ app.post("/update", auth, async (req, res) => {
             const circle = await getCircle(authCallerId);
             const receiverData = await getCircleData(circleId);
             if (!receiverData.onesignal_ids || receiverData.onesignal_ids.length === 0) {
-                return res.json({ message: "Receiver has no OneSignal subscription" });
+                return res.json({
+                    message: "Receiver has no OneSignal subscription",
+                });
             }
 
             const config = await getConfig();
@@ -4032,7 +4413,9 @@ app.post("/update", auth, async (req, res) => {
                 return res.json({ error: "invalid target" });
             }
             if (sourceId === targetId) {
-                return res.json({ error: "source can't be the same as target" });
+                return res.json({
+                    error: "source can't be the same as target",
+                });
             }
 
             switch (type) {
@@ -4063,9 +4446,15 @@ app.post("/update", auth, async (req, res) => {
             if (!targetId) {
                 return res.json({ error: "invalid target" });
             }
-            const connectionDocs = await db.collection("connections").where("circle_ids", "array-contains", targetId).get();
+            const connectionDocs = await db
+                .collection("connections")
+                .where("circle_ids", "array-contains", targetId)
+                .get();
 
-            let result = { connection_count: `${connectionDocs.docs.length} connections`, connections: [] };
+            let result = {
+                connection_count: `${connectionDocs.docs.length} connections`,
+                connections: [],
+            };
 
             if (commandArgs[2] !== "count") {
                 // loop through connections and update them
@@ -4084,7 +4473,11 @@ app.post("/update", auth, async (req, res) => {
                 return res.json({ error: "invalid type" });
             }
             let date = new Date(commandArgs[2] ?? "2020-01-01");
-            const snapshot = await db.collection("circles").where("type", "==", type).where("created_at", ">=", date).get();
+            const snapshot = await db
+                .collection("circles")
+                .where("type", "==", type)
+                .where("created_at", ">=", date)
+                .get();
 
             let result = { count: `${snapshot.docs.length} ${type}s` };
             return res.json({ result });
@@ -4104,7 +4497,10 @@ app.post("/update", auth, async (req, res) => {
                     if (circle.content?.startsWith("<")) {
                         // convert HTML to Markdown
                         let newContent = turndownService.turndown(circle.content);
-                        await upsertCircle(circle.id, { id: circle.id, content: newContent });
+                        await upsertCircle(circle.id, {
+                            id: circle.id,
+                            content: newContent,
+                        });
                         ++count;
                     }
                 });
@@ -4116,7 +4512,10 @@ app.post("/update", auth, async (req, res) => {
                 }
 
                 let newContent = turndownService.turndown(circle.content);
-                await upsertCircle(targetId, { id: targetId, content: newContent });
+                await upsertCircle(targetId, {
+                    id: targetId,
+                    content: newContent,
+                });
             }
         } else if (commandArgs[0] === "circle_text") {
             // gets circle text for a circle
@@ -4147,7 +4546,17 @@ app.post("/update", auth, async (req, res) => {
 const runtimeOpts = {
     timeoutSeconds: 540,
     memory: "1GB",
-    secrets: ["OPENAI", "ONESIGNAL_APP_ID", "ONESIGNAL_API_KEY", "JITSI_API_KEY", "JITSI_DOMAIN", "PINECONE_API_KEY", "PINECONE_ENVIRONMENT"],
+    secrets: [
+        "OPENAI",
+        "ONESIGNAL_APP_ID",
+        "ONESIGNAL_API_KEY",
+        "JITSI_API_KEY",
+        "JITSI_DOMAIN",
+        "PINECONE_API_KEY",
+        "PINECONE_ENVIRONMENT",
+        "ZOOM_SDK_KEY",
+        "ZOOM_SDK_SECRET",
+    ],
 };
 
 exports.api = functions.region("europe-west1").runWith(runtimeOpts).https.onRequest(app);
@@ -4167,9 +4576,9 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
     // <meta property="og:article:section" content="Motion" />
     // {motion.published_at && <meta property="og:article:published_time" content={fromFsDate(motion.published_at)} />}
 
-    let description = "co:do";
+    let description = "Circles";
     let type = "website";
-    let title = "co:do";
+    let title = "Circles";
     let imageUrl = path[0] + "/default-cover.png";
     let resourceId = null;
     let article = null;
@@ -4182,7 +4591,7 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
         }
     }
     // load information about resource
-    let appName = "co:do";
+    let appName = "Circles";
 
     if (resourceId) {
         let circle = await getCircle(resourceId);
@@ -4201,9 +4610,17 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
                 if (circle.language === "sv") {
                     if (circle.starts_at) {
                         let dateObj = circle.starts_at.toDate();
-                        let weekday = dateObj.toLocaleString("sv", { weekday: "short" });
-                        let monthday = dateObj.toLocaleDateString("sv", { month: "short", day: "numeric" });
-                        let time = dateObj.toLocaleTimeString("sv", { hour: "2-digit", minute: "2-digit" });
+                        let weekday = dateObj.toLocaleString("sv", {
+                            weekday: "short",
+                        });
+                        let monthday = dateObj.toLocaleDateString("sv", {
+                            month: "short",
+                            day: "numeric",
+                        });
+                        let time = dateObj.toLocaleTimeString("sv", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
                         datestr = ` (${weekday}, ${monthday} kl ${time})`;
                     }
 
@@ -4211,9 +4628,17 @@ exports.preRender = functions.https.onRequest(async (request, response) => {
                 } else {
                     if (circle.starts_at) {
                         let dateObj = circle.starts_at.toDate();
-                        let weekday = dateObj.toLocaleString("en", { weekday: "short" });
-                        let monthday = dateObj.toLocaleDateString("en", { month: "short", day: "numeric" });
-                        let time = dateObj.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" });
+                        let weekday = dateObj.toLocaleString("en", {
+                            weekday: "short",
+                        });
+                        let monthday = dateObj.toLocaleDateString("en", {
+                            month: "short",
+                            day: "numeric",
+                        });
+                        let time = dateObj.toLocaleTimeString("en", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
                         datestr = ` (${weekday}, ${monthday} kl ${time})`;
                     }
 

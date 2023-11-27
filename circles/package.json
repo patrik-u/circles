@@ -17,6 +17,7 @@
         "@sentry/react": "^7.41.0",
         "@sentry/tracing": "^7.41.0",
         "@use-gesture/react": "^10.2.24",
+        "@zoomus/websdk": "^2.18.0",
         "algoliasearch": "^4.14.2",
         "axios": "^0.23.0",
         "caniuse-lite": "^1.0.30001517",
@@ -111,6 +112,10 @@
             "react-app",
             "react-app/jest"
         ]
+    },
+    "prettier": {
+        "printWidth": 120,
+        "tabWidth": 4
     },
     "browserslist": {
         "production": [
