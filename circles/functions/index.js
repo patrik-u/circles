@@ -105,6 +105,34 @@ const auth = async (req, res, next) => {
 };
 
 // authorize user and decode token if available but let unautherized users through
+const authOptional = async (req, res, next) => {
+    if (
+        (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer ")) &&
+        !(req.cookies && req.cookies.__session)
+    ) {
+        next();
+        return;
+    }
+
+    let idToken;
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+        // read the ID Token from the Authorization header.
+        idToken = req.headers.authorization.split("Bearer ")[1];
+    } else if (req.cookies) {
+        // read the ID Token from cookie.
+        idToken = req.cookies.__session;
+    } else {
+        // no cookie
+        next();
+        return;
+    }
+
+    try {
+        const decodedIdToken = await admin.auth().verifyIdToken(idToken);
+        req.user = decodedIdToken;
+    } catch (error) {}
+    next();
+};
 
 //#endregion
 
@@ -974,17 +1002,18 @@ const createZoomMeeting = async (circle) => {
 };
 
 const generateZoomToken = (apiKey, secret, meetingNumber, role) => {
-    const iat = Math.round(new Date().getTime() / 1000) - 30;
-    const exp = iat + 60 * 60 * 48; // Signature valid for 48 hours
+    const iat = Math.round(new Date().getTime() / 1000);
+    const exp = iat + 60 * 60 * 2;
 
     // JWT payload for Zoom Meeting SDK
     const payload = {
         appKey: apiKey,
+        sdkKey: apiKey,
+        mn: meetingNumber,
         iat,
         exp,
         tokenExp: exp,
-        tpc: meetingNumber, // Topic (Meeting Number)
-        role,
+        role: role,
     };
 
     return jsonwebtoken.sign(payload, secret);
@@ -1823,12 +1852,12 @@ app.get("/circles/:id/circles", async (req, res) => {
 });
 
 // gets zoom credentials for circle
-app.get("/circles/:id/zoom-credentials", auth, async (req, res) => {
+app.get("/circles/:id/zoom-credentials", authOptional, async (req, res) => {
     functions.logger.log("Fetching zoom credentials");
     console.log("Fetching zoom credentials");
 
     const circleId = req.params.id;
-    const authCallerId = req.user.user_id;
+    const authCallerId = req.user?.user_id;
 
     try {
         // see if user is admin of circle
@@ -1836,16 +1865,30 @@ app.get("/circles/:id/zoom-credentials", auth, async (req, res) => {
         if (!circle) {
             return res.json({ error: "circle not found" });
         }
-        const isAdmin = await isAdminOf(authCallerId, circleId);
+        const isAdmin = authCallerId ? await isAdminOf(authCallerId, circleId) : false;
 
-        const role = isAdmin ? 1 : 0; // 1 for host, 0 for attendee
-        const user = await getCircle(authCallerId);
-        const userData = await getCircleData(authCallerId);
-        let meetingNumber = circle.zoom_meeting_number;
+        const role = 0; //isAdmin ? 1 : 0; // 1 for host, 0 for attendee
+        let userName = "Anonymous";
+        let userEmail = null;
+
+        if (authCallerId) {
+            const user = await getCircle(authCallerId);
+            const userData = await getCircleData(authCallerId);
+            userName = user.name;
+            userEmail = userData.email;
+        }
+
+        // get meeting number and passcode
+        let circleData = await getCircleData(circleId);
+        let meetingNumber = circleData?.zoom_meeting_number;
+        let passWord = circleData?.zoom_passcode;
+
+        //let meetingNumber = circle.zoom_meeting_number;
 
         if (!meetingNumber) {
-            // create new zoom meeting
-            meetingNumber = await createZoomMeeting(circle, authCallerId);
+            // TODO create new zoom meeting
+            // meetingNumber = await createZoomMeeting(circle);
+            return res.json({ error: "no zoom meeting room set up" });
         }
 
         const apiKey = process.env.ZOOM_SDK_KEY;
@@ -1857,8 +1900,9 @@ app.get("/circles/:id/zoom-credentials", auth, async (req, res) => {
             signature,
             apiKey,
             meetingNumber,
-            userName: user.name,
-            userEmail: userData.email,
+            userName,
+            userEmail,
+            passWord,
         });
     } catch (error) {
         functions.logger.error("Error while getting zoom credentials:", error);

@@ -45,16 +45,41 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
 
     return (
         <>
-            <Box color="white" mt="0" bg={panelBackground} height="100vh" minH="100vh" maxW={isMobile ? "none" : "400px"} width="full" position="relative">
+            <Box
+                color="white"
+                mt="0"
+                bg={panelBackground}
+                height="100vh"
+                minH="100vh"
+                maxW={isMobile ? "none" : "400px"}
+                width="full"
+                position="relative"
+            >
                 <Scrollbars autoHide>
-                    <CircleListItem item={globalCircle} onClick={() => onCircleClick(globalCircle)} isDark={true} inSelect={true} inNav={true} />
-                    {favoriteCircles?.map((item) =>
-                        view === "compact" ? (
-                            <CircleListItem key={item.id} item={item} onClick={() => onCircleClick(item)} isDark={true} inSelect={true} inNav={true} />
-                        ) : (
-                            <CircleListItemNormal key={item.id} item={item} onClick={() => onCircleClick(item)} />
-                        )
-                    )}
+                    <CircleListItem
+                        item={globalCircle}
+                        onClick={() => onCircleClick(globalCircle)}
+                        isDark={true}
+                        inSelect={true}
+                        inNav={true}
+                    />
+
+                    {favoriteCircles
+                        ?.filter((x) => x.id !== "global")
+                        ?.map((item) =>
+                            view === "compact" ? (
+                                <CircleListItem
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => onCircleClick(item)}
+                                    isDark={true}
+                                    inSelect={true}
+                                    inNav={true}
+                                />
+                            ) : (
+                                <CircleListItemNormal key={item.id} item={item} onClick={() => onCircleClick(item)} />
+                            )
+                        )}
 
                     {isMobile && (
                         <Flex
@@ -72,7 +97,13 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
                             cursor="pointer"
                             zIndex="100"
                         >
-                            <Icon width={iconSize + 8 + "px"} height={iconSize + 8 + "px"} color={"#ddd"} as={MdOutlineClose} cursor="pointer" />
+                            <Icon
+                                width={iconSize + 8 + "px"}
+                                height={iconSize + 8 + "px"}
+                                color={"#ddd"}
+                                as={MdOutlineClose}
+                                cursor="pointer"
+                            />
                         </Flex>
                     )}
                 </Scrollbars>
