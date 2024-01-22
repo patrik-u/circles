@@ -1,8 +1,8 @@
 //#region imports
 import { useEffect, useCallback } from "react";
-import { log } from "components/Helpers";
+import { log } from "@/components/Helpers";
 import { useAtom } from "jotai";
-import { userLocationAtom } from "components/Atoms";
+import { userLocationAtom } from "@/components/Atoms";
 import { getPreciseDistance } from "geolib";
 //#endregion
 
@@ -27,7 +27,10 @@ export const LocationManager = () => {
                 if (preciseDistance < 100) return;
             }
 
-            log(`getUserLocationSuccess (lat: ${location.coords.latitude}, lon: ${location.coords.longitude}, acc: ${location.coords.accuracy})`, 0);
+            log(
+                `getUserLocationSuccess (lat: ${location.coords.latitude}, lon: ${location.coords.longitude}, acc: ${location.coords.accuracy})`,
+                0
+            );
             setUserLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
         },
         [userLocation, setUserLocation]

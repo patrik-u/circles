@@ -49,6 +49,6 @@ export function $createDocumentHeadingNode(id, tag) {
     return new DocumentHeadingNode(id, tag);
 }
 
-export function $isDocumentHeadingNode(node?) {
+export function $isDocumentHeadingNode(node) {
     return node instanceof DocumentHeadingNode;
 }

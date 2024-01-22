@@ -6,8 +6,8 @@ import { FaCalendarAlt, FaVideo } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
 import { BsChatText } from "react-icons/bs";
 import { BiNetworkChart } from "react-icons/bi";
-import i18n from "i18n/Localization";
-import { isAdmin, isConnected } from "components/Helpers";
+import i18n from "@/i18n/Localization";
+import { isAdmin, isConnected } from "@/components/Helpers";
 //#endregion
 
 export const routes = {
@@ -134,7 +134,13 @@ export const getNavigationItems = (circle, isAdmin) => {
     });
 
     if (isAdmin) {
-        navigationItems.push({ route: routes.circle(circle).admin, name: i18n.t("Admin"), icon: RiAdminLine, switchOffMap: true, matchSubPaths: true });
+        navigationItems.push({
+            route: routes.circle(circle).admin,
+            name: i18n.t("Admin"),
+            icon: RiAdminLine,
+            switchOffMap: true,
+            matchSubPaths: true,
+        });
     }
 
     return navigationItems;

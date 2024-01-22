@@ -8,5 +8,8 @@
                 "function": "preRender"
             }
         ]
+    },
+    "functions": {
+        "source": "functions"
     }
 }

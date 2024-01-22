@@ -1,15 +1,15 @@
 //#region imports
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import db, { auth } from "components/Firebase";
+import db, { auth } from "@/components/Firebase";
 import * as Sentry from "@sentry/react";
 import { signOut, onAuthStateChanged, onIdTokenChanged, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
-import { toastError, log, fromFsDate } from "components/Helpers";
+import { toastError, log, fromFsDate } from "@/components/Helpers";
 import { collection, doc, onSnapshot, query, where, GeoPoint } from "firebase/firestore";
-import i18n from "i18n/Localization";
+import i18n from "@/i18n/Localization";
 import { useAtom } from "jotai";
-import { signInStatusValues } from "components/Constants";
+import { signInStatusValues } from "@/components/Constants";
 import {
     uidAtom,
     userAtom,
@@ -23,10 +23,10 @@ import {
     inVideoConferenceAtom,
     circleAtom,
     updateRelationAtom,
-} from "components/Atoms";
-import config from "Config";
-import useScript from "components/useScript";
-import { tnsLastUpdate } from "components/TermsOfService";
+} from "@/components/Atoms";
+import config from "@/Config";
+import useScript from "@/components/useScript";
+import { tnsLastUpdate } from "@/components/TermsOfService";
 //#endregion
 
 // signs out user
@@ -273,7 +273,10 @@ export const AccountManager = () => {
 
         // we want to do this once only unless circle ID changes
 
-        let location = userLocation?.latitude && userLocation?.longitude ? new GeoPoint(userLocation.latitude, userLocation.longitude) : null;
+        let location =
+            userLocation?.latitude && userLocation?.longitude
+                ? new GeoPoint(userLocation.latitude, userLocation.longitude)
+                : null;
 
         axios
             .put(`/circles/${user.id}/activity`, {

@@ -1,8 +1,8 @@
 const SentryCli = require("@sentry/cli");
 async function createReleaseAndUpload() {
-    const release = `${process.env.REACT_APP_NAME}@${process.env.REACT_APP_VERSION}`;
+    const release = `${import.meta.env.VITE_APP_NAME}@${import.meta.env.VITE_APP_VERSION}`;
     if (!release) {
-        console.warn("REACT_APP_SENTRY_RELEASE is not set");
+        console.warn("VITE_APP_SENTRY_RELEASE is not set");
         return;
     }
     const cli = new SentryCli();

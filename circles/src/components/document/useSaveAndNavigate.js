@@ -1,9 +1,9 @@
 //#region imports
-import { toastError, toastInfo } from "components/Helpers";
-import { log } from "components/Helpers";
+import { toastError, toastInfo } from "@/components/Helpers";
+import { log } from "@/components/Helpers";
 import { useAtom } from "jotai";
-import { saveIdAtom } from "components/Atoms";
-import { useNavigateNoUpdates } from "components/RouterUtils";
+import { saveIdAtom } from "@/components/Atoms";
+import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 //#endregion

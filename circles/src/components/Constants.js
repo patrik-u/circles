@@ -1,4 +1,4 @@
-import i18n from "i18n/Localization";
+import i18n from "@/i18n/Localization";
 
 export const defaultContentWidth = "435px";
 export const defaultCoverHeight = { default: 464, mobile: 250 };

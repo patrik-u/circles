@@ -1,7 +1,7 @@
 const configs = {
     dev: {
         environment: "dev",
-        apiUrl: "http://localhost:5001/circles-a0ce1/europe-west1/api",
+        apiUrl: "http://localhost:5000/circles-a0ce1/europe-west1/api",
         firebase: {
             apiKey: "AIzaSyD4PvlvtCDQeiWJejOlqBCyWi0gItOQO2E",
             authDomain: "circles-a0ce1.firebaseapp.com",
@@ -65,7 +65,7 @@ const configs = {
         oneSignalAppId: "f5691af6-6908-4ddb-8f37-1a8a00463692",
         mapBoxToken: "pk.eyJ1IjoidGltYW9sc3NvbiIsImEiOiJjbGQyMW05M2YwMXVhM3lvYzMweWllbDZtIn0.ar7LH2YZverGDBWGjxQ65w",
         environment: "devprod",
-        apiUrl: "http://localhost:5001/codo-fab51/europe-west1/api",
+        apiUrl: "http://localhost:5000/codo-fab51/europe-west1/api",
         logLevel: 0,
         ai_agent: "1p64TIEPMcwIdxdRjzvJ",
     },
@@ -93,7 +93,7 @@ const configs = {
 };
 
 const getConfig = () => {
-    switch (process.env.REACT_APP_ENVIRONMENT) {
+    switch (import.meta.env.VITE_APP_ENVIRONMENT) {
         default:
         case "dev":
             return configs.dev;

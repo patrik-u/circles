@@ -1,5 +1,5 @@
-import { DataProvider } from "services/DataProvider";
-import db from "components/Firebase";
+import { DataProvider } from "@/services/DataProvider";
+import db from "@/components/Firebase";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 
 // fetches and saves circle data from the Firebase backend
