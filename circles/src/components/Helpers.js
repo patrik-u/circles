@@ -72,7 +72,11 @@ export const isConnected = (userData, circleId, types) => {
 
 export const isConnectedOrPending = (userData, circleId) => {
     if (!circleId || !userData) return false;
-    return userData.id === circleId || userData.connected_mutually_to?.includes(circleId) || userData.connected_mutually_to_request?.includes(circleId);
+    return (
+        userData.id === circleId ||
+        userData.connected_mutually_to?.includes(circleId) ||
+        userData.connected_mutually_to_request?.includes(circleId)
+    );
 };
 
 export const hasUpdates = (userData, circle, category) => {
@@ -147,7 +151,7 @@ export const getImageKitUrl = (url, width, height) => {
             default:
             case "dev":
                 return url;
-            case "dev-prod":
+            case "devprod":
                 return url;
             case "staging":
                 imageKitEndpoint += "web-staging/";
@@ -258,7 +262,10 @@ export const isActiveInCircle = (circle) => {
 };
 
 export const isActiveInVideoConference = (circle) => {
-    return isWithinMinutes(circle?.activity?.active_in_video_conference, 2) || isWithinMinutes(circle?.activity?.active_video_conference, 2);
+    return (
+        isWithinMinutes(circle?.activity?.active_in_video_conference, 2) ||
+        isWithinMinutes(circle?.activity?.active_video_conference, 2)
+    );
 };
 
 export const getRelationSet = (user, circle) => {
@@ -302,7 +309,9 @@ export const datesAreOnSameDay = (first, second) => {
     if (!firstDate || !secondDate) return false;
 
     return (
-        firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth() && firstDate.getDate() === secondDate.getDate()
+        firstDate.getFullYear() === secondDate.getFullYear() &&
+        firstDate.getMonth() === secondDate.getMonth() &&
+        firstDate.getDate() === secondDate.getDate()
     );
 };
 
@@ -325,9 +334,9 @@ export const getDayAndMonth = (date = new Date()) => {
 };
 
 export const getDateAndTimeLong = (date) => {
-    return `${fromFsDate(date)?.toLocaleDateString?.(undefined, { month: "long", day: "numeric" })} ${i18n.t("clock_at")} ${fromFsDate(
-        date
-    )?.toLocaleTimeString?.(undefined, {
+    return `${fromFsDate(date)?.toLocaleDateString?.(undefined, { month: "long", day: "numeric" })} ${i18n.t(
+        "clock_at"
+    )} ${fromFsDate(date)?.toLocaleTimeString?.(undefined, {
         hour: "2-digit",
         minute: "2-digit",
     })}`;
