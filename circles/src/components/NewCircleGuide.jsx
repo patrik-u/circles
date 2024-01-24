@@ -1,22 +1,17 @@
 //#region imports
-import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
-import { Flex, Box, Text, Spinner, Button, Checkbox, useToast, HStack, VStack } from "@chakra-ui/react";
-import { Scrollbars } from "react-custom-scrollbars-2";
+import React, { useState, useMemo, Suspense } from "react";
+import { Flex, Box, Spinner, HStack, VStack } from "@chakra-ui/react";
 import axios from "axios";
-import { toastError, log } from "@/components/Helpers";
 import i18n from "@/i18n/Localization";
-import config from "@/Config";
-import PrivacyPolicy from "@/components/TermsOfService";
 import { userAtom, toggleAboutAtom } from "@/components/Atoms";
 import { useAtom } from "jotai";
-import { routes, openCircle, openAboutCircle } from "@/components/Navigation";
+import { openCircle, openAboutCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CircleContentForm } from "@/components/settings/CircleContentForm";
 import { CircleImagesForm } from "@/components/settings/CircleImagesForm";
 import { CircleMissionForm } from "@/components/settings/CircleMissionForm";
 import { CircleTagsForm } from "@/components/settings/CircleTagsForm";
 import { CircleOffersAndNeedsForm } from "@/components/settings/CircleOffersAndNeedsForm";
-import { CircleBaseForm } from "@/components/settings/CircleBaseForm";
 import { CircleBasePopupForm } from "@/components/settings/CircleBasePopupForm";
 import { CircleTypeForm } from "@/components/settings/CircleTypeForm";
 //#endregion

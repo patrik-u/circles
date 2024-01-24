@@ -10,15 +10,19 @@ service cloud.firestore {
       allow write: if false;
     }
     match /circle_data/{circle_data} {
-    	allow read: if request.auth.uid == resource.data.circle_id;
+    	allow read: if request.auth.uid == resource.data.circle_id || request.auth.uid == resource.id || request.auth.uid in resource.data.admin_by || request.auth.uid in resource.data.owned_by;
       allow write: if false;
     }
     match /connections/{connection} {
     	allow read: if true;
       allow write: if false;
     }
+    match /chat/{chat} {
+      allow read: if true;
+      allow write: if false;
+    }    
     match /chat_messages/{chat_message} {
-     	allow read: if resource.data.circle_id == request.auth.uid || get(/databases/$(database)/documents/circles/$(resource.data.circle_id)).data.chat_is_public || (request.auth.uid in get(/databases/$(database)/documents/circle_data/$(resource.data.circle_id)).data.connected_mutually_to);
+     	allow read: if resource.data.circle_id == request.auth.uid || get(/databases/$(database)/documents/circles/$(resource.data.circle_id)).data.is_public || (request.auth.uid in get(/databases/$(database)/documents/circle_data/$(resource.data.circle_id)).data.connected_mutually_to) || (request.auth.uid in get(/databases/$(database)/documents/circles/$(resource.data.circle_id)).data.circle_ids);
       allow write: if false;
     }
     match /notifications/{notification} {
@@ -28,6 +32,10 @@ service cloud.firestore {
     match /chat_notifications/{chat_notification} {
     	allow read: if request.auth.uid == resource.data.user_id;
       allow write: if false;
-    } 
+    }
+    match /config/{config} {
+    	allow read: if true;
+      allow write: if false;
+    }
   }
 }

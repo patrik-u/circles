@@ -15,9 +15,8 @@ import CreateNewCirclePopup from "@/components/CreateNewCirclePopup";
 import PushNotificationsManager from "@/components/PushNotificationsManager";
 import ServerConfigManager from "@/components/ServerConfigManager";
 import { Tnc } from "@/components/TermsOfService";
+import { Circle } from "@/components/Circle";
 //#endregion
-
-const Circle = lazy(() => import("@/components/Circle"));
 
 const App = () => {
     log("App.render", -1);

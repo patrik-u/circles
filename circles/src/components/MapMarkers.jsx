@@ -30,6 +30,7 @@ import {
 } from "@/components/Atoms";
 import { useNavigateNoUpdates, useQueryParamsNoUpdates } from "@/components/RouterUtils";
 import { useSearchParams } from "react-router-dom";
+import { CirclePreview } from "@/components/CirclePreview";
 //#endregion
 
 export const LocationPickerMarker = ({ position }) => {
@@ -205,8 +206,6 @@ export const CircleMapEdges = ({ circle, circles }) => {
 export const CircleMarker = ({ circle, highlighted }) => {
     return circle && <CircleMapMarker circle={circle} highlighted={highlighted} />;
 };
-
-const CirclePreview = lazy(() => import("@/components/CirclePreview"));
 
 export const CircleMapMarker = ({ circle, highlighted, ignoreIsActive }) => {
     const [user] = useAtom(userAtom);

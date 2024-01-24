@@ -498,7 +498,7 @@ i.chevron-down {
     display: inline-block;
     height: 8px;
     width: 8px;
-    background-image: url(assets/images/icons/chevron-down.svg);
+    background-image: url(/assets/images/icons/chevron-down.svg);
 }
 
 #block-controls button:hover {
@@ -518,46 +518,47 @@ i.chevron-down {
 }
 
 #block-controls span.block-type.paragraph {
-    background-image: url(assets/images/icons/text-paragraph.svg);
+    background-image: url(/assets/images/icons/text-paragraph.svg);
 }
 
 #block-controls span.block-type.h1 {
-    background-image: url(assets/images/icons/type-h1.svg);
+    background-image: url(/assets/images/icons/type-h1.svg);
 }
 
 #block-controls span.block-type.h2 {
-    background-image: url(assets/images/icons/type-h2.svg);
+    background-image: url(/assets/images/icons/type-h2.svg);
 }
 
 #block-controls span.block-type.h3 {
-    background-image: url(assets/images/icons/type-h3.svg);
+    background-image: url(/assets/images/icons/type-h3.svg);
 }
 
 #block-controls span.block-type.h4 {
-    background-image: url(assets/images/icons/type-h4.svg);
+    background-image: url(/assets/images/icons/type-h4.svg);
 }
 
 #block-controls span.block-type.quote {
-    background-image: url(assets/images/icons/chat-square-quote.svg);
+    background-image: url(/assets/images/icons/chat-square-quote.svg);
 }
 
 #block-controls span.block-type.ul {
-    background-image: url(assets/images/icons/list-ul.svg);
+    background-image: url(/assets/images/icons/list-ul.svg);
 }
 
 #block-controls span.block-type.ol {
-    background-image: url(assets/images/icons/list-ol.svg);
+    background-image: url(/assets/images/icons/list-ol.svg);
 }
 
 #block-controls span.block-type.code {
-    background-image: url(assets/images/icons/code.svg);
+    background-image: url(/assets/images/icons/code.svg);
 }
 
 .dropdown {
     z-index: 150;
     display: block;
     position: absolute;
-    box-shadow: 0 12px 28px 0 rgba(0, 0, 0, 0.2), 0 2px 4px 0 rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 12px 28px 0 rgba(0, 0, 0, 0.2), 0 2px 4px 0 rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
     border-radius: 8px;
     min-width: 100px;
     min-height: 40px;
@@ -650,7 +651,7 @@ i.chevron-down {
 }
 
 .link-editor div.link-edit {
-    background-image: url(assets/images/icons/pencil-fill.svg);
+    background-image: url(/assets/images/icons/pencil-fill.svg);
     background-size: 16px;
     background-position: center;
     background-repeat: no-repeat;
@@ -704,93 +705,93 @@ i.chevron-down {
 }
 
 i.undo {
-    background-image: url(assets/images/icons/arrow-counterclockwise.svg);
+    background-image: url(/assets/images/icons/arrow-counterclockwise.svg);
 }
 
 i.redo {
-    background-image: url(assets/images/icons/arrow-clockwise.svg);
+    background-image: url(/assets/images/icons/arrow-clockwise.svg);
 }
 
 .icon.paragraph {
-    background-image: url(assets/images/icons/text-paragraph.svg);
+    background-image: url(/assets/images/icons/text-paragraph.svg);
 }
 
 .icon.h1-heading,
 .icon.h1 {
-    background-image: url(assets/images/icons/type-h1.svg);
+    background-image: url(/assets/images/icons/type-h1.svg);
 }
 
 .icon.h2-heading,
 .icon.h2 {
-    background-image: url(assets/images/icons/type-h2.svg);
+    background-image: url(/assets/images/icons/type-h2.svg);
 }
 
 .icon.h3-heading,
 .icon.h3 {
-    background-image: url(assets/images/icons/type-h3.svg);
+    background-image: url(/assets/images/icons/type-h3.svg);
 }
 
 .icon.h4-heading,
 .icon.h4 {
-    background-image: url(assets/images/icons/type-h4.svg);
+    background-image: url(/assets/images/icons/type-h4.svg);
 }
 
 .icon.bullet-list,
 .icon.ul {
-    background-image: url(assets/images/icons/list-ul.svg);
+    background-image: url(/assets/images/icons/list-ul.svg);
 }
 
 .icon.numbered-list,
 .icon.ol {
-    background-image: url(assets/images/icons/list-ol.svg);
+    background-image: url(/assets/images/icons/list-ol.svg);
 }
 
 .icon.quote {
-    background-image: url(assets/images/icons/chat-square-quote.svg);
+    background-image: url(/assets/images/icons/chat-square-quote.svg);
 }
 
 .icon.code {
-    background-image: url(assets/images/icons/code.svg);
+    background-image: url(/assets/images/icons/code.svg);
 }
 
 i.bold {
-    background-image: url(assets/images/icons/type-bold.svg);
+    background-image: url(/assets/images/icons/type-bold.svg);
 }
 
 i.italic {
-    background-image: url(assets/images/icons/type-italic.svg);
+    background-image: url(/assets/images/icons/type-italic.svg);
 }
 
 i.underline {
-    background-image: url(assets/images/icons/type-underline.svg);
+    background-image: url(/assets/images/icons/type-underline.svg);
 }
 
 i.strikethrough {
-    background-image: url(assets/images/icons/type-strikethrough.svg);
+    background-image: url(/assets/images/icons/type-strikethrough.svg);
 }
 
 i.code {
-    background-image: url(assets/images/icons/code.svg);
+    background-image: url(/assets/images/icons/code.svg);
 }
 
 i.link {
-    background-image: url(assets/images/icons/link.svg);
+    background-image: url(/assets/images/icons/link.svg);
 }
 
 i.left-align {
-    background-image: url(assets/images/icons/text-left.svg);
+    background-image: url(/assets/images/icons/text-left.svg);
 }
 
 i.center-align {
-    background-image: url(assets/images/icons/text-center.svg);
+    background-image: url(/assets/images/icons/text-center.svg);
 }
 
 i.right-align {
-    background-image: url(assets/images/icons/text-right.svg);
+    background-image: url(/assets/images/icons/text-right.svg);
 }
 
 i.justify-align {
-    background-image: url(assets/images/icons/justify.svg);
+    background-image: url(/assets/images/icons/justify.svg);
 }
 
 /* Story navigator */
