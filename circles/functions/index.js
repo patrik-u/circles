@@ -4598,8 +4598,8 @@ const runtimeOpts = {
         "JITSI_DOMAIN",
         "PINECONE_API_KEY",
         "PINECONE_ENVIRONMENT",
-        "ZOOM_SDK_KEY",
-        "ZOOM_SDK_SECRET",
+        // "ZOOM_SDK_KEY",
+        // "ZOOM_SDK_SECRET",
     ],
 };
 
