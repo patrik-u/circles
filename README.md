@@ -10,5 +10,5 @@ This is an early version of the platform, we have a lot of ideas about where we 
 
 ### [DEMO](https://circles-325718.web.app/)
 
-[Instructions on how to set up your own instance](New Instance Guide.md)
+[Instructions on how to set up your own instance](https://github.com/patrik-u/circles/blob/main/New%20Instance%20Guide.md)
 

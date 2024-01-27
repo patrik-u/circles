@@ -370,11 +370,27 @@ MapBox is used to display the map.
 
     `mapBoxToken: "<your mapbox token>"`
 
+## Configuring Pinecone
+
+1. Sign up on [https://pinecone.io](https://www.pinecone.io)
+2. Click on "Create Index"
+3. Set dimensions to 1536 and metric to cosine
+
+TODO
+
+## Configuring JITSI
+
+TODO
+
 ## Configuring Sentry
 
 Sentry is used for bugtracking.
 
 TODO
+
+## Cors Issues
+
+- Add "allUsers - Cloud Functions Invoker" to cloud functions (api & preRender) in Google cloud console  
 
 ## Deploying App
 
