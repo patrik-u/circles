@@ -375,6 +375,7 @@ MapBox is used to display the map.
 1. Sign up on [https://pinecone.io](https://www.pinecone.io)
 2. Click on "Create Index"
 3. Set dimensions to 1536 and metric to cosine
+4. Set PINECONE_ENVIRONMENT (e.g. gcp-starter) and PINECONE_API_KEY, found in the pinecone site.
 
 TODO
 
