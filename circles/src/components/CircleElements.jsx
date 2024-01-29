@@ -1338,7 +1338,8 @@ export const CirclePicture = ({
     const imageOffset = circleBorderColors.length * borderWidth;
 
     const isHexagon = (inCircle) => {
-        return inCircle?.type === "user";
+        return false;
+        //return inCircle?.type === "user";
     };
 
     const getShapeStyle = (inCircle) => {
