@@ -66,9 +66,10 @@ import WidgetController from "@/components/WidgetController";
 import NavigationPanel from "@/components/NavigationPanel";
 import config from "@/Config";
 import CircleGlobusMap from "@/components/CircleGlobusMap";
-import Feed from "@/components/Feed";
+import CircleDashboard from "@/components/CircleDashboard";
 import { CircleChatWidget } from "@/components/CircleChat";
-import UserPanel from "@/components/UserPanel";
+import { UserDashboard } from "@/components/UserDashboard";
+import { CircleSearcher } from "@/components/CircleSearch";
 //#endregion
 
 export const globalCircle = {
@@ -94,8 +95,10 @@ export const ExploreView = () => {
     log("ExploreView.render", -1);
 
     const [isMobile] = useAtom(isMobileAtom);
-    const [toggledWidgets, setToggledWidgets] = useState(isMobile ? ["user-panel"] : ["user-panel", "feed"]);
-    const feedExpanded = false;
+    const [toggledWidgets, setToggledWidgets] = useState(
+        isMobile ? ["user-dashboard"] : ["user-dashboard", "circle-dashboard"]
+    );
+    const [circleDashboardExpanded, setCircleDashboardExpanded] = useState(false);
     const isGlobal = true;
 
     const hostId = "circles";
@@ -329,26 +332,45 @@ export const ExploreView = () => {
             <Box flexGrow="1" position="relative">
                 {/* <TopMenu onLogoClick={onLogoClick} /> */}
                 {/* <TopMenuAlt onLogoClick={onLogoClick} /> */}
-                <Flex flexDirection="column" position="relative">
-                    <Box width="100%" height={contentHeight + "px"} position="relative">
+                <Flex flexDirection="column" position="relative" backgroundColor="black">
+                    <Box
+                        width={config.ui_variant >= 2 ? "calc(100% - 390px)" : "100%"}
+                        height={contentHeight + "px"}
+                        position="relative"
+                    >
                         <CircleMap height={contentHeight} />
                     </Box>
 
                     <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="2" pointerEvents="none">
                         <Flex flexGrow="1" marginTop={"0px"} zIndex="10">
-                            {toggledWidgets.includes("user-panel") && (
+                            {config.ui_variant < 2 && toggledWidgets.includes("user-dashboard") && (
                                 <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="1">
-                                    <UserPanel onClose={() => {}} />
+                                    <UserDashboard onClose={() => {}} />
                                 </Flex>
                             )}
 
-                            {toggledWidgets.includes("feed") && (
-                                <Flex flexDirection="column" minWidth="24rem" width="24rem" flexShrink={0} order="3">
-                                    <Feed onClose={() => {}} />
+                            {toggledWidgets.includes("circle-dashboard") && (
+                                <Flex
+                                    flexDirection="column"
+                                    minWidth={config.ui_variant >= 4 ? "28rem" : "24rem"}
+                                    width={circleDashboardExpanded ? "auto" : "24rem"}
+                                    flexGrow={circleDashboardExpanded ? "1" : "0"}
+                                    flexShrink={0}
+                                    order="3"
+                                >
+                                    <CircleDashboard
+                                        onClose={() => {}}
+                                        expanded={circleDashboardExpanded}
+                                        setExpanded={setCircleDashboardExpanded}
+                                    />
                                 </Flex>
                             )}
 
-                            {!(isMobile || feedExpanded) && <Flex flexDirection="column" flexGrow="1" order="2"></Flex>}
+                            {!(isMobile || circleDashboardExpanded) && (
+                                <Flex flexDirection="column" flexGrow="1" order="2">
+                                    <CircleSearcher />
+                                </Flex>
+                            )}
                         </Flex>
                     </Flex>
 
