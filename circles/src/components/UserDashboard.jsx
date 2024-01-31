@@ -35,7 +35,7 @@ import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
 //#endregion
 
-const UserPanel = ({ onClose }) => {
+export const UserDashboard = ({ onClose }) => {
     log("UserPanel.render", -1);
 
     const [user] = useAtom(userAtom);
@@ -256,4 +256,4 @@ const UserPanel = ({ onClose }) => {
     );
 };
 
-export default UserPanel;
+export default UserDashboard;
