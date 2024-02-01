@@ -199,12 +199,12 @@ export const SearchBox = ({
             <InputLeftElement
                 color="#333"
                 pointerEvents="none"
-                children={<RiSearchLine size={isMobile ? 20 : 28} />}
-                height={isSmall ? "30px" : "38px"}
+                children={<RiSearchLine size={isMobile ? 20 : 24} />}
+                height={isSmall ? "30px" : "36px"}
             />
             <Input
                 borderRadius="50px"
-                height={isSmall ? "30px" : "38px"}
+                height={isSmall ? "30px" : "36px"}
                 backgroundColor="#f4f4f4dd"
                 width="100%"
                 value={query}
@@ -219,7 +219,7 @@ export const SearchBox = ({
                 <InputRightElement
                     color="#333"
                     children={<MdOutlineClose size={isSmall ? 20 : 28} />}
-                    height={isSmall ? "30px" : "38px"}
+                    height={isSmall ? "30px" : "36px"}
                     marginRight={isSmall ? "6px" : "5px"}
                     onClick={closeClick}
                     cursor="pointer"
@@ -566,6 +566,7 @@ export const CircleSearcher = (props) => {
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
 
     const iconSize = "26px";
+    const height = "36px";
     const openSearch = () => {
         if (searchIsOpen) {
             setSearchIsOpen(false);
