@@ -23,7 +23,6 @@ const configs = {
             "pk.eyJ1IjoiZXhtYWtpbmEtYWRtaW4iLCJhIjoiY2t1cjJkOWJuMDB0MDJvbWYweWx5emR0dSJ9.elxjxO7DHA2UyXs0j7GTHA",
         ai_agent: "tN05inp7an26vZMaAAWw",
         disableOnActive: false,
-        ui_variant: 4, // 0 = default, 1 = with circle header and tabs, 2 = without user dashboard, 4 = with vertical tabs in circle dashboard
     },
     staging: {
         environment: "staging",

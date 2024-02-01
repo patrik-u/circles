@@ -149,8 +149,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         switch (mapStyle) {
             default:
             case "satellite":
-                return "mapbox://styles/timaolsson/clfe29gyd000o01o3ray8f97m";
-            //return "mapbox://styles/mapbox/satellite-streets-v11";
+                //return "mapbox://styles/timaolsson/clfe29gyd000o01o3ray8f97m";
+                return "mapbox://styles/mapbox/satellite-streets-v11";
             case "streets":
                 return "mapbox://styles/exmakina-admin/ckur9npyof1t318rzrisvj2n2";
             case "satellite-no-labels":

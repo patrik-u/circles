@@ -37,7 +37,7 @@ export const ProfileMenu = () => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const [user, setUser] = useAtom(userAtom);
     const [, setToggleSettings] = useAtom(toggleSettingsAtom);
-    const circlePictureSizeInt = isMobile ? 30 : 48;
+    const circlePictureSizeInt = 30;
     const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
     const displayProfile = signInStatus.signedIn || (signInStatus.signingIn && user?.picture);

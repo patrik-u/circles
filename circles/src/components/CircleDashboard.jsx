@@ -37,7 +37,9 @@ import {
     circlesFilterAtom,
     previewCircleAtom,
     userAtom,
+    userDataAtom,
     toggleWidgetEventAtom,
+    circleDashboardExpandedAtom,
 } from "@/components/Atoms";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "@/components/RouterUtils";
 import {
@@ -56,6 +58,7 @@ import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
 import { FiChevronLeft, FiChevronRight, FiChevronDown } from "react-icons/fi";
 import { FiHome, FiUsers, FiCircle, FiCalendar, FiClipboard } from "react-icons/fi";
+import TopMenu from "@/components/TopMenu";
 //#endregion
 
 const examplePosts = [
@@ -214,40 +217,78 @@ const Post = ({ post }) => {
     );
 };
 
-const exampleCircles = [
-    {
-        id: "1",
-        name: "Global",
-        picture: "https://source.unsplash.com/featured/?globe",
-    },
-    {
-        id: "2",
-        name: "Social Systems Lab",
-        picture: "https://source.unsplash.com/featured/?social",
-    },
-    {
-        id: "3",
-        name: "AfrikaBurn",
-        picture: "https://source.unsplash.com/featured/?burningman",
-    },
-    {
-        id: "4",
-        name: "RailNomad",
-        picture: "https://source.unsplash.com/featured/?train",
-    },
-    {
-        id: "5",
-        name: "SoilMates",
-        picture: "https://source.unsplash.com/featured/?permaculture",
-    },
-];
+// const exampleCircles = [
+//     {
+//         id: "1",
+//         name: "Global",
+//         picture: "https://source.unsplash.com/featured/?globe",
+//     },
+//     {
+//         id: "2",
+//         name: "Social Systems Lab",
+//         picture: "https://source.unsplash.com/featured/?social",
+//     },
+//     {
+//         id: "3",
+//         name: "AfrikaBurn",
+//         picture: "https://source.unsplash.com/featured/?burningman",
+//     },
+//     {
+//         id: "4",
+//         name: "RailNomad",
+//         picture: "https://source.unsplash.com/featured/?train",
+//     },
+//     {
+//         id: "5",
+//         name: "SoilMates",
+//         picture: "https://source.unsplash.com/featured/?permaculture",
+//     },
+// ];
 
-const CircleSelector = ({ circles }) => {
+const CircleSelector = () => {
+    // get circles from user similar to favorite menu
+    const [userData] = useAtom(userDataAtom);
+    const [favoriteCircles, setFavoriteCircles] = useState([]);
+    const [circle] = useAtom(circleAtom);
+    let global = { id: "global", name: "Global", picture: "/logo2.jpg" };
+    const [circles] = useMemo(() => {
+        // global circle first and then add favorite circles
+        let newCircles = [global];
+        if (favoriteCircles) {
+            newCircles = [...newCircles, ...favoriteCircles];
+        }
+        return [newCircles];
+    }, [favoriteCircles, global]);
+    const navigate = useNavigateNoUpdates();
+    const view = "compact";
+
+    useEffect(() => {
+        if (!userData?.circle_settings) return;
+
+        let newFavoriteCircles = [];
+        for (var circleId in userData.circle_settings) {
+            let favorite = userData.circle_settings[circleId].favorite;
+            if (favorite) {
+                let favoriteCircle = userData.circle_settings[circleId].circle;
+                if (favoriteCircle?.type === "circle") {
+                    newFavoriteCircles.push(favoriteCircle);
+                }
+            }
+        }
+        setFavoriteCircles(newFavoriteCircles);
+    }, [userData?.circle_settings]);
+
+    useEffect(() => {
+        // if circle id changes and it differs from selected circle we want to update the selected circle
+    }, [circle?.id]);
+
     const [selectedCircle, setSelectedCircle] = useState(circles[0]);
 
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
     };
+
+    if (!selectedCircle) return <Box flexGrow="1" />;
 
     return (
         <Menu matchWidth margin="5px">
@@ -286,7 +327,7 @@ const Feed = ({ posts }) => {
     );
 };
 
-const CircleDashboard = ({ onClose, expanded, setExpanded }) => {
+const CircleDashboard = ({ onClose }) => {
     log("CircleDashboard.render", -1);
 
     const [tabIndex, setTabIndex] = useState(0);
@@ -296,6 +337,7 @@ const CircleDashboard = ({ onClose, expanded, setExpanded }) => {
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
     const circle = user;
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
@@ -310,124 +352,103 @@ const CircleDashboard = ({ onClose, expanded, setExpanded }) => {
 
     return (
         <>
-            {circle && (
+            {/* {circle && ( */}
+            <Box
+                position="relative"
+                flexGrow="1"
+                height="100%"
+                margin={isMobile ? "0px" : `10px 10px 10px ${circleDashboardExpanded ? "10px" : "0px"}`}
+            >
+                <IconButton
+                    position="absolute"
+                    pointerEvents="auto"
+                    left="-6px"
+                    top="30px"
+                    aria-label="Expand circle dashboard"
+                    zIndex="600"
+                    size="xs"
+                    icon={circleDashboardExpanded ? <FiChevronRight /> : <FiChevronLeft />}
+                    onClick={() => setCircleDashboardExpanded(!circleDashboardExpanded)}
+                    isRound
+                />
+
                 <Box
-                    position="relative"
+                    bgGradient="linear(to-r,#d3d1d3,#ffffff)"
+                    borderRadius="10px"
+                    padding="0px"
                     flexGrow="1"
+                    pointerEvents="auto"
+                    position="relative"
                     height="100%"
-                    margin={isMobile ? "0px" : `10px 10px 10px ${expanded ? "10px" : "0px"}`}
+                    overflow="hidden"
                 >
-                    <IconButton
-                        position="absolute"
-                        pointerEvents="auto"
-                        left="-6px"
-                        top="30px"
-                        aria-label="Expand circle dashboard"
-                        zIndex="600"
-                        size="xs"
-                        icon={expanded ? <FiChevronRight /> : <FiChevronLeft />}
-                        onClick={() => setExpanded(!expanded)}
-                        isRound
-                    />
+                    <Flex flexDirection="row" align="center" backgroundColor="white">
+                        <CircleSelector />
+                        <TopMenu />
+                    </Flex>
 
                     <Box
-                        bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-                        borderRadius="10px"
-                        padding="0px"
+                        display="flex"
+                        flexDirection="column"
                         flexGrow="1"
-                        pointerEvents="auto"
-                        position="relative"
-                        height="100%"
-                        overflow="hidden"
+                        height="100%" // Ensure this element takes the full height
                     >
-                        {config.ui_variant >= 1 && <CircleSelector circles={exampleCircles} />}
+                        <Tabs
+                            index={tabIndex}
+                            onChange={(index) => setTabIndex(index)}
+                            isFitted={circleDashboardExpanded ? false : true}
+                            display="flex"
+                            flex="1"
+                            flexDirection={"column"}
+                            orientation={"horizontal"}
+                        >
+                            <TabList bg="white">
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiHome />
+                                        <Text fontSize="12px">Feed</Text>
+                                    </Flex>
+                                </Tab>
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiUsers />
+                                        <Text fontSize="12px">Members</Text>
+                                    </Flex>
+                                </Tab>
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiCircle />
+                                        <Text fontSize="12px">Circles</Text>
+                                    </Flex>
+                                </Tab>
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiCalendar />
+                                        <Text fontSize="12px">Events</Text>
+                                    </Flex>
+                                </Tab>
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiClipboard />
+                                        <Text fontSize="12px">Tasks</Text>
+                                    </Flex>
+                                </Tab>
+                            </TabList>
 
-                        {config.ui_variant === 0 && <Feed posts={examplePosts} />}
-
-                        {config.ui_variant >= 1 && (
-                            <Box
-                                display="flex"
-                                flexDirection="column"
-                                flexGrow="1"
-                                height="100%" // Ensure this element takes the full height
-                            >
-                                <Tabs
-                                    index={tabIndex}
-                                    onChange={(index) => setTabIndex(index)}
-                                    isFitted={config.ui_variant >= 4 ? false : true}
-                                    display="flex"
-                                    flex="1"
-                                    flexDirection={config.ui_variant >= 4 ? "row" : "column"}
-                                    orientation={config.ui_variant >= 4 ? "vertical" : "horizontal"}
-                                >
-                                    <TabList bg="white" width={config.ui_variant >= 4 ? "60px" : "auto"}>
-                                        <Tab
-                                            borderLeft={"none"}
-                                            borderRight={config.ui_variant >= 4 ? "3px solid" : "none"}
-                                            borderColor={config.ui_variant >= 4 ? "gray.200" : "white"}
-                                        >
-                                            <Flex flexDirection="column" align="center">
-                                                <FiHome />
-                                                <Text fontSize="12px">Feed</Text>
-                                            </Flex>
-                                        </Tab>
-                                        <Tab
-                                            borderLeft={"none"}
-                                            borderRight={config.ui_variant >= 4 ? "3px solid" : "none"}
-                                            borderColor={config.ui_variant >= 4 ? "gray.200" : "white"}
-                                        >
-                                            <Flex flexDirection="column" align="center">
-                                                <FiUsers />
-                                                <Text fontSize="12px">Members</Text>
-                                            </Flex>
-                                        </Tab>
-                                        <Tab
-                                            borderLeft={"none"}
-                                            borderRight={config.ui_variant >= 4 ? "3px solid" : "none"}
-                                            borderColor={config.ui_variant >= 4 ? "gray.200" : "white"}
-                                        >
-                                            <Flex flexDirection="column" align="center">
-                                                <FiCircle />
-                                                <Text fontSize="12px">Circles</Text>
-                                            </Flex>
-                                        </Tab>
-                                        <Tab
-                                            borderLeft={"none"}
-                                            borderRight={config.ui_variant >= 4 ? "3px solid" : "none"}
-                                            borderColor={config.ui_variant >= 4 ? "gray.200" : "white"}
-                                        >
-                                            <Flex flexDirection="column" align="center">
-                                                <FiCalendar />
-                                                <Text fontSize="12px">Events</Text>
-                                            </Flex>
-                                        </Tab>
-                                        <Tab
-                                            borderLeft={"none"}
-                                            borderRight={config.ui_variant >= 4 ? "3px solid" : "none"}
-                                            borderColor={config.ui_variant >= 4 ? "gray.200" : "white"}
-                                        >
-                                            <Flex flexDirection="column" align="center">
-                                                <FiClipboard />
-                                                <Text fontSize="12px">Tasks</Text>
-                                            </Flex>
-                                        </Tab>
-                                    </TabList>
-
-                                    <TabPanels flex="1">
-                                        <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                            <Feed posts={examplePosts} />
-                                        </TabPanel>
-                                        <TabPanel>{/* Members Component */}</TabPanel>
-                                        <TabPanel>{/* Circles Component */}</TabPanel>
-                                        <TabPanel>{/* Events Component */}</TabPanel>
-                                        <TabPanel>{/* Tasks Component */}</TabPanel>
-                                    </TabPanels>
-                                </Tabs>
-                            </Box>
-                        )}
+                            <TabPanels flex="1">
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    <Feed posts={examplePosts} />
+                                </TabPanel>
+                                <TabPanel>{/* Members Component */}</TabPanel>
+                                <TabPanel>{/* Circles Component */}</TabPanel>
+                                <TabPanel>{/* Events Component */}</TabPanel>
+                                <TabPanel>{/* Tasks Component */}</TabPanel>
+                            </TabPanels>
+                        </Tabs>
                     </Box>
                 </Box>
-            )}
+            </Box>
+            {/* )} */}
         </>
     );
 };

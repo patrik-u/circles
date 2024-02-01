@@ -95,7 +95,7 @@ const Messages = () => {
     const navigate = useNavigateNoUpdates();
     const [messages, setMessages] = useState([]);
     const { isOpen: messagesIsOpen, onOpen: messagesOnOpen, onClose: messagesOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 24;
+    const iconSize = 18;
     const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
     const [signInStatus] = useAtom(signInStatusAtom);
@@ -195,7 +195,7 @@ const Messages = () => {
                         <Icon
                             width={iconSizePx}
                             height={iconSizePx}
-                            color={"white"}
+                            color={"black"}
                             as={AiOutlineMessage}
                             cursor="pointer"
                         />

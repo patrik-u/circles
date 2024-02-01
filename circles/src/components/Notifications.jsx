@@ -422,7 +422,7 @@ const Notifications = () => {
     const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 24;
+    const iconSize = isMobile ? 18 : 18;
     const iconSizePx = iconSize + "px";
 
     const notificationsBoxRef = useRef(null);
@@ -525,7 +525,7 @@ const Notifications = () => {
                         onClick={openNotifications}
                         cursor="pointer"
                     >
-                        <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={FaRegBell} cursor="pointer" />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"black"} as={FaRegBell} cursor="pointer" />
                     </Flex>
                     {hasUnreadNotifications(notifications) && (
                         <Box
