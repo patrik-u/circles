@@ -65,6 +65,7 @@ export const homeExpandedAtom = atom(false);
 export const chatCircleAtom = atom(null);
 export const circlesFilterAtom = atom({});
 export const circleSubSectionAtom = atom(circleSubSections.default);
+export const circleDashboardExpandedAtom = atom(false);
 
 export const mergedSemanticSearchCirclesAtom = atom((get) => {
     const semanticSearchCircles = get(semanticSearchCirclesAtom);
