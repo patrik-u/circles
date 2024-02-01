@@ -286,6 +286,7 @@ const CircleSelector = () => {
 
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
+        openCircle(navigate, circle);
     };
 
     if (!selectedCircle) return <Box flexGrow="1" />;
