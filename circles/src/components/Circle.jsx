@@ -50,9 +50,9 @@ import {
     connectedCirclesAtom,
     mentionedCirclesAtom,
     circleHistoryAtom,
+    circleDashboardExpandedAtom,
 } from "@/components/Atoms";
 import { displayModes } from "@/components/Constants";
-import TopMenu from "@/components/TopMenu";
 import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
 import { useSpring, animated } from "react-spring";
 import useWindowDimensions from "@/components/useWindowDimensions";
@@ -65,6 +65,10 @@ import WidgetController from "@/components/WidgetController";
 import NavigationPanel from "@/components/NavigationPanel";
 import config from "@/Config";
 import CircleGlobusMap from "@/components/CircleGlobusMap";
+import CircleDashboard from "@/components/CircleDashboard";
+import { CircleChatWidget } from "@/components/CircleChat";
+import { UserDashboard } from "@/components/UserDashboard";
+import { CircleSearcher } from "@/components/CircleSearch";
 //#endregion
 
 export const globalCircle = {
@@ -89,8 +93,13 @@ export const globalCircle = {
 export const Circle = ({ isGlobal }) => {
     log("Circle.render", -1);
 
-    const { hostId, circleId } = useParams();
     const [isMobile] = useAtom(isMobileAtom);
+    const [toggledWidgets, setToggledWidgets] = useState(
+        isMobile ? ["user-dashboard"] : ["user-dashboard", "circle-dashboard"]
+    );
+    const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
+    const { hostId, circleId } = useParams();
+
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circle, setCircle] = useAtom(circleAtom);
     const [, setCircleData] = useAtom(circleDataAtom);
@@ -308,43 +317,56 @@ export const Circle = ({ isGlobal }) => {
     const circlePictureSize = isMobile ? 120 : 160;
 
     const debugBg = false;
-    const coverHeight = windowHeight;
+    const topMenuHeight = 90;
+    const topMenuHeightPx = topMenuHeight + "px";
+    const contentHeight = windowHeight;
 
     return (
         <Flex flexDirection="row">
-            {isPinned && !isMobile && (
-                <Box width="300px" height="100vh">
-                    <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} />
-                </Box>
-            )}
             <Box flexGrow="1" position="relative">
-                {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
-                {/* ONB123 */}
-                <Flex flexDirection="column" position="relative">
-                    <Box width="100%" height={coverHeight + "px"} position="relative">
-                        {/* <CircleGlobusMap /> */}
-                        <CircleMap height={coverHeight} />
+                <Flex flexDirection="column" position="relative" backgroundColor="black">
+                    <Box width={"calc(100% - 360px)"} height={contentHeight + "px"} position="relative">
+                        <CircleMap height={contentHeight} />
+                        <Flex
+                            position="absolute"
+                            right="0px"
+                            top="0px"
+                            width="30px"
+                            height="100%"
+                            zIndex="1"
+                            // backgroundColor="#ffffff66"
+                            backgroundColor="transparent"
+                            style={{
+                                background: "linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1))",
+                            }}
+                        ></Flex>
                     </Box>
 
-                    <WidgetController />
-                    {/* ONB123 */}
+                    <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="2" pointerEvents="none">
+                        <Flex flexGrow="1" marginTop={"0px"} zIndex="10">
+                            {toggledWidgets.includes("circle-dashboard") && (
+                                <Flex
+                                    flexDirection="column"
+                                    minWidth={"24rem"}
+                                    width={circleDashboardExpanded ? "auto" : "24rem"}
+                                    flexGrow={circleDashboardExpanded ? "1" : "0"}
+                                    flexShrink={0}
+                                    order="3"
+                                >
+                                    <CircleDashboard onClose={() => {}} />
+                                </Flex>
+                            )}
+
+                            {!(isMobile || circleDashboardExpanded) && (
+                                <Flex flexDirection="column" flexGrow="1" order="2">
+                                    <CircleSearcher />
+                                </Flex>
+                            )}
+                        </Flex>
+                    </Flex>
+
+                    {/* <WidgetController /> */}
                 </Flex>
-                {(!isPinned || isMobile) && (
-                    <Drawer
-                        isOpen={isOpen}
-                        onClose={onClose}
-                        placement="left"
-                        size={isMobile ? "full" : "xs"}
-                        closeOnOverlayClick={!isPinned}
-                    >
-                        <DrawerOverlay />
-                        <DrawerContent padding="0">
-                            <DrawerBody padding="0">
-                                <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} onClose={onClose} />
-                            </DrawerBody>
-                        </DrawerContent>
-                    </Drawer>
-                )}
             </Box>
         </Flex>
     );
