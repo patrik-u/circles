@@ -28,6 +28,7 @@ import {
     twoLineEllipsisStyle,
     isActiveInCircle,
     getImageKitUrl,
+    isAdmin,
 } from "@/components/Helpers";
 import { defaultUserPicture } from "@/components/Constants";
 import { useAtom } from "jotai";
@@ -57,9 +58,23 @@ import { CircleTags } from "@/components/CircleElements";
 import { ActiveInCircle, RelationSetInfo } from "@/components/CirclePreview";
 import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
-import { FiChevronLeft, FiChevronRight, FiChevronDown } from "react-icons/fi";
-import { FiHome, FiUsers, FiCircle, FiCalendar, FiClipboard } from "react-icons/fi";
+import {
+    FiChevronLeft,
+    FiChevronRight,
+    FiChevronDown,
+    FiHome,
+    FiUsers,
+    FiCircle,
+    FiCalendar,
+    FiClipboard,
+    FiMessageCircle,
+    FiSettings,
+    FiShield,
+} from "react-icons/fi";
+import { HiOutlineChat } from "react-icons/hi";
 import TopMenu from "@/components/TopMenu";
+import CircleAdmin from "@/components/CircleAdmin";
+import CircleSettings from "@/components/settings/CircleSettings";
 //#endregion
 
 const examplePosts = [
@@ -352,12 +367,13 @@ const CircleDashboard = ({ onClose }) => {
     const [tabIndex, setTabIndex] = useState(0);
 
     const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
-    const circle = user;
+    const [circle] = useAtom(circleAtom);
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
 
@@ -371,7 +387,6 @@ const CircleDashboard = ({ onClose }) => {
 
     return (
         <>
-            {/* {circle && ( */}
             <Box
                 position="relative"
                 flexGrow="1"
@@ -423,7 +438,7 @@ const CircleDashboard = ({ onClose }) => {
                             flexDirection={"column"}
                             orientation={"horizontal"}
                         >
-                            <TabList bg="white">
+                            <TabList bg="white" borderColor="white">
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
                                         <FiHome />
@@ -454,22 +469,66 @@ const CircleDashboard = ({ onClose }) => {
                                         <Text fontSize="12px">Tasks</Text>
                                     </Flex>
                                 </Tab>
+                                {circleDashboardExpanded && (
+                                    <>
+                                        <Tab borderColor={"white"}>
+                                            <Flex flexDirection="column" align="center">
+                                                <FiMessageCircle />
+                                                <Text fontSize="12px">Chat</Text>
+                                            </Flex>
+                                        </Tab>
+                                        {isAdmin(circle, userData) && (
+                                            <Tab borderColor={"white"}>
+                                                <Flex flexDirection="column" align="center">
+                                                    <FiSettings />
+                                                    <Text fontSize="12px">Settings</Text>
+                                                </Flex>
+                                            </Tab>
+                                        )}
+                                        {circle?.id === "global" && user?.is_admin && (
+                                            <Tab borderColor={"white"}>
+                                                <Flex flexDirection="column" align="center">
+                                                    <FiShield />
+                                                    <Text fontSize="12px">Admin</Text>
+                                                </Flex>
+                                            </Tab>
+                                        )}
+                                    </>
+                                )}
                             </TabList>
 
                             <TabPanels flex="1">
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     <Feed posts={examplePosts} />
                                 </TabPanel>
-                                <TabPanel>{/* Members Component */}</TabPanel>
-                                <TabPanel>{/* Circles Component */}</TabPanel>
-                                <TabPanel>{/* Events Component */}</TabPanel>
-                                <TabPanel>{/* Tasks Component */}</TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Members Component */}
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Circles Component */}
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Events Component */}
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Tasks Component */}
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Chat Component */}
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    <Flex flexDirection="column" flexGrow="1" order="2">
+                                        <CircleSettings />
+                                    </Flex>
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    <CircleAdmin />
+                                </TabPanel>
                             </TabPanels>
                         </Tabs>
                     </Box>
                 </Box>
             </Box>
-            {/* )} */}
         </>
     );
 };
