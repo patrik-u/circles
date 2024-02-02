@@ -75,6 +75,7 @@ import { HiOutlineChat } from "react-icons/hi";
 import TopMenu from "@/components/TopMenu";
 import CircleAdmin from "@/components/CircleAdmin";
 import CircleSettings from "@/components/settings/CircleSettings";
+import { CircleChatWidget } from "@/components/CircleChat";
 //#endregion
 
 const examplePosts = [
@@ -447,6 +448,12 @@ const CircleDashboard = ({ onClose }) => {
                                 </Tab>
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
+                                        <FiMessageCircle />
+                                        <Text fontSize="12px">Chat</Text>
+                                    </Flex>
+                                </Tab>
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
                                         <FiUsers />
                                         <Text fontSize="12px">Members</Text>
                                     </Flex>
@@ -463,18 +470,13 @@ const CircleDashboard = ({ onClose }) => {
                                         <Text fontSize="12px">Events</Text>
                                     </Flex>
                                 </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiClipboard />
-                                        <Text fontSize="12px">Tasks</Text>
-                                    </Flex>
-                                </Tab>
+
                                 {circleDashboardExpanded && (
                                     <>
                                         <Tab borderColor={"white"}>
                                             <Flex flexDirection="column" align="center">
-                                                <FiMessageCircle />
-                                                <Text fontSize="12px">Chat</Text>
+                                                <FiClipboard />
+                                                <Text fontSize="12px">Tasks</Text>
                                             </Flex>
                                         </Tab>
                                         {isAdmin(circle, userData) && (
@@ -501,6 +503,9 @@ const CircleDashboard = ({ onClose }) => {
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     <Feed posts={examplePosts} />
                                 </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="calc(100% - 40px)">
+                                    <CircleChatWidget />
+                                </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     {/* Members Component */}
                                 </TabPanel>
@@ -513,13 +518,9 @@ const CircleDashboard = ({ onClose }) => {
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     {/* Tasks Component */}
                                 </TabPanel>
+
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Chat Component */}
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    <Flex flexDirection="column" flexGrow="1" order="2">
-                                        <CircleSettings />
-                                    </Flex>
+                                    <CircleSettings />
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     <CircleAdmin />

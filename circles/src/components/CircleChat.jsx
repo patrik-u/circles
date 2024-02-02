@@ -335,11 +335,12 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                             borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
                                                 item.isLast ? "10px" : "2px"
                                             }`}
-                                            bgGradient={
-                                                item.isSelf
-                                                    ? "linear(to-r,#d3d1d3,#ffffff)"
-                                                    : "linear(to-r,#d3d1d3,#ffffff)"
-                                            }
+                                            // bgGradient={
+                                            //     item.isSelf
+                                            //         ? "linear(to-r,#d3d1d3,#ffffff)"
+                                            //         : "linear(to-r,#d3d1d3,#ffffff)"
+                                            // }
+                                            backgroundColor={item.isSelf ? "#90ffb3" : "#ffffff"}
                                             color={item.user.id !== user?.id ? "black" : "black"}
                                             marginRight="auto"
                                             overflow="hidden"
@@ -1250,7 +1251,15 @@ export const CircleChat = ({ circle }) => {
     if (!circle) return null;
 
     return (
-        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
+        <Flex
+            flexGrow="1"
+            backgroundColor="#e3e3e3"
+            width="100%"
+            height="100%"
+            position="relative"
+            overflow="hidden"
+            pointerEvents="auto"
+        >
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
                     {!isAuthorized && (
