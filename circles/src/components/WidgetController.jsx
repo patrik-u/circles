@@ -98,7 +98,7 @@ const WidgetController = () => {
     const [, setPreviewCircle] = useAtom(previewCircleAtom);
     const [toggleWidgetEvent, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [toggledWidgets, setToggledWidgets] = useState(isMobile ? ["chat"] : ["chat", "about"]);
-    const menuItems = useMemo(() => ["edit", "discover", "chat", "video", "calendar", "admin"], []);
+    const menuItems = useMemo(() => ["edit", "discover", "chat", "video", "calendar", "settings", "admin"], []);
     const [searchParams, setSearchParams] = useSearchParams();
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const videoMinimized = useMemo(() => {
