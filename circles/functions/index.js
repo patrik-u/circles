@@ -597,7 +597,6 @@ const getCircleTypes = (source, target) => {
 const propagateCircleUpdate = async (id) => {
     const circleRef = db.collection("circles").doc(id);
     let circleDoc = await circleRef.get();
-    circleDoc = await circleRef.get();
     let circleData = circleDoc?.data();
     if (!circleData) return;
 
@@ -662,6 +661,38 @@ const propagateCircleUpdate = async (id) => {
         let setRef = db.collection("circles").doc(setDocs.docs[i].id);
 
         batchArray[batchIndex].set(setRef, { [id]: circleData }, { merge: true });
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
+
+    //  loop through user settings favorite circles and update them
+    const favoriteDocs = await db.collection("circle_data").where(`circle_settings.${id}.favorite`, "==", true).get();
+    batchArray = [db.batch()];
+    operationCounter = 0;
+    batchIndex = 0;
+
+    // loop through each user data and update favorites
+    for (var i = 0; i < favoriteDocs.docs.length; ++i) {
+        let circleDataRef = db.collection("circle_data").doc(favoriteDocs.docs[i].id);
+        let circleDoc = await circleDataRef.get();
+        let circleDataData = circleDoc?.data();
+
+        let oldSettings = circleDataData?.circle_settings[id];
+        if (!oldSettings) continue;
+
+        let newSettings = { ...oldSettings };
+        newSettings.circle = getSettingsCircle(circleData);
+        let circle_settings = {
+            [id]: newSettings,
+        };
+
+        batchArray[batchIndex].set(circleDataRef, { circle_settings }, { merge: true });
         ++operationCounter;
         if (operationCounter >= 499) {
             batchArray.push(db.batch());
@@ -2270,6 +2301,25 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
     }
 });
 
+const getSettingsCircle = (circle) => {
+    let settingsCircle = {
+        id: circle.id,
+        name: circle.name,
+        type: circle.type,
+    }; // store basic info about circle
+    if (circle.picture) {
+        settingsCircle.picture = circle.picture;
+    }
+    if (circle.cover) {
+        settingsCircle.cover = circle.cover;
+    }
+    if (circle.base) {
+        settingsCircle.base = circle.base;
+    }
+
+    return settingsCircle;
+};
+
 // update circle settings
 const updateCircleSettings = async (authCallerId, circleId, targetCircleId, settings, checkAuth = true) => {
     let favoriteSet = false;
@@ -2294,17 +2344,7 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
     }
 
     let circle = await getCircle(targetCircleId);
-    newSettings.circle = {
-        id: circle.id,
-        name: circle.name,
-        type: circle.type,
-    }; // store basic info about circle
-    if (circle.picture) {
-        newSettings.circle.picture = circle.picture;
-    }
-    if (circle.cover) {
-        newSettings.circle.cover = circle.cover;
-    }
+    newSettings.circle = getSettingsCircle(circle);
 
     // verify user is authorized to change settings
     if (checkAuth) {
