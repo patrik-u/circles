@@ -40,6 +40,7 @@ import {
     userDataAtom,
     toggleWidgetEventAtom,
     circleDashboardExpandedAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "@/components/RouterUtils";
 import {
@@ -250,15 +251,19 @@ const CircleSelector = () => {
     const [userData] = useAtom(userDataAtom);
     const [favoriteCircles, setFavoriteCircles] = useState([]);
     const [circle] = useAtom(circleAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     let global = { id: "global", name: "Global", picture: "/logo2.jpg" };
     const [circles] = useMemo(() => {
         // global circle first and then add favorite circles
         let newCircles = [global];
+        if (circle?.id && circle?.id !== "global") {
+            newCircles = [...newCircles, circle];
+        }
         if (favoriteCircles) {
-            newCircles = [...newCircles, ...favoriteCircles];
+            newCircles = [...newCircles, ...favoriteCircles.filter((c) => c.id !== circle?.id)];
         }
         return [newCircles];
-    }, [favoriteCircles, global]);
+    }, [favoriteCircles, circle, global]);
     const navigate = useNavigateNoUpdates();
     const view = "compact";
 
@@ -279,7 +284,11 @@ const CircleSelector = () => {
     }, [userData?.circle_settings]);
 
     useEffect(() => {
+        if (!circle?.id) return;
         // if circle id changes and it differs from selected circle we want to update the selected circle
+        if (circle?.id !== selectedCircle?.id) {
+            setSelectedCircle(circle);
+        }
     }, [circle?.id]);
 
     const [selectedCircle, setSelectedCircle] = useState(circles[0]);
@@ -287,9 +296,18 @@ const CircleSelector = () => {
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
         openCircle(navigate, circle);
+
+        log("CALLING FOCUS ON CIRCLE", 0, true);
+
+        // focus on circle
+        if (circle?.id === "global") {
+            setFocusOnMapItem({ zoom: 1.8, item: global });
+        } else {
+            setFocusOnMapItem({ item: circle });
+        }
     };
 
-    if (!selectedCircle) return <Box flexGrow="1" />;
+    if (!selectedCircle?.id) return <Box flexGrow="1" />;
 
     return (
         <Menu matchWidth margin="5px">

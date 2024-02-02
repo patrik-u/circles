@@ -42,7 +42,7 @@ export const routes = {
     // graph: "/graph",
 };
 
-export const openCircle = (navigate, circle, section) => {
+export const openCircle = (navigate, circle, section = null) => {
     if (!circle?.id) return;
     let path = routes.circle(circle);
     navigate(section ? path[section] : path.home);

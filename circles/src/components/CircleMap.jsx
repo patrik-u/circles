@@ -91,7 +91,13 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         let zoom = focusOnMapItem.zoom ?? 15;
         let location = getLocation(focusOnMapItem.item);
 
-        if (!location) return;
+        if (!location) {
+            if (focusOnMapItem.item?.id === "global") {
+                location = { latitude: 0, longitude: 0 };
+            } else {
+                return;
+            }
+        }
 
         log("location: " + JSON.stringify(location));
 
