@@ -178,6 +178,8 @@ const examplePosts = [
 ];
 
 const Post = ({ post }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+
     // Return social media post with image, content, and author
     return (
         <Box
@@ -209,7 +211,7 @@ const Post = ({ post }) => {
                 src={post.image}
                 width="100%"
                 height="250px"
-                maxWidth="450px"
+                maxWidth={isMobile ? "none" : "450px"}
                 objectFit="cover"
                 borderRadius="10px"
                 fallbackSrc={getImageKitUrl(defaultUserPicture, 48, 48)}
@@ -297,8 +299,6 @@ const CircleSelector = () => {
         setSelectedCircle(circle);
         openCircle(navigate, circle);
 
-        log("CALLING FOCUS ON CIRCLE", 0, true);
-
         // focus on circle
         if (circle?.id === "global") {
             setFocusOnMapItem({ zoom: 1.8, item: global });
@@ -378,22 +378,24 @@ const CircleDashboard = ({ onClose }) => {
                 height="100%"
                 margin={isMobile ? "0px" : `10px 10px 10px ${circleDashboardExpanded ? "10px" : "0px"}`}
             >
-                <IconButton
-                    position="absolute"
-                    pointerEvents="auto"
-                    left="-6px"
-                    top="30px"
-                    aria-label="Expand circle dashboard"
-                    zIndex="600"
-                    size="xs"
-                    icon={circleDashboardExpanded ? <FiChevronRight /> : <FiChevronLeft />}
-                    onClick={() => setCircleDashboardExpanded(!circleDashboardExpanded)}
-                    isRound
-                />
+                {!isMobile && (
+                    <IconButton
+                        position="absolute"
+                        pointerEvents="auto"
+                        left="-6px"
+                        top="30px"
+                        aria-label="Expand circle dashboard"
+                        zIndex="600"
+                        size="xs"
+                        icon={circleDashboardExpanded ? <FiChevronRight /> : <FiChevronLeft />}
+                        onClick={() => setCircleDashboardExpanded(!circleDashboardExpanded)}
+                        isRound
+                    />
+                )}
 
                 <Box
                     bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-                    borderRadius="10px"
+                    borderRadius={isMobile ? "0px" : "10px"}
                     padding="0px"
                     flexGrow="1"
                     pointerEvents="auto"

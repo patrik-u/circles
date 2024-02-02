@@ -348,7 +348,7 @@ export const Circle = ({ isGlobal }) => {
                                 <Flex
                                     flexDirection="column"
                                     minWidth={"24rem"}
-                                    width={circleDashboardExpanded ? "auto" : "24rem"}
+                                    width={circleDashboardExpanded ? "auto" : isMobile ? "100%" : "24rem"}
                                     flexGrow={circleDashboardExpanded ? "1" : "0"}
                                     flexShrink={0}
                                     order="3"
