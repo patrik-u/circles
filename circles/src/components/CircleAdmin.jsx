@@ -66,84 +66,34 @@ const CircleAdmin = ({ onClose }) => {
         setIsPosting(false);
     };
 
-    const iconSize = 12;
-
     return (
-        <Box
-            bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-            borderRadius="10px"
-            margin={isMobile ? "0px" : "0px 10px 10px 10px"}
-            padding="5px"
-            // flexGrow="1"
-            pointerEvents="auto"
-            position="relative"
-            overflow="hidden"
-            height={"100%"}
-            width="auto"
+        <Flex
+            flexGrow="1"
+            width="100%"
+            height="100%"
+            align="center"
+            flexDirection="column"
+            padding="10px"
+            paddingBottom="40px"
         >
-            <Box
-                bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-                borderRadius="10px"
-                padding={isMobile ? "0px" : "10px 10px 10px 10px"}
-                // flexGrow="1"
-                pointerEvents="auto"
-                position="relative"
-                overflow="hidden"
-                height={"100%"}
-                width="auto"
-            >
-                <Flex flexGrow="1" width="100%" height="100%" align="center" flexDirection="column">
-                    <HStack spacing="10px" width="100%">
-                        <Input value={command} onChange={handleChange} backgroundColor="white" />
-                        <Box>
-                            <Button
-                                colorScheme="red"
-                                borderRadius="25px"
-                                onClick={() => update(true)}
-                                isLoading={isPosting}
-                                width="200px"
-                                marginRight="40px"
-                            >
-                                Run
-                            </Button>
-                        </Box>
-                    </HStack>
-                    <Box marginTop="10px" flexGrow="1" width="100%">
-                        <Box height="100%" backgroundColor="white">
-                            <Scrollbars>
-                                <CircleRichText height="100%" backgroundColor="white">
-                                    {commandOutput}
-                                </CircleRichText>
-                            </Scrollbars>
-                        </Box>
-                        {/* <Textarea value={commandOutput} height="100%" backgroundColor="white" readOnly /> */}
-                    </Box>
-
-                    <Flex
-                        width={iconSize + 8 + "px"}
-                        height={iconSize + 8 + "px"}
-                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                        _active={{ transform: "scale(0.98)" }}
-                        borderRadius="50%"
-                        justifyContent="center"
-                        alignItems="center"
-                        onClick={onClose}
-                        cursor="pointer"
-                        position="absolute"
-                        top="10px"
-                        right="10px"
+            <HStack spacing="10px" width="100%">
+                <Input value={command} onChange={handleChange} backgroundColor="white" />
+                <Box>
+                    <Button
+                        colorScheme="red"
+                        borderRadius="25px"
+                        onClick={() => update(true)}
+                        isLoading={isPosting}
+                        width="150px"
                     >
-                        <Icon
-                            width={iconSize + 8 + "px"}
-                            height={iconSize + 8 + "px"}
-                            color={"#333"}
-                            as={MdOutlineClose}
-                            cursor="pointer"
-                        />
-                    </Flex>
-                </Flex>
+                        Run
+                    </Button>
+                </Box>
+            </HStack>
+            <Box marginTop="10px" flexGrow="1" width="100%">
+                <Textarea value={commandOutput} height="100%" backgroundColor="white" readOnly resize="none" />
             </Box>
-        </Box>
+        </Flex>
     );
 };
 
