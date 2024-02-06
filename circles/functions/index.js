@@ -145,6 +145,56 @@ const getOneSignalClient = () => {
     return oneSignalClient;
 };
 
+const getLatlng = (coords) => {
+    if (!coords) return { latitude: 0, longitude: 0 };
+
+    let lat = coords.latitude ?? coords._latitude ?? 0;
+    let lng = coords.longitude ?? coords._longitude ?? 0;
+    return { latitude: lat, longitude: lng };
+};
+
+const calculateMapCenter = (locations) => {
+    let sumLat = 0.0;
+    let sumLng = 0.0;
+
+    // iterate through each location to sum latitudes and longitudes
+    locations.forEach((loc) => {
+        sumLat += loc.latitude;
+        sumLng += loc.longitude;
+    });
+
+    // calculate average latitude and longitude
+    const avgLat = sumLat / locations.length;
+    const avgLng = sumLng / locations.length;
+
+    // return the calculated center
+    return { latitude: avgLat, longitude: avgLng };
+};
+
+const calculateMapZoomFactor = (locations) => {
+    // constants for calculations
+    const MAX_LATITUDE = 85.0511287798; // Maximum latitude for Web Mercator projection
+
+    // calculate bounds
+    let minLat = Math.min(...locations.map((loc) => loc.latitude));
+    let maxLat = Math.max(...locations.map((loc) => loc.latitude));
+    minLat = Math.max(minLat, -MAX_LATITUDE);
+    maxLat = Math.min(maxLat, MAX_LATITUDE);
+    let minLng = Math.min(...locations.map((loc) => loc.longitude));
+    let maxLng = Math.max(...locations.map((loc) => loc.longitude));
+
+    // calculate latitudinal and longitudinal spans
+    let latSpan = maxLat - minLat;
+    let lngSpan = maxLng - minLng;
+
+    // calculate zoom factor (simplified and conceptual)
+    let latZoom = -Math.log(latSpan / 360) / Math.log(2);
+    let lngZoom = -Math.log(lngSpan / 360) / Math.log(2);
+
+    // return the minimum of the two zooms as the factor
+    return Math.min(latZoom, lngZoom);
+};
+
 const getPinecone = async () => {
     if (pineconeInitialized) {
         return pinecone;
@@ -1239,6 +1289,42 @@ const setUserSeen = async (userId, circleId, category) => {
     );
 };
 
+const updateMapViewport = async (circleId) => {
+    const circle = await getCircle(circleId);
+    if (!circle) return;
+
+    // get all circles with this parent circle
+    const circles = await db.collection("circles").where("parent_circle.id", "==", circleId).get();
+
+    // get all locations
+    let locations = [];
+    if (circle.base) {
+        locations.push(getLatlng(circle.base));
+    }
+    circles.forEach((doc) => {
+        let circle = doc.data();
+        if (circle.base) {
+            locations.push(getLatlng(circle.base));
+        }
+    });
+
+    if (locations.length <= 0) return;
+
+    // calculate map location center
+    let mapCenter = calculateMapCenter(locations);
+
+    // calculate map zoom factor
+    let mapZoomFactor = calculateMapZoomFactor(locations);
+
+    let calculated_map_viewport = {
+        center: mapCenter,
+        zoom_factor: mapZoomFactor,
+    };
+
+    // update circle
+    await updateCircle(circleId, { calculated_map_viewport: calculated_map_viewport });
+};
+
 //#endregion
 
 //#region circles
@@ -1320,9 +1406,23 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.picture) {
         circle.picture = circleReq.picture;
     }
+
+    let baseChanged = false;
     if (circleReq.base) {
         circle.base = circleReq.base;
+
+        if (currentCircle) {
+            // check if base has changed
+            let currentLoc = getLatlng(currentCircle.base);
+            let newLoc = getLatlng(circleReq.base);
+            if (currentLoc.latitude !== newLoc.latitude || currentLoc.longitude !== newLoc.longitude) {
+                baseChanged = true;
+            }
+        } else {
+            baseChanged = true;
+        }
     }
+
     if (circleReq.description !== undefined) {
         circle.description = circleReq.description;
     }
@@ -1521,6 +1621,16 @@ const upsertCircle = async (authCallerId, circleReq) => {
                 await createConnection(circleId, tagId, "connected_mutually_to");
                 await createConnection(tagId, circleId, "connected_mutually_to");
             }
+        }
+    }
+
+    if (hasNewParent || baseChanged) {
+        // calculate new map viewport for old and new parent circle
+        if (oldParentId) {
+            await updateMapViewport(oldParentId);
+        }
+        if (circle.parent_circle?.id) {
+            await updateMapViewport(circle.parent_circle.id);
         }
     }
 
@@ -2315,6 +2425,12 @@ const getSettingsCircle = (circle) => {
     }
     if (circle.base) {
         settingsCircle.base = circle.base;
+    }
+    if (circle.calculated_map_viewport) {
+        settingsCircle.calculated_map_viewport = circle.calculated_map_viewport;
+    }
+    if (circle.custom_map_viewport) {
+        settingsCircle.custom_map_viewport = circle.custom_map_viewport;
     }
 
     return settingsCircle;
