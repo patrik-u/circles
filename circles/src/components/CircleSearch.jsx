@@ -16,7 +16,7 @@ import {
     Tooltip,
     Spinner,
 } from "@chakra-ui/react";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { log } from "@/components/Helpers";
 import { HiOutlineSearch } from "react-icons/hi";
@@ -28,6 +28,7 @@ import {
     semanticSearchCirclesAtom,
     toggleWidgetEventAtom,
     circlesFilterAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import config from "@/Config";
 import CircleListItem from "@/components/CircleListItem";

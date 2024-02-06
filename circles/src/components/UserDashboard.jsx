@@ -46,6 +46,7 @@ export const UserDashboard = ({ onClose }) => {
     const circle = user;
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -100,6 +101,7 @@ export const UserDashboard = ({ onClose }) => {
                                                 cursor="pointer"
                                                 onClick={() => {
                                                     openCircle(navigate, circle.parent_circle);
+                                                    focusCircle(circle.parent_circle, setFocusOnMapItem);
                                                     setToggleWidgetEvent({ name: "about", value: true });
                                                 }}
                                             >

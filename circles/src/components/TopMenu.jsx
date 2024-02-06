@@ -28,6 +28,7 @@ const NavigationButtons = ({ direction, ...props }) => {
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
     const forwardCircle = useMemo(() => circleHistory?.history?.[circleHistory.position + 1], [circleHistory]);
     const backCircle = useMemo(() => circleHistory?.history?.[circleHistory.position - 1], [circleHistory]);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const navigateBack = () => {
         if (circleHistory.position > 0) {
@@ -35,6 +36,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
+            focusCircle(circle, setFocusOnMapItem);
         }
     };
 
@@ -44,6 +46,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
+            focusCircle(circle, setFocusOnMapItem);
         }
     };
 

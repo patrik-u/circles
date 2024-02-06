@@ -13,7 +13,7 @@ import {
     isActiveInVideoConference,
     getCircleTypes,
 } from "@/components/Helpers";
-import { openAboutCircle, openCircle } from "@/components/Navigation";
+import { openAboutCircle, openCircle, focusCircle } from "@/components/Navigation";
 import {
     CirclePicture,
     CircleCover,
@@ -34,6 +34,7 @@ import {
     userAtom,
     userDataAtom,
     updateRelationAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { useNavigateNoUpdates } from "./RouterUtils";
 import Lottie from "react-lottie";
@@ -46,6 +47,7 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     if (!circle?.activity?.active_in_circle) {
         return null;
@@ -140,6 +142,7 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
                         onClick={() => {
                             console.log("opening circle");
                             openCircle(navigate, circle.activity.active_in_circle);
+                            focusCircle(circle.activity.active_in_circle, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "video", value: true });
                         }}
                         align="center"

@@ -3,10 +3,17 @@ import React, { useEffect } from "react";
 import { Box, Image, Flex, SimpleGrid, Text } from "@chakra-ui/react";
 import { CirclePicture } from "@/components/CircleElements";
 import { getImageKitUrl, log, singleLineEllipsisStyle } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, userDataAtom, homeExpandedAtom, searchResultsShownAtom } from "@/components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    userDataAtom,
+    homeExpandedAtom,
+    searchResultsShownAtom,
+    focusOnMapItemAtom,
+} from "@/components/Atoms";
 import CircleSearchBox from "@/components/CircleSearch";
 // #endregion
 
@@ -18,6 +25,7 @@ export const Home = () => {
     const [userData] = useAtom(userDataAtom);
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const getFavoriteCircles = (userData) => {
         if (!userData) return [];
@@ -85,7 +93,10 @@ export const Home = () => {
                                             style={singleLineEllipsisStyle}
                                             fontSize="12px"
                                             marginTop="5px"
-                                            onClick={() => openCircle(navigate, item)}
+                                            onClick={() => {
+                                                openCircle(navigate, item);
+                                                focusCircle(item, setFocusOnMapItem);
+                                            }}
                                         >
                                             {item.name}
                                         </Text>

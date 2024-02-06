@@ -3,9 +3,9 @@ import React, { useState, useMemo, Suspense } from "react";
 import { Flex, Box, Spinner, HStack, VStack } from "@chakra-ui/react";
 import axios from "axios";
 import i18n from "@/i18n/Localization";
-import { userAtom, toggleAboutAtom } from "@/components/Atoms";
+import { userAtom, toggleAboutAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { useAtom } from "jotai";
-import { openCircle, openAboutCircle } from "@/components/Navigation";
+import { openCircle, openAboutCircle, focusCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CircleContentForm } from "@/components/settings/CircleContentForm";
 import { CircleImagesForm } from "@/components/settings/CircleImagesForm";
@@ -49,6 +49,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
         allSteps.location,
     ]);
     const [activeStep, setActiveStep] = useState(allSteps.type);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
@@ -56,6 +57,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
             complete();
             onClose();
             openCircle(navigate, createdCircle);
+            focusCircle(createdCircle, setFocusOnMapItem);
             openAboutCircle(createdCircle, setToggleAbout);
         } else {
             setActiveStep(steps[nextIndex]);

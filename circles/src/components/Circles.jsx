@@ -16,7 +16,7 @@ import {
 import i18n from "@/i18n/Localization";
 import axios from "axios";
 import { log, isConnected, isAdmin } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CirclePicture, CircleTags, ConnectButton } from "@/components/CircleElements";
@@ -31,6 +31,7 @@ import {
     isMobileAtom,
     newCirclePopupAtom,
     circleSettingsAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { IoMdSend } from "react-icons/io";
 import { MdOutlineList, MdDns, MdPictureInPicture, MdViewAgenda } from "react-icons/md";
@@ -136,6 +137,7 @@ export const Circles = ({ type }) => {
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circleSettings, setCircleSettings] = useAtom(circleSettingsAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const navigate = useNavigateNoUpdates();
 
@@ -225,12 +227,22 @@ export const Circles = ({ type }) => {
                 <Scrollbars>
                     {filteredCircles?.map((item) =>
                         view === "compact" ? (
-                            <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
+                            <CircleListItem
+                                key={item.id}
+                                item={item}
+                                onClick={() => {
+                                    openCircle(navigate, item);
+                                    focusCircle(item, setFocusOnMapItem);
+                                }}
+                            />
                         ) : (
                             <CircleListItemNormal
                                 key={item.id}
                                 item={item}
-                                onClick={() => openCircle(navigate, item)}
+                                onClick={() => {
+                                    openCircle(navigate, item);
+                                    focusCircle(item, setFocusOnMapItem);
+                                }}
                             />
                         )
                     )}

@@ -7,10 +7,17 @@ import i18n from "@/i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
 import { AiOutlineMessage } from "react-icons/ai";
 import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { CirclePicture, buttonHighlight } from "@/components/CircleElements";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, chatCircleAtom, signInStatusAtom, toggleWidgetEventAtom } from "@/components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    chatCircleAtom,
+    signInStatusAtom,
+    toggleWidgetEventAtom,
+    focusOnMapItemAtom,
+} from "@/components/Atoms";
 import db from "@/components/Firebase";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 //#endregion

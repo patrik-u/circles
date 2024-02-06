@@ -34,9 +34,9 @@ import {
     getImageKitUrl,
     getDefaultCirclePicture,
 } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { useAtom } from "jotai";
-import { userAtom, isMobileAtom } from "@/components/Atoms";
+import { userAtom, isMobileAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { buttonHighlight } from "@/components/CircleElements";
 //#endregion
 
@@ -424,7 +424,7 @@ const Notifications = () => {
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
     const iconSize = isMobile ? 18 : 18;
     const iconSizePx = iconSize + "px";
-
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const notificationsBoxRef = useRef(null);
 
     useOutsideClick({
@@ -499,6 +499,7 @@ const Notifications = () => {
                         onClick={() => {
                             notificationsOnClose();
                             openCircle(navigate, notification.source);
+                            focusCircle(notification.source, setFocusOnMapItem);
                         }}
                     />
                 );

@@ -19,7 +19,7 @@ import {
     TabPanel,
     Tab,
 } from "@chakra-ui/react";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import {
     log,
     getDateAndTimeLong,
@@ -321,13 +321,7 @@ const CircleSelector = () => {
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
         openCircle(navigate, circle);
-
-        // focus on circle
-        if (circle?.id === "global") {
-            setFocusOnMapItem({ zoom: 1.8, item: global });
-        } else {
-            setFocusOnMapItem({ item: circle });
-        }
+        focusCircle(circle, setFocusOnMapItem);
     };
 
     if (!selectedCircle?.id) return <Box flexGrow="1" />;

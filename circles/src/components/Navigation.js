@@ -48,6 +48,15 @@ export const openCircle = (navigate, circle, section = null) => {
     navigate(section ? path[section] : path.home);
 };
 
+export const focusCircle = (circle, setFocusOnMapItem) => {
+    // focus on circle
+    if (circle?.id === "global") {
+        setFocusOnMapItem({ zoom: 1.8, item: global });
+    } else {
+        setFocusOnMapItem({ item: circle });
+    }
+};
+
 export const openAboutCircle = (circle, setToggleAbout) => {
     if (!circle?.id) return;
     setToggleAbout(circle);

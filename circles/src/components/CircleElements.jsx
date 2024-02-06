@@ -52,7 +52,7 @@ import {
     getRelationSet,
 } from "@/components/Helpers";
 import { Scrollbars } from "react-custom-scrollbars-2";
-import { routes, openCircle, openAboutCircle } from "@/components/Navigation";
+import { routes, openCircle, focusCircle, openAboutCircle } from "@/components/Navigation";
 import { CirclePreview } from "@/components/CirclePreview";
 import { RiLinksLine, RiShareLine, RiLiveFill } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
@@ -317,6 +317,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
     const [, setPreviewCircle] = useAtom(previewCircleAtom);
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const onOpenChat = () => {
         // init set circle
@@ -326,6 +327,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
 
         let relationSet = getRelationSet(user, circle);
         openCircle(navigate, relationSet);
+        focusCircle(relationSet, setFocusOnMapItem);
         setPreviewCircle(null);
         setToggleWidgetEvent({ name: "chat", value: true });
         setToggleWidgetEvent({ name: "about", value: true });
@@ -1585,6 +1587,7 @@ export const LargeConnectButton = ({ circle }) => {
 export const OpenButton = ({ circle, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const height = "28px";
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     return (
         <Tooltip label={"Enter into circle"} aria-label="A tooltip">
@@ -1597,6 +1600,7 @@ export const OpenButton = ({ circle, ...props }) => {
                 onClick={(event) => {
                     event.stopPropagation();
                     openCircle(navigate, circle);
+                    focusCircle(circle, setFocusOnMapItem);
                 }}
                 position="relative"
                 align="center"

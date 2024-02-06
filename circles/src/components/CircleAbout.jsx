@@ -1,7 +1,7 @@
 //#region imports
 import React, { useEffect, useMemo } from "react";
 import { Box, VStack, Text, Flex, HStack } from "@chakra-ui/react";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import {
     log,
     getDateAndTimeLong,
@@ -18,6 +18,7 @@ import {
     previewCircleAtom,
     userAtom,
     toggleWidgetEventAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "@/components/RouterUtils";
 import {
@@ -46,6 +47,7 @@ const CircleAbout = ({ onClose }) => {
     const circle = useMemo(() => previewCircle ?? currentCircle, [previewCircle, currentCircle]);
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -100,6 +102,7 @@ const CircleAbout = ({ onClose }) => {
                                                 cursor="pointer"
                                                 onClick={() => {
                                                     openCircle(navigate, circle.parent_circle);
+                                                    focusCircle(circle.parent_circle, setFocusOnMapItem);
                                                     setToggleWidgetEvent({ name: "about", value: true });
                                                 }}
                                             >
