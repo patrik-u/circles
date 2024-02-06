@@ -111,7 +111,8 @@ const CircleSettings = ({ onClose }) => {
             pointerEvents="auto"
             position="relative"
             overflow="hidden"
-            height={isBaseSettings() ? "200px" : "100%"}
+            // height={isBaseSettings() ? "200px" : "100%"}
+            height={"100%"}
             width="auto"
         >
             <Flex
