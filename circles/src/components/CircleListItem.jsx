@@ -58,7 +58,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
             flexDirection="row"
             flexGrow="0"
             flexShrink="0"
-            paddingBottom="10px"
+            // paddingBottom="10px"
             cursor={inSelect ? "pointer" : "default"}
             onClick={inSelect ? onClick : null}
             onMouseEnter={() => setHighlightedCircle(item)}
@@ -124,24 +124,24 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                     </>
                 )}
 
-                {!inSelect && (
+                {/* {!inSelect && (
                     <Box paddingTop="2px">
                         <CircleActions circle={item} onChatToggle={onChatToggle} />
                     </Box>
-                )}
-                {showChat && (
+                )} */}
+                {/* {showChat && (
                     <Box align="start" paddingTop="10px">
                         <CircleChat item={item} embeddedChatHeight={400} />
                     </Box>
-                )}
+                )} */}
                 {/* <Box>
                 <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
             </Box> */}
             </VStack>
 
-            {!inSelect && (
+            {/* {!inSelect && (
                 <ConnectButton circle={item} position="absolute" bottom="5px" right="10px" hoverFadeColor="#ffffff" />
-            )}
+            )} */}
 
             <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
                 {item.type === "event" && (
@@ -520,21 +520,21 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         <CircleTags circle={item} size="tiny" inSelect={inSelect} />
                     </Box>
 
-                    <Box paddingTop="4px">
+                    {/* <Box paddingTop="4px">
                         <CircleActions circle={item} onChatToggle={onChatToggle} />
-                    </Box>
+                    </Box> */}
 
                     {/* <Box>
                 <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
             </Box> */}
-                    {showChat && (
+                    {/* {showChat && (
                         <Box align="start" paddingTop="10px">
                             <CircleChat item={item} embeddedChatHeight={400} />
                         </Box>
-                    )}
+                    )} */}
                 </VStack>
 
-                {!inSelect && (
+                {/* {!inSelect && (
                     <ConnectButton
                         circle={item}
                         position="absolute"
@@ -542,7 +542,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         right="10px"
                         hoverFadeColor="#ffffff"
                     />
-                )}
+                )} */}
 
                 <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
                     {item.type === "event" && (

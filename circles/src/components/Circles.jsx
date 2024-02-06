@@ -36,6 +36,7 @@ import { IoMdSend } from "react-icons/io";
 import { MdOutlineList, MdDns, MdPictureInPicture, MdViewAgenda } from "react-icons/md";
 import { TbLayoutRows } from "react-icons/tb";
 import { BsCardHeading } from "react-icons/bs";
+import Scrollbars from "react-custom-scrollbars-2";
 //#endregion
 
 const CreateNewCircleForm = ({ type }) => {
@@ -186,58 +187,61 @@ export const Circles = ({ type }) => {
     const view = getCircleSettings("view") || "normal";
 
     return (
-        <Box flexGrow="1" width="100%" height="100%" align="center" position="relative" top="0px" left="0px">
-            <Flex width="100%" flexDirection="column" flexWrap="nowrap">
-                <CreateNewCircleForm type={type} />
-
-                {filteredCircles?.length > 0 && (
-                    <Flex borderBottom="1px solid #ebebeb" justifyContent="end">
-                        <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
-                            <IconButton
-                                width="28px"
-                                height="28px"
-                                margin="0px"
-                                minWidth="24px"
-                                padding="0px"
-                                aria-label="Compact"
-                                backgroundColor={view === "compact" ? "#e6e6e6" : "transparent"}
-                                icon={<MdOutlineList size={18} />}
-                                onClick={() => {
-                                    updateCircleSettings("view", "compact");
-                                }}
+        <Flex flexGrow="1" width="100%" height="100%" flexDirection={"column"}>
+            <CreateNewCircleForm type={type} />
+            {filteredCircles?.length > 0 && (
+                <Flex borderBottom="1px solid #ebebeb" justifyContent="end">
+                    <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
+                        <IconButton
+                            width="28px"
+                            height="28px"
+                            margin="0px"
+                            minWidth="24px"
+                            padding="0px"
+                            aria-label="Compact"
+                            backgroundColor={view === "compact" ? "#e6e6e6" : "transparent"}
+                            icon={<MdOutlineList size={18} />}
+                            onClick={() => {
+                                updateCircleSettings("view", "compact");
+                            }}
+                        />
+                        <IconButton
+                            width="28px"
+                            height="28px"
+                            margin="0px"
+                            minWidth="24px"
+                            padding="0px"
+                            aria-label="Normal"
+                            backgroundColor={view === "normal" ? "#e6e6e6" : "transparent"}
+                            icon={<MdViewAgenda size={18} />}
+                            onClick={() => {
+                                updateCircleSettings("view", "normal");
+                            }}
+                        />
+                    </ButtonGroup>
+                </Flex>
+            )}
+            <Flex flexGrow="1" flexDirection={"column"}>
+                <Scrollbars>
+                    {filteredCircles?.map((item) =>
+                        view === "compact" ? (
+                            <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
+                        ) : (
+                            <CircleListItemNormal
+                                key={item.id}
+                                item={item}
+                                onClick={() => openCircle(navigate, item)}
                             />
-                            <IconButton
-                                width="28px"
-                                height="28px"
-                                margin="0px"
-                                minWidth="24px"
-                                padding="0px"
-                                aria-label="Normal"
-                                backgroundColor={view === "normal" ? "#e6e6e6" : "transparent"}
-                                icon={<MdViewAgenda size={18} />}
-                                onClick={() => {
-                                    updateCircleSettings("view", "normal");
-                                }}
-                            />
-                        </ButtonGroup>
-                    </Flex>
-                )}
-
-                {filteredCircles?.map((item) =>
-                    view === "compact" ? (
-                        <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
-                    ) : (
-                        <CircleListItemNormal key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
-                    )
-                )}
-
+                        )
+                    )}
+                </Scrollbars>
                 {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                         {i18n.t(`No ${type}s`)}
                     </Text>
                 )}
             </Flex>
-        </Box>
+        </Flex>
     );
 };
 

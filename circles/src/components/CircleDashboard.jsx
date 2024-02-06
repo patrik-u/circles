@@ -76,6 +76,7 @@ import TopMenu from "@/components/TopMenu";
 import CircleAdmin from "@/components/CircleAdmin";
 import CircleSettings from "@/components/settings/CircleSettings";
 import { CircleChatWidget } from "@/components/CircleChat";
+import { Circles } from "@/components/Circles";
 //#endregion
 
 const examplePosts = [
@@ -271,16 +272,22 @@ const CircleSelector = () => {
     const [circle] = useAtom(circleAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     let global = { id: "global", name: "Global", picture: "/logo2.jpg" };
-    const [circles] = useMemo(() => {
-        // global circle first and then add favorite circles
-        let newCircles = [global];
-        if (circle?.id && circle?.id !== "global") {
-            newCircles = [...newCircles, circle];
-        }
+    const circles = useMemo(() => {
+        let newCircles = [];
         if (favoriteCircles) {
-            newCircles = [...newCircles, ...favoriteCircles.filter((c) => c.id !== circle?.id)];
+            newCircles = favoriteCircles
+                .filter((c) => c.id !== circle?.id)
+                .sort((a, b) => a.name.localeCompare(b.name));
         }
-        return [newCircles];
+        // global circle first and then add favorite circles
+        let preCircles = [];
+        if (circle?.id && circle?.id !== "global") {
+            preCircles = [global, circle];
+        } else {
+            preCircles = [global];
+        }
+
+        return [...preCircles, ...newCircles];
     }, [favoriteCircles, circle, global]);
     const navigate = useNavigateNoUpdates();
     const view = "compact";
@@ -454,14 +461,14 @@ const CircleDashboard = ({ onClose }) => {
                                 </Tab>
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
-                                        <FiUsers />
-                                        <Text fontSize="12px">Members</Text>
+                                        <FiCircle />
+                                        <Text fontSize="12px">Circles</Text>
                                     </Flex>
                                 </Tab>
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
-                                        <FiCircle />
-                                        <Text fontSize="12px">Circles</Text>
+                                        <FiUsers />
+                                        <Text fontSize="12px">Members</Text>
                                     </Flex>
                                 </Tab>
                                 <Tab borderColor={"white"}>
@@ -501,16 +508,19 @@ const CircleDashboard = ({ onClose }) => {
 
                             <TabPanels flex="1">
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
+                                    {/* Feed Component */}
                                     <Feed posts={examplePosts} />
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="calc(100% - 40px)">
+                                    {/* Chat Component */}
                                     <CircleChatWidget />
+                                </TabPanel>
+                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%" backgroundColor="white">
+                                    {/* Circles Component */}
+                                    <Circles type="circle" />
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     {/* Members Component */}
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Circles Component */}
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     {/* Events Component */}
