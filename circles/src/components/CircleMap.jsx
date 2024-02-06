@@ -29,7 +29,7 @@ import mapboxgl from "mapbox-gl";
 import config from "@/Config";
 //#endregion
 
-export const CircleMap = ({ height, onMapClick, children }, ref) => {
+export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
     const [mapStyle] = useAtom(mapStyleAtom);
     const [focusOnMapItem, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const mapboxToken = config.mapBoxToken;
@@ -85,11 +85,37 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         setIsMapInitialized(true);
     };
 
+    const adjustZoomForViewport = (zoomFactor) => {
+        // Dynamic adjustment factor based on viewport size
+        const baseViewportSize = 850; // a reference viewport size for which the zoomFactor is accurate
+        const currentViewportSize = Math.min(width, height);
+        const sizeRatio = currentViewportSize / baseViewportSize;
+        if (sizeRatio === 0) sizeRatio = 1;
+
+        // Calculate dynamic adjustment factor based on the size ratio
+        const dynamicAdjustmentFactor = Math.log2(1 / sizeRatio);
+
+        log(
+            "width: " + width + ", height: " + height + ", dynamicAdjustmentFactor: " + dynamicAdjustmentFactor,
+            0,
+            true
+        );
+
+        // Apply dynamic adjustment
+        return zoomFactor - dynamicAdjustmentFactor;
+    };
+
     useEffect(() => {
         if (!focusOnMapItem) return;
 
-        let zoom = focusOnMapItem.zoom ?? 15;
-        let location = getLocation(focusOnMapItem.item);
+        let calculatedMapViewport = focusOnMapItem?.item?.calculated_map_viewport;
+
+        let zoom = focusOnMapItem.zoom ?? calculatedMapViewport?.zoom_factor ?? 15;
+        if (calculatedMapViewport?.zoom_factor) {
+            zoom = adjustZoomForViewport(calculatedMapViewport.zoom_factor);
+        }
+
+        let location = calculatedMapViewport?.center ?? getLocation(focusOnMapItem.item);
 
         if (!location) {
             if (focusOnMapItem.item?.id === "global") {
@@ -99,7 +125,7 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
             }
         }
 
-        log("location: " + JSON.stringify(location));
+        log("focusing on location: " + JSON.stringify(location) + ", zoom: " + zoom, 0, true);
 
         let transitionSpeed = focusOnMapItem.speed ?? 3;
         let transitionCurve = focusOnMapItem.curve ?? 2;

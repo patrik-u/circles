@@ -325,8 +325,12 @@ export const Circle = ({ isGlobal }) => {
         <Flex flexDirection="row">
             <Box flexGrow="1" position="relative">
                 <Flex flexDirection="column" position="relative" backgroundColor="black">
-                    <Box width={"calc(100% - 360px)"} height={contentHeight + "px"} position="relative">
-                        <CircleMap height={contentHeight} />
+                    <Box
+                        width={isMobile ? "100%" : "calc(100% - 360px)"}
+                        height={contentHeight + "px"}
+                        position="relative"
+                    >
+                        <CircleMap width={isMobile ? windowWidth : windowWidth - 360} height={contentHeight} />
                         <Flex
                             position="absolute"
                             right="0px"
