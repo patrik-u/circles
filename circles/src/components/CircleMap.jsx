@@ -108,7 +108,29 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
     useEffect(() => {
         if (!focusOnMapItem) return;
 
+        let transitionSpeed = focusOnMapItem.speed ?? 3;
+        let transitionCurve = focusOnMapItem.curve ?? 2;
+        const mapInstance = mapRef.current.getMap();
+
         let calculatedMapViewport = focusOnMapItem?.item?.calculated_map_viewport;
+        let bounds = calculatedMapViewport?.bounds;
+        if (bounds) {
+            let lngLatBounds = [
+                [bounds.southwest.longitude, bounds.southwest.latitude],
+                [bounds.northeast.longitude, bounds.northeast.latitude],
+            ];
+
+            mapInstance.fitBounds(lngLatBounds, {
+                padding: { top: 100, bottom: 10, left: 30, right: 50 },
+                animate: true,
+                speed: transitionSpeed, // make the flying slow
+                curve: transitionCurve, // change the speed at which it zooms out
+                easing: (t) => t,
+                essential: true,
+            });
+            setFocusOnMapItem(null);
+            return;
+        }
 
         let zoom = focusOnMapItem.zoom ?? calculatedMapViewport?.zoom_factor ?? 15;
         if (calculatedMapViewport?.zoom_factor) {
@@ -127,13 +149,10 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
 
         log("focusing on location: " + JSON.stringify(location) + ", zoom: " + zoom, 0, true);
 
-        let transitionSpeed = focusOnMapItem.speed ?? 3;
-        let transitionCurve = focusOnMapItem.curve ?? 2;
-
         //setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom, transitionDuration });
 
         // fly to location
-        const mapInstance = mapRef.current.getMap();
+
         mapInstance.flyTo({
             center: [location.longitude, location.latitude],
             zoom: zoom,

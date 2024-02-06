@@ -195,6 +195,22 @@ const calculateMapZoomFactor = (locations) => {
     return Math.min(latZoom, lngZoom);
 };
 
+const calculateMapBounds = (locations) => {
+    // get minimum and maximum latitudes and longitudes
+    let minLat = Math.min(...locations.map((loc) => loc.latitude));
+    let maxLat = Math.max(...locations.map((loc) => loc.latitude));
+    let minLng = Math.min(...locations.map((loc) => loc.longitude));
+    let maxLng = Math.max(...locations.map((loc) => loc.longitude));
+
+    // return the calculated bounds
+    const bounds = {
+        southwest: { latitude: minLat, longitude: minLng },
+        northeast: { latitude: maxLat, longitude: maxLng },
+    };
+
+    return bounds;
+};
+
 const getPinecone = async () => {
     if (pineconeInitialized) {
         return pinecone;
@@ -1316,9 +1332,13 @@ const updateMapViewport = async (circleId) => {
     // calculate map zoom factor
     let mapZoomFactor = calculateMapZoomFactor(locations);
 
+    // calculate bounds
+    let mapBounds = calculateMapBounds(locations);
+
     let calculated_map_viewport = {
         center: mapCenter,
         zoom_factor: mapZoomFactor,
+        bounds: mapBounds,
     };
 
     // update circle
