@@ -78,6 +78,7 @@ import CircleAdmin from "@/components/CircleAdmin";
 import CircleSettings from "@/components/settings/CircleSettings";
 import { CircleChatWidget } from "@/components/CircleChat";
 import { Circles } from "@/components/Circles";
+import CircleAbout from "./CircleAbout";
 //#endregion
 
 const examplePosts = [
@@ -381,7 +382,7 @@ const CircleDashboard = ({ onClose }) => {
     const { hostId, circleId } = useParams();
 
     // define a mapping from tab paths to tab indexes
-    const tabPaths = ["feed", "chat", "circles", "members", "events", "tasks", "settings", "admin"];
+    const tabPaths = ["home", "feed", "chat", "circles", "members", "events", "tasks", "settings", "admin"];
     const currentPath = location.pathname.split("/").pop();
     const tabIndex = Math.max(tabPaths.indexOf(currentPath), 0);
 
@@ -461,7 +462,7 @@ const CircleDashboard = ({ onClose }) => {
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
                                         <FiHome />
-                                        <Text fontSize="12px">Feed</Text>
+                                        <Text fontSize="12px">Home</Text>
                                     </Flex>
                                 </Tab>
                                 <Tab borderColor={"white"}>
@@ -488,15 +489,15 @@ const CircleDashboard = ({ onClose }) => {
                                         <Text fontSize="12px">Members</Text>
                                     </Flex>
                                 </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiCalendar />
-                                        <Text fontSize="12px">Events</Text>
-                                    </Flex>
-                                </Tab>
 
                                 {circleDashboardExpanded && (
                                     <>
+                                        <Tab borderColor={"white"}>
+                                            <Flex flexDirection="column" align="center">
+                                                <FiCalendar />
+                                                <Text fontSize="12px">Events</Text>
+                                            </Flex>
+                                        </Tab>
                                         <Tab borderColor={"white"}>
                                             <Flex flexDirection="column" align="center">
                                                 <FiClipboard />
@@ -528,6 +529,7 @@ const CircleDashboard = ({ onClose }) => {
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
                                     <Route index element={<Feed posts={examplePosts} />} />
+                                    <Route path="home" element={<CircleAbout />} />
                                     <Route path="feed" element={<Feed posts={examplePosts} />} />
                                     <Route path="chat" element={<CircleChatWidget />} />
                                     <Route path="circles" element={<Circles type="circle" />} />
