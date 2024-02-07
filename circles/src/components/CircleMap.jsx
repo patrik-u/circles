@@ -89,7 +89,7 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
         // Dynamic adjustment factor based on viewport size
         const baseViewportSize = 850; // a reference viewport size for which the zoomFactor is accurate
         const currentViewportSize = Math.min(width, height);
-        const sizeRatio = currentViewportSize / baseViewportSize;
+        let sizeRatio = currentViewportSize / baseViewportSize;
         if (sizeRatio === 0) sizeRatio = 1;
 
         // Calculate dynamic adjustment factor based on the size ratio

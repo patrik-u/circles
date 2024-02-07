@@ -54,6 +54,7 @@ export const includeParagraphsAtom = atomWithStorage("includeParagraphs", true);
 export const circleHistoryAtom = atom({ history: [], position: -1 });
 export const circleAtom = atom(null);
 export const circleDataAtom = atom(null);
+export const subcirclesAtom = atom([]);
 export const activeCirclesAtom = atom([]);
 export const similarCirclesAtom = atom([]);
 export const connectedCirclesAtom = atom([]);
@@ -91,16 +92,11 @@ export const mergedSemanticSearchCirclesAtom = atom((get) => {
 });
 
 export const circlesAtom = atom((get) => {
-    // gets active circles and circles from semantic search query and combines them to a single list
-    const activeCircles = get(activeCirclesAtom);
-    const similarCircles = get(similarCirclesAtom);
-    const connectedCircles = get(connectedCirclesAtom);
-    const mentionedCircles = get(mentionedCirclesAtom);
+    // gets subcircles and circles from semantic search query and combines them to a single list
+    const subcircles = get(subcirclesAtom);
     const mergedSemanticSearchCircles = get(mergedSemanticSearchCirclesAtom);
 
-    // remove duplicates here
-
-    let circles = [...activeCircles];
+    let circles = [...subcircles];
     for (var circle of circles) {
         // clear colors and queries
         circle.colors = [];
@@ -122,52 +118,83 @@ export const circlesAtom = atom((get) => {
         }
     }
 
-    // add similar circles not in list
-    for (var similarCircle of similarCircles) {
-        let circleId = similarCircle.id;
-        let existingCircle = circles.find((x) => x.id === circleId);
-        if (!existingCircle) {
-            similarCircle.categories = ["similar"];
-            circles.push(similarCircle);
-        } else {
-            existingCircle.categories.push("similar");
-            // TODO maybe add color
-        }
+    // DISCOVERY123 old logic to get active, similar, connected, mentioned and searched circles
+    // const activeCircles = get(activeCirclesAtom);
+    // const similarCircles = get(similarCirclesAtom);
+    // const connectedCircles = get(connectedCirclesAtom);
+    // const mentionedCircles = get(mentionedCirclesAtom);
+    // const mergedSemanticSearchCircles = get(mergedSemanticSearchCirclesAtom);
 
-        if (!similarCircle.name) {
-            log("similarCircle: " + JSON.stringify(similarCircle, null, 2), 0, true, similarCircle);
-        }
-    }
+    // // remove duplicates here
 
-    // add connected circles not in list
-    for (var connectedCircle of connectedCircles) {
-        let circleId = connectedCircle.id;
-        let existingCircle = circles.find((x) => x.id === circleId);
-        if (!existingCircle) {
-            connectedCircle.categories = ["connected"];
-            circles.push(connectedCircle);
-        } else {
-            existingCircle.categories.push("connected");
-            // TODO maybe add color
-        }
-    }
+    // let circles = [...activeCircles];
+    // for (var circle of circles) {
+    //     // clear colors and queries
+    //     circle.colors = [];
+    //     circle.queries = [];
+    //     circle.categories = ["active"];
+    // }
 
-    // add mentioned circles not in list
-    mentionedCircles.sort(
-        (a, b) =>
-            fromFsDate(b.mentioned_at ?? new Date("2000-01-01")) - fromFsDate(a.mentioned_at ?? new Date("2000-01-01"))
-    );
-    for (var mentionedCircle of mentionedCircles) {
-        let circleId = mentionedCircle.id;
-        let existingCircle = circles.find((x) => x.id === circleId);
-        if (!existingCircle) {
-            mentionedCircle.categories = ["mentioned"];
-            circles.push(mentionedCircle);
-        } else {
-            existingCircle.categories.push("mentioned");
-            // TODO maybe add color
-        }
-    }
+    // for (var item of mergedSemanticSearchCircles) {
+    //     // loop through all semantic search circles and add them to the list
+    //     let circleId = item.id;
+    //     let existingCircle = circles.find((x) => x.id === circleId);
+    //     if (existingCircle) {
+    //         existingCircle.colors = item.colors;
+    //         existingCircle.query = item.query;
+    //         existingCircle.categories.push("search");
+    //     } else {
+    //         item.categories = ["search"];
+    //         circles.push(item);
+    //     }
+    // }
+
+    // // add similar circles not in list
+    // for (var similarCircle of similarCircles) {
+    //     let circleId = similarCircle.id;
+    //     let existingCircle = circles.find((x) => x.id === circleId);
+    //     if (!existingCircle) {
+    //         similarCircle.categories = ["similar"];
+    //         circles.push(similarCircle);
+    //     } else {
+    //         existingCircle.categories.push("similar");
+    //         // TODO maybe add color
+    //     }
+
+    //     if (!similarCircle.name) {
+    //         log("similarCircle: " + JSON.stringify(similarCircle, null, 2), 0, true, similarCircle);
+    //     }
+    // }
+
+    // // add connected circles not in list
+    // for (var connectedCircle of connectedCircles) {
+    //     let circleId = connectedCircle.id;
+    //     let existingCircle = circles.find((x) => x.id === circleId);
+    //     if (!existingCircle) {
+    //         connectedCircle.categories = ["connected"];
+    //         circles.push(connectedCircle);
+    //     } else {
+    //         existingCircle.categories.push("connected");
+    //         // TODO maybe add color
+    //     }
+    // }
+
+    // // add mentioned circles not in list
+    // mentionedCircles.sort(
+    //     (a, b) =>
+    //         fromFsDate(b.mentioned_at ?? new Date("2000-01-01")) - fromFsDate(a.mentioned_at ?? new Date("2000-01-01"))
+    // );
+    // for (var mentionedCircle of mentionedCircles) {
+    //     let circleId = mentionedCircle.id;
+    //     let existingCircle = circles.find((x) => x.id === circleId);
+    //     if (!existingCircle) {
+    //         mentionedCircle.categories = ["mentioned"];
+    //         circles.push(mentionedCircle);
+    //     } else {
+    //         existingCircle.categories.push("mentioned");
+    //         // TODO maybe add color
+    //     }
+    // }
 
     return circles;
 });

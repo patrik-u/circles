@@ -38,6 +38,7 @@ import {
     homeExpandedAtom,
     signInStatusAtom,
     circleAtom,
+    subcirclesAtom,
     circleDataAtom,
     circleConnectionsAtom,
     searchResultsShownAtom,
@@ -109,6 +110,7 @@ export const Circle = ({ isGlobal }) => {
     const [, setConnectedCircles] = useAtom(connectedCirclesAtom);
     const [, setMentionedCircles] = useAtom(mentionedCirclesAtom);
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
+    const [, setSubcircles] = useAtom(subcirclesAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [showHistoricCircles, setShowHistoricCircles] = useAtom(showHistoricCirclesAtom);
@@ -212,59 +214,88 @@ export const Circle = ({ isGlobal }) => {
     useEffect(() => {
         if (!circleId && !isGlobal) return;
 
-        // get all circles that has recently been active in circle
-        const lastXMinutes = new Date();
-        lastXMinutes.setMinutes(lastXMinutes.getMinutes() - 60 * 24); // last 24 hours
-
-        // show all connections on the map
-        // subscribe to connected circles
-        let q = null;
-
-        // subscribe to active circles
+        // if global we get all circles of type "circle" in the system
         let everything = circleId === "global" || isGlobal;
+        let q = null;
         if (everything) {
-            q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
+            // get all circles
+            q = query(collection(db, "circles"), where("type", "in", ["circle", "post", "event", "user", "task"]));
         } else {
+            // get subcircles
             q = query(
                 collection(db, "circles"),
-                where("activity.active_in_circle.id", "==", circleId),
-                where("activity.last_activity", ">=", lastXMinutes)
+                where("parent_circle.id", "==", circleId),
+                where("type", "in", ["circle", "post", "event", "user", "task"])
             );
-            // TODO here we might want to get active in sub-circles as well
         }
 
-        // subscribe to active circles
-        let unsubscribeGetActiveCircles = onSnapshot(q, (snap) => {
-            let activeCircles = snap.docs.map((doc) => {
+        let unsubscribeGetSubcircles = onSnapshot(q, (snap) => {
+            let circles = snap.docs.map((doc) => {
                 return { id: doc.id, ...doc.data() };
             });
-            setActiveCircles(activeCircles);
+            setSubcircles(circles);
         });
 
-        // get similar circles
-        axios
-            .get(`/circles/${circleId}/circles`)
-            .then((response) => {
-                let similarCircles = response.data.similarCircles;
-                setSimilarCircles(similarCircles ?? []);
-
-                //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
-
-                let connectedCircles = response.data.connectedCircles;
-                setConnectedCircles(connectedCircles ?? []);
-
-                let mentionedCircles = response.data.mentionedCircles;
-                setMentionedCircles(mentionedCircles ?? []);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-
         return () => {
-            if (unsubscribeGetActiveCircles) {
-                unsubscribeGetActiveCircles();
+            if (unsubscribeGetSubcircles) {
+                unsubscribeGetSubcircles();
             }
         };
+
+        // DISCOVERY123 old discovery logic to get active, similar, mentioned and connected circles
+        // // get all circles that has recently been active in circle
+        // const lastXMinutes = new Date();
+        // lastXMinutes.setMinutes(lastXMinutes.getMinutes() - 60 * 24); // last 24 hours
+
+        // // show all connections on the map
+        // // subscribe to connected circles
+        // let q = null;
+
+        // // subscribe to active circles
+        // let everything = circleId === "global" || isGlobal;
+        // if (everything) {
+        //     q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
+        // } else {
+        //     q = query(
+        //         collection(db, "circles"),
+        //         where("activity.active_in_circle.id", "==", circleId),
+        //         where("activity.last_activity", ">=", lastXMinutes)
+        //     );
+        //     // TODO here we might want to get active in sub-circles as well
+        // }
+
+        // // subscribe to active circles
+        // let unsubscribeGetActiveCircles = onSnapshot(q, (snap) => {
+        //     let activeCircles = snap.docs.map((doc) => {
+        //         return { id: doc.id, ...doc.data() };
+        //     });
+        //     setActiveCircles(activeCircles);
+        // });
+
+        // // get similar circles
+        // axios
+        //     .get(`/circles/${circleId}/circles`)
+        //     .then((response) => {
+        //         let similarCircles = response.data.similarCircles;
+        //         setSimilarCircles(similarCircles ?? []);
+
+        //         //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
+
+        //         let connectedCircles = response.data.connectedCircles;
+        //         setConnectedCircles(connectedCircles ?? []);
+
+        //         let mentionedCircles = response.data.mentionedCircles;
+        //         setMentionedCircles(mentionedCircles ?? []);
+        //     })
+        //     .catch((err) => {
+        //         console.error(err);
+        //     });
+
+        // return () => {
+        //     if (unsubscribeGetActiveCircles) {
+        //         unsubscribeGetActiveCircles();
+        //     }
+        // };
     }, [
         circleId,
         setActiveCircles,

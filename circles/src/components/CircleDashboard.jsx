@@ -1,5 +1,5 @@
 //#region imports
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 import {
     Box,
     VStack,
@@ -31,6 +31,7 @@ import {
     isAdmin,
 } from "@/components/Helpers";
 import { defaultUserPicture } from "@/components/Constants";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -290,6 +291,7 @@ const CircleSelector = () => {
         return [...preCircles, ...newCircles];
     }, [favoriteCircles, circle, global]);
     const navigate = useNavigateNoUpdates();
+    const location = useLocationNoUpdates();
     const view = "compact";
 
     useEffect(() => {
@@ -366,8 +368,6 @@ const Feed = ({ posts }) => {
 const CircleDashboard = ({ onClose }) => {
     log("CircleDashboard.render", -1);
 
-    const [tabIndex, setTabIndex] = useState(0);
-
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
@@ -378,6 +378,23 @@ const CircleDashboard = ({ onClose }) => {
     const [circle] = useAtom(circleAtom);
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
+    const { hostId, circleId } = useParams();
+
+    // define a mapping from tab paths to tab indexes
+    const tabPaths = ["feed", "chat", "circles", "members", "events", "tasks", "settings", "admin"];
+    const currentPath = location.pathname.split("/").pop();
+    const tabIndex = Math.max(tabPaths.indexOf(currentPath), 0);
+
+    const handleTabChange = (index) => {
+        const path = tabPaths[index];
+        navigate(`/${hostId}/${circleId}/${path}`);
+    };
+
+    // useEffect(() => {
+    //     // This ensures that the tab index is updated when the URL changes
+    //     // It handles the case where the user navigates directly via URL or browser back/forward
+    //     setTabIndex(tabPaths.indexOf(location.pathname.split("/").pop()));
+    // }, [location, tabPaths]);
 
     const getNameFontSize = (name) => {
         if (!name) return "17px";
@@ -429,18 +446,24 @@ const CircleDashboard = ({ onClose }) => {
                         display="flex"
                         flexDirection="column"
                         flexGrow="1"
-                        height="100%" // Ensure this element takes the full height
+                        height="calc(100% - 40px)" // Ensure this element takes the full height
                     >
                         <Tabs
                             index={tabIndex}
-                            onChange={(index) => setTabIndex(index)}
+                            onChange={handleTabChange}
+                            isLazy
                             isFitted={circleDashboardExpanded ? false : true}
                             display="flex"
-                            flex="1"
                             flexDirection={"column"}
                             orientation={"horizontal"}
                         >
                             <TabList bg="white" borderColor="white">
+                                <Tab borderColor={"white"}>
+                                    <Flex flexDirection="column" align="center">
+                                        <FiHome />
+                                        <Text fontSize="12px">Feed</Text>
+                                    </Flex>
+                                </Tab>
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
                                         <FiHome />
@@ -499,28 +522,35 @@ const CircleDashboard = ({ onClose }) => {
                                     </>
                                 )}
                             </TabList>
+                        </Tabs>
 
-                            <TabPanels flex="1">
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Feed Component */}
-                                    <Feed posts={examplePosts} />
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="calc(100% - 40px)">
-                                    {/* Chat Component */}
-                                    <CircleChatWidget />
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%" backgroundColor="white">
-                                    {/* Circles Component */}
+                        <Box flex="1" backgroundColor="white">
+                            <Suspense fallback={<Box></Box>}>
+                                <Routes>
+                                    <Route index element={<Feed posts={examplePosts} />} />
+                                    <Route path="feed" element={<Feed posts={examplePosts} />} />
+                                    <Route path="chat" element={<CircleChatWidget />} />
+                                    <Route path="circles" element={<Circles type="circle" />} />
+                                    <Route path="events" element={<Circles type="event" />} />
+                                    <Route path="tasks" element={<Circles type="task" />} />
+                                    <Route path="settings" element={<CircleSettings />} />
+                                    <Route path="admin" element={<CircleAdmin />} />
+                                </Routes>
+                            </Suspense>
+                        </Box>
+
+                        {/* <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%" backgroundColor="white">
+                                    Circles Component 
                                     <Circles type="circle" />
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Members Component */}
+                                     Members Component
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Events Component */}
+                                    Events Component 
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    {/* Tasks Component */}
+                                    Tasks Component 
                                 </TabPanel>
 
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
@@ -528,9 +558,7 @@ const CircleDashboard = ({ onClose }) => {
                                 </TabPanel>
                                 <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
                                     <CircleAdmin />
-                                </TabPanel>
-                            </TabPanels>
-                        </Tabs>
+                                </TabPanel> */}
                     </Box>
                 </Box>
             </Box>
