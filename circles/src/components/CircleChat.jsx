@@ -1248,12 +1248,14 @@ export const CircleChat = ({ circle }) => {
         setMessageToReply(null);
     };
 
+    const circleChatBackgroundColor = "white"; // "#e3e3e3";
+
     if (!circle) return null;
 
     return (
         <Flex
             flexGrow="1"
-            backgroundColor="#e3e3e3"
+            // backgroundColor={circleChatBackgroundColor}
             width="100%"
             height="100%"
             position="relative"
