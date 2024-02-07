@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import db from "@/components/Firebase";
 import axios from "axios";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { log, fromFsDate, getDateWithoutTime, isConnected } from "@/components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
@@ -52,6 +53,7 @@ import {
     mentionedCirclesAtom,
     circleHistoryAtom,
     circleDashboardExpandedAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { displayModes } from "@/components/Constants";
 import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
@@ -121,6 +123,8 @@ export const Circle = ({ isGlobal }) => {
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
+    const [initialFocusDone, setInitialFocusDone] = useState(false);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const handlePinClick = () => {
         setIsPinned(!isPinned);
@@ -344,6 +348,13 @@ export const Circle = ({ isGlobal }) => {
         }, 60000);
         return () => clearInterval(intervalId);
     }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);
+
+    useEffect(() => {
+        if (circleId && circle?.id && !initialFocusDone) {
+            focusCircle(circle, setFocusOnMapItem);
+            setInitialFocusDone(true); // Prevent further calls on subsequent renders
+        }
+    }, [circleId, circle, initialFocusDone]);
 
     const circlePictureSize = isMobile ? 120 : 160;
 
