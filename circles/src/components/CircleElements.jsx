@@ -1660,15 +1660,7 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, onClickSpace,
     if (!circle) return null;
 
     return (
-        <Flex
-            flex="initial"
-            order="0"
-            align="left"
-            flexDirection="column"
-            width="100%"
-            height={isMobile ? "32px" : "32px"}
-            {...props}
-        >
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={"32px"} {...props}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex flexDirection="row" width="100%" position="relative" align="center">
                     {inChat && (

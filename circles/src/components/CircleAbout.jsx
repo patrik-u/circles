@@ -68,26 +68,44 @@ const CircleAbout = ({ onClose }) => {
         return "14px";
     };
 
+    const noPaddingStyle = true;
+
     return (
         <>
             {circle && (
                 <Box
-                    bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-                    borderRadius="10px"
-                    margin={isMobile ? "0px" : "0px 10px 10px 0px"}
-                    padding="5px"
+                    // bgGradient="linear(to-r,#d3d1d3,#ffffff)"
+                    // borderRadius="10px"
+                    // margin={isMobile ? "0px" : "0px 10px 10px 0px"}
+                    padding={noPaddingStyle ? "0px" : "5px"}
                     flexGrow="1"
                     pointerEvents="auto"
                     position="relative"
                     overflow="hidden"
                     height="100%"
                 >
-                    <CircleHeader circle={circle} onClose={onClose} />
+                    {circle?.id !== "global" && (
+                        <CircleHeader
+                            circle={circle}
+                            onClose={onClose}
+                            paddingLeft={noPaddingStyle ? "5px" : "0px"}
+                            paddingRight={noPaddingStyle ? "5px" : "0px"}
+                            // position="absolute"
+                            // top="5px"
+                        />
+                    )}
                     <Scrollbars autoHide>
-                        <CircleCover circle={circle} coverHeight={184} borderRadius="7px" />
+                        <CircleCover circle={circle} coverHeight={184} borderRadius={noPaddingStyle ? "0px" : "7px"} />
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
-                        <Flex height="54px" width="100%" flexDirection="row" position="relative">
+                        <Flex
+                            height="54px"
+                            width="100%"
+                            flexDirection="row"
+                            position="relative"
+                            paddingLeft={noPaddingStyle ? "5px" : "0px"}
+                            paddingRight={noPaddingStyle ? "5px" : "0px"}
+                        >
                             <Box width="calc(50% - 38px)" overflow="hidden">
                                 {circle.type !== "set" && (
                                     <Flex flexDirection={"column"} marginLeft="5px" marginTop="5px">
@@ -184,7 +202,7 @@ const CircleAbout = ({ onClose }) => {
                             <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />
                         )}
 
-                        {circle?.id !== user?.id && (
+                        {/* {circle?.id !== user?.id && (
                             <RelationSetInfo
                                 circle={
                                     circle?.type === "set"
@@ -193,10 +211,10 @@ const CircleAbout = ({ onClose }) => {
                                             : circle?.[circle?.circle_ids?.[1]]
                                         : circle
                                 }
-                                marginLeft="0px"
-                                marginRight="0px"
+                                marginLeft={noPaddingStyle ? "5px" : "0px"}
+                                marginRight={noPaddingStyle ? "5px" : "0px"}
                             />
-                        )}
+                        )} */}
 
                         {circle.description && (
                             <Box
@@ -204,7 +222,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <CircleRichText mentions={circle.mentions}>{circle.description}</CircleRichText>
                             </Box>
@@ -216,7 +234,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">Tags</Text>
                                 <CircleTags circle={circle} showAll={true} wrap="wrap" />
@@ -229,7 +247,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">Mission</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.mission}</CircleRichText>
@@ -242,7 +260,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">Offers</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.offers}</CircleRichText>
@@ -255,7 +273,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">Needs</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.needs}</CircleRichText>
@@ -268,7 +286,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">About</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.content}</CircleRichText>
@@ -276,7 +294,12 @@ const CircleAbout = ({ onClose }) => {
                         )}
 
                         {circle.questions && (
-                            <Box backgroundColor="#ffffffaa" padding="5px" borderRadius="7px" marginTop="10px">
+                            <Box
+                                backgroundColor="#ffffffaa"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                borderRadius="7px"
+                                marginTop="10px"
+                            >
                                 {circle.questions.question0 && <CircleQuestion question={circle.questions.question0} />}
                                 {circle.questions.question1 && <CircleQuestion question={circle.questions.question1} />}
                                 {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
@@ -291,7 +314,7 @@ const CircleAbout = ({ onClose }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding="5px"
+                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
                             >
                                 <Text fontWeight="bold">Version</Text>
                                 <Text>{import.meta.env.VITE_APP_VERSION}</Text>
