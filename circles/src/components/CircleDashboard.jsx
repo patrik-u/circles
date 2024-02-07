@@ -274,7 +274,7 @@ const CircleSelector = () => {
     const [favoriteCircles, setFavoriteCircles] = useState([]);
     const [circle] = useAtom(circleAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
-    let global = { id: "global", name: "Explore", picture: "/explore2.png" };
+    let global = { id: "global", name: "Explore", picture: "/explore3.png" };
     const circles = useMemo(() => {
         let newCircles = [];
         if (favoriteCircles) {
