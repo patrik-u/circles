@@ -71,6 +71,7 @@ import {
     FiMessageCircle,
     FiSettings,
     FiShield,
+    FiRss,
 } from "react-icons/fi";
 import { HiOutlineChat } from "react-icons/hi";
 import TopMenu from "@/components/TopMenu";
@@ -383,8 +384,10 @@ const CircleDashboard = ({ onClose }) => {
 
     // define a mapping from tab paths to tab indexes
     const tabPaths = ["home", "feed", "chat", "circles", "members", "events", "tasks", "settings", "admin"];
-    const currentPath = location.pathname.split("/").pop();
-    const tabIndex = Math.max(tabPaths.indexOf(currentPath), 0);
+    const pathSegments = location.pathname.split("/");
+    const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
+    const tabPathIndex = tabPaths.indexOf(currentTabPath);
+    const tabIndex = tabPathIndex < 0 ? tabPaths.indexOf("feed") : tabPathIndex;
 
     const handleTabChange = (index) => {
         const path = tabPaths[index];
@@ -467,7 +470,7 @@ const CircleDashboard = ({ onClose }) => {
                                 </Tab>
                                 <Tab borderColor={"white"}>
                                     <Flex flexDirection="column" align="center">
-                                        <FiHome />
+                                        <FiRss />
                                         <Text fontSize="12px">Feed</Text>
                                     </Flex>
                                 </Tab>
@@ -528,14 +531,15 @@ const CircleDashboard = ({ onClose }) => {
                         <Box flex="1" backgroundColor="white">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
-                                    <Route index element={<Feed posts={examplePosts} />} />
+                                    <Route path="/" element={<Feed posts={examplePosts} />} />
                                     <Route path="home" element={<CircleAbout />} />
                                     <Route path="feed" element={<Feed posts={examplePosts} />} />
                                     <Route path="chat" element={<CircleChatWidget />} />
                                     <Route path="circles" element={<Circles type="circle" />} />
+                                    <Route path="members" element={<Circles type="user" />} />
                                     <Route path="events" element={<Circles type="event" />} />
                                     <Route path="tasks" element={<Circles type="task" />} />
-                                    <Route path="settings" element={<CircleSettings />} />
+                                    <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin" element={<CircleAdmin />} />
                                 </Routes>
                             </Suspense>
