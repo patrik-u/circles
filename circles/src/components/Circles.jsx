@@ -71,8 +71,8 @@ const CreateNewCircleForm = ({ type }) => {
     if (!user?.id || (!circle?.is_public && !isAdmin(circle, userData)) || type === "user") return null;
 
     return (
-        <Flex flexDirection="column">
-            <Flex flexDirection="row" height="60px" align="center">
+        <Flex flexDirection="column" paddingRight="5px" paddingTop="5px">
+            <Flex flexDirection="row" height="40px" align="center">
                 <Box margin="10px" minWidth="40px" minHeight="40px" position="relative">
                     <CirclePicture circle={user} size={40} disableClick={true} />
                 </Box>
@@ -192,7 +192,7 @@ export const Circles = ({ type }) => {
         <Flex flexGrow="1" width="100%" height="100%" flexDirection={"column"}>
             <CreateNewCircleForm type={type} />
             {filteredCircles?.length > 0 && (
-                <Flex borderBottom="1px solid #ebebeb" justifyContent="end">
+                <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
                     <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
                         <IconButton
                             width="28px"
