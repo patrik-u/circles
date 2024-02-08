@@ -95,7 +95,12 @@ const CircleAbout = ({ onClose }) => {
                         />
                     )}
                     <Scrollbars autoHide>
-                        <CircleCover circle={circle} coverHeight={184} borderRadius={noPaddingStyle ? "0px" : "7px"} />
+                        <CircleCover
+                            circle={circle}
+                            coverHeight={184}
+                            coverWidth={isMobile ? null : 375}
+                            borderRadius={noPaddingStyle ? "0px" : "7px"}
+                        />
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
                         <Flex
