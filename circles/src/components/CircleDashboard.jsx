@@ -387,7 +387,7 @@ const CircleDashboard = ({ onClose }) => {
     const pathSegments = location.pathname.split("/");
     const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
     const tabPathIndex = tabPaths.indexOf(currentTabPath);
-    const tabIndex = tabPathIndex < 0 ? tabPaths.indexOf("feed") : tabPathIndex;
+    const tabIndex = tabPathIndex < 0 ? (circleId === "global" ? tabPaths.indexOf("feed") : 0) : tabPathIndex;
 
     const handleTabChange = (index) => {
         const path = tabPaths[index];
@@ -531,7 +531,12 @@ const CircleDashboard = ({ onClose }) => {
                         <Box flex="1" backgroundColor="white">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
-                                    <Route path="/" element={<Feed posts={examplePosts} />} />
+                                    <Route
+                                        path="/"
+                                        element={
+                                            circleId === "global" ? <Feed posts={examplePosts} /> : <CircleAbout />
+                                        }
+                                    />
                                     <Route path="home" element={<CircleAbout />} />
                                     <Route path="feed" element={<Feed posts={examplePosts} />} />
                                     <Route path="chat" element={<CircleChatWidget />} />
