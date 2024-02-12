@@ -12,6 +12,7 @@ import {
     MenuButton,
     MenuList,
     MenuItem,
+    MenuDivider,
     Button,
     Tabs,
     TabList,
@@ -285,13 +286,13 @@ const CircleSelector = () => {
         // global circle first and then add favorite circles
         let preCircles = [];
         if (circle?.id && circle?.id !== "global") {
-            preCircles = [global, circle];
+            preCircles = [circle];
         } else {
-            preCircles = [global];
+            preCircles = [];
         }
 
         return [...preCircles, ...newCircles];
-    }, [favoriteCircles, circle, global]);
+    }, [favoriteCircles, circle]);
     const navigate = useNavigateNoUpdates();
     const location = useLocationNoUpdates();
     const view = "compact";
@@ -345,6 +346,13 @@ const CircleSelector = () => {
                 </Box>
             </MenuButton>
             <MenuList width="100%">
+                <MenuItem key={global.id} onClick={() => handleSelect(global)}>
+                    <Image boxSize="30px" borderRadius="full" src={global.picture} alt={global.name} mr={2} />
+                    <Text>{global.name}</Text>
+                </MenuItem>
+
+                <MenuDivider />
+
                 {circles.map((circle) => (
                     <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
                         <Image boxSize="30px" borderRadius="full" src={circle.picture} alt={circle.name} mr={2} />
