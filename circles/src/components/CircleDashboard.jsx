@@ -1,5 +1,5 @@
 //#region imports
-import React, { useEffect, useMemo, useState, Suspense } from "react";
+import React, { useEffect, useMemo, useState, Suspense, useRef } from "react";
 import {
     Box,
     VStack,
@@ -14,6 +14,7 @@ import {
     MenuItem,
     MenuDivider,
     Button,
+    SimpleGrid,
     Tabs,
     TabList,
     TabPanels,
@@ -81,6 +82,7 @@ import CircleSettings from "@/components/settings/CircleSettings";
 import { CircleChatWidget } from "@/components/CircleChat";
 import { Circles } from "@/components/Circles";
 import CircleAbout from "./CircleAbout";
+import { GrAppsRounded } from "react-icons/gr";
 //#endregion
 
 const examplePosts = [
@@ -375,6 +377,54 @@ const Feed = ({ posts }) => {
     );
 };
 
+const tabs = [
+    {
+        id: "home",
+        name: "Home",
+        icon: FiHome,
+    },
+    {
+        id: "feed",
+        name: "Feed",
+        icon: FiRss,
+    },
+    {
+        id: "chat",
+        name: "Chat",
+        icon: FiMessageCircle,
+    },
+    {
+        id: "circles",
+        name: "Circles",
+        icon: FiCircle,
+    },
+    {
+        id: "members",
+        name: "Members",
+        icon: FiUsers,
+    },
+    {
+        id: "events",
+        name: "Events",
+        icon: FiCalendar,
+    },
+    {
+        id: "tasks",
+        name: "Tasks",
+        icon: FiClipboard,
+    },
+    {
+        id: "settings",
+        name: "Settings",
+        icon: FiSettings,
+    },
+    {
+        id: "admin",
+        name: "Admin",
+        icon: FiShield,
+    },
+];
+
 const CircleDashboard = ({ onClose }) => {
     log("CircleDashboard.render", -1);
 
@@ -389,24 +439,46 @@ const CircleDashboard = ({ onClose }) => {
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
     const { hostId, circleId } = useParams();
+    const dropdownRef = useRef(null);
 
-    // define a mapping from tab paths to tab indexes
-    const tabPaths = ["home", "feed", "chat", "circles", "members", "events", "tasks", "settings", "admin"];
     const pathSegments = location.pathname.split("/");
     const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
-    const tabPathIndex = tabPaths.indexOf(currentTabPath);
-    const tabIndex = tabPathIndex < 0 ? (circleId === "global" ? tabPaths.indexOf("feed") : 0) : tabPathIndex;
+    const selectedTab = useMemo(() => {
+        // get tab with id same as currentTabPath
+        let tab = tabs.find((x) => x.id === currentTabPath);
+        if (!tab) {
+            return circleId === "global" ? tabs.find((x) => x.id === "feed") : tabs.find((x) => x.id === "home"); // default tab
+        }
+        return tab;
+    }, [currentTabPath, tabs, circleId]);
+    const tabIndex = useMemo(() => {
+        return tabs.indexOf(selectedTab);
+    }, [selectedTab]);
+
+    const [showDropdown, setShowDropdown] = useState(false);
+    const visibleTabs = useMemo(() => {
+        if (circleDashboardExpanded) return tabs;
+        else return tabs.slice(0, 4);
+    }, [tabs, circleDashboardExpanded]);
+    const dropdownTabs = tabs.slice(4);
+
+    useEffect(() => {
+        // close dropdown on blur
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [dropdownRef]);
 
     const handleTabChange = (index) => {
-        const path = tabPaths[index];
-        navigate(`/${hostId}/${circleId}/${path}`);
+        // const path = tabPaths[index];
+        // navigate(`/${hostId}/${circleId}/${path}`);
     };
-
-    // useEffect(() => {
-    //     // This ensures that the tab index is updated when the URL changes
-    //     // It handles the case where the user navigates directly via URL or browser back/forward
-    //     setTabIndex(tabPaths.indexOf(location.pathname.split("/").pop()));
-    // }, [location, tabPaths]);
 
     const getNameFontSize = (name) => {
         if (!name) return "17px";
@@ -414,6 +486,15 @@ const CircleDashboard = ({ onClose }) => {
         if (name.length < 19) return "15px";
         if (name.length < 24) return "14px";
         return "14px";
+    };
+
+    const isTabSelected = (tab) => {
+        return tab?.id === selectedTab?.id;
+    };
+
+    const onTabClick = (tab) => {
+        const path = tab?.id ?? "";
+        navigate(`/${hostId}/${circleId}/${path}`);
     };
 
     return (
@@ -460,81 +541,94 @@ const CircleDashboard = ({ onClose }) => {
                         flexGrow="1"
                         height="calc(100% - 40px)" // Ensure this element takes the full height
                     >
-                        <Tabs
-                            index={tabIndex}
-                            onChange={handleTabChange}
-                            isLazy
-                            isFitted={circleDashboardExpanded ? false : true}
-                            display="flex"
-                            flexDirection={"column"}
-                            orientation={"horizontal"}
-                        >
-                            <TabList bg="white" borderColor="white">
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiHome />
-                                        <Text fontSize="12px">Home</Text>
+                        <Flex flexDirection="row" height="50px" backgroundColor="white" align="center">
+                            {visibleTabs.map((tab) => (
+                                <Flex
+                                    borderWidth="0px 0px 2px 0px"
+                                    borderBottomColor={isTabSelected(tab) ? "#ff2a10" : "white"}
+                                    height="50px"
+                                    // #ff8b68
+                                    cursor="pointer"
+                                    flexDirection="column"
+                                    align="center"
+                                    minWidth={circleDashboardExpanded ? "70px" : "none"}
+                                    flexGrow={circleDashboardExpanded ? 0 : 1}
+                                    onClick={() => onTabClick(tab)}
+                                >
+                                    <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
+                                        <tab.icon />
+                                        <Text fontSize="12px">{tab.name}</Text>
                                     </Flex>
-                                </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiRss />
-                                        <Text fontSize="12px">Feed</Text>
-                                    </Flex>
-                                </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiMessageCircle />
-                                        <Text fontSize="12px">Chat</Text>
-                                    </Flex>
-                                </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiCircle />
-                                        <Text fontSize="12px">Circles</Text>
-                                    </Flex>
-                                </Tab>
-                                <Tab borderColor={"white"}>
-                                    <Flex flexDirection="column" align="center">
-                                        <FiUsers />
-                                        <Text fontSize="12px">Members</Text>
-                                    </Flex>
-                                </Tab>
+                                </Flex>
+                            ))}
 
-                                {circleDashboardExpanded && (
-                                    <>
-                                        <Tab borderColor={"white"}>
-                                            <Flex flexDirection="column" align="center">
-                                                <FiCalendar />
-                                                <Text fontSize="12px">Events</Text>
-                                            </Flex>
-                                        </Tab>
-                                        <Tab borderColor={"white"}>
-                                            <Flex flexDirection="column" align="center">
-                                                <FiClipboard />
-                                                <Text fontSize="12px">Tasks</Text>
-                                            </Flex>
-                                        </Tab>
-                                        {isAdmin(circle, userData) && (
-                                            <Tab borderColor={"white"}>
-                                                <Flex flexDirection="column" align="center">
-                                                    <FiSettings />
-                                                    <Text fontSize="12px">Settings</Text>
+                            {!circleDashboardExpanded && (
+                                <Flex
+                                    borderWidth="0px 0px 2px 0px"
+                                    borderBottomColor={dropdownTabs.includes(selectedTab) ? "#ff2a10" : "white"}
+                                    height="50px"
+                                    cursor="pointer"
+                                    flexDirection="column"
+                                    align="center"
+                                    minWidth={circleDashboardExpanded ? "70px" : "none"}
+                                    flexGrow={circleDashboardExpanded ? 0 : 1}
+                                    onClick={() => setShowDropdown(!showDropdown)}
+                                >
+                                    <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
+                                        {dropdownTabs.includes(selectedTab) ? (
+                                            <>
+                                                <selectedTab.icon />
+                                                <Flex flexDirection="row" align="center">
+                                                    <Text fontSize="12px">{selectedTab.name}</Text>
+                                                    <FiChevronDown size="10px" />
                                                 </Flex>
-                                            </Tab>
-                                        )}
-                                        {circle?.id === "global" && user?.is_admin && (
-                                            <Tab borderColor={"white"}>
-                                                <Flex flexDirection="column" align="center">
-                                                    <FiShield />
-                                                    <Text fontSize="12px">Admin</Text>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <GrAppsRounded />
+                                                <Flex flexDirection="row" align="center">
+                                                    <Text fontSize="12px">More</Text>
+                                                    <FiChevronDown size="10px" />
                                                 </Flex>
-                                            </Tab>
+                                            </>
                                         )}
-                                    </>
-                                )}
-                            </TabList>
-                        </Tabs>
+                                    </Flex>
+                                </Flex>
+                            )}
+                        </Flex>
+
+                        {showDropdown && (
+                            <Box
+                                ref={dropdownRef}
+                                position="absolute"
+                                right="0"
+                                mt="50px" // Adjust based on actual layout
+                                boxShadow="md"
+                                zIndex="10"
+                                backgroundColor="white"
+                            >
+                                <SimpleGrid columns={4} spacing={0} borderWidth="1px" borderRadius="7px">
+                                    {dropdownTabs.map((tab) => (
+                                        <Box
+                                            p={2}
+                                            cursor="pointer"
+                                            _hover={{ bg: "gray.100" }}
+                                            // borderWidth="1px"
+                                            // borderRadius="md"
+                                            onClick={() => {
+                                                onTabClick(tab);
+                                                setShowDropdown(false); // Close dropdown after selection
+                                            }}
+                                        >
+                                            <Flex flexDirection="column" align="center">
+                                                <tab.icon />
+                                                <Text fontSize="12px">{tab.name}</Text>
+                                            </Flex>
+                                        </Box>
+                                    ))}
+                                </SimpleGrid>
+                            </Box>
+                        )}
 
                         <Box flex="1" backgroundColor="white">
                             <Suspense fallback={<Box></Box>}>
@@ -557,27 +651,6 @@ const CircleDashboard = ({ onClose }) => {
                                 </Routes>
                             </Suspense>
                         </Box>
-
-                        {/* <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%" backgroundColor="white">
-                                    Circles Component 
-                                    <Circles type="circle" />
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                     Members Component
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    Events Component 
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    Tasks Component 
-                                </TabPanel>
-
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    <CircleSettings />
-                                </TabPanel>
-                                <TabPanel flex="1" overflowY="auto" p={0} m={0} height="100%">
-                                    <CircleAdmin />
-                                </TabPanel> */}
                     </Box>
                 </Box>
             </Box>
