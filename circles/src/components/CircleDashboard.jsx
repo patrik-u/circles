@@ -13,6 +13,9 @@ import {
     MenuList,
     MenuItem,
     MenuDivider,
+    MenuGroup,
+    Divider,
+    AbsoluteCenter,
     Button,
     SimpleGrid,
     Tabs,
@@ -350,17 +353,32 @@ const CircleSelector = () => {
             <MenuList width="100%">
                 <MenuItem key={global.id} onClick={() => handleSelect(global)}>
                     <Image boxSize="30px" borderRadius="full" src={global.picture} alt={global.name} mr={2} />
-                    <Text>{global.name}</Text>
+                    <Flex flexDirection="column">
+                        <Text fontWeight="bold">{global.name}</Text>
+                        <Text fontSize="10px">Explore circles</Text>
+                    </Flex>
                 </MenuItem>
 
-                <MenuDivider />
+                {/* <MenuDivider /> */}
+                {circles.length > 0 && (
+                    <Flex position="relative" flexDirection="row" paddingTop="14px" paddingBottom="14px" align="center">
+                        <Divider />
+                        <Flex position="absolute" left="0" top="8px" bg="white" px="4" align="center">
+                            <Text fontSize="10px" fontWeight="bold">
+                                MY CIRCLES
+                            </Text>
+                        </Flex>
+                    </Flex>
+                )}
 
+                {/* <MenuGroup title="Favorites"> */}
                 {circles.map((circle) => (
                     <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
                         <Image boxSize="30px" borderRadius="full" src={circle.picture} alt={circle.name} mr={2} />
-                        <Text>{circle.name}</Text>
+                        <Text fontWeight="bold">{circle.name}</Text>
                     </MenuItem>
                 ))}
+                {/* </MenuGroup> */}
             </MenuList>
         </Menu>
     );
@@ -552,7 +570,7 @@ const CircleDashboard = ({ onClose }) => {
                                     flexDirection="column"
                                     align="center"
                                     minWidth={circleDashboardExpanded ? "70px" : "none"}
-                                    flexGrow={circleDashboardExpanded ? 0 : 1}
+                                    flex={circleDashboardExpanded ? 0 : 1}
                                     onClick={() => onTabClick(tab)}
                                 >
                                     <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
@@ -571,7 +589,7 @@ const CircleDashboard = ({ onClose }) => {
                                     flexDirection="column"
                                     align="center"
                                     minWidth={circleDashboardExpanded ? "70px" : "none"}
-                                    flexGrow={circleDashboardExpanded ? 0 : 1}
+                                    flex={circleDashboardExpanded ? 0 : 1}
                                     onClick={() => setShowDropdown(!showDropdown)}
                                 >
                                     <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
