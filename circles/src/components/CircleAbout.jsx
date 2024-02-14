@@ -102,6 +102,38 @@ const CircleAbout = ({ onClose }) => {
                             borderRadius={noPaddingStyle ? "0px" : "7px"}
                         />
 
+                        {circle?.parent_circle && (
+                            <Flex
+                                flexDirection="row"
+                                align="center"
+                                position="absolute"
+                                top="5px"
+                                left="5px"
+                                backgroundColor="white"
+                                borderRadius="20px"
+                                paddingLeft="3px"
+                                paddingRight="10px"
+                            >
+                                <CirclePicture circle={circle.parent_circle} size={15} hasPopover={false} />
+                                <Text
+                                    fontSize={"12px"}
+                                    marginLeft="5px"
+                                    fontWeight="bold"
+                                    color="black"
+                                    _hover={{ color: "#904893" }}
+                                    noOfLines={1}
+                                    cursor="pointer"
+                                    onClick={() => {
+                                        openCircle(navigate, circle.parent_circle);
+                                        focusCircle(circle.parent_circle, setFocusOnMapItem);
+                                        setToggleWidgetEvent({ name: "about", value: true });
+                                    }}
+                                >
+                                    This circle is part of {circle?.parent_circle?.name}
+                                </Text>
+                            </Flex>
+                        )}
+
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
                         <Flex
                             height="54px"
@@ -114,24 +146,6 @@ const CircleAbout = ({ onClose }) => {
                             <Box width="calc(50% - 38px)" overflow="hidden">
                                 {circle.type !== "set" && (
                                     <Flex flexDirection={"column"} marginLeft="5px" marginTop="5px">
-                                        {circle?.parent_circle && (
-                                            <Text
-                                                fontSize={"12px"}
-                                                fontWeight="bold"
-                                                color="#5d5d5d"
-                                                _hover={{ color: "#904893" }}
-                                                noOfLines={1}
-                                                lineHeight="13px"
-                                                cursor="pointer"
-                                                onClick={() => {
-                                                    openCircle(navigate, circle.parent_circle);
-                                                    focusCircle(circle.parent_circle, setFocusOnMapItem);
-                                                    setToggleWidgetEvent({ name: "about", value: true });
-                                                }}
-                                            >
-                                                {circle?.parent_circle?.name}
-                                            </Text>
-                                        )}
                                         <Text
                                             fontSize={getNameFontSize(circle.name)}
                                             fontWeight="bold"
