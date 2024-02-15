@@ -136,6 +136,7 @@ export const Circle = ({ isGlobal }) => {
         log("opening navigation menu", -1);
     };
 
+    // updates circle history
     useEffect(() => {
         if (!circle?.id) return;
 
@@ -160,12 +161,10 @@ export const Circle = ({ isGlobal }) => {
                 position: x.position + 1,
                 history: [...x.history, circle],
             };
-
-            // if (x.history.length > 0 && x.history[x.length - 1] === circle.id) return x;
-            // return { position: x.position + 1, history: [...x.history, circle] };
         });
     }, [circle?.id, setCircleHistory]); // ignore warning as we only want to update history when circle id changes
 
+    // subscribes to circle
     useEffect(() => {
         log("Circle.useEffect", -1);
 
@@ -189,6 +188,7 @@ export const Circle = ({ isGlobal }) => {
         }
     }, [hostId, circleId, setCircle, isGlobal]);
 
+    // subscribes to circle private data
     useEffect(() => {
         if (!circle?.id) return;
         if (!user?.id) return;
@@ -215,6 +215,7 @@ export const Circle = ({ isGlobal }) => {
         }
     }, [hostId, userData?.admin_of, userData?.owner_of, circle?.id, user?.id, setCircleData]);
 
+    // gets connected circles
     useEffect(() => {
         if (!circleId && !isGlobal) return;
 
@@ -231,6 +232,17 @@ export const Circle = ({ isGlobal }) => {
                 where("parent_circle.id", "==", circleId),
                 where("type", "in", ["circle", "post", "event", "user", "task"])
             );
+
+            // get connected circles
+            axios
+                .get(`/circles/${circleId}/circles`, { params: { filter: ["connected"] } })
+                .then((response) => {
+                    let connectedCircles = response.data.connectedCircles;
+                    setConnectedCircles(connectedCircles ?? []);
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
         }
 
         let unsubscribeGetSubcircles = onSnapshot(q, (snap) => {
@@ -310,6 +322,7 @@ export const Circle = ({ isGlobal }) => {
         setMentionedCircles,
     ]);
 
+    // marks circle as seen
     useEffect(() => {
         log("Circle.useEffect 2", -1);
         if (!signInStatus.signedIn) return;
@@ -325,6 +338,7 @@ export const Circle = ({ isGlobal }) => {
             .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
 
+    // updates user activity
     useEffect(() => {
         if (config.disableOnActive) return;
         if (!signInStatus.signedIn || !user?.id) return;
@@ -349,6 +363,7 @@ export const Circle = ({ isGlobal }) => {
         return () => clearInterval(intervalId);
     }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);
 
+    // focuses on circle if circle is navigated to directly
     useEffect(() => {
         if (circleId && circle?.id && !initialFocusDone) {
             focusCircle(circle, setFocusOnMapItem);
@@ -410,8 +425,6 @@ export const Circle = ({ isGlobal }) => {
                             )}
                         </Flex>
                     </Flex>
-
-                    {/* <WidgetController /> */}
                 </Flex>
             </Box>
         </Flex>

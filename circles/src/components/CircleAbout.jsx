@@ -128,6 +128,7 @@ const CircleAbout = ({ onClose }) => {
                                         focusCircle(circle.parent_circle, setFocusOnMapItem);
                                         setToggleWidgetEvent({ name: "about", value: true });
                                     }}
+                                    userSelect="none"
                                 >
                                     This circle is part of {circle?.parent_circle?.name}
                                 </Text>

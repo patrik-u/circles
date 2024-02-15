@@ -101,7 +101,7 @@ export const circlesAtom = atom((get) => {
         // clear colors and queries
         circle.colors = [];
         circle.queries = [];
-        circle.categories = ["active"];
+        circle.categories = ["subcircle"];
     }
 
     for (var item of mergedSemanticSearchCircles) {
@@ -115,6 +115,20 @@ export const circlesAtom = atom((get) => {
         } else {
             item.categories = ["search"];
             circles.push(item);
+        }
+    }
+
+    // add connected circles not in list
+    const connectedCircles = get(connectedCirclesAtom);
+    for (var connectedCircle of connectedCircles) {
+        let circleId = connectedCircle.id;
+        let existingCircle = circles.find((x) => x.id === circleId);
+        if (!existingCircle) {
+            connectedCircle.categories = ["connected"];
+            circles.push(connectedCircle);
+        } else {
+            existingCircle.categories.push("connected");
+            // TODO maybe add color
         }
     }
 

@@ -1926,77 +1926,88 @@ app.put("/circles/:id/chunks", auth, async (req, res) => {
 // get circles relevant to circle
 app.get("/circles/:id/circles", async (req, res) => {
     const circleId = req.params.id;
+    const filter = req.query.filter;
+    const noFilter = !filter || filter.length <= 0;
+    // console.log("*************************" + JSON.stringify(filter));
 
     try {
         // TODO when filtering for a specific category and type we can make the semantic search more specific to that as to yield more relevant results
 
         // get similar circles through semantic search
         let similarCircles = [];
-        try {
-            similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
-            similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
-            similarCircles = similarCircles.concat(
-                await semanticSearch(null, circleId, ["event", "project", "document"], 7)
-            );
-        } catch (error) {
-            functions.logger.error("Error while getting similar circles:", error);
+        if (noFilter || filter.includes("similar")) {
+            try {
+                similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
+                similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
+                similarCircles = similarCircles.concat(
+                    await semanticSearch(null, circleId, ["event", "project", "document"], 7)
+                );
+            } catch (error) {
+                functions.logger.error("Error while getting similar circles:", error);
+            }
+
+            // remove circle itself from similar circles
+            similarCircles = similarCircles.filter((x) => x.id !== circleId);
+
+            // TODO similar circles can be cached per circleId and updated periodically
         }
 
-        // remove circle itself from similar circles
-        similarCircles = similarCircles.filter((x) => x.id !== circleId);
-
-        // TODO similar circles can be cached per circleId and updated periodically
-
-        // get circles connected to circle
-        const connections = await getRelevantConnections(circleId);
-
-        // get up to date circle data for connections
-        let circleIds = connections.filter((x) => x.target.type !== "tag").map((x) => x.target.id);
         let connectedCircles = [];
-        while (circleIds.length) {
-            let circleIdsBatch = circleIds.splice(0, 10);
-            let circleDocs = await db
-                .collection("circles")
-                .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
-                .get();
-            for (let i = 0; i < circleDocs.docs.length; i++) {
-                let circle = {
-                    id: circleDocs.docs[i].id,
-                    ...circleDocs.docs[i].data(),
-                };
-                connectedCircles.push(circle);
+        if (noFilter || filter.includes("connected")) {
+            // get circles connected to circle
+            const connections = await getRelevantConnections(circleId);
+
+            // get up to date circle data for connections
+            let circleIds = connections.filter((x) => x.target.type !== "tag").map((x) => x.target.id);
+
+            while (circleIds.length) {
+                let circleIdsBatch = circleIds.splice(0, 10);
+                let circleDocs = await db
+                    .collection("circles")
+                    .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+                    .get();
+                for (let i = 0; i < circleDocs.docs.length; i++) {
+                    let circle = {
+                        id: circleDocs.docs[i].id,
+                        ...circleDocs.docs[i].data(),
+                    };
+                    connectedCircles.push(circle);
+                }
             }
         }
 
-        // get circles mentioned in circle
-        // get latest chat_messages in circle and extract mentioned circles
         let mentionedCircles = [];
-        let chatMessages = await db
-            .collection("chat_messages")
-            .where("circle_id", "==", circleId)
-            .where("has_mentions", "==", true)
-            .orderBy("sent_at", "desc")
-            .limit(10)
-            .get();
-        for (let i = 0; i < chatMessages.docs.length; i++) {
-            let chatMessage = chatMessages.docs[i].data();
-            let mentions = chatMessage.mentions;
+        if (noFilter || filter.includes("mentioned")) {
+            // get circles mentioned in circle
+            // get latest chat_messages in circle and extract mentioned circles
 
-            // add to mentioned circles or update existing circle with chatMessage date
-            for (let j = 0; j < mentions.length; j++) {
-                let mention = mentions[j];
+            let chatMessages = await db
+                .collection("chat_messages")
+                .where("circle_id", "==", circleId)
+                .where("has_mentions", "==", true)
+                .orderBy("sent_at", "desc")
+                .limit(10)
+                .get();
+            for (let i = 0; i < chatMessages.docs.length; i++) {
+                let chatMessage = chatMessages.docs[i].data();
+                let mentions = chatMessage.mentions;
 
-                // check if circle is already in mentioned circles
-                let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
-                if (mentionedCircle) {
-                    // update last mentioned date
-                    if (chatMessage.sent_at > mentionedCircle.mentioned_at) {
-                        mentionedCircle.mentioned_at = chatMessage.sent_at;
+                // add to mentioned circles or update existing circle with chatMessage date
+                for (let j = 0; j < mentions.length; j++) {
+                    let mention = mentions[j];
+
+                    // check if circle is already in mentioned circles
+                    let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
+                    if (mentionedCircle) {
+                        // update last mentioned date
+                        if (chatMessage.sent_at > mentionedCircle.mentioned_at) {
+                            mentionedCircle.mentioned_at = chatMessage.sent_at;
+                        }
+                    } else {
+                        // add to mentioned circles
+                        mention.mentioned_at = chatMessage.sent_at;
+                        mentionedCircles.push(mention);
                     }
-                } else {
-                    // add to mentioned circles
-                    mention.mentioned_at = chatMessage.sent_at;
-                    mentionedCircles.push(mention);
                 }
             }
         }

@@ -359,7 +359,6 @@ const CircleSelector = () => {
                     </Flex>
                 </MenuItem>
 
-                {/* <MenuDivider /> */}
                 {circles.length > 0 && (
                     <Flex position="relative" flexDirection="row" paddingTop="14px" paddingBottom="14px" align="center">
                         <Divider />
@@ -371,14 +370,12 @@ const CircleSelector = () => {
                     </Flex>
                 )}
 
-                {/* <MenuGroup title="Favorites"> */}
                 {circles.map((circle) => (
                     <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
                         <Image boxSize="30px" borderRadius="full" src={circle.picture} alt={circle.name} mr={2} />
                         <Text fontWeight="bold">{circle.name}</Text>
                     </MenuItem>
                 ))}
-                {/* </MenuGroup> */}
             </MenuList>
         </Menu>
     );
@@ -575,7 +572,9 @@ const CircleDashboard = ({ onClose }) => {
                                 >
                                     <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
                                         <tab.icon />
-                                        <Text fontSize="12px">{tab.name}</Text>
+                                        <Text userSelect="none" fontSize="12px">
+                                            {tab.name}
+                                        </Text>
                                     </Flex>
                                 </Flex>
                             ))}
@@ -597,7 +596,9 @@ const CircleDashboard = ({ onClose }) => {
                                             <>
                                                 <selectedTab.icon />
                                                 <Flex flexDirection="row" align="center">
-                                                    <Text fontSize="12px">{selectedTab.name}</Text>
+                                                    <Text userSelect="none" fontSize="12px">
+                                                        {selectedTab.name}
+                                                    </Text>
                                                     <FiChevronDown size="10px" />
                                                 </Flex>
                                             </>
@@ -605,7 +606,9 @@ const CircleDashboard = ({ onClose }) => {
                                             <>
                                                 <GrAppsRounded />
                                                 <Flex flexDirection="row" align="center">
-                                                    <Text fontSize="12px">More</Text>
+                                                    <Text userSelect="none" fontSize="12px">
+                                                        More
+                                                    </Text>
                                                     <FiChevronDown size="10px" />
                                                 </Flex>
                                             </>
@@ -640,7 +643,9 @@ const CircleDashboard = ({ onClose }) => {
                                         >
                                             <Flex flexDirection="column" align="center">
                                                 <tab.icon />
-                                                <Text fontSize="12px">{tab.name}</Text>
+                                                <Text userSelect="none" fontSize="12px">
+                                                    {tab.name}
+                                                </Text>
                                             </Flex>
                                         </Box>
                                     ))}
@@ -660,10 +665,19 @@ const CircleDashboard = ({ onClose }) => {
                                     <Route path="home" element={<CircleAbout />} />
                                     <Route path="feed" element={<Feed posts={examplePosts} />} />
                                     <Route path="chat" element={<CircleChatWidget />} />
-                                    <Route path="circles" element={<Circles type="circle" />} />
-                                    <Route path="members" element={<Circles type="user" />} />
-                                    <Route path="events" element={<Circles type="event" />} />
-                                    <Route path="tasks" element={<Circles type="task" />} />
+                                    <Route
+                                        path="circles"
+                                        element={<Circles type="circle" categories={["subcircle"]} />}
+                                    />
+                                    <Route
+                                        path="members"
+                                        element={<Circles type="user" categories={["connected"]} />}
+                                    />
+                                    <Route
+                                        path="events"
+                                        element={<Circles type="event" categories={["connected"]} />}
+                                    />
+                                    <Route path="tasks" element={<Circles type="task" categories={["connected"]} />} />
                                     <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin" element={<CircleAdmin />} />
                                 </Routes>

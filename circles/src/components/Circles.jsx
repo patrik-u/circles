@@ -130,7 +130,7 @@ const CreateNewCircleForm = ({ type }) => {
     );
 };
 
-export const Circles = ({ type }) => {
+export const Circles = ({ type, categories }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
@@ -142,13 +142,21 @@ export const Circles = ({ type }) => {
     const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
-        if (circlesFilter.types?.length === 1 && circlesFilter.types.includes(type)) return;
+        // see if filter needs to be updated
+        let typeSame = circlesFilter.types?.length === 1 && circlesFilter.types.includes(type);
+        let categoriesSame =
+            (!categories && !circlesFilter.categories) ||
+            (circlesFilter.categories?.length === categories?.length &&
+                circlesFilter.categories?.every((v, i) => v === categories[i]));
+        if (typeSame && categoriesSame) return;
 
         let newFilter = { ...circlesFilter };
         newFilter.types = [type];
         if (type !== "event") {
             newFilter.sortBy = "newest";
         }
+
+        newFilter.categories = categories;
 
         setCirclesFilter(newFilter);
     }, [circlesFilter, setCirclesFilter, type]);
