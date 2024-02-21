@@ -48,6 +48,29 @@ const CircleAbout = ({ onClose }) => {
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
+
+    useEffect(() => {
+        // display subcircles on map by default
+        let type = "circle";
+        let categories = ["subcircle"];
+        let typeSame = circlesFilter.types?.length === 1 && circlesFilter.types.includes(type);
+        let categoriesSame =
+            (!categories && !circlesFilter.categories) ||
+            (circlesFilter.categories?.length === categories?.length &&
+                circlesFilter.categories?.every((v, i) => v === categories[i]));
+        if (typeSame && categoriesSame) return;
+
+        let newFilter = { ...circlesFilter };
+        newFilter.types = [type];
+        if (type !== "event") {
+            newFilter.sortBy = "newest";
+        }
+
+        newFilter.categories = categories;
+
+        setCirclesFilter(newFilter);
+    }, [circlesFilter, setCirclesFilter]);
 
     const CircleQuestion = ({ question }) => {
         return (
