@@ -12,6 +12,13 @@ import {
     ButtonGroup,
     Button,
     IconButton,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    ModalContent,
+    ModalOverlay,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import i18n from "@/i18n/Localization";
 import axios from "axios";
@@ -59,6 +66,10 @@ const CreateNewCircleForm = ({ type }) => {
         setMessage("");
     };
 
+    const togglePopup = () => {
+        setNewCirclePopup({ type, circle });
+    };
+
     const handleMessageKeyDown = async (e) => {
         if (!isMobile && e.keyCode === 13 && !e.shiftKey) {
             e.preventDefault();
@@ -85,29 +96,8 @@ const CreateNewCircleForm = ({ type }) => {
                         rows="1"
                         borderRadius="40px"
                         placeholder={i18n.t(`Create new ${type}`)}
-                        value={message}
-                        onChange={handleMessageChange}
-                        onFocus={() => setShowInfoBox(true)}
-                        onBlur={() => setShowInfoBox(false)}
-                        onKeyDown={handleMessageKeyDown}
+                        onFocus={() => togglePopup()}
                     />
-                    {isMobile && (
-                        <Box
-                            position="absolute"
-                            top="18px"
-                            right="20px"
-                            width="26px"
-                            height="26px"
-                            flexShrink="0"
-                            cursor="pointer"
-                            onClick={sendMessage}
-                            zIndex="20"
-                        >
-                            <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} />
-                        </Box>
-                    )}
-
-                    {/* <Box backgroundColor="red" border="1px solid #494948" borderRadius="60px" width="100%" height="40px"></Box> */}
                 </Box>
             </Flex>
             {/* {showInfoBox && (
@@ -255,11 +245,11 @@ export const Circles = ({ type, categories }) => {
                         )
                     )}
                 </Scrollbars>
-                {filteredCircles?.length <= 0 && (
+                {/* {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                         {i18n.t(`No ${type}s`)}
                     </Text>
-                )}
+                )} */}
             </Flex>
         </Flex>
     );

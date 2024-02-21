@@ -331,12 +331,12 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                 role="group"
                 color="black"
                 cursor="pointer"
-                bg="white"
+                // bg="white"
                 boxShadow="md"
-                _hover={{
-                    bg: "#ddd8db",
-                    color: "black",
-                }}
+                // _hover={{
+                //     bg: "#ddd8db",
+                //     color: "black",
+                // }}
                 overflow="hidden"
                 position="relative"
                 marginLeft="10px"
@@ -352,21 +352,21 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                         height="95px"
                         flexShrink="0"
                         flexGrow="0"
-                        backgroundColor="#b9b9b9"
+                        // backgroundColor="#b9b9b9"
                         overflow="hidden"
                         position="relative"
                         borderRadius="0px 13px 13px 0px"
                     >
                         <CircleCover circle={item} coverWidth={140} coverHeight={95} />
 
-                        <CirclePicture
+                        {/* <CirclePicture
                             circle={item}
                             position="absolute"
                             size={40}
                             top="5px"
                             right="5px"
                             disableClick={true}
-                        />
+                        /> */}
 
                         <VStack position="absolute" top="5px" left="5px" align="left" spacing="2px">
                             {item?.type === "event" && (
@@ -428,8 +428,11 @@ export const CirclePreview = ({ item, onClick, focusItem, location, inChat, inMa
                         align="left"
                         justifyContent="left"
                         spacing="0px"
-                        marginLeft="15px"
-                        marginRight="15px"
+                        paddingLeft="15px"
+                        paddingRight="15px"
+                        backgroundColor="white"
+                        borderRadius="13px"
+                        marginLeft="1px"
                     >
                         {item.type === "event" && (
                             <Text

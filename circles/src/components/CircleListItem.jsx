@@ -34,11 +34,285 @@ import axios from "axios";
 import linkifyHtml from "linkify-html";
 //#endregion
 
+export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isMobile] = useAtom(isMobileAtom);
+    const location = useLocationNoUpdates();
+    const [showChat, setShowChat] = useState(false);
+    const [formattedContent, setFormattedContent] = useState(item?.content);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+
+    useEffect(() => {
+        if (!item?.content) return;
+
+        if (item.type === "post" && item.has_links) {
+            const options = { target: "_blank" };
+            let formattedText = linkifyHtml(item.content, options);
+            setFormattedContent(formattedText);
+        } else {
+            setFormattedContent(item.content);
+        }
+    }, [item?.content, item?.type, item?.has_links]);
+
+    const onChatToggle = (showChat) => {
+        setShowChat(showChat);
+    };
+
+    if (!item) return null;
+
+    return (
+        <Flex flexDirection="column" key={item.id} borderBottom="1px solid #ebebeb">
+            <Flex
+                align="left"
+                role="group"
+                color="black"
+                bg={inSelect ? "transparent" : "white"}
+                // _hover={
+                //     inSelect
+                //         ? {}
+                //         : {
+                //               bg: "#ddd8db",
+                //               color: "black",
+                //           }
+                // }
+                overflow="hidden"
+                position="relative"
+                flexDirection="row"
+                flexGrow="0"
+                flexShrink="0"
+                paddingBottom="10px"
+                {...props}
+            >
+                <Box
+                    margin="10px"
+                    minWidth={item.type === "post" ? "40px" : "60px"}
+                    minHeight="60px"
+                    position="relative"
+                >
+                    <CirclePicture
+                        circle={item.type === "post" ? item.creator : item}
+                        size={item.type === "post" ? 40 : 60}
+                        hasPopover={true}
+                    />
+                </Box>
+
+                <VStack
+                    flexGrow="1"
+                    align="left"
+                    justifyContent="left"
+                    spacing="0px"
+                    marginLeft="5px"
+                    marginRight="15px"
+                    marginTop={item.type === "event" ? "0px" : "10px"}
+                >
+                    {item.type === "event" && (
+                        <Text
+                            textAlign="left"
+                            fontSize="12px"
+                            fontWeight="700"
+                            color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
+                            href={location?.pathname}
+                            marginTop="0px"
+                        >
+                            {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
+                        </Text>
+                    )}
+
+                    <HStack>
+                        <Text
+                            fontSize={item.type === "post" ? "15px" : "16px"}
+                            fontWeight="700"
+                            textAlign="left"
+                            lineHeight={item.type === "event" ? "17px" : "inherit"}
+                            marginTop={item.type === "event" ? "2px" : "0px"}
+                            style={singleLineEllipsisStyle}
+                            onClick={onClick}
+                            cursor="pointer"
+                        >
+                            {item.type === "post" ? item.creator.name : item.name}
+                        </Text>
+                    </HStack>
+
+                    {item.content && (
+                        <Box
+                            align="left"
+                            marginLeft={isMobile ? "15px" : "0px"}
+                            marginRight={isMobile ? "15px" : "0px"}
+                            marginTop={item.type === "post" ? "0px" : "10px"}
+                            overflow="hidden"
+                            maxHeight={isExpanded ? "none" : "150px"}
+                            position="relative"
+                        >
+                            <Box marginBottom={isExpanded ? "30px" : "0px"}>
+                                <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
+                            </Box>
+                            {/* Add fade out gradient */}
+                            <Box
+                                position="absolute"
+                                height={isExpanded ? "100%" : "150px"}
+                                // backgroundColor="#bbbb24af"
+                                bottom="0px"
+                                top="0px"
+                                left="0px"
+                                right="0px"
+                                pointerEvents="none"
+                            >
+                                {!isExpanded && (
+                                    <>
+                                        <Box
+                                            position="absolute"
+                                            bottom="10px"
+                                            left="0px"
+                                            right="0px"
+                                            height="50px"
+                                            background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
+                                        />
+                                        <Box
+                                            position="absolute"
+                                            bottom="0px"
+                                            left="0px"
+                                            right="0px"
+                                            height="10px"
+                                            background="#ffffff"
+                                        />
+                                    </>
+                                )}
+                                <Link
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    position="absolute"
+                                    bottom="0px"
+                                    left="0px"
+                                    right="0px"
+                                    fontSize="12px"
+                                    fontWeight="400"
+                                    pointerEvents="auto"
+                                >
+                                    {isExpanded ? "Show less" : "Show more"}
+                                </Link>
+                            </Box>
+                        </Box>
+                    )}
+
+                    <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
+
+                    <Box paddingTop="4px">
+                        <CircleTags circle={item} size="tiny" inSelect={inSelect} />
+                    </Box>
+
+                    {/* <Box paddingTop="4px">
+                        <CircleActions circle={item} onChatToggle={onChatToggle} />
+                    </Box> */}
+
+                    {/* <Box>
+                <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
+            </Box> */}
+                    {/* {showChat && (
+                        <Box align="start" paddingTop="10px">
+                            <CircleChat item={item} embeddedChatHeight={400} />
+                        </Box>
+                    )} */}
+                </VStack>
+
+                {/* {!inSelect && (
+                    <ConnectButton
+                        circle={item}
+                        position="absolute"
+                        bottom="5px"
+                        right="10px"
+                        hoverFadeColor="#ffffff"
+                    />
+                )} */}
+
+                <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
+                    {item.type === "event" && (
+                        <Flex
+                            borderRadius="20px"
+                            height="18px"
+                            backgroundColor="white"
+                            paddingLeft="2px"
+                            paddingRight="5px"
+                            align="center"
+                            flexDirection="row"
+                            justifyContent="center"
+                            onClick={(event) => {
+                                if (inSelect) return;
+
+                                event.stopPropagation();
+                                setFocusOnMapItem({ item });
+                            }}
+                        >
+                            <Icon
+                                width="14px"
+                                height="14px"
+                                color="#929292"
+                                as={HiClock}
+                                cursor="pointer"
+                                marginRight="2px"
+                            />
+                            <Text fontWeight="700" color="#929292" fontSize="12px">
+                                {getEventTime(item)}
+                            </Text>
+                        </Flex>
+                    )}
+
+                    {item.distance && (
+                        <Flex
+                            borderRadius="20px"
+                            height="18px"
+                            //backgroundColor="#c242bb"
+                            backgroundColor="white"
+                            paddingLeft="2px"
+                            paddingRight="5px"
+                            align="center"
+                            flexDirection="row"
+                            justifyContent="center"
+                            onClick={(event) => {
+                                if (inSelect) return;
+
+                                event.stopPropagation();
+                                setFocusOnMapItem({ item });
+                            }}
+                        >
+                            <Icon
+                                width="14px"
+                                height="14px"
+                                color="#929292"
+                                as={RiMapPinFill}
+                                cursor="pointer"
+                                marginRight="2px"
+                            />
+                            <Text fontWeight="700" color="#929292" fontSize="12px">
+                                {getDistanceString(item.distance)}
+                            </Text>
+                        </Flex>
+                    )}
+                </VStack>
+            </Flex>
+        </Flex>
+    );
+};
+
 export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...props }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isMobile] = useAtom(isMobileAtom);
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const [highlightedCircle, setHighlightedCircle] = useAtom(highlightedCircleAtom);
+
+    const [formattedContent, setFormattedContent] = useState(item?.content);
+
+    useEffect(() => {
+        if (!item?.content) return;
+
+        if (item.type === "post" && item.has_links) {
+            const options = { target: "_blank" };
+            let formattedText = linkifyHtml(item.content, options);
+            setFormattedContent(formattedText);
+        } else {
+            setFormattedContent(item.content);
+        }
+    }, [item?.content, item?.type, item?.has_links]);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -65,10 +339,10 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
             onMouseLeave={() => setHighlightedCircle(null)}
             {...props}
         >
-            <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
+            <Box margin="10px" minWidth={item.type === "post" ? "40px" : "60px"} minHeight="60px" position="relative">
                 <CirclePicture
                     circle={item.type === "post" ? item.creator : item}
-                    size={60}
+                    size={item.type === "post" ? 40 : 60}
                     hasPopover={!inSelect}
                     circleBorderColors={item.colors}
                 />
@@ -98,7 +372,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                 <HStack>
                     <Text
                         color={isDark ? "white" : "black"}
-                        fontSize="16px"
+                        fontSize={item.type === "post" ? "15px" : "16px"}
                         fontWeight="700"
                         textAlign="left"
                         lineHeight={item.type === "event" ? "17px" : "inherit"}
@@ -107,9 +381,69 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                         onClick={inSelect ? null : onClick}
                         cursor="pointer"
                     >
-                        {item.name}
+                        {item.type === "post" ? item.creator.name : item.name}
                     </Text>
                 </HStack>
+
+                {item.content && item.type === "post" && (
+                    <Box
+                        align="left"
+                        marginLeft={isMobile ? "15px" : "0px"}
+                        marginRight={isMobile ? "15px" : "0px"}
+                        marginTop={item.type === "post" ? "0px" : "10px"}
+                        overflow="hidden"
+                        maxHeight={isExpanded ? "none" : "150px"}
+                        position="relative"
+                    >
+                        <Box marginBottom={isExpanded ? "30px" : "0px"}>
+                            <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
+                        </Box>
+                        {/* Add fade out gradient */}
+                        <Box
+                            position="absolute"
+                            height={isExpanded ? "100%" : "150px"}
+                            // backgroundColor="#bbbb24af"
+                            bottom="0px"
+                            top="0px"
+                            left="0px"
+                            right="0px"
+                            pointerEvents="none"
+                        >
+                            {!isExpanded && (
+                                <>
+                                    <Box
+                                        position="absolute"
+                                        bottom="10px"
+                                        left="0px"
+                                        right="0px"
+                                        height="50px"
+                                        background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
+                                    />
+                                    <Box
+                                        position="absolute"
+                                        bottom="0px"
+                                        left="0px"
+                                        right="0px"
+                                        height="10px"
+                                        background="#ffffff"
+                                    />
+                                </>
+                            )}
+                            <Link
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                position="absolute"
+                                bottom="0px"
+                                left="0px"
+                                right="0px"
+                                fontSize="12px"
+                                fontWeight="400"
+                                pointerEvents="auto"
+                            >
+                                {isExpanded ? "Show less" : "Show more"}
+                            </Link>
+                        </Box>
+                    </Box>
+                )}
 
                 {!inNav && (
                     <>
@@ -362,254 +696,6 @@ export const CircleActions = ({ circle, onChatToggle, ...props }) => {
             <ShareButtonMenu />
             <ConnectButton circle={circle} hoverFadeColor="#ffffff" /> */}
         </HStack>
-    );
-};
-
-export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isMobile] = useAtom(isMobileAtom);
-    const location = useLocationNoUpdates();
-    const [showChat, setShowChat] = useState(false);
-    const [formattedContent, setFormattedContent] = useState(item?.content);
-    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
-
-    useEffect(() => {
-        if (!item?.content) return;
-
-        if (item.type === "post" && item.has_links) {
-            const options = { target: "_blank" };
-            let formattedText = linkifyHtml(item.content, options);
-            setFormattedContent(formattedText);
-        } else {
-            setFormattedContent(item.content);
-        }
-    }, [item?.content, item?.type, item?.has_links]);
-
-    const onChatToggle = (showChat) => {
-        setShowChat(showChat);
-    };
-
-    if (!item) return null;
-
-    return (
-        <Flex flexDirection="column" key={item.id} borderBottom="1px solid #ebebeb">
-            <Flex
-                align="left"
-                role="group"
-                color="black"
-                bg={inSelect ? "transparent" : "white"}
-                // _hover={
-                //     inSelect
-                //         ? {}
-                //         : {
-                //               bg: "#ddd8db",
-                //               color: "black",
-                //           }
-                // }
-                overflow="hidden"
-                position="relative"
-                flexDirection="row"
-                flexGrow="0"
-                flexShrink="0"
-                paddingBottom="10px"
-                {...props}
-            >
-                <Box margin="10px" minWidth="60px" minHeight="60px" position="relative">
-                    <CirclePicture circle={item.type === "post" ? item.creator : item} size={60} hasPopover={true} />
-                </Box>
-
-                <VStack
-                    flexGrow="1"
-                    align="left"
-                    justifyContent="left"
-                    spacing="0px"
-                    marginLeft="5px"
-                    marginRight="15px"
-                    marginTop={item.type === "event" ? "0px" : "10px"}
-                >
-                    {item.type === "event" && (
-                        <Text
-                            textAlign="left"
-                            fontSize="12px"
-                            fontWeight="700"
-                            color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                            href={location?.pathname}
-                            marginTop="0px"
-                        >
-                            {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
-                        </Text>
-                    )}
-                    <HStack>
-                        <Text
-                            fontSize="16px"
-                            fontWeight="700"
-                            textAlign="left"
-                            lineHeight={item.type === "event" ? "17px" : "inherit"}
-                            marginTop={item.type === "event" ? "2px" : "0px"}
-                            style={singleLineEllipsisStyle}
-                            onClick={onClick}
-                            cursor="pointer"
-                        >
-                            {item.name}
-                        </Text>
-                    </HStack>
-
-                    {item.content && (
-                        <Box
-                            align="left"
-                            marginLeft={isMobile ? "15px" : "0px"}
-                            marginRight={isMobile ? "15px" : "0px"}
-                            marginTop="10px"
-                            overflow="hidden"
-                            maxHeight={isExpanded ? "none" : "150px"}
-                            position="relative"
-                        >
-                            <Box marginBottom={isExpanded ? "30px" : "0px"}>
-                                <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
-                            </Box>
-                            {/* Add fade out gradient */}
-                            <Box
-                                position="absolute"
-                                height={isExpanded ? "100%" : "150px"}
-                                // backgroundColor="#bbbb24af"
-                                bottom="0px"
-                                top="0px"
-                                left="0px"
-                                right="0px"
-                                pointerEvents="none"
-                            >
-                                {!isExpanded && (
-                                    <>
-                                        <Box
-                                            position="absolute"
-                                            bottom="10px"
-                                            left="0px"
-                                            right="0px"
-                                            height="50px"
-                                            background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
-                                        />
-                                        <Box
-                                            position="absolute"
-                                            bottom="0px"
-                                            left="0px"
-                                            right="0px"
-                                            height="10px"
-                                            background="#ffffff"
-                                        />
-                                    </>
-                                )}
-                                <Link
-                                    onClick={() => setIsExpanded(!isExpanded)}
-                                    position="absolute"
-                                    bottom="0px"
-                                    left="0px"
-                                    right="0px"
-                                    fontSize="12px"
-                                    fontWeight="400"
-                                    pointerEvents="auto"
-                                >
-                                    {isExpanded ? "Show less" : "Show more"}
-                                </Link>
-                            </Box>
-                        </Box>
-                    )}
-
-                    <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
-
-                    <Box paddingTop="4px">
-                        <CircleTags circle={item} size="tiny" inSelect={inSelect} />
-                    </Box>
-
-                    {/* <Box paddingTop="4px">
-                        <CircleActions circle={item} onChatToggle={onChatToggle} />
-                    </Box> */}
-
-                    {/* <Box>
-                <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
-            </Box> */}
-                    {/* {showChat && (
-                        <Box align="start" paddingTop="10px">
-                            <CircleChat item={item} embeddedChatHeight={400} />
-                        </Box>
-                    )} */}
-                </VStack>
-
-                {/* {!inSelect && (
-                    <ConnectButton
-                        circle={item}
-                        position="absolute"
-                        bottom="5px"
-                        right="10px"
-                        hoverFadeColor="#ffffff"
-                    />
-                )} */}
-
-                <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
-                    {item.type === "event" && (
-                        <Flex
-                            borderRadius="20px"
-                            height="18px"
-                            backgroundColor="white"
-                            paddingLeft="2px"
-                            paddingRight="5px"
-                            align="center"
-                            flexDirection="row"
-                            justifyContent="center"
-                            onClick={(event) => {
-                                if (inSelect) return;
-
-                                event.stopPropagation();
-                                setFocusOnMapItem({ item });
-                            }}
-                        >
-                            <Icon
-                                width="14px"
-                                height="14px"
-                                color="#929292"
-                                as={HiClock}
-                                cursor="pointer"
-                                marginRight="2px"
-                            />
-                            <Text fontWeight="700" color="#929292" fontSize="12px">
-                                {getEventTime(item)}
-                            </Text>
-                        </Flex>
-                    )}
-
-                    {item.distance && (
-                        <Flex
-                            borderRadius="20px"
-                            height="18px"
-                            //backgroundColor="#c242bb"
-                            backgroundColor="white"
-                            paddingLeft="2px"
-                            paddingRight="5px"
-                            align="center"
-                            flexDirection="row"
-                            justifyContent="center"
-                            onClick={(event) => {
-                                if (inSelect) return;
-
-                                event.stopPropagation();
-                                setFocusOnMapItem({ item });
-                            }}
-                        >
-                            <Icon
-                                width="14px"
-                                height="14px"
-                                color="#929292"
-                                as={RiMapPinFill}
-                                cursor="pointer"
-                                marginRight="2px"
-                            />
-                            <Text fontWeight="700" color="#929292" fontSize="12px">
-                                {getDistanceString(item.distance)}
-                            </Text>
-                        </Flex>
-                    )}
-                </VStack>
-            </Flex>
-        </Flex>
     );
 };
 

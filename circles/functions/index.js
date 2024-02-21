@@ -41,10 +41,10 @@ const db = admin.firestore();
 
 let oneSignalClient = null;
 
-const defaultSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // default search types when not specified by user
-const defaultAiSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "project"]; // default search types when not specified by AI
-const createCircleTypes = ["circle", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
-const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project", "chunk"]; // circle types that are indexed in vector database for semantic search
+const defaultSearchTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "document", "project"]; // default search types when not specified by user
+const defaultAiSearchTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "project"]; // default search types when not specified by AI
+const createCircleTypes = ["circle", "post", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
+const indexCircleTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "document", "project", "chunk"]; // circle types that are indexed in vector database for semantic search
 const indexCircleChunkTypes = ["document_chunk"]; // circle chunk types that are indexed in vector database for semantic search
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
@@ -1310,7 +1310,11 @@ const updateMapViewport = async (circleId) => {
     if (!circle) return;
 
     // get all circles with this parent circle
-    const circles = await db.collection("circles").where("parent_circle.id", "==", circleId).get();
+    const circles = await db
+        .collection("circles")
+        .where("parent_circle.id", "==", circleId)
+        .where("type", "==", "circle")
+        .get();
 
     // get all locations
     let locations = [];
@@ -1373,6 +1377,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
     let errors = {};
     const date = new Date();
 
+    console.log("upserting circle" + JSON.stringify(circleReq, 2, null));
+
     let circle = {};
     let newCircle = circleReq.id ? false : true;
     let type = circleReq.type;
@@ -1393,10 +1399,13 @@ const upsertCircle = async (authCallerId, circleReq) => {
         type = currentCircle.type;
     }
 
+    console.log("*** 1");
     // required fields for new circles
     if (newCircle) {
-        if (!circleReq.name) {
-            errors.name = "Name must not be empty";
+        if (circleReq.type !== "post") {
+            if (!circleReq.name) {
+                errors.name = "Name must not be empty";
+            }
         }
         if (!circleReq.type) {
             errors.type = "Type must not be empty";
@@ -1554,11 +1563,15 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
 
+    console.log("*** 2");
+
     if (Object.keys(errors).length !== 0) {
+        console.log("*** 3" + JSON.stringify(errors, 2, null));
         return { errors };
     }
 
     if (Object.keys(circle).length <= 0) {
+        console.log("*** 4");
         return currentCircle;
     }
 

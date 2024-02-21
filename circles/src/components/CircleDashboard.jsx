@@ -659,11 +659,26 @@ const CircleDashboard = ({ onClose }) => {
                                     <Route
                                         path="/"
                                         element={
-                                            circleId === "global" ? <Feed posts={examplePosts} /> : <CircleAbout />
+                                            circleId === "global" ? (
+                                                <Circles
+                                                    type="post"
+                                                    categories={circleId === "global" ? [] : ["connected"]}
+                                                />
+                                            ) : (
+                                                <CircleAbout />
+                                            )
                                         }
                                     />
                                     <Route path="home" element={<CircleAbout />} />
-                                    <Route path="feed" element={<Feed posts={examplePosts} />} />
+                                    <Route
+                                        path="feed"
+                                        element={
+                                            <Circles
+                                                type="post"
+                                                categories={circleId === "global" ? [] : ["subcircle"]}
+                                            />
+                                        }
+                                    />
                                     <Route path="chat" element={<CircleChatWidget />} />
                                     <Route
                                         path="circles"
@@ -671,7 +686,12 @@ const CircleDashboard = ({ onClose }) => {
                                     />
                                     <Route
                                         path="members"
-                                        element={<Circles type="user" categories={["connected"]} />}
+                                        element={
+                                            <Circles
+                                                type="user"
+                                                categories={circleId === "global" ? [] : ["connected"]}
+                                            />
+                                        }
                                     />
                                     <Route
                                         path="events"
