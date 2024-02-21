@@ -10,6 +10,7 @@ import {
     isPastEvent,
     getEventTime,
     isConnected,
+    getPostTime,
 } from "@/components/Helpers";
 import {
     CirclePicture,
@@ -118,7 +119,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         </Text>
                     )}
 
-                    <HStack>
+                    <HStack spacing="0px" align="center">
                         <Text
                             fontSize={item.type === "post" ? "15px" : "16px"}
                             fontWeight="700"
@@ -131,6 +132,12 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         >
                             {item.type === "post" ? item.creator.name : item.name}
                         </Text>
+                        {item.type === "post" && (
+                            // Time since post
+                            <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                                · {getPostTime(item)}
+                            </Text>
+                        )}
                     </HStack>
 
                     {item.content && (
@@ -369,7 +376,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                         {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                     </Text>
                 )}
-                <HStack>
+                <HStack spacing="0px" align="center">
                     <Text
                         color={isDark ? "white" : "black"}
                         fontSize={item.type === "post" ? "15px" : "16px"}
@@ -383,6 +390,12 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                     >
                         {item.type === "post" ? item.creator.name : item.name}
                     </Text>
+                    {item.type === "post" && (
+                        // Time since post
+                        <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                            · {getPostTime(item)}
+                        </Text>
+                    )}
                 </HStack>
 
                 {item.content && item.type === "post" && (
