@@ -200,6 +200,13 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         </Box>
                     )}
 
+                    {item.description && (
+                        <Box paddingBottom="2px">
+                            <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
+                                {item.description}
+                            </Text>
+                        </Box>
+                    )}
                     <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
 
                     <Box paddingTop="4px">
@@ -461,7 +468,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                 {!inNav && (
                     <>
                         <Box>
-                            <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
+                            <Text fontSize="15px" textAlign="left" style={singleLineEllipsisStyle}>
                                 {item.description}
                             </Text>
                         </Box>
