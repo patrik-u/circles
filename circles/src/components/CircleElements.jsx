@@ -1642,6 +1642,14 @@ export const SimilarityIndicator = ({ circle, ...props }) => {
     );
 };
 
+export const BoxIf = ({ children, noBox, ...props }) => {
+    return noBox ? children : <Box {...props}>{children}</Box>;
+};
+
+export const ScrollbarsIf = ({ children, noScrollbars }) => {
+    return noScrollbars ? children : <Scrollbars autoHide>{children}</Scrollbars>;
+};
+
 export const CircleHeader = ({ circle, onClose, inPreview, inChat, onClickSpace, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);

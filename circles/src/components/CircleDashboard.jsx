@@ -86,193 +86,8 @@ import { CircleChatWidget } from "@/components/CircleChat";
 import { Circles } from "@/components/Circles";
 import CircleAbout from "./CircleAbout";
 import { GrAppsRounded } from "react-icons/gr";
+import CircleHomeFeed from "./CircleHomeFeed";
 //#endregion
-
-const examplePosts = [
-    {
-        author: {
-            name: "Skyler Smith",
-            picture: "https://randomuser.me/api/portraits/men/38.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?nature",
-        content: "Let's turn our ideas into impactful actions.",
-    },
-    {
-        author: {
-            name: "Casey Johnson",
-            picture: "https://randomuser.me/api/portraits/men/36.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?water",
-        content: "Innovation and collaboration – the keys to success.",
-    },
-    {
-        author: {
-            name: "Casey Brown",
-            picture: "https://randomuser.me/api/portraits/men/52.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?fun",
-        content: "Empowering communities through creative collaboration.",
-    },
-    {
-        author: {
-            name: "Skyler Johnson",
-            picture: "https://randomuser.me/api/portraits/women/27.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?art",
-        content: "United in purpose, divided in tasks. Let's co-create!",
-    },
-    {
-        author: {
-            name: "Taylor Miller",
-            picture: "https://randomuser.me/api/portraits/men/75.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?play",
-        content: "Together, we can create a brighter future!",
-    },
-    {
-        author: {
-            name: "Jamie Brown",
-            picture: "https://randomuser.me/api/portraits/women/92.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?people",
-        content: "Together, we can create a brighter future!",
-    },
-    {
-        author: {
-            name: "Jordan Garcia",
-            picture: "https://randomuser.me/api/portraits/men/49.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?revolution",
-        content: "United in purpose, divided in tasks. Let's co-create!",
-    },
-    {
-        author: {
-            name: "Avery Wilson",
-            picture: "https://randomuser.me/api/portraits/women/5.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?tech",
-        content: "Bringing innovative minds together for a better world.",
-    },
-    {
-        author: {
-            name: "Riley Davis",
-            picture: "https://randomuser.me/api/portraits/men/15.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?urban",
-        content: "Your ideas can transform the world. Share them!",
-    },
-    {
-        author: {
-            name: "Morgan Williams",
-            picture: "https://randomuser.me/api/portraits/women/78.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?permaculture",
-        content: "Every small step leads to a big change.",
-    },
-    {
-        author: {
-            name: "Jordan Williams",
-            picture: "https://randomuser.me/api/portraits/men/92.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?streetart",
-        content: "Join the movement of positive change makers.",
-    },
-    {
-        author: {
-            name: "Riley Rodriguez",
-            picture: "https://randomuser.me/api/portraits/men/48.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?love",
-        content: "Join us in making a positive change in our community.",
-    },
-    {
-        author: {
-            name: "Charlie Wilson",
-            picture: "https://randomuser.me/api/portraits/women/61.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?romance",
-        content: "Change starts with us. Let's be the change makers!",
-    },
-    {
-        author: {
-            name: "Morgan Rodriguez",
-            picture: "https://randomuser.me/api/portraits/men/69.jpg",
-        },
-        image: "https://source.unsplash.com/featured/?earth",
-        content: "Together, we can create a brighter future!",
-    },
-];
-
-const Post = ({ post }) => {
-    const [isMobile] = useAtom(isMobileAtom);
-
-    // Return social media post with image, content, and author
-    return (
-        <Box
-            bgGradient="linear(to-r,#ffffff,#ffffff)"
-            borderRadius="10px"
-            margin="5px"
-            padding="5px"
-            flexGrow="1"
-            pointerEvents="auto"
-            position="relative"
-        >
-            <Flex flexDirection="row" align="center" position="relative">
-                <Image
-                    src={getImageKitUrl(post.author.picture ?? defaultUserPicture, 42, 42)}
-                    width="48px"
-                    height="48px"
-                    borderRadius="50%"
-                    fallbackSrc={getImageKitUrl(defaultUserPicture, 42, 42)}
-                />
-                <Text fontSize="16px" fontWeight="bold" color="black" lineHeight="18px" marginLeft="15px">
-                    {post.author.name}
-                </Text>
-            </Flex>
-            <Text fontSize="16px" color="black" lineHeight="18px" marginTop="10px" marginBottom="10px">
-                {post.content}
-            </Text>
-
-            <Image
-                src={post.image}
-                width="100%"
-                height="250px"
-                maxWidth={isMobile ? "none" : "450px"}
-                objectFit="cover"
-                borderRadius="10px"
-                fallbackSrc={getImageKitUrl(defaultUserPicture, 48, 48)}
-            />
-        </Box>
-    );
-};
-
-// const exampleCircles = [
-//     {
-//         id: "1",
-//         name: "Global",
-//         picture: "https://source.unsplash.com/featured/?globe",
-//     },
-//     {
-//         id: "2",
-//         name: "Social Systems Lab",
-//         picture: "https://source.unsplash.com/featured/?social",
-//     },
-//     {
-//         id: "3",
-//         name: "AfrikaBurn",
-//         picture: "https://source.unsplash.com/featured/?burningman",
-//     },
-//     {
-//         id: "4",
-//         name: "RailNomad",
-//         picture: "https://source.unsplash.com/featured/?train",
-//     },
-//     {
-//         id: "5",
-//         name: "SoilMates",
-//         picture: "https://source.unsplash.com/featured/?permaculture",
-//     },
-// ];
 
 const CircleSelector = () => {
     // get circles from user similar to favorite menu
@@ -381,27 +196,11 @@ const CircleSelector = () => {
     );
 };
 
-const Feed = ({ posts }) => {
-    return (
-        <Scrollbars autoHide>
-            {posts.map((post, i) => (
-                <Post key={i} post={post} />
-            ))}
-            <Box height="35px"></Box>
-        </Scrollbars>
-    );
-};
-
 const tabs = [
     {
         id: "home",
         name: "Home",
         icon: FiHome,
-    },
-    {
-        id: "feed",
-        name: "Feed",
-        icon: FiRss,
     },
     {
         id: "chat",
@@ -414,14 +213,14 @@ const tabs = [
         icon: FiCircle,
     },
     {
-        id: "members",
-        name: "Members",
-        icon: FiUsers,
-    },
-    {
         id: "events",
         name: "Events",
         icon: FiCalendar,
+    },
+    {
+        id: "members",
+        name: "Members",
+        icon: FiUsers,
     },
     {
         id: "tasks",
@@ -462,7 +261,7 @@ const CircleDashboard = ({ onClose }) => {
         // get tab with id same as currentTabPath
         let tab = tabs.find((x) => x.id === currentTabPath);
         if (!tab) {
-            return circleId === "global" ? tabs.find((x) => x.id === "feed") : tabs.find((x) => x.id === "home"); // default tab
+            return tabs.find((x) => x.id === "home"); // default tab
         }
         return tab;
     }, [currentTabPath, tabs, circleId]);
@@ -489,19 +288,6 @@ const CircleDashboard = ({ onClose }) => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [dropdownRef]);
-
-    const handleTabChange = (index) => {
-        // const path = tabPaths[index];
-        // navigate(`/${hostId}/${circleId}/${path}`);
-    };
-
-    const getNameFontSize = (name) => {
-        if (!name) return "17px";
-        if (name.length < 16) return "17px";
-        if (name.length < 19) return "15px";
-        if (name.length < 24) return "14px";
-        return "14px";
-    };
 
     const isTabSelected = (tab) => {
         return tab?.id === selectedTab?.id;
@@ -656,48 +442,33 @@ const CircleDashboard = ({ onClose }) => {
                         <Box flex="1" backgroundColor="white">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
-                                    <Route
-                                        path="/"
-                                        element={
-                                            circleId === "global" ? (
-                                                <Circles
-                                                    type="post"
-                                                    categories={circleId === "global" ? [] : ["connected"]}
-                                                />
-                                            ) : (
-                                                <CircleAbout />
-                                            )
-                                        }
-                                    />
-                                    <Route path="home" element={<CircleAbout />} />
-                                    <Route
-                                        path="feed"
-                                        element={
-                                            <Circles
-                                                type="post"
-                                                categories={circleId === "global" ? [] : ["subcircle"]}
-                                            />
-                                        }
-                                    />
+                                    <Route path="/" element={<CircleHomeFeed />} />
+                                    <Route path="home" element={<CircleHomeFeed />} />
                                     <Route path="chat" element={<CircleChatWidget />} />
                                     <Route
                                         path="circles"
-                                        element={<Circles type="circle" categories={["subcircle"]} />}
+                                        element={
+                                            <Circles type="circle" types={["circle"]} categories={["subcircle"]} />
+                                        }
                                     />
                                     <Route
                                         path="members"
                                         element={
                                             <Circles
                                                 type="user"
+                                                types={["user"]}
                                                 categories={circleId === "global" ? [] : ["connected"]}
                                             />
                                         }
                                     />
                                     <Route
                                         path="events"
-                                        element={<Circles type="event" categories={["connected"]} />}
+                                        element={<Circles type="event" types={["event"]} categories={["connected"]} />}
                                     />
-                                    <Route path="tasks" element={<Circles type="task" categories={["connected"]} />} />
+                                    <Route
+                                        path="tasks"
+                                        element={<Circles type="task" types={["task"]} categories={["connected"]} />}
+                                    />
                                     <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin" element={<CircleAdmin />} />
                                 </Routes>

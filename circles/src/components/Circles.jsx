@@ -45,6 +45,7 @@ import { MdOutlineList, MdDns, MdPictureInPicture, MdViewAgenda } from "react-ic
 import { TbLayoutRows } from "react-icons/tb";
 import { BsCardHeading } from "react-icons/bs";
 import Scrollbars from "react-custom-scrollbars-2";
+import { ScrollbarsIf } from "./CircleElements";
 //#endregion
 
 const CreateNewCircleForm = ({ type }) => {
@@ -120,7 +121,7 @@ const CreateNewCircleForm = ({ type }) => {
     );
 };
 
-export const Circles = ({ type, categories }) => {
+export const Circles = ({ type, types, categories, noScrollbars }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
@@ -132,24 +133,18 @@ export const Circles = ({ type, categories }) => {
     const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
-        // see if filter needs to be updated
-        let typeSame = circlesFilter.types?.length === 1 && circlesFilter.types.includes(type);
-        let categoriesSame =
-            (!categories && !circlesFilter.categories) ||
-            (circlesFilter.categories?.length === categories?.length &&
-                circlesFilter.categories?.every((v, i) => v === categories[i]));
-        if (typeSame && categoriesSame) return;
+        log("Circles.useEffect 1", -1);
 
-        let newFilter = { ...circlesFilter };
-        newFilter.types = [type];
-        if (type !== "event") {
-            newFilter.sortBy = "newest";
+        // check if filter needs to update
+        if (
+            circlesFilter?.types?.join(",") !== types.join(",") ||
+            circlesFilter?.categories?.join(",") !== categories.join(",")
+        ) {
+            setCirclesFilter((currentFilter) => {
+                return { ...currentFilter, types: types, categories: categories };
+            });
         }
-
-        newFilter.categories = categories;
-
-        setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter, type]);
+    }, [setCirclesFilter, types]);
 
     useEffect(() => {
         log("Circles.useEffect 3", -1);
@@ -187,7 +182,12 @@ export const Circles = ({ type, categories }) => {
     const view = getCircleSettings("view") || "normal";
 
     return (
-        <Flex flexGrow="1" width="100%" height="100%" flexDirection={"column"}>
+        <Flex
+            flexGrow={noScrollbars ? "0" : "1"}
+            width="100%"
+            height={noScrollbars ? "auto" : "100%"}
+            flexDirection={"column"}
+        >
             <CreateNewCircleForm type={type} />
             {filteredCircles?.length > 0 && (
                 <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
@@ -222,29 +222,31 @@ export const Circles = ({ type, categories }) => {
                 </Flex>
             )}
             <Flex flexGrow="1" flexDirection={"column"}>
-                <Scrollbars>
-                    {filteredCircles?.map((item) =>
-                        view === "compact" ? (
-                            <CircleListItem
-                                key={item.id}
-                                item={item}
-                                onClick={() => {
-                                    openCircle(navigate, item);
-                                    focusCircle(item, setFocusOnMapItem);
-                                }}
-                            />
-                        ) : (
-                            <CircleListItemNormal
-                                key={item.id}
-                                item={item}
-                                onClick={() => {
-                                    openCircle(navigate, item);
-                                    focusCircle(item, setFocusOnMapItem);
-                                }}
-                            />
-                        )
-                    )}
-                </Scrollbars>
+                <ScrollbarsIf noScrollbars={noScrollbars}>
+                    {filteredCircles
+                        ?.filter((x) => x.type === type)
+                        ?.map((item) =>
+                            view === "compact" ? (
+                                <CircleListItem
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => {
+                                        openCircle(navigate, item);
+                                        focusCircle(item, setFocusOnMapItem);
+                                    }}
+                                />
+                            ) : (
+                                <CircleListItemNormal
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => {
+                                        openCircle(navigate, item);
+                                        focusCircle(item, setFocusOnMapItem);
+                                    }}
+                                />
+                            )
+                        )}
+                </ScrollbarsIf>
                 {/* {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                         {i18n.t(`No ${type}s`)}

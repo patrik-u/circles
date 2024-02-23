@@ -34,9 +34,10 @@ import { CircleTags } from "@/components/CircleElements";
 import { ActiveInCircle, RelationSetInfo } from "@/components/CirclePreview";
 import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
+import { ScrollbarsIf } from "./CircleElements";
 //#endregion
 
-const CircleAbout = ({ onClose }) => {
+const CircleAbout = ({ onClose, noScrollbars }) => {
     log("CircleAbout.render", -1);
 
     const [user] = useAtom(userAtom);
@@ -49,28 +50,6 @@ const CircleAbout = ({ onClose }) => {
     const navigate = useNavigateNoUpdates();
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
-
-    useEffect(() => {
-        // display subcircles on map by default
-        let type = "circle";
-        let categories = ["subcircle"];
-        let typeSame = circlesFilter.types?.length === 1 && circlesFilter.types.includes(type);
-        let categoriesSame =
-            (!categories && !circlesFilter.categories) ||
-            (circlesFilter.categories?.length === categories?.length &&
-                circlesFilter.categories?.every((v, i) => v === categories[i]));
-        if (typeSame && categoriesSame) return;
-
-        let newFilter = { ...circlesFilter };
-        newFilter.types = [type];
-        if (type !== "event") {
-            newFilter.sortBy = "newest";
-        }
-
-        newFilter.categories = categories;
-
-        setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter]);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -101,11 +80,11 @@ const CircleAbout = ({ onClose }) => {
                     // borderRadius="10px"
                     // margin={isMobile ? "0px" : "0px 10px 10px 0px"}
                     padding={noPaddingStyle ? "0px" : "5px"}
-                    flexGrow="1"
+                    flexGrow={noScrollbars ? "0" : "1"}
                     pointerEvents="auto"
                     position="relative"
-                    overflow="hidden"
-                    height="100%"
+                    overflow={noScrollbars ? "visible" : "hidden"}
+                    height={noScrollbars ? "auto" : "100%"}
                 >
                     {circle?.id !== "global" && (
                         <CircleHeader
@@ -117,7 +96,7 @@ const CircleAbout = ({ onClose }) => {
                             // top="5px"
                         />
                     )}
-                    <Scrollbars autoHide>
+                    <ScrollbarsIf noScrollbars={noScrollbars}>
                         <CircleCover
                             circle={circle}
                             coverHeight={184}
@@ -364,7 +343,7 @@ const CircleAbout = ({ onClose }) => {
                             </Box>
                         )}
                         <Box height="35px"></Box>
-                    </Scrollbars>
+                    </ScrollbarsIf>
                 </Box>
             )}
         </>
