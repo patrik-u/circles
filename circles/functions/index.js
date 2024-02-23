@@ -2458,9 +2458,13 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
 const getSettingsCircle = (circle) => {
     let settingsCircle = {
         id: circle.id,
-        name: circle.name,
-        type: circle.type,
     }; // store basic info about circle
+    if (circle.name) {
+        settingsCircle.name = circle.name;
+    }
+    if (circle.type) {
+        settingsCircle.type = circle.type;
+    }
     if (circle.picture) {
         settingsCircle.picture = circle.picture;
     }

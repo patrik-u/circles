@@ -168,7 +168,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                     <>
                                         <Box
                                             position="absolute"
-                                            bottom="10px"
+                                            bottom="20px"
                                             left="0px"
                                             right="0px"
                                             height="50px"
@@ -179,7 +179,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                             bottom="0px"
                                             left="0px"
                                             right="0px"
-                                            height="10px"
+                                            height="20px"
                                             background="#ffffff"
                                         />
                                     </>
@@ -193,6 +193,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                                     fontSize="12px"
                                     fontWeight="400"
                                     pointerEvents="auto"
+                                    color="#6491ff"
                                 >
                                     {isExpanded ? "Show less" : "Show more"}
                                 </Link>
@@ -225,6 +226,11 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             <CircleChat item={item} embeddedChatHeight={400} />
                         </Box>
                     )} */}
+                    {!inSelect && (
+                        <Box paddingTop="2px">
+                            <CircleActions circle={item} onChatToggle={onChatToggle} />
+                        </Box>
+                    )}
                 </VStack>
 
                 {/* {!inSelect && (
@@ -433,7 +439,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                                 <>
                                     <Box
                                         position="absolute"
-                                        bottom="10px"
+                                        bottom="20px"
                                         left="0px"
                                         right="0px"
                                         height="50px"
@@ -444,7 +450,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                                         bottom="0px"
                                         left="0px"
                                         right="0px"
-                                        height="10px"
+                                        height="20px"
                                         background="#ffffff"
                                     />
                                 </>
@@ -458,6 +464,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                                 fontSize="12px"
                                 fontWeight="400"
                                 pointerEvents="auto"
+                                color="#6491ff"
                             >
                                 {isExpanded ? "Show less" : "Show more"}
                             </Link>
@@ -478,11 +485,11 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                     </>
                 )}
 
-                {/* {!inSelect && (
+                {!inSelect && (
                     <Box paddingTop="2px">
                         <CircleActions circle={item} onChatToggle={onChatToggle} />
                     </Box>
-                )} */}
+                )}
                 {/* {showChat && (
                     <Box align="start" paddingTop="10px">
                         <CircleChat item={item} embeddedChatHeight={400} />
@@ -567,30 +574,27 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
     );
 };
 
-export const ChatButton = ({ circle, onChatToggle }) => {
+export const CommentButton = ({ circle, onCommentToggle }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
-    const iconSize = isMobile ? 20 : 20;
+    const iconSize = 18;
     const iconSizePx = iconSize + "px";
-    const [showChat, setShowChat] = useState(false);
+    const [showComments, setShowComments] = useState(false);
 
-    const toggleChat = () => {
+    const toggleComments = () => {
         if (!circle?.id) {
             return;
         }
 
-        let newShowChat = !showChat;
-        setShowChat(newShowChat);
-        onChatToggle(newShowChat);
+        let newShowComments = !showComments;
+        setShowComments(newShowComments);
+        onCommentToggle(newShowComments);
     };
 
     const isAuthorized = () => {
         return circle.is_public || isConnected(userData, circle?.id, ["connected_mutually_to"]);
     };
-
-    // TODO if chat is private and user isn't connected, show a lock icon on the chat button
-    // if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
     return (
         <>
@@ -603,14 +607,14 @@ export const ChatButton = ({ circle, onChatToggle }) => {
                 borderRadius="50%"
                 justifyContent="center"
                 alignItems="center"
-                onClick={toggleChat}
+                onClick={toggleComments}
                 cursor="pointer"
-                color={showChat ? "#2596ff" : "#333"}
+                color={showComments ? "#2596ff" : "#333"}
             >
                 <Icon
                     width={iconSizePx}
                     height={iconSizePx}
-                    as={!isAuthorized() ? BsChat : showChat ? BsChatTextFill : BsChatText}
+                    as={!isAuthorized() ? BsChat : showComments ? BsChatTextFill : BsChatText}
                 />
                 {!isAuthorized() && (
                     <Icon position="absolute" width="14px" height="14px" as={BsLockFill} right="4px" bottom="2px" />
@@ -701,21 +705,22 @@ export const LikeButton = ({ circle }) => {
     );
 };
 
-export const CircleActions = ({ circle, onChatToggle, ...props }) => {
+export const CircleActions = ({ circle, onCommentToggle, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [userData] = useAtom(userDataAtom);
 
     if (!circle) return null;
 
     return (
-        <HStack position="relative" align="center">
-            <ChatButton circle={circle} onChatToggle={onChatToggle} />
+        <Flex position="relative" align="center" flexDirection="row">
+            <CommentButton circle={circle} onCommentToggle={onCommentToggle} />
             <LikeButton circle={circle} />
+            {/* <ShareButtonMenu /> */}
             {/* <FavoriteButton />
             {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
-            <ShareButtonMenu />
+            
             <ConnectButton circle={circle} hoverFadeColor="#ffffff" /> */}
-        </HStack>
+        </Flex>
     );
 };
 

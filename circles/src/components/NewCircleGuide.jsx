@@ -45,7 +45,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
     const getStepsForType = (type) => {
         switch (type) {
             case "post":
-                return [allSteps.post, allSteps.location];
+                return [allSteps.post];
             default:
                 return [
                     allSteps.about,

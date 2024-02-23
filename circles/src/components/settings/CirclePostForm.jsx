@@ -87,7 +87,7 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
 
                     if (putCircleResult && !putCircleResult.data?.error) {
                         toast({
-                            title: i18n.t("Settings updated"),
+                            title: i18n.t("Post updated"),
                             status: "success",
                             position: "top",
                             duration: 4500,
@@ -97,7 +97,7 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                         //console.log(circleId);
                         //console.log(JSON.stringify(putCircleResult.data, null, 2));
                         toast({
-                            title: i18n.t("Failed to update settings"),
+                            title: i18n.t("Failed to update post"),
                             status: "error",
                             position: "top",
                             duration: 4500,
@@ -136,7 +136,7 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
 
                 if (putCircleResult && !putCircleResult.data?.error) {
                     toast({
-                        title: i18n.t("Circle created"),
+                        title: i18n.t("Post created"),
                         status: "success",
                         position: "top",
                         duration: 4500,
