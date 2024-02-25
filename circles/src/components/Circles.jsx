@@ -187,6 +187,7 @@ export const Circles = ({ type, types, categories, noScrollbars }) => {
             width="100%"
             height={noScrollbars ? "auto" : "100%"}
             flexDirection={"column"}
+            maxWidth="600px"
         >
             <CreateNewCircleForm type={type} />
             {filteredCircles?.length > 0 && (
