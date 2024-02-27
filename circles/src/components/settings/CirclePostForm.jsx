@@ -1,10 +1,11 @@
 //#region imports
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { Form, Field, Formik } from "formik";
 import { components } from "react-select";
 import Select from "react-select";
 import {
     Box,
+    Image,
     Tooltip,
     FormControl,
     Icon,
@@ -39,7 +40,133 @@ import "react-quill/dist/quill.snow.css";
 import CircleListItem from "@/components/CircleListItem";
 import { IoInformationCircleSharp } from "react-icons/io5";
 import DocumentEditor from "@/components/document/DocumentEditor";
+import { useDropzone } from "react-dropzone";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { IoMdImages } from "react-icons/io";
 //#endregion
+
+const sliderSettings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: true,
+};
+
+export const MediaUpload = ({ initialFiles = [], onFileChange, ...props }) => {
+    const [files, setFiles] = useState([]);
+    const toast = useToast();
+    const filesRef = useRef(files);
+    const sliderRef = useRef(null);
+
+    useEffect(() => {
+        filesRef.current = files;
+    }, [files]);
+
+    const onDrop = useCallback((acceptedFiles) => {
+        const mappedFiles = acceptedFiles.map((file) =>
+            Object.assign(file, {
+                preview: URL.createObjectURL(file),
+            })
+        );
+
+        // ignore duplicates
+        const filteredMappedFiles = mappedFiles.filter((newFile) => {
+            return !files.some((file) => file.path === newFile.path);
+        });
+
+        // Append the new files to the existing files
+        setFiles((prevFiles) => {
+            let newFiles = [...prevFiles, ...filteredMappedFiles];
+            // Wait for the state to update and then slide to the last slide
+            setTimeout(() => {
+                if (sliderRef.current && sliderRef.current.slickGoTo) {
+                    const lastIndex = newFiles.length - 1;
+                    sliderRef.current.slickGoTo(lastIndex);
+                }
+            }, 0);
+
+            return newFiles;
+        });
+
+        console.log(JSON.stringify(filteredMappedFiles, null, 2));
+
+        onFileChange([...files, ...filteredMappedFiles]);
+    }, []);
+
+    // useEffect(() => {
+    //     // Convert initialFiles to the format expected by the component,
+    //     // including creating preview URLs
+    //     log("MediaUpload.useEffect 1", -1, true);
+    //     const filesWithPreviews = initialFiles.map((file) => ({
+    //         ...file,
+    //         preview: file.preview || URL.createObjectURL(file),
+    //     }));
+    //     setFiles((x) => filesWithPreviews);
+    // }, [initialFiles]);
+
+    const { getRootProps, getInputProps } = useDropzone({ onDrop });
+
+    const removeFile = (file) => () => {
+        log("removeFile", -1, true);
+        const newFiles = files.filter((f) => f !== file);
+        setFiles(newFiles);
+        onFileChange(newFiles);
+    };
+
+    // Cleanup previews
+    useEffect(() => {
+        log("MediaUpload.useEffect 2", -1, true);
+        return () => {
+            filesRef.current.forEach((file) => {
+                if (file.preview?.startsWith("blob:")) {
+                    URL.revokeObjectURL(file.preview);
+                }
+            });
+        };
+    }, []);
+
+    return (
+        <Flex flexDirection="column" flex="1" {...props}>
+            {files.length > 0 && (
+                <Box width="100%" maxHeight="200px" marginBottom="5px">
+                    <Slider ref={sliderRef} {...sliderSettings}>
+                        {files.map((file) => (
+                            <Box key={file.name} position="relative" maxHeight="200px" overflow="hidden">
+                                <Image
+                                    key={file.name}
+                                    src={file.preview}
+                                    alt="preview"
+                                    width="100%"
+                                    height="100%"
+                                    objectFit="contain"
+                                />
+                                <IconButton
+                                    icon={<DeleteIcon />}
+                                    isRound="true"
+                                    size="sm"
+                                    position="absolute"
+                                    right="10px"
+                                    top="10px"
+                                    // colorScheme="red"
+                                    onClick={removeFile(file)}
+                                />
+                            </Box>
+                        ))}
+                    </Slider>
+                </Box>
+            )}
+            <Box {...getRootProps()}>
+                <input {...getInputProps()} />
+                <IconButton icon={<IoMdImages />} isRound="true" size="md" />
+            </Box>
+        </Flex>
+    );
+};
 
 export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUpdate, onCancel }) => {
     const [user] = useAtom(userAtom);
@@ -48,6 +175,14 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
     const [isInitialized, setIsInitialized] = useState(false);
     const contentDescriptionLength = 150;
     const createCircleInitialRef = useRef();
+    const [mediaFiles, setMediaFiles] = useState([]);
+
+    const handleFileChange = (newFiles) => {
+        setMediaFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    };
+    const handleRemoveFile = (fileToRemove) => {
+        setMediaFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
+    };
 
     const getPostContext = () => {
         if (circle?.parent_circle && circle?.parent_circle?.id !== "global") {
@@ -221,6 +356,8 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                             </FormControl>
                         )}
                     </Field>
+
+                    <MediaUpload onFileChange={handleFileChange} initialFiles={[]} />
 
                     <VStack align="center">
                         <Box>
