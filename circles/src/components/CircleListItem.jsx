@@ -1,6 +1,6 @@
 //#region imports
 import React, { useState, useEffect } from "react";
-import { Box, Flex, HStack, VStack, Text, Icon, Link } from "@chakra-ui/react";
+import { Box, Flex, HStack, VStack, Text, Icon, Link, Image } from "@chakra-ui/react";
 import {
     getDistanceString,
     getDateAndTimeLong,
@@ -33,7 +33,39 @@ import { BsChatText, BsChatTextFill, BsChatFill, BsChat, BsLockFill } from "reac
 import { CircleChat } from "@/components/CircleChat";
 import axios from "axios";
 import linkifyHtml from "linkify-html";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 //#endregion
+
+const sliderSettings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: true,
+};
+
+export const MediaDisplay = ({ media, ...props }) => {
+    const SliderIf = ({ children, noSlider }) => {
+        return noSlider ? children : <Slider {...sliderSettings}>{children}</Slider>;
+    };
+
+    return (
+        <Box width="300px" height="300px" {...props}>
+            <Slider {...sliderSettings}>
+                {/* <SliderIf noSlider={media?.length <= 1}> */}
+                {media.map((media) => (
+                    <Box width="300px" height="300px" backgroundColor="white">
+                        <Image src={media.url} width="100%" height="100%" objectFit="contain" />
+                    </Box>
+                ))}
+                {/* </SliderIf> */}
+            </Slider>
+        </Box>
+    );
+};
 
 export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -208,6 +240,9 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             </Text>
                         </Box>
                     )}
+
+                    {item.media && <MediaDisplay media={item.media} />}
+
                     <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
 
                     <Box paddingTop="4px">

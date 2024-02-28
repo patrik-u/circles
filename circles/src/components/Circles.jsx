@@ -121,7 +121,7 @@ const CreateNewCircleForm = ({ type }) => {
     );
 };
 
-export const Circles = ({ type, types, categories, noScrollbars }) => {
+export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
@@ -137,11 +137,12 @@ export const Circles = ({ type, types, categories, noScrollbars }) => {
 
         // check if filter needs to update
         if (
+            circlesFilter?.sortBy !== sortBy ||
             circlesFilter?.types?.join(",") !== types.join(",") ||
             circlesFilter?.categories?.join(",") !== categories.join(",")
         ) {
             setCirclesFilter((currentFilter) => {
-                return { ...currentFilter, types: types, categories: categories };
+                return { ...currentFilter, types: types, categories: categories, sortBy: sortBy };
             });
         }
     }, [setCirclesFilter, types]);

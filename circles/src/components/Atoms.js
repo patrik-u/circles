@@ -132,6 +132,11 @@ export const circlesAtom = atom((get) => {
         }
     }
 
+    // mentionedCircles.sort(
+    //     (a, b) =>
+    //         fromFsDate(b.mentioned_at ?? new Date("2000-01-01")) - fromFsDate(a.mentioned_at ?? new Date("2000-01-01"))
+    // );
+
     // DISCOVERY123 old logic to get active, similar, connected, mentioned and searched circles
     // const activeCircles = get(activeCirclesAtom);
     // const similarCircles = get(similarCirclesAtom);

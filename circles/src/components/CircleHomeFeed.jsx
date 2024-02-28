@@ -60,21 +60,13 @@ const CircleHomeFeed = ({ onClose }) => {
                             types={["post", "circle"]}
                             categories={circleId === "global" ? [] : ["connected", "subcircle"]}
                             noScrollbars={true}
+                            sortBy="newest"
                         />
                     </ScrollbarsIf>
                 </BoxIf>
             </ScrollbarsIf>
         </Flex>
     );
-
-    // circleId === "global" ? (
-    //     <Circles
-    //         type="post"
-    //         categories={circleId === "global" ? [] : ["connected"]}
-    //     />
-    // ) : (
-    //     <CircleAbout />
-    // )
 };
 
 export default CircleHomeFeed;

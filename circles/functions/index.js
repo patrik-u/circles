@@ -1435,6 +1435,9 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.picture) {
         circle.picture = circleReq.picture;
     }
+    if (circleReq.media) {
+        circle.media = circleReq.media;
+    }
 
     let baseChanged = false;
     if (circleReq.base) {

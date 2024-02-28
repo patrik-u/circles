@@ -28,6 +28,8 @@ import {
 import { CheckIcon } from "@chakra-ui/icons";
 import { adminCircles, combineDateAndTime, fromFsDate, log } from "@/components/Helpers";
 import { CirclePicture, MetaData, NewSessionButton } from "@/components/CircleElements";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/components/Firebase";
 import axios from "axios";
 import { i18n, LanguagePicker } from "@/i18n/Localization";
 import ReactQuill from "react-quill";
@@ -180,9 +182,6 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
     const handleFileChange = (newFiles) => {
         setMediaFiles((prevFiles) => [...prevFiles, ...newFiles]);
     };
-    const handleRemoveFile = (fileToRemove) => {
-        setMediaFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
-    };
 
     const getPostContext = () => {
         if (circle?.parent_circle && circle?.parent_circle?.id !== "global") {
@@ -190,6 +189,58 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
         } else {
             return `Post to Everyone`;
         }
+    };
+
+    const differenceBy = (arr1, arr2, key) => arr1.filter((a) => !arr2.some((b) => a[key] === b[key]));
+
+    // updates media files
+    const updateMediaFilesAndSave = async (circleId, circleData) => {
+        const storageUrl = `circles/${circleId}/public/media/`;
+        let newMedia = mediaFiles;
+        let existingMedia = circle.media ?? [];
+
+        const filesToUpload = differenceBy(newMedia, existingMedia, "name");
+        const filesToRemove = differenceBy(existingMedia, newMedia, "name");
+
+        log(JSON.stringify(newMedia), 0, true);
+
+        // upload new files
+        const uploadPromises = filesToUpload.map(async (file) => {
+            const fileRef = ref(storage, `${storageUrl}${file.name}`);
+
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+            return {
+                url,
+                name: file.name,
+                type: file.type,
+            };
+        });
+
+        // remove deleted files
+        const removePromises = filesToRemove.map(async ({ name }) => {
+            const fileRef = ref(storage, `${storageUrl}${name}`);
+            await deleteObject(fileRef);
+        });
+
+        // Wait for all uploads and removals to complete
+        const uploadedFiles = await Promise.all(uploadPromises);
+        await Promise.all(removePromises);
+
+        // Return the updated list of media (existing + new - removed)
+        const updatedMedia = existingMedia
+            .filter(({ name }) => !filesToRemove.some((file) => file.name === name))
+            .concat(uploadedFiles);
+
+        log(JSON.stringify(updatedMedia), 0, true);
+
+        // save circle data with reference to media
+        circleData.media = updatedMedia ?? [];
+        let putCircleResult = await axios.put(`/circles/${circleId}`, {
+            circleData: circleData,
+        });
+
+        return putCircleResult;
     };
 
     if (!circle) return null;
@@ -213,9 +264,7 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                     // update circle data
                     let putCircleResult = null;
                     try {
-                        putCircleResult = await axios.put(`/circles/${circle.id}`, {
-                            circleData: updatedCircleData,
-                        });
+                        putCircleResult = await updateMediaFilesAndSave(circle.id, updatedCircleData);
                     } catch (err) {
                         console.error(err);
                     }
@@ -277,6 +326,13 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                         duration: 4500,
                         isClosable: true,
                     });
+
+                    // upload media
+                    try {
+                        putCircleResult = await updateMediaFilesAndSave(putCircleResult.data.circle.id, {});
+                    } catch (err) {
+                        console.error(err);
+                    }
 
                     if (onUpdate) {
                         onUpdate(putCircleResult.data.circle);
