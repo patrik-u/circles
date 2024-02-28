@@ -1,6 +1,29 @@
 //#region imports
-import React, { useState, useEffect } from "react";
-import { Box, Flex, HStack, VStack, Text, Icon, Link, Image } from "@chakra-ui/react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+    Box,
+    Flex,
+    HStack,
+    VStack,
+    Text,
+    Icon,
+    Link,
+    Image,
+    IconButton,
+    Menu,
+    MenuButton,
+    MenuList,
+    MenuItem,
+    useToast,
+    useDisclosure,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogContent,
+    AlertDialogOverlay,
+    Button,
+} from "@chakra-ui/react";
 import {
     getDistanceString,
     getDateAndTimeLong,
@@ -11,6 +34,8 @@ import {
     getEventTime,
     isConnected,
     getPostTime,
+    isAdmin,
+    log,
 } from "@/components/Helpers";
 import {
     CirclePicture,
@@ -36,6 +61,9 @@ import linkifyHtml from "linkify-html";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { HiOutlineDotsHorizontal } from "react-icons/hi";
+import { FiEdit } from "react-icons/fi";
+import { DeleteIcon } from "@chakra-ui/icons";
 //#endregion
 
 const sliderSettings = {
@@ -44,6 +72,7 @@ const sliderSettings = {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
+    adaptiveHeight: true,
     arrows: true,
 };
 
@@ -52,19 +81,147 @@ export const MediaDisplay = ({ media, ...props }) => {
         return noSlider ? children : <Slider {...sliderSettings}>{children}</Slider>;
     };
 
+    const containerRef = useRef();
+    const [containerWidth, setContainerWidth] = useState("100%");
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                setContainerWidth(`${containerRef.current.offsetWidth}px`);
+            }
+        };
+
+        // Call resize function on component mount and add event listener for future resizes
+        handleResize();
+        window.addEventListener("resize", handleResize);
+
+        // Cleanup event listener on component unmount
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     return (
-        <Box width="300px" height="300px" {...props}>
-            <Slider {...sliderSettings}>
-                {/* <SliderIf noSlider={media?.length <= 1}> */}
-                {media.map((media) => (
-                    <Box width="300px" height="300px" backgroundColor="white">
-                        <Image src={media.url} width="100%" height="100%" objectFit="contain" />
-                    </Box>
-                ))}
-                {/* </SliderIf> */}
-            </Slider>
+        <Box ref={containerRef} width="100%" {...props}>
+            <Box width={containerWidth}>
+                <SliderIf noSlider={media?.length <= 1}>
+                    {media
+                        .filter((x) => x?.url)
+                        .map((media) => (
+                            <Box key={media.url} width="100%" backgroundColor="white">
+                                <Image src={media.url} width="100%" height="100%" objectFit="contain" />
+                            </Box>
+                        ))}
+                </SliderIf>
+            </Box>
         </Box>
     );
+};
+
+export const CircleDotsMenu = ({ circle, ...props }) => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const cancelRef = useRef();
+    const [userData] = useAtom(userDataAtom);
+    const toast = useToast();
+
+    if (!circle) return;
+
+    const showDotsMenu = circle.type === "post" || circle.type === "event";
+    if (!showDotsMenu) return null;
+
+    // if user is author/admin of circle show dots menu
+    if (!isAdmin(circle, userData)) return null;
+
+    const editCircle = () => {};
+    const deleteCircle = async () => {
+        // delete circle
+        let typeName = circle.type;
+        typeName = typeName.charAt(0).toUpperCase() + typeName.slice(1);
+
+        try {
+            onClose();
+            // delete circle
+            let putCircleResult = null;
+            try {
+                putCircleResult = await axios.delete(`/circles/${circle.id}`, {
+                    data: { name_confirmation: circle.name },
+                });
+            } catch (err) {
+                console.log(err);
+            }
+
+            if (!putCircleResult || putCircleResult.data?.error) {
+                toast({
+                    title: `${typeName} couldn't be deleted`,
+                    description: putCircleResult?.data?.error,
+                    status: "error",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            } else {
+                toast({
+                    title: `${typeName} has been deleted`,
+                    status: "success",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            }
+        } catch (error) {
+            toast({
+                title: `${typeName} couldn't be deleted`,
+                description: error,
+                status: "error",
+                position: "top",
+                duration: 4500,
+                isClosable: true,
+            });
+        }
+    };
+
+    return (
+        <>
+            <Menu>
+                <MenuButton
+                    as={IconButton}
+                    icon={<HiOutlineDotsHorizontal />}
+                    variant="ghost"
+                    isRound="true"
+                    size="sm"
+                    {...props}
+                ></MenuButton>
+                <MenuList>
+                    <MenuItem icon={<FiEdit />} onClick={editCircle}>
+                        Edit
+                    </MenuItem>
+                    <MenuItem icon={<DeleteIcon />} onClick={onOpen}>
+                        Delete
+                    </MenuItem>
+                </MenuList>
+            </Menu>
+            <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+                <AlertDialogOverlay>
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                            Delete {circle.type}
+                        </AlertDialogHeader>
+
+                        <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+
+                        <AlertDialogFooter>
+                            <Button ref={cancelRef} onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="red" onClick={deleteCircle} ml={3}>
+                                Delete
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
+        </>
+    );
+
+    // <IconButton icon={<HiOutlineDotsHorizontal />} isRound="true" size="sm" variant="ghost" {...props} />;
 };
 
 export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
@@ -277,6 +434,8 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         hoverFadeColor="#ffffff"
                     />
                 )} */}
+
+                <CircleDotsMenu circle={item} position="absolute" top="5px" right="5px" />
 
                 <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
                     {item.type === "event" && (
@@ -539,6 +698,7 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
                 <ConnectButton circle={item} position="absolute" bottom="5px" right="10px" hoverFadeColor="#ffffff" />
             )} */}
 
+            <CircleDotsMenu circle={item} position="absolute" top="5px" right="5px" />
             <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
                 {item.type === "event" && (
                     <Flex
