@@ -16,6 +16,7 @@ import {
     MenuItem,
     useToast,
     useDisclosure,
+    Portal,
     AlertDialog,
     AlertDialogBody,
     AlertDialogFooter,
@@ -52,7 +53,14 @@ import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useLocationNoUpdates } from "@/components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, userDataAtom, userAtom, focusOnMapItemAtom, highlightedCircleAtom } from "@/components/Atoms";
+import {
+    isMobileAtom,
+    userDataAtom,
+    userAtom,
+    focusOnMapItemAtom,
+    highlightedCircleAtom,
+    newCirclePopupAtom,
+} from "@/components/Atoms";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { BsChatText, BsChatTextFill, BsChatFill, BsChat, BsLockFill } from "react-icons/bs";
 import { CircleChat } from "@/components/CircleChat";
@@ -121,6 +129,7 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
     const cancelRef = useRef();
     const [userData] = useAtom(userDataAtom);
     const toast = useToast();
+    const [, setNewCirclePopup] = useAtom(newCirclePopupAtom);
 
     if (!circle) return;
 
@@ -130,7 +139,9 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
     // if user is author/admin of circle show dots menu
     if (!isAdmin(circle, userData)) return null;
 
-    const editCircle = () => {};
+    const editCircle = () => {
+        setNewCirclePopup(true);
+    };
     const deleteCircle = async () => {
         // delete circle
         let typeName = circle.type;
@@ -189,14 +200,16 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
                     size="sm"
                     {...props}
                 ></MenuButton>
-                <MenuList>
-                    <MenuItem icon={<FiEdit />} onClick={editCircle}>
-                        Edit
-                    </MenuItem>
-                    <MenuItem icon={<DeleteIcon />} onClick={onOpen}>
-                        Delete
-                    </MenuItem>
-                </MenuList>
+                <Portal>
+                    <MenuList zIndex={1400}>
+                        <MenuItem icon={<FiEdit />} onClick={editCircle}>
+                            Edit
+                        </MenuItem>
+                        <MenuItem icon={<DeleteIcon />} onClick={onOpen}>
+                            Delete
+                        </MenuItem>
+                    </MenuList>
+                </Portal>
             </Menu>
             <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
                 <AlertDialogOverlay>
