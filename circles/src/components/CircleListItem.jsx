@@ -72,6 +72,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { FiEdit } from "react-icons/fi";
 import { DeleteIcon } from "@chakra-ui/icons";
+import { circleAtom } from "./Atoms";
 //#endregion
 
 const sliderSettings = {
@@ -239,6 +240,7 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
 
 export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [circle] = useAtom(circleAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const location = useLocationNoUpdates();
     const [showChat, setShowChat] = useState(false);
@@ -335,10 +337,30 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             {item.type === "post" ? item.creator.name : item.name}
                         </Text>
                         {item.type === "post" && (
-                            // Time since post
-                            <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
-                                · {getPostTime(item)}
-                            </Text>
+                            <>
+                                {/* Time since post */}
+                                <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                                    · {getPostTime(item)}
+                                </Text>
+                                {item.parent_circle && item.parent_circle.id !== circle?.id && (
+                                    <>
+                                        <Flex flexDir={"row"} align="center">
+                                            <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                                                ·
+                                            </Text>
+                                            <CirclePicture
+                                                circle={item?.parent_circle}
+                                                size={16}
+                                                hasPopover={true}
+                                                marginLeft="7px"
+                                            />
+                                            {/* <Text fontSize="12px" marginLeft="4px">
+                                                {item?.parent_circle?.name}
+                                            </Text> */}
+                                        </Flex>
+                                    </>
+                                )}
+                            </>
                         )}
                     </HStack>
 

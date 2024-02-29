@@ -87,14 +87,17 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
 
     const complete = () => {
         if (!circle?.id) return;
-        let req = {
-            circleData: {
-                ai_summary: true,
-            },
-        };
-        axios.put(`/circles/${circle.id}`, req).catch((error) => {
-            console.error(error);
-        });
+        // turn on AI summary for select circle types
+        if (circle.type === "circle" || circle.type === "event" || circle.type === "user") {
+            let req = {
+                circleData: {
+                    ai_summary: true,
+                },
+            };
+            axios.put(`/circles/${circle.id}`, req).catch((error) => {
+                console.error(error);
+            });
+        }
     };
 
     const getActiveStepComponent = () => {

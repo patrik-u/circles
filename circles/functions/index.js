@@ -1377,7 +1377,7 @@ const upsertCircle = async (authCallerId, circleReq) => {
     let errors = {};
     const date = new Date();
 
-    console.log("upserting circle" + JSON.stringify(circleReq, 2, null));
+    // console.log("upserting circle" + JSON.stringify(circleReq, 2, null));
 
     let circle = {};
     let newCircle = circleReq.id ? false : true;
@@ -1399,7 +1399,6 @@ const upsertCircle = async (authCallerId, circleReq) => {
         type = currentCircle.type;
     }
 
-    console.log("*** 1");
     // required fields for new circles
     if (newCircle) {
         if (circleReq.type !== "post") {
@@ -1550,31 +1549,32 @@ const upsertCircle = async (authCallerId, circleReq) => {
     let parent = null;
     if (circleReq.parent_circle !== undefined) {
         let parentId = circleReq.parent_circle?.id;
-        if (parentId !== oldParentId) {
-            hasNewParent = true;
-            if (parentId) {
-                // check if user is owner or admin and allowed to set circle parent
-                parent = await getCircle(parentId);
-                if (!parent.is_public) {
-                    const isAuthorized = await isAdminOf(authCallerId, parentId);
-                    if (!isAuthorized) {
-                        errors.parent_circle = "User must be admin of parent circle";
+        if (parentId === "global") {
+            parentId = null;
+            circle.parent_circle = false;
+        } else {
+            if (parentId !== oldParentId) {
+                hasNewParent = true;
+                if (parentId) {
+                    // check if user is owner or admin and allowed to set circle parent
+                    parent = await getCircle(parentId);
+                    if (!parent.is_public) {
+                        const isAuthorized = await isAdminOf(authCallerId, parentId);
+                        if (!isAuthorized) {
+                            errors.parent_circle = "User must be admin of parent circle";
+                        }
                     }
                 }
+                circle.parent_circle = parent ?? false;
             }
-            circle.parent_circle = parent ?? false;
         }
     }
 
-    console.log("*** 2");
-
     if (Object.keys(errors).length !== 0) {
-        console.log("*** 3" + JSON.stringify(errors, 2, null));
         return { errors };
     }
 
     if (Object.keys(circle).length <= 0) {
-        console.log("*** 4");
         return currentCircle;
     }
 
@@ -1674,8 +1674,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
     upsertCircleEmbedding(circle.id);
 
     // update summary if ai_summary is true
-    if (circle.ai_summary && circle.type !== "document") {
-        // disable AI summaries for documents for now as they change frequently during editing
+    if (circle.ai_summary && circle.type !== "document" && circle.type !== "post") {
+        // disable AI summaries for documents and posts for now as they change frequently during editing
         generateAiSummary(circle); // do this in background so we don't have to wait for it
     }
 

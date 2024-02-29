@@ -64,6 +64,7 @@ export const MediaUpload = ({ initialFiles = [], onFileChange, ...props }) => {
     const toast = useToast();
     const filesRef = useRef(files);
     const sliderRef = useRef(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         filesRef.current = files;
@@ -104,12 +105,15 @@ export const MediaUpload = ({ initialFiles = [], onFileChange, ...props }) => {
         // Convert initialFiles to the format expected by the component,
         // including creating preview URLs
         log("MediaUpload.useEffect 1", -1, true);
+        if (isInitialized) return;
+
         // const filesWithPreviews = initialFiles.map((file) => ({
         //     ...file,
         //     preview: file.preview || URL.createObjectURL(file),
         // }));
+        setIsInitialized(true);
         setFiles((x) => initialFiles);
-    }, [initialFiles]);
+    }, [initialFiles, isInitialized]);
 
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
