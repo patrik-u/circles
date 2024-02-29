@@ -17,15 +17,19 @@ import { CircleTypeForm } from "@/components/settings/CircleTypeForm";
 import { CirclePostForm } from "@/components/settings/CirclePostForm";
 //#endregion
 
-export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapInteract }) => {
+export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, toggleMapInteract, isUpdateForm }) => {
     const [user] = useAtom(userAtom);
-    const [createdCircle, setCreatedCircle] = useState({
-        type: type,
-        parent_circle: circle,
-        content: message,
-        is_public: true,
-        language: i18n.language,
-    });
+    const [createdCircle, setCreatedCircle] = useState(
+        isUpdateForm
+            ? circle
+            : {
+                  type: type,
+                  parent_circle: parent_circle,
+                  content: message,
+                  is_public: true,
+                  language: i18n.language,
+              }
+    );
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const navigate = useNavigateNoUpdates();
     const allSteps = useMemo(
@@ -101,7 +105,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CirclePostForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -118,7 +122,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleContentForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -154,7 +158,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleMissionForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -190,7 +194,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleOffersAndNeedsForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}

@@ -140,7 +140,7 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
     if (!isAdmin(circle, userData)) return null;
 
     const editCircle = () => {
-        setNewCirclePopup(true);
+        setNewCirclePopup({ type: circle.type, circle: circle, isUpdateForm: true });
     };
     const deleteCircle = async () => {
         // delete circle
@@ -403,7 +403,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         </Box>
                     )}
 
-                    {item.description && (
+                    {item.type !== "post" && item.description && (
                         <Box paddingBottom="2px">
                             <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
                                 {item.description}

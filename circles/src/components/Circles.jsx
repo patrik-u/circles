@@ -63,12 +63,12 @@ const CreateNewCircleForm = ({ type }) => {
 
     const sendMessage = async () => {
         // open create new circle guide
-        setNewCirclePopup({ type, circle, message: message });
+        setNewCirclePopup({ type, parent_circle: circle, message: message });
         setMessage("");
     };
 
     const togglePopup = () => {
-        setNewCirclePopup({ type, circle });
+        setNewCirclePopup({ type, parent_circle: circle });
     };
 
     const handleMessageKeyDown = async (e) => {

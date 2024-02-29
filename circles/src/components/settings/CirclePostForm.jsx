@@ -28,7 +28,7 @@ import {
 import { CheckIcon } from "@chakra-ui/icons";
 import { adminCircles, combineDateAndTime, fromFsDate, log } from "@/components/Helpers";
 import { CirclePicture, MetaData, NewSessionButton } from "@/components/CircleElements";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, deleteObject, getDownloadURL } from "firebase/storage";
 import { storage } from "@/components/Firebase";
 import axios from "axios";
 import { i18n, LanguagePicker } from "@/i18n/Localization";
@@ -100,16 +100,16 @@ export const MediaUpload = ({ initialFiles = [], onFileChange, ...props }) => {
         onFileChange([...files, ...filteredMappedFiles]);
     }, []);
 
-    // useEffect(() => {
-    //     // Convert initialFiles to the format expected by the component,
-    //     // including creating preview URLs
-    //     log("MediaUpload.useEffect 1", -1, true);
-    //     const filesWithPreviews = initialFiles.map((file) => ({
-    //         ...file,
-    //         preview: file.preview || URL.createObjectURL(file),
-    //     }));
-    //     setFiles((x) => filesWithPreviews);
-    // }, [initialFiles]);
+    useEffect(() => {
+        // Convert initialFiles to the format expected by the component,
+        // including creating preview URLs
+        log("MediaUpload.useEffect 1", -1, true);
+        // const filesWithPreviews = initialFiles.map((file) => ({
+        //     ...file,
+        //     preview: file.preview || URL.createObjectURL(file),
+        // }));
+        setFiles((x) => initialFiles);
+    }, [initialFiles]);
 
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
@@ -141,7 +141,7 @@ export const MediaUpload = ({ initialFiles = [], onFileChange, ...props }) => {
                             <Box key={file.name} position="relative" maxHeight="200px" overflow="hidden">
                                 <Image
                                     key={file.name}
-                                    src={file.preview}
+                                    src={file.preview ?? file.url}
                                     alt="preview"
                                     width="100%"
                                     height="100%"
@@ -413,7 +413,7 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
                         )}
                     </Field>
 
-                    <MediaUpload onFileChange={handleFileChange} initialFiles={[]} />
+                    <MediaUpload onFileChange={handleFileChange} initialFiles={circle.media} />
 
                     <VStack align="center">
                         <Box>

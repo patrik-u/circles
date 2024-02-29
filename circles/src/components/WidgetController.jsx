@@ -227,7 +227,7 @@ const WidgetController = () => {
     };
 
     const openCreateCircle = () => {
-        setNewCirclePopup({ circle });
+        setNewCirclePopup({ parent_circle: circle });
     };
 
     const getTooltip = (component) => {
