@@ -1457,8 +1457,40 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.description !== undefined) {
         circle.description = circleReq.description;
     }
+    let links = null;
     if (circleReq.content !== undefined) {
         circle.content = circleReq.content;
+
+        if (circle.type === "post") {
+            // check for links and mentions in content
+            links = linkify.match(circle.content);
+            if (links) {
+                // check if link points to circle
+                let circleIds = [];
+                for (var link of links) {
+                    let circleId = extractCircleId(link.url);
+                    if (circleId) {
+                        circleIds.push(circleId);
+
+                        // remove link from links
+                        let linkUrl = link.url;
+                        links = links.filter((x) => x.url !== linkUrl);
+                    }
+                }
+
+                if (circleIds.length > 0) {
+                    // get mentions
+                    let mentions = await getCirclesFromIds(circleIds);
+                    if (mentions) {
+                        circle.mentions = mentions;
+                        circle.has_mentions = true;
+                    }
+                }
+                if (links?.length > 0) {
+                    circle.has_links = true;
+                }
+            }
+        }
     }
     if (circleReq.lexical_content !== undefined) {
         circle.lexical_content = circleReq.lexical_content;
@@ -1677,6 +1709,12 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circle.ai_summary && circle.type !== "document" && circle.type !== "post") {
         // disable AI summaries for documents and posts for now as they change frequently during editing
         generateAiSummary(circle); // do this in background so we don't have to wait for it
+    }
+
+    // add preview images
+    if (circle.has_links) {
+        const circleRef = db.collection("circles").doc(circle.id);
+        addPreviewImages(circleRef, links);
     }
 
     return circle;

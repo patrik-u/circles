@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     Box,
     Flex,
@@ -37,6 +37,7 @@ import {
     getPostTime,
     isAdmin,
     log,
+    getMetaImage,
 } from "@/components/Helpers";
 import {
     CirclePicture,
@@ -85,13 +86,27 @@ const sliderSettings = {
     arrows: true,
 };
 
-export const MediaDisplay = ({ media, ...props }) => {
+export const MediaDisplay = ({ media, meta_data, ...props }) => {
     const SliderIf = ({ children, noSlider }) => {
         return noSlider ? children : <Slider {...sliderSettings}>{children}</Slider>;
     };
 
     const containerRef = useRef();
     const [containerWidth, setContainerWidth] = useState("100%");
+
+    const allMedia = useMemo(() => {
+        let m = media ?? [];
+        let metaMedia =
+            meta_data?.map((x) => ({
+                name: x.title,
+                is_meta_data: true,
+                url: x.images[0],
+                type: "image",
+                link: x.url,
+            })) ?? [];
+
+        return [...m, ...metaMedia];
+    }, [media, meta_data]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -111,13 +126,34 @@ export const MediaDisplay = ({ media, ...props }) => {
     return (
         <Box ref={containerRef} width="100%" {...props}>
             <Box width={containerWidth}>
-                <SliderIf noSlider={media?.length <= 1}>
-                    {media
+                <SliderIf noSlider={allMedia?.length <= 1}>
+                    {allMedia
                         .filter((x) => x?.url)
                         .map((media) => (
-                            <Box key={media.url} width="100%" backgroundColor="white">
+                            <Flex
+                                key={media.url}
+                                flexDirection="column"
+                                width="100%"
+                                maxWidth={containerWidth}
+                                backgroundColor="white"
+                            >
                                 <Image src={media.url} width="100%" height="100%" objectFit="contain" />
-                            </Box>
+                                {media.link && (
+                                    <Link href={media.link} target="_blank">
+                                        <Flex
+                                            backgroundColor="#e5e5e5"
+                                            height="30px"
+                                            align="center"
+                                            paddingLeft="5px"
+                                            paddingRight="5px"
+                                        >
+                                            <Text style={singleLineEllipsisStyle} fontSize="12px">
+                                                {media.name}
+                                            </Text>
+                                        </Flex>
+                                    </Link>
+                                )}
+                            </Flex>
                         ))}
                 </SliderIf>
             </Box>
@@ -247,17 +283,17 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
     const [formattedContent, setFormattedContent] = useState(item?.content);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
-    useEffect(() => {
-        if (!item?.content) return;
+    // useEffect(() => {
+    //     if (!item?.content) return;
 
-        if (item.type === "post" && item.has_links) {
-            const options = { target: "_blank" };
-            let formattedText = linkifyHtml(item.content, options);
-            setFormattedContent(formattedText);
-        } else {
-            setFormattedContent(item.content);
-        }
-    }, [item?.content, item?.type, item?.has_links]);
+    //     if (item.type === "post" && item.has_links) {
+    //         const options = { target: "_blank" };
+    //         let formattedText = linkifyHtml(item.content, options);
+    //         setFormattedContent(formattedText);
+    //     } else {
+    //         setFormattedContent(item.content);
+    //     }
+    // }, [item?.content, item?.type, item?.has_links]);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -309,6 +345,7 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                     marginLeft="5px"
                     marginRight="15px"
                     marginTop={item.type === "event" ? "0px" : "10px"}
+                    overflow="hidden"
                 >
                     {item.type === "event" && (
                         <Text
@@ -373,15 +410,14 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                             overflow="hidden"
                             maxHeight={isExpanded ? "none" : "150px"}
                             position="relative"
+                            width="100%"
                         >
-                            <Box marginBottom={isExpanded ? "30px" : "0px"}>
+                            <Box marginBottom={isExpanded ? "30px" : "0px"} width="100%" overflow="hidden">
                                 <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
                             </Box>
-                            {/* Add fade out gradient */}
                             <Box
                                 position="absolute"
                                 height={isExpanded ? "100%" : "150px"}
-                                // backgroundColor="#bbbb24af"
                                 bottom="0px"
                                 top="0px"
                                 left="0px"
@@ -433,9 +469,9 @@ export const CircleListItemNormal = ({ item, onClick, inSelect, ...props }) => {
                         </Box>
                     )}
 
-                    {item.media && <MediaDisplay media={item.media} />}
+                    {item.media && <MediaDisplay media={item.media} meta_data={item.meta_data} />}
 
-                    <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />
+                    {item.type !== "post" && <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" />}
 
                     <Box paddingTop="4px">
                         <CircleTags circle={item} size="tiny" inSelect={inSelect} />
@@ -551,17 +587,17 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
 
     const [formattedContent, setFormattedContent] = useState(item?.content);
 
-    useEffect(() => {
-        if (!item?.content) return;
+    // useEffect(() => {
+    //     if (!item?.content) return;
 
-        if (item.type === "post" && item.has_links) {
-            const options = { target: "_blank" };
-            let formattedText = linkifyHtml(item.content, options);
-            setFormattedContent(formattedText);
-        } else {
-            setFormattedContent(item.content);
-        }
-    }, [item?.content, item?.type, item?.has_links]);
+    //     if (item.type === "post" && item.has_links) {
+    //         const options = { target: "_blank" };
+    //         let formattedText = linkifyHtml(item.content, options);
+    //         setFormattedContent(formattedText);
+    //     } else {
+    //         setFormattedContent(item.content);
+    //     }
+    // }, [item?.content, item?.type, item?.has_links]);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
@@ -703,11 +739,13 @@ export const CircleListItem = ({ item, isDark, onClick, inSelect, inNav, ...prop
 
                 {!inNav && (
                     <>
-                        <Box>
-                            <Text fontSize="15px" textAlign="left" style={singleLineEllipsisStyle}>
-                                {item.description}
-                            </Text>
-                        </Box>
+                        {item.type !== "post" && item.description && (
+                            <Box>
+                                <Text fontSize="15px" textAlign="left" style={singleLineEllipsisStyle}>
+                                    {item.description}
+                                </Text>
+                            </Box>
+                        )}
                         <Box paddingTop={item.type === "event" ? "0px" : "4px"}>
                             <CircleTags circle={item} size="tiny" inSelect={inSelect} />
                         </Box>
