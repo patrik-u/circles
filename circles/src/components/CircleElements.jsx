@@ -52,7 +52,7 @@ import {
     getRelationSet,
 } from "@/components/Helpers";
 import { Scrollbars } from "react-custom-scrollbars-2";
-import { routes, openCircle, openAboutCircle } from "@/components/Navigation";
+import { routes, openCircle, focusCircle, openAboutCircle } from "@/components/Navigation";
 import { CirclePreview } from "@/components/CirclePreview";
 import { RiLinksLine, RiShareLine, RiLiveFill } from "react-icons/ri";
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from "react-share";
@@ -317,6 +317,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
     const [, setPreviewCircle] = useAtom(previewCircleAtom);
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const onOpenChat = () => {
         // init set circle
@@ -326,6 +327,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
 
         let relationSet = getRelationSet(user, circle);
         openCircle(navigate, relationSet);
+        focusCircle(relationSet, setFocusOnMapItem);
         setPreviewCircle(null);
         setToggleWidgetEvent({ name: "chat", value: true });
         setToggleWidgetEvent({ name: "about", value: true });
@@ -1338,7 +1340,8 @@ export const CirclePicture = ({
     const imageOffset = circleBorderColors.length * borderWidth;
 
     const isHexagon = (inCircle) => {
-        return inCircle?.type === "user";
+        return false;
+        //return inCircle?.type === "user";
     };
 
     const getShapeStyle = (inCircle) => {
@@ -1584,6 +1587,7 @@ export const LargeConnectButton = ({ circle }) => {
 export const OpenButton = ({ circle, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const height = "28px";
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     return (
         <Tooltip label={"Enter into circle"} aria-label="A tooltip">
@@ -1596,6 +1600,7 @@ export const OpenButton = ({ circle, ...props }) => {
                 onClick={(event) => {
                     event.stopPropagation();
                     openCircle(navigate, circle);
+                    focusCircle(circle, setFocusOnMapItem);
                 }}
                 position="relative"
                 align="center"
@@ -1637,6 +1642,14 @@ export const SimilarityIndicator = ({ circle, ...props }) => {
     );
 };
 
+export const BoxIf = ({ children, noBox, ...props }) => {
+    return noBox ? children : <Box {...props}>{children}</Box>;
+};
+
+export const ScrollbarsIf = ({ children, noScrollbars }) => {
+    return noScrollbars ? children : <Scrollbars autoHide>{children}</Scrollbars>;
+};
+
 export const CircleHeader = ({ circle, onClose, inPreview, inChat, onClickSpace, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
@@ -1655,15 +1668,7 @@ export const CircleHeader = ({ circle, onClose, inPreview, inChat, onClickSpace,
     if (!circle) return null;
 
     return (
-        <Flex
-            flex="initial"
-            order="0"
-            align="left"
-            flexDirection="column"
-            width="100%"
-            height={isMobile ? "32px" : "32px"}
-            {...props}
-        >
+        <Flex flex="initial" order="0" align="left" flexDirection="column" width="100%" height={"32px"} {...props}>
             <Flex flexDirection="row" width="100%" align="center">
                 <Flex flexDirection="row" width="100%" position="relative" align="center">
                     {inChat && (

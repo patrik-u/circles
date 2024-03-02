@@ -335,11 +335,12 @@ const ChatMessages = ({ messages, onRenderComplete, replyChatMessage, deleteChat
                                             borderRadius={`${item.isFirst ? "10px" : "2px"} 10px 10px ${
                                                 item.isLast ? "10px" : "2px"
                                             }`}
-                                            bgGradient={
-                                                item.isSelf
-                                                    ? "linear(to-r,#d3d1d3,#ffffff)"
-                                                    : "linear(to-r,#d3d1d3,#ffffff)"
-                                            }
+                                            // bgGradient={
+                                            //     item.isSelf
+                                            //         ? "linear(to-r,#d3d1d3,#ffffff)"
+                                            //         : "linear(to-r,#d3d1d3,#ffffff)"
+                                            // }
+                                            backgroundColor={item.isSelf ? "#90ffb3" : "#ffffff"}
                                             color={item.user.id !== user?.id ? "black" : "black"}
                                             marginRight="auto"
                                             overflow="hidden"
@@ -708,13 +709,13 @@ const MessageInputBox = ({
                                 flexShrink="0"
                                 cursor="pointer"
                             >
-                                <HiOutlineEmojiHappy size="30px" color={user ? "#ffffff" : "#e6e6e6"} />
+                                <HiOutlineEmojiHappy size="30px" color={"#6e6e6e"} />
                             </Box>
                         </PopoverTrigger>
                     )}
                     {!user && (
                         <Box position="absolute" top="18px" right="10px" width="30px" height="30px" flexShrink="0">
-                            <HiOutlineEmojiHappy size="30px" color="#e6e6e6" />
+                            <HiOutlineEmojiHappy size="30px" color="#6e6e6e" />
                         </Box>
                     )}
                     <PopoverContent
@@ -1247,14 +1248,24 @@ export const CircleChat = ({ circle }) => {
         setMessageToReply(null);
     };
 
+    const circleChatBackgroundColor = "white"; // "#e3e3e3";
+
     if (!circle) return null;
 
     return (
-        <Flex flexGrow="1" width="100%" height="100%" position="relative" overflow="hidden" pointerEvents="auto">
+        <Flex
+            flexGrow="1"
+            // backgroundColor={circleChatBackgroundColor}
+            width="100%"
+            height="100%"
+            position="relative"
+            overflow="hidden"
+            pointerEvents="auto"
+        >
             <Flex width="100%" height="100%" overflow="hidden" flexDirection="column">
                 <Flex flexGrow="1" flexDirection="column" align="left" overflow="hidden">
                     {!isAuthorized && (
-                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px" color="white">
+                        <Box marginTop="20px" spacing="0px" marginLeft="8px" marginRight="8px" color="#333">
                             <Text>{i18n.t(`You need to join the [${circle?.type}] to chat`)}</Text>
                         </Box>
                     )}
@@ -1275,7 +1286,7 @@ export const CircleChat = ({ circle }) => {
                                 aria-label="A tooltip"
                             >
                                 <Box>
-                                    <RiChatPrivateLine color="white" size="20px" />
+                                    <RiChatPrivateLine color="#333" size="20px" />
                                 </Box>
                             </Tooltip>
                         </Flex>
@@ -1301,11 +1312,11 @@ export const CircleChat = ({ circle }) => {
                                         />
 
                                         {!chatMessages?.length && !isLoadingMessages && (
-                                            <Text color="white" marginLeft="12px">
+                                            <Text color="#333" marginLeft="12px">
                                                 {i18n.t("No messages")}
                                             </Text>
                                         )}
-                                        {isLoadingMessages && <Spinner marginLeft="12px" color="white" />}
+                                        {isLoadingMessages && <Spinner marginLeft="12px" color="#333" />}
                                     </VStack>
                                     {chatMessages.length > 0 && <Box ref={scrollLastRef} marginTop="10px" />}
                                 </Scrollbars>

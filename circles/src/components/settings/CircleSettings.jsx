@@ -7,7 +7,7 @@ import { routes } from "@/components/Navigation";
 import { Scrollbars } from "react-custom-scrollbars-2";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "@/components/RouterUtils";
 import { useAtom } from "jotai";
-import { isMobileAtom, circleAtom, circleDataAtom } from "@/components/Atoms";
+import { isMobileAtom, circleAtom, circleDataAtom, circleDashboardExpandedAtom } from "@/components/Atoms";
 import { CircleContentForm } from "@/components/settings/CircleContentForm";
 import { CircleImagesForm } from "@/components/settings/CircleImagesForm";
 import { CircleTagsForm } from "@/components/settings/CircleTagsForm";
@@ -39,6 +39,7 @@ const CircleSettings = ({ onClose }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [circle] = useAtom(circleAtom);
     const [circleData] = useAtom(circleDataAtom);
+    const [circleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
 
     const adminNavigationItems = () => {
         if (!circle) return [];
@@ -103,23 +104,22 @@ const CircleSettings = ({ onClose }) => {
 
     return (
         <Box
-            bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-            borderRadius="10px"
-            margin={isMobile ? "0px" : "0px 10px 10px 10px"}
-            padding="5px"
+            margin="0px"
+            // padding="5px"
             // flexGrow="1"
             pointerEvents="auto"
             position="relative"
             overflow="hidden"
-            height={isBaseSettings() ? "200px" : "100%"}
+            // height={isBaseSettings() ? "200px" : "100%"}
+            height={"100%"}
             width="auto"
         >
             <Flex
                 flexGrow="1"
-                height={isMobile ? "100%" : "100%"}
+                height="100%"
                 position="relative"
                 left="0px"
-                flexDirection={isMobile ? "column" : "row"}
+                flexDirection={!circleDashboardExpanded ? "column" : "row"}
                 top="0px"
             >
                 <Box marginLeft="2px" backgroundColor="white" borderRadius="0px 7px 7px 0px" flexGrow="1">
@@ -128,49 +128,30 @@ const CircleSettings = ({ onClose }) => {
                             <Routes>
                                 <Route path="/" element={<CircleContentForm isUpdateForm={true} circle={circle} />} />
                                 <Route
-                                    path="/settings/"
-                                    element={<CircleContentForm isUpdateForm={true} circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/images"
+                                    path="/images"
                                     element={<CircleImagesForm isUpdateForm={true} circle={circle} />}
                                 />
                                 <Route
-                                    path="/settings/mission"
+                                    path="/mission"
                                     element={<CircleMissionForm isUpdateForm={true} circle={circle} />}
                                 />
+                                <Route path="/tags" element={<CircleTagsForm isUpdateForm={true} circle={circle} />} />
                                 <Route
-                                    path="/settings/tags"
-                                    element={<CircleTagsForm isUpdateForm={true} circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/questions"
+                                    path="/questions"
                                     element={<CircleQuestionsForm isUpdateForm={true} circle={circle} />}
                                 />
+                                <Route path="/base" element={<CircleBaseForm isUpdateForm={true} circle={circle} />} />
+                                <Route path="/offersandneeds" element={<CircleOffersAndNeedsForm circle={circle} />} />
+                                <Route path="/socialmedia" element={<CircleQuickLinksForm circle={circle} />} />
+                                <Route path="/connections" element={<CircleConnectionsForm circle={circle} />} />
                                 <Route
-                                    path="/settings/base"
-                                    element={<CircleBaseForm isUpdateForm={true} circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/offersandneeds"
-                                    element={<CircleOffersAndNeedsForm circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/socialmedia"
-                                    element={<CircleQuickLinksForm circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/connections"
-                                    element={<CircleConnectionsForm circle={circle} />}
-                                />
-                                <Route
-                                    path="/settings/ai"
+                                    path="/ai"
                                     element={
                                         <CircleAiForm circle={circle} circleData={circleData} isUpdateForm={true} />
                                     }
                                 />
                                 {/* <Route path="/settings/funding" element={<CircleFundingForm circle={circle} />} /> */}
-                                <Route path="/settings/misc" element={<CircleDeleteForm circle={circle} />} />
+                                <Route path="/misc" element={<CircleDeleteForm circle={circle} />} />
                             </Routes>
                         </Box>
                     </Scrollbars>
@@ -178,26 +159,26 @@ const CircleSettings = ({ onClose }) => {
 
                 <Flex
                     position={"relative"}
-                    flexDirection={isMobile ? "row" : "column"}
-                    height={isMobile ? "50px" : "100%"}
+                    flexDirection={!circleDashboardExpanded ? "row" : "column"}
+                    height={!circleDashboardExpanded ? "50px" : "100%"}
                     backgroundColor="#fdfdfd"
-                    width={isMobile ? "100%" : "130px"}
+                    width={!circleDashboardExpanded ? "100%" : "130px"}
                     flexShrink="0"
                     order="-1"
                     borderRadius="7px 0px 0px 7px"
                 >
-                    <Scrollbars autoHide height={isMobile ? "50px" : "100%"} width="100%">
+                    <Scrollbars autoHide height={!circleDashboardExpanded ? "50px" : "100%"} width="100%">
                         <Flex
-                            height={isMobile ? "50px" : "auto"}
-                            marginLeft={isMobile ? "10px" : "0px"}
-                            flexDirection={isMobile ? "row" : "column"}
-                            marginTop={isMobile ? "0px" : "15px"}
+                            height={!circleDashboardExpanded ? "50px" : "auto"}
+                            marginLeft={!circleDashboardExpanded ? "10px" : "0px"}
+                            flexDirection={!circleDashboardExpanded ? "row" : "column"}
+                            marginTop={!circleDashboardExpanded ? "0px" : "15px"}
                             align="center"
                         >
                             {adminNavigationItems().map((navItem, i) => (
                                 <Flex
                                     key={navItem.route}
-                                    width={isMobile ? "auto" : "110px"}
+                                    width={!circleDashboardExpanded ? "auto" : "110px"}
                                     align="center"
                                     justifyContent="center"
                                     borderRadius="50px"
@@ -206,13 +187,13 @@ const CircleSettings = ({ onClose }) => {
                                     paddingLeft="10px"
                                     paddingRight="10px"
                                     flexShrink="0"
-                                    marginLeft={isMobile ? "0px" : "5px"}
-                                    marginRight={isMobile ? "0px" : "5px"}
-                                    marginTop={isMobile ? "0px" : "5px"}
-                                    marginBottom={isMobile ? "0px" : "5px"}
-                                    color={isMatch[i] ? (isMobile ? "white" : "#585858") : "#757575"}
+                                    marginLeft={!circleDashboardExpanded ? "0px" : "5px"}
+                                    marginRight={!circleDashboardExpanded ? "0px" : "5px"}
+                                    marginTop={!circleDashboardExpanded ? "0px" : "5px"}
+                                    marginBottom={!circleDashboardExpanded ? "0px" : "5px"}
+                                    color={isMatch[i] ? (!circleDashboardExpanded ? "white" : "#585858") : "#757575"}
                                     fontWeight={isMatch[i] ? "700" : "500"}
-                                    bg={isMatch[i] ? (isMobile ? "#c242bb" : "#d5d5d5") : "transparent"}
+                                    bg={isMatch[i] ? (!circleDashboardExpanded ? "#c242bb" : "#d5d5d5") : "transparent"}
                                     onClick={() => navigate(navItem.route)}
                                     flexDirection="column"
                                 >
@@ -229,28 +210,30 @@ const CircleSettings = ({ onClose }) => {
                     </Scrollbars>
                 </Flex>
 
-                <Flex
-                    width={iconSize + 8 + "px"}
-                    height={iconSize + 8 + "px"}
-                    _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
-                    _active={{ transform: "scale(0.98)" }}
-                    borderRadius="50%"
-                    justifyContent="center"
-                    alignItems="center"
-                    onClick={onClose}
-                    cursor="pointer"
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                >
-                    <Icon
+                {onClose && (
+                    <Flex
                         width={iconSize + 8 + "px"}
                         height={iconSize + 8 + "px"}
-                        color={"#333"}
-                        as={MdOutlineClose}
+                        _hover={{ color: "#e6e6e6", transform: "scale(1.1)" }}
+                        _active={{ transform: "scale(0.98)" }}
+                        borderRadius="50%"
+                        justifyContent="center"
+                        alignItems="center"
+                        onClick={onClose}
                         cursor="pointer"
-                    />
-                </Flex>
+                        position="absolute"
+                        top="10px"
+                        right="10px"
+                    >
+                        <Icon
+                            width={iconSize + 8 + "px"}
+                            height={iconSize + 8 + "px"}
+                            color={"#333"}
+                            as={MdOutlineClose}
+                            cursor="pointer"
+                        />
+                    </Flex>
+                )}
             </Flex>
         </Box>
     );

@@ -12,11 +12,18 @@ import {
     ButtonGroup,
     Button,
     IconButton,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    ModalContent,
+    ModalOverlay,
+    ModalCloseButton,
 } from "@chakra-ui/react";
 import i18n from "@/i18n/Localization";
 import axios from "axios";
 import { log, isConnected, isAdmin } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CirclePicture, CircleTags, ConnectButton } from "@/components/CircleElements";
@@ -31,11 +38,14 @@ import {
     isMobileAtom,
     newCirclePopupAtom,
     circleSettingsAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { IoMdSend } from "react-icons/io";
 import { MdOutlineList, MdDns, MdPictureInPicture, MdViewAgenda } from "react-icons/md";
 import { TbLayoutRows } from "react-icons/tb";
 import { BsCardHeading } from "react-icons/bs";
+import Scrollbars from "react-custom-scrollbars-2";
+import { ScrollbarsIf } from "./CircleElements";
 //#endregion
 
 const CreateNewCircleForm = ({ type }) => {
@@ -53,8 +63,12 @@ const CreateNewCircleForm = ({ type }) => {
 
     const sendMessage = async () => {
         // open create new circle guide
-        setNewCirclePopup({ type, circle, message: message });
+        setNewCirclePopup({ type, parent_circle: circle, message: message });
         setMessage("");
+    };
+
+    const togglePopup = () => {
+        setNewCirclePopup({ type, parent_circle: circle });
     };
 
     const handleMessageKeyDown = async (e) => {
@@ -69,8 +83,8 @@ const CreateNewCircleForm = ({ type }) => {
     if (!user?.id || (!circle?.is_public && !isAdmin(circle, userData)) || type === "user") return null;
 
     return (
-        <Flex flexDirection="column">
-            <Flex flexDirection="row" height="60px" align="center">
+        <Flex flexDirection="column" paddingRight="5px" paddingTop="5px">
+            <Flex flexDirection="row" height="40px" align="center">
                 <Box margin="10px" minWidth="40px" minHeight="40px" position="relative">
                     <CirclePicture circle={user} size={40} disableClick={true} />
                 </Box>
@@ -83,29 +97,8 @@ const CreateNewCircleForm = ({ type }) => {
                         rows="1"
                         borderRadius="40px"
                         placeholder={i18n.t(`Create new ${type}`)}
-                        value={message}
-                        onChange={handleMessageChange}
-                        onFocus={() => setShowInfoBox(true)}
-                        onBlur={() => setShowInfoBox(false)}
-                        onKeyDown={handleMessageKeyDown}
+                        onFocus={() => togglePopup()}
                     />
-                    {isMobile && (
-                        <Box
-                            position="absolute"
-                            top="18px"
-                            right="20px"
-                            width="26px"
-                            height="26px"
-                            flexShrink="0"
-                            cursor="pointer"
-                            onClick={sendMessage}
-                            zIndex="20"
-                        >
-                            <IoMdSend size="26px" color={user ? "#7880f8" : "#e6e6e6"} />
-                        </Box>
-                    )}
-
-                    {/* <Box backgroundColor="red" border="1px solid #494948" borderRadius="60px" width="100%" height="40px"></Box> */}
                 </Box>
             </Flex>
             {/* {showInfoBox && (
@@ -128,27 +121,31 @@ const CreateNewCircleForm = ({ type }) => {
     );
 };
 
-export const Circles = ({ type }) => {
+export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circleSettings, setCircleSettings] = useAtom(circleSettingsAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
-        if (circlesFilter.types?.length === 1 && circlesFilter.types.includes(type)) return;
+        log("Circles.useEffect 1", -1);
 
-        let newFilter = { ...circlesFilter };
-        newFilter.types = [type];
-        if (type !== "event") {
-            newFilter.sortBy = "newest";
+        // check if filter needs to update
+        if (
+            circlesFilter?.sortBy !== sortBy ||
+            circlesFilter?.types?.join(",") !== types.join(",") ||
+            circlesFilter?.categories?.join(",") !== categories.join(",")
+        ) {
+            setCirclesFilter((currentFilter) => {
+                return { ...currentFilter, types: types, categories: categories, sortBy: sortBy };
+            });
         }
-
-        setCirclesFilter(newFilter);
-    }, [circlesFilter, setCirclesFilter, type]);
+    }, [setCirclesFilter, types]);
 
     useEffect(() => {
         log("Circles.useEffect 3", -1);
@@ -186,58 +183,79 @@ export const Circles = ({ type }) => {
     const view = getCircleSettings("view") || "normal";
 
     return (
-        <Box flexGrow="1" width="100%" height="100%" align="center" position="relative" top="0px" left="0px">
-            <Flex width="100%" flexDirection="column" flexWrap="nowrap">
-                <CreateNewCircleForm type={type} />
-
-                {filteredCircles?.length > 0 && (
-                    <Flex borderBottom="1px solid #ebebeb" justifyContent="end">
-                        <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
-                            <IconButton
-                                width="28px"
-                                height="28px"
-                                margin="0px"
-                                minWidth="24px"
-                                padding="0px"
-                                aria-label="Compact"
-                                backgroundColor={view === "compact" ? "#e6e6e6" : "transparent"}
-                                icon={<MdOutlineList size={18} />}
-                                onClick={() => {
-                                    updateCircleSettings("view", "compact");
-                                }}
-                            />
-                            <IconButton
-                                width="28px"
-                                height="28px"
-                                margin="0px"
-                                minWidth="24px"
-                                padding="0px"
-                                aria-label="Normal"
-                                backgroundColor={view === "normal" ? "#e6e6e6" : "transparent"}
-                                icon={<MdViewAgenda size={18} />}
-                                onClick={() => {
-                                    updateCircleSettings("view", "normal");
-                                }}
-                            />
-                        </ButtonGroup>
-                    </Flex>
-                )}
-
-                {filteredCircles?.map((item) =>
-                    view === "compact" ? (
-                        <CircleListItem key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
-                    ) : (
-                        <CircleListItemNormal key={item.id} item={item} onClick={() => openCircle(navigate, item)} />
-                    )
-                )}
-
-                {filteredCircles?.length <= 0 && (
+        <Flex
+            flexGrow={noScrollbars ? "0" : "1"}
+            width="100%"
+            height={noScrollbars ? "auto" : "100%"}
+            flexDirection={"column"}
+            maxWidth="600px"
+        >
+            <CreateNewCircleForm type={type} />
+            {filteredCircles?.length > 0 && (
+                <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
+                    <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
+                        <IconButton
+                            width="28px"
+                            height="28px"
+                            margin="0px"
+                            minWidth="24px"
+                            padding="0px"
+                            aria-label="Compact"
+                            backgroundColor={view === "compact" ? "#e6e6e6" : "transparent"}
+                            icon={<MdOutlineList size={18} />}
+                            onClick={() => {
+                                updateCircleSettings("view", "compact");
+                            }}
+                        />
+                        <IconButton
+                            width="28px"
+                            height="28px"
+                            margin="0px"
+                            minWidth="24px"
+                            padding="0px"
+                            aria-label="Normal"
+                            backgroundColor={view === "normal" ? "#e6e6e6" : "transparent"}
+                            icon={<MdViewAgenda size={18} />}
+                            onClick={() => {
+                                updateCircleSettings("view", "normal");
+                            }}
+                        />
+                    </ButtonGroup>
+                </Flex>
+            )}
+            <Flex flexGrow="1" flexDirection={"column"}>
+                <ScrollbarsIf noScrollbars={noScrollbars}>
+                    {filteredCircles
+                        ?.filter((x) => x.type === type)
+                        ?.map((item) =>
+                            view === "compact" ? (
+                                <CircleListItem
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => {
+                                        openCircle(navigate, item);
+                                        focusCircle(item, setFocusOnMapItem);
+                                    }}
+                                />
+                            ) : (
+                                <CircleListItemNormal
+                                    key={item.id}
+                                    item={item}
+                                    onClick={() => {
+                                        openCircle(navigate, item);
+                                        focusCircle(item, setFocusOnMapItem);
+                                    }}
+                                />
+                            )
+                        )}
+                </ScrollbarsIf>
+                {/* {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">
                         {i18n.t(`No ${type}s`)}
                     </Text>
-                )}
+                )} */}
             </Flex>
-        </Box>
+        </Flex>
     );
 };
 

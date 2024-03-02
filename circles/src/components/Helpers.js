@@ -140,6 +140,15 @@ export const getEventTime = (item) => {
     }
 };
 
+export const getPostTime = (item) => {
+    let postDate = fromFsDate(item.created_at);
+    if (isToday(postDate)) {
+        return timeSince(fromFsDate(item.created_at), false, true);
+    } else {
+        return getDateLong(postDate);
+    }
+};
+
 export const getImageKitUrl = (url, width, height) => {
     if (!url) return null;
 
@@ -366,7 +375,7 @@ export const twoLineEllipsisStyle = {
     overflow: "hidden",
 };
 
-export const timeSince = (date, timeUntil) => {
+export const timeSince = (date, timeUntil, useShort = false) => {
     if (typeof date !== "object") {
         date = new Date(date);
     }
@@ -381,32 +390,35 @@ export const timeSince = (date, timeUntil) => {
 
     var interval = Math.floor(seconds / 31536000);
     if (interval >= 1) {
-        intervalType = interval == 1 ? i18n.t("year") : i18n.t("years");
+        intervalType = interval == 1 ? i18n.t(useShort ? "y" : "year") : i18n.t(useShort ? "y" : "years");
     } else {
         interval = Math.floor(seconds / 2592000);
         if (interval >= 1) {
-            intervalType = interval == 1 ? i18n.t("month") : i18n.t("months");
+            intervalType = interval == 1 ? i18n.t(useShort ? "mo" : "month") : i18n.t(useShort ? "mo" : "months");
         } else {
             interval = Math.floor(seconds / 86400);
             if (interval >= 1) {
-                intervalType = interval == 1 ? i18n.t("day") : i18n.t("days");
+                intervalType = interval == 1 ? i18n.t(useShort ? "d" : "day") : i18n.t(useShort ? "d" : "days");
             } else {
                 interval = Math.floor(seconds / 3600);
                 if (interval >= 1) {
-                    intervalType = interval == 1 ? i18n.t("hour") : i18n.t("hours");
+                    intervalType = interval == 1 ? i18n.t(useShort ? "h" : "hour") : i18n.t(useShort ? "h" : "hours");
                 } else {
                     interval = Math.floor(seconds / 60);
                     if (interval >= 1) {
-                        intervalType = interval == 1 ? i18n.t("minute") : i18n.t("minutes");
+                        intervalType =
+                            interval == 1 ? i18n.t(useShort ? "m" : "minute") : i18n.t(useShort ? "m" : "minutes");
                     } else {
                         interval = seconds;
-                        intervalType = interval == 1 ? i18n.t("second") : i18n.t("seconds");
+                        intervalType =
+                            interval == 1 ? i18n.t(useShort ? "s" : "second") : i18n.t(useShort ? "s" : "seconds");
                     }
                 }
             }
         }
     }
-    return interval + " " + intervalType;
+    if (useShort) return interval + intervalType;
+    else return interval + " " + intervalType;
 };
 
 export const validateEmail = (email) => {

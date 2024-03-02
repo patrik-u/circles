@@ -150,10 +150,10 @@ export const LoginRegisterMenu = () => {
         displayLoginRegisterMenu && (
             <Box marginTop="0px">
                 <HStack>
-                    <Button onClick={onSignInClick} rounded={"full"} height={isMobile ? "30px" : "40px"}>
+                    <Button onClick={onSignInClick} rounded={"full"} height={"30px"}>
                         {i18n.t("Log in")}
                     </Button>
-                    <Button onClick={onSignUpClick} rounded={"full"} height={isMobile ? "30px" : "40px"}>
+                    <Button onClick={onSignUpClick} rounded={"full"} height={"30px"}>
                         {i18n.t("Sign up")}
                     </Button>
                 </HStack>

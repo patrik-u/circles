@@ -47,8 +47,10 @@ export const CreateNewCirclePopup = () => {
                 <NewCircleGuide
                     onClose={onClose}
                     type={newCirclePopup?.type}
+                    parent_circle={newCirclePopup?.parent_circle}
                     circle={newCirclePopup?.circle}
                     message={newCirclePopup?.message}
+                    isUpdateForm={newCirclePopup?.isUpdateForm}
                     toggleMapInteract={toggleMapInteract}
                 />
             </Suspense>

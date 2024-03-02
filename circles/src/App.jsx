@@ -16,6 +16,7 @@ import PushNotificationsManager from "@/components/PushNotificationsManager";
 import ServerConfigManager from "@/components/ServerConfigManager";
 import { Tnc } from "@/components/TermsOfService";
 import { Circle } from "@/components/Circle";
+// import { CircleOld } from "@/components/CircleOld";
 //#endregion
 
 const App = () => {
@@ -61,6 +62,7 @@ const App = () => {
                         <Route path="/terms" element={<Tnc />} />
                         <Route path="/privacy" element={<Tnc showPrivacyPolicy={true} />} />
                         <Route path="/:hostId/:circleId/*" element={<Circle />} />
+                        {/* <Route path="/:hostId/:circleId/*" element={<CircleOld />} /> */}
                         <Route path="*" element={<Navigate to="/circles/global" replace />} />
                     </Routes>
                 </Suspense>

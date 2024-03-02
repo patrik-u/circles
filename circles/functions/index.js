@@ -41,10 +41,10 @@ const db = admin.firestore();
 
 let oneSignalClient = null;
 
-const defaultSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project"]; // default search types when not specified by user
-const defaultAiSearchTypes = ["circle", "event", "tag", "ai_agent", "user", "project"]; // default search types when not specified by AI
-const createCircleTypes = ["circle", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
-const indexCircleTypes = ["circle", "event", "tag", "ai_agent", "user", "document", "project", "chunk"]; // circle types that are indexed in vector database for semantic search
+const defaultSearchTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "document", "project"]; // default search types when not specified by user
+const defaultAiSearchTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "project"]; // default search types when not specified by AI
+const createCircleTypes = ["circle", "post", "event", "tag", "ai_agent", "document", "project"]; // circle types that can be created by users
+const indexCircleTypes = ["circle", "post", "event", "tag", "ai_agent", "user", "document", "project", "chunk"]; // circle types that are indexed in vector database for semantic search
 const indexCircleChunkTypes = ["document_chunk"]; // circle chunk types that are indexed in vector database for semantic search
 
 // const postmarkKey = defineString("POSTMARK_API_KEY");
@@ -143,6 +143,72 @@ const getOneSignalClient = () => {
         oneSignalClient = new OneSignal.Client(process.env.ONESIGNAL_APP_ID, process.env.ONESIGNAL_API_KEY);
     }
     return oneSignalClient;
+};
+
+const getLatlng = (coords) => {
+    if (!coords) return { latitude: 0, longitude: 0 };
+
+    let lat = coords.latitude ?? coords._latitude ?? 0;
+    let lng = coords.longitude ?? coords._longitude ?? 0;
+    return { latitude: lat, longitude: lng };
+};
+
+const calculateMapCenter = (locations) => {
+    let sumLat = 0.0;
+    let sumLng = 0.0;
+
+    // iterate through each location to sum latitudes and longitudes
+    locations.forEach((loc) => {
+        sumLat += loc.latitude;
+        sumLng += loc.longitude;
+    });
+
+    // calculate average latitude and longitude
+    const avgLat = sumLat / locations.length;
+    const avgLng = sumLng / locations.length;
+
+    // return the calculated center
+    return { latitude: avgLat, longitude: avgLng };
+};
+
+const calculateMapZoomFactor = (locations) => {
+    // constants for calculations
+    const MAX_LATITUDE = 85.0511287798; // Maximum latitude for Web Mercator projection
+
+    // calculate bounds
+    let minLat = Math.min(...locations.map((loc) => loc.latitude));
+    let maxLat = Math.max(...locations.map((loc) => loc.latitude));
+    minLat = Math.max(minLat, -MAX_LATITUDE);
+    maxLat = Math.min(maxLat, MAX_LATITUDE);
+    let minLng = Math.min(...locations.map((loc) => loc.longitude));
+    let maxLng = Math.max(...locations.map((loc) => loc.longitude));
+
+    // calculate latitudinal and longitudinal spans
+    let latSpan = maxLat - minLat;
+    let lngSpan = maxLng - minLng;
+
+    // calculate zoom factor (simplified and conceptual)
+    let latZoom = -Math.log(latSpan / 360) / Math.log(2);
+    let lngZoom = -Math.log(lngSpan / 360) / Math.log(2);
+
+    // return the minimum of the two zooms as the factor
+    return Math.min(latZoom, lngZoom);
+};
+
+const calculateMapBounds = (locations) => {
+    // get minimum and maximum latitudes and longitudes
+    let minLat = Math.min(...locations.map((loc) => loc.latitude));
+    let maxLat = Math.max(...locations.map((loc) => loc.latitude));
+    let minLng = Math.min(...locations.map((loc) => loc.longitude));
+    let maxLng = Math.max(...locations.map((loc) => loc.longitude));
+
+    // return the calculated bounds
+    const bounds = {
+        southwest: { latitude: minLat, longitude: minLng },
+        northeast: { latitude: maxLat, longitude: maxLng },
+    };
+
+    return bounds;
 };
 
 const getPinecone = async () => {
@@ -597,7 +663,6 @@ const getCircleTypes = (source, target) => {
 const propagateCircleUpdate = async (id) => {
     const circleRef = db.collection("circles").doc(id);
     let circleDoc = await circleRef.get();
-    circleDoc = await circleRef.get();
     let circleData = circleDoc?.data();
     if (!circleData) return;
 
@@ -662,6 +727,38 @@ const propagateCircleUpdate = async (id) => {
         let setRef = db.collection("circles").doc(setDocs.docs[i].id);
 
         batchArray[batchIndex].set(setRef, { [id]: circleData }, { merge: true });
+        ++operationCounter;
+        if (operationCounter >= 499) {
+            batchArray.push(db.batch());
+            ++batchIndex;
+            operationCounter = 0;
+        }
+    }
+
+    batchArray.forEach(async (batch) => await batch.commit());
+
+    //  loop through user settings favorite circles and update them
+    const favoriteDocs = await db.collection("circle_data").where(`circle_settings.${id}.favorite`, "==", true).get();
+    batchArray = [db.batch()];
+    operationCounter = 0;
+    batchIndex = 0;
+
+    // loop through each user data and update favorites
+    for (var i = 0; i < favoriteDocs.docs.length; ++i) {
+        let circleDataRef = db.collection("circle_data").doc(favoriteDocs.docs[i].id);
+        let circleDoc = await circleDataRef.get();
+        let circleDataData = circleDoc?.data();
+
+        let oldSettings = circleDataData?.circle_settings[id];
+        if (!oldSettings) continue;
+
+        let newSettings = { ...oldSettings };
+        newSettings.circle = getSettingsCircle(circleData);
+        let circle_settings = {
+            [id]: newSettings,
+        };
+
+        batchArray[batchIndex].set(circleDataRef, { circle_settings }, { merge: true });
         ++operationCounter;
         if (operationCounter >= 499) {
             batchArray.push(db.batch());
@@ -1208,6 +1305,50 @@ const setUserSeen = async (userId, circleId, category) => {
     );
 };
 
+const updateMapViewport = async (circleId) => {
+    const circle = await getCircle(circleId);
+    if (!circle) return;
+
+    // get all circles with this parent circle
+    const circles = await db
+        .collection("circles")
+        .where("parent_circle.id", "==", circleId)
+        .where("type", "==", "circle")
+        .get();
+
+    // get all locations
+    let locations = [];
+    if (circle.base) {
+        locations.push(getLatlng(circle.base));
+    }
+    circles.forEach((doc) => {
+        let circle = doc.data();
+        if (circle.base) {
+            locations.push(getLatlng(circle.base));
+        }
+    });
+
+    if (locations.length <= 0) return;
+
+    // calculate map location center
+    let mapCenter = calculateMapCenter(locations);
+
+    // calculate map zoom factor
+    let mapZoomFactor = calculateMapZoomFactor(locations);
+
+    // calculate bounds
+    let mapBounds = calculateMapBounds(locations);
+
+    let calculated_map_viewport = {
+        center: mapCenter,
+        zoom_factor: mapZoomFactor,
+        bounds: mapBounds,
+    };
+
+    // update circle
+    await updateCircle(circleId, { calculated_map_viewport: calculated_map_viewport });
+};
+
 //#endregion
 
 //#region circles
@@ -1236,6 +1377,8 @@ const upsertCircle = async (authCallerId, circleReq) => {
     let errors = {};
     const date = new Date();
 
+    // console.log("upserting circle" + JSON.stringify(circleReq, 2, null));
+
     let circle = {};
     let newCircle = circleReq.id ? false : true;
     let type = circleReq.type;
@@ -1258,8 +1401,10 @@ const upsertCircle = async (authCallerId, circleReq) => {
 
     // required fields for new circles
     if (newCircle) {
-        if (!circleReq.name) {
-            errors.name = "Name must not be empty";
+        if (circleReq.type !== "post") {
+            if (!circleReq.name) {
+                errors.name = "Name must not be empty";
+            }
         }
         if (!circleReq.type) {
             errors.type = "Type must not be empty";
@@ -1289,14 +1434,63 @@ const upsertCircle = async (authCallerId, circleReq) => {
     if (circleReq.picture) {
         circle.picture = circleReq.picture;
     }
+    if (circleReq.media) {
+        circle.media = circleReq.media;
+    }
+
+    let baseChanged = false;
     if (circleReq.base) {
         circle.base = circleReq.base;
+
+        if (currentCircle) {
+            // check if base has changed
+            let currentLoc = getLatlng(currentCircle.base);
+            let newLoc = getLatlng(circleReq.base);
+            if (currentLoc.latitude !== newLoc.latitude || currentLoc.longitude !== newLoc.longitude) {
+                baseChanged = true;
+            }
+        } else {
+            baseChanged = true;
+        }
     }
+
     if (circleReq.description !== undefined) {
         circle.description = circleReq.description;
     }
+    let links = null;
     if (circleReq.content !== undefined) {
         circle.content = circleReq.content;
+
+        if (circle.type === "post") {
+            // check for links and mentions in content
+            links = linkify.match(circle.content);
+            if (links) {
+                // check if link points to circle
+                let circleIds = [];
+                for (var link of links) {
+                    let circleId = extractCircleId(link.url);
+                    if (circleId) {
+                        circleIds.push(circleId);
+
+                        // remove link from links
+                        let linkUrl = link.url;
+                        links = links.filter((x) => x.url !== linkUrl);
+                    }
+                }
+
+                if (circleIds.length > 0) {
+                    // get mentions
+                    let mentions = await getCirclesFromIds(circleIds);
+                    if (mentions) {
+                        circle.mentions = mentions;
+                        circle.has_mentions = true;
+                    }
+                }
+                if (links?.length > 0) {
+                    circle.has_links = true;
+                }
+            }
+        }
     }
     if (circleReq.lexical_content !== undefined) {
         circle.lexical_content = circleReq.lexical_content;
@@ -1387,19 +1581,24 @@ const upsertCircle = async (authCallerId, circleReq) => {
     let parent = null;
     if (circleReq.parent_circle !== undefined) {
         let parentId = circleReq.parent_circle?.id;
-        if (parentId !== oldParentId) {
-            hasNewParent = true;
-            if (parentId) {
-                // check if user is owner or admin and allowed to set circle parent
-                parent = await getCircle(parentId);
-                if (!parent.is_public) {
-                    const isAuthorized = await isAdminOf(authCallerId, parentId);
-                    if (!isAuthorized) {
-                        errors.parent_circle = "User must be admin of parent circle";
+        if (parentId === "global") {
+            parentId = null;
+            circle.parent_circle = false;
+        } else {
+            if (parentId !== oldParentId) {
+                hasNewParent = true;
+                if (parentId) {
+                    // check if user is owner or admin and allowed to set circle parent
+                    parent = await getCircle(parentId);
+                    if (!parent.is_public) {
+                        const isAuthorized = await isAdminOf(authCallerId, parentId);
+                        if (!isAuthorized) {
+                            errors.parent_circle = "User must be admin of parent circle";
+                        }
                     }
                 }
+                circle.parent_circle = parent ?? false;
             }
-            circle.parent_circle = parent ?? false;
         }
     }
 
@@ -1493,13 +1692,29 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
 
+    if (hasNewParent || baseChanged) {
+        // calculate new map viewport for old and new parent circle
+        if (oldParentId) {
+            await updateMapViewport(oldParentId);
+        }
+        if (circle.parent_circle?.id) {
+            await updateMapViewport(circle.parent_circle.id);
+        }
+    }
+
     // upsert embeddings
     upsertCircleEmbedding(circle.id);
 
     // update summary if ai_summary is true
-    if (circle.ai_summary && circle.type !== "document") {
-        // disable AI summaries for documents for now as they change frequently during editing
+    if (circle.ai_summary && circle.type !== "document" && circle.type !== "post") {
+        // disable AI summaries for documents and posts for now as they change frequently during editing
         generateAiSummary(circle); // do this in background so we don't have to wait for it
+    }
+
+    // add preview images
+    if (circle.has_links) {
+        const circleRef = db.collection("circles").doc(circle.id);
+        addPreviewImages(circleRef, links);
     }
 
     return circle;
@@ -1765,77 +1980,88 @@ app.put("/circles/:id/chunks", auth, async (req, res) => {
 // get circles relevant to circle
 app.get("/circles/:id/circles", async (req, res) => {
     const circleId = req.params.id;
+    const filter = req.query.filter;
+    const noFilter = !filter || filter.length <= 0;
+    // console.log("*************************" + JSON.stringify(filter));
 
     try {
         // TODO when filtering for a specific category and type we can make the semantic search more specific to that as to yield more relevant results
 
         // get similar circles through semantic search
         let similarCircles = [];
-        try {
-            similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
-            similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
-            similarCircles = similarCircles.concat(
-                await semanticSearch(null, circleId, ["event", "project", "document"], 7)
-            );
-        } catch (error) {
-            functions.logger.error("Error while getting similar circles:", error);
+        if (noFilter || filter.includes("similar")) {
+            try {
+                similarCircles = await semanticSearch(null, circleId, ["circle"], 7);
+                similarCircles = similarCircles.concat(await semanticSearch(null, circleId, ["user"], 7));
+                similarCircles = similarCircles.concat(
+                    await semanticSearch(null, circleId, ["event", "project", "document"], 7)
+                );
+            } catch (error) {
+                functions.logger.error("Error while getting similar circles:", error);
+            }
+
+            // remove circle itself from similar circles
+            similarCircles = similarCircles.filter((x) => x.id !== circleId);
+
+            // TODO similar circles can be cached per circleId and updated periodically
         }
 
-        // remove circle itself from similar circles
-        similarCircles = similarCircles.filter((x) => x.id !== circleId);
-
-        // TODO similar circles can be cached per circleId and updated periodically
-
-        // get circles connected to circle
-        const connections = await getRelevantConnections(circleId);
-
-        // get up to date circle data for connections
-        let circleIds = connections.filter((x) => x.target.type !== "tag").map((x) => x.target.id);
         let connectedCircles = [];
-        while (circleIds.length) {
-            let circleIdsBatch = circleIds.splice(0, 10);
-            let circleDocs = await db
-                .collection("circles")
-                .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
-                .get();
-            for (let i = 0; i < circleDocs.docs.length; i++) {
-                let circle = {
-                    id: circleDocs.docs[i].id,
-                    ...circleDocs.docs[i].data(),
-                };
-                connectedCircles.push(circle);
+        if (noFilter || filter.includes("connected")) {
+            // get circles connected to circle
+            const connections = await getRelevantConnections(circleId);
+
+            // get up to date circle data for connections
+            let circleIds = connections.filter((x) => x.target.type !== "tag").map((x) => x.target.id);
+
+            while (circleIds.length) {
+                let circleIdsBatch = circleIds.splice(0, 10);
+                let circleDocs = await db
+                    .collection("circles")
+                    .where(admin.firestore.FieldPath.documentId(), "in", circleIdsBatch)
+                    .get();
+                for (let i = 0; i < circleDocs.docs.length; i++) {
+                    let circle = {
+                        id: circleDocs.docs[i].id,
+                        ...circleDocs.docs[i].data(),
+                    };
+                    connectedCircles.push(circle);
+                }
             }
         }
 
-        // get circles mentioned in circle
-        // get latest chat_messages in circle and extract mentioned circles
         let mentionedCircles = [];
-        let chatMessages = await db
-            .collection("chat_messages")
-            .where("circle_id", "==", circleId)
-            .where("has_mentions", "==", true)
-            .orderBy("sent_at", "desc")
-            .limit(10)
-            .get();
-        for (let i = 0; i < chatMessages.docs.length; i++) {
-            let chatMessage = chatMessages.docs[i].data();
-            let mentions = chatMessage.mentions;
+        if (noFilter || filter.includes("mentioned")) {
+            // get circles mentioned in circle
+            // get latest chat_messages in circle and extract mentioned circles
 
-            // add to mentioned circles or update existing circle with chatMessage date
-            for (let j = 0; j < mentions.length; j++) {
-                let mention = mentions[j];
+            let chatMessages = await db
+                .collection("chat_messages")
+                .where("circle_id", "==", circleId)
+                .where("has_mentions", "==", true)
+                .orderBy("sent_at", "desc")
+                .limit(10)
+                .get();
+            for (let i = 0; i < chatMessages.docs.length; i++) {
+                let chatMessage = chatMessages.docs[i].data();
+                let mentions = chatMessage.mentions;
 
-                // check if circle is already in mentioned circles
-                let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
-                if (mentionedCircle) {
-                    // update last mentioned date
-                    if (chatMessage.sent_at > mentionedCircle.mentioned_at) {
-                        mentionedCircle.mentioned_at = chatMessage.sent_at;
+                // add to mentioned circles or update existing circle with chatMessage date
+                for (let j = 0; j < mentions.length; j++) {
+                    let mention = mentions[j];
+
+                    // check if circle is already in mentioned circles
+                    let mentionedCircle = mentionedCircles.find((x) => x.id === mention.id);
+                    if (mentionedCircle) {
+                        // update last mentioned date
+                        if (chatMessage.sent_at > mentionedCircle.mentioned_at) {
+                            mentionedCircle.mentioned_at = chatMessage.sent_at;
+                        }
+                    } else {
+                        // add to mentioned circles
+                        mention.mentioned_at = chatMessage.sent_at;
+                        mentionedCircles.push(mention);
                     }
-                } else {
-                    // add to mentioned circles
-                    mention.mentioned_at = chatMessage.sent_at;
-                    mentionedCircles.push(mention);
                 }
             }
         }
@@ -2270,6 +2496,35 @@ app.post("/connections/:id/deny", auth, async (req, res) => {
     }
 });
 
+const getSettingsCircle = (circle) => {
+    let settingsCircle = {
+        id: circle.id,
+    }; // store basic info about circle
+    if (circle.name) {
+        settingsCircle.name = circle.name;
+    }
+    if (circle.type) {
+        settingsCircle.type = circle.type;
+    }
+    if (circle.picture) {
+        settingsCircle.picture = circle.picture;
+    }
+    if (circle.cover) {
+        settingsCircle.cover = circle.cover;
+    }
+    if (circle.base) {
+        settingsCircle.base = circle.base;
+    }
+    if (circle.calculated_map_viewport) {
+        settingsCircle.calculated_map_viewport = circle.calculated_map_viewport;
+    }
+    if (circle.custom_map_viewport) {
+        settingsCircle.custom_map_viewport = circle.custom_map_viewport;
+    }
+
+    return settingsCircle;
+};
+
 // update circle settings
 const updateCircleSettings = async (authCallerId, circleId, targetCircleId, settings, checkAuth = true) => {
     let favoriteSet = false;
@@ -2294,17 +2549,7 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
     }
 
     let circle = await getCircle(targetCircleId);
-    newSettings.circle = {
-        id: circle.id,
-        name: circle.name,
-        type: circle.type,
-    }; // store basic info about circle
-    if (circle.picture) {
-        newSettings.circle.picture = circle.picture;
-    }
-    if (circle.cover) {
-        newSettings.circle.cover = circle.cover;
-    }
+    newSettings.circle = getSettingsCircle(circle);
 
     // verify user is authorized to change settings
     if (checkAuth) {

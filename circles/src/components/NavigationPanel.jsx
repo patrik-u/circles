@@ -3,10 +3,10 @@ import { Slide, Button, Box, useDisclosure, Flex, Icon } from "@chakra-ui/react"
 import { FaThumbtack } from "react-icons/fa";
 import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
-import { isMobileAtom, userDataAtom } from "@/components/Atoms";
+import { isMobileAtom, userDataAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { globalCircle } from "@/components/Circle";
 import Scrollbars from "react-custom-scrollbars-2";
 
@@ -18,6 +18,7 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     const [favoriteCircles, setFavoriteCircles] = useState([]);
     const navigate = useNavigateNoUpdates();
     const view = "compact";
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     useEffect(() => {
         if (!userData?.circle_settings) return;
@@ -34,6 +35,7 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
 
     const onCircleClick = (item) => {
         openCircle(navigate, item);
+        focusCircle(item, setFocusOnMapItem);
         if (!isPinned) {
             onClose();
         }

@@ -3,9 +3,9 @@ import React, { useState, useMemo, Suspense } from "react";
 import { Flex, Box, Spinner, HStack, VStack } from "@chakra-ui/react";
 import axios from "axios";
 import i18n from "@/i18n/Localization";
-import { userAtom, toggleAboutAtom } from "@/components/Atoms";
+import { userAtom, toggleAboutAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { useAtom } from "jotai";
-import { openCircle, openAboutCircle } from "@/components/Navigation";
+import { openCircle, openAboutCircle, focusCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CircleContentForm } from "@/components/settings/CircleContentForm";
 import { CircleImagesForm } from "@/components/settings/CircleImagesForm";
@@ -14,22 +14,28 @@ import { CircleTagsForm } from "@/components/settings/CircleTagsForm";
 import { CircleOffersAndNeedsForm } from "@/components/settings/CircleOffersAndNeedsForm";
 import { CircleBasePopupForm } from "@/components/settings/CircleBasePopupForm";
 import { CircleTypeForm } from "@/components/settings/CircleTypeForm";
+import { CirclePostForm } from "@/components/settings/CirclePostForm";
 //#endregion
 
-export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapInteract }) => {
+export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, toggleMapInteract, isUpdateForm }) => {
     const [user] = useAtom(userAtom);
-    const [createdCircle, setCreatedCircle] = useState({
-        type: type,
-        parent_circle: circle,
-        content: message,
-        is_public: true,
-        language: i18n.language,
-    });
+    const [createdCircle, setCreatedCircle] = useState(
+        isUpdateForm
+            ? circle
+            : {
+                  type: type,
+                  parent_circle: parent_circle,
+                  content: message,
+                  is_public: true,
+                  language: i18n.language,
+              }
+    );
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const navigate = useNavigateNoUpdates();
     const allSteps = useMemo(
         () => ({
-            type: { id: "type", label: i18n.t("Type") },
+            // type: { id: "type", label: i18n.t("Type") },
+            post: { id: "post", label: i18n.t("Post") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
             mission: { id: "mission", label: i18n.t("Mission") },
@@ -39,24 +45,37 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
         }),
         []
     );
-    const [steps] = useState([
-        allSteps.type,
-        allSteps.about,
-        allSteps.images,
-        allSteps.mission,
-        allSteps.tags,
-        allSteps.offers_and_needs,
-        allSteps.location,
-    ]);
-    const [activeStep, setActiveStep] = useState(allSteps.type);
+
+    const getStepsForType = (type) => {
+        switch (type) {
+            case "post":
+                return [allSteps.post];
+            default:
+                return [
+                    allSteps.about,
+                    allSteps.images,
+                    allSteps.mission,
+                    allSteps.tags,
+                    allSteps.offers_and_needs,
+                    allSteps.location,
+                ];
+        }
+    };
+
+    const steps = getStepsForType(type);
+    const [activeStep, setActiveStep] = useState(steps[0]);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
         if (nextIndex >= steps.length) {
             complete();
             onClose();
-            openCircle(navigate, createdCircle);
-            openAboutCircle(createdCircle, setToggleAbout);
+            if (createdCircle.type === "circle") {
+                openCircle(navigate, createdCircle);
+                focusCircle(createdCircle, setFocusOnMapItem);
+                openAboutCircle(createdCircle, setToggleAbout);
+            }
         } else {
             setActiveStep(steps[nextIndex]);
         }
@@ -68,25 +87,28 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
 
     const complete = () => {
         if (!circle?.id) return;
-        let req = {
-            circleData: {
-                ai_summary: true,
-            },
-        };
-        axios.put(`/circles/${circle.id}`, req).catch((error) => {
-            console.error(error);
-        });
+        // turn on AI summary for select circle types
+        if (circle.type === "circle" || circle.type === "event" || circle.type === "user") {
+            let req = {
+                circleData: {
+                    ai_summary: true,
+                },
+            };
+            axios.put(`/circles/${circle.id}`, req).catch((error) => {
+                console.error(error);
+            });
+        }
     };
 
     const getActiveStepComponent = () => {
         switch (activeStep.id) {
-            case allSteps.type.id:
+            case allSteps.post.id:
                 return (
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
-                                <CircleTypeForm
-                                    isUpdateForm={false}
+                                <CirclePostForm
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -97,14 +119,13 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         </VStack>
                     </Box>
                 );
-
             case allSteps.about.id:
                 return (
                     <Box>
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleContentForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -140,7 +161,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleMissionForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -176,7 +197,7 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CircleOffersAndNeedsForm
-                                    isUpdateForm={false}
+                                    isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}
                                     onNext={next}
@@ -214,19 +235,21 @@ export const NewCircleGuide = ({ onClose, type, circle, message, toggleMapIntera
         <Box>
             <Box marginTop="10px">{getActiveStepComponent()}</Box>
 
-            <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
-                <HStack align="center">
-                    {steps.map((x, i) => (
-                        <Box
-                            key={x.id}
-                            width="10px"
-                            height="10px"
-                            borderRadius="50%"
-                            backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
-                        ></Box>
-                    ))}
-                </HStack>
-            </Flex>
+            {steps.length > 1 && (
+                <Flex flexDirection="column" flexGrow="1" align="center" marginBottom="20px" marginTop="20px">
+                    <HStack align="center">
+                        {steps.map((x, i) => (
+                            <Box
+                                key={x.id}
+                                width="10px"
+                                height="10px"
+                                borderRadius="50%"
+                                backgroundColor={i <= steps.indexOf(activeStep) ? "#5062ff" : "#d3d3d3"}
+                            ></Box>
+                        ))}
+                    </HStack>
+                </Flex>
+            )}
         </Box>
     );
 };

@@ -13,7 +13,6 @@ import {
 } from "@chakra-ui/react";
 import db from "@/components/Firebase";
 import axios from "axios";
-import { openCircle, focusCircle } from "@/components/Navigation";
 import { log, fromFsDate, getDateWithoutTime, isConnected } from "@/components/Helpers";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Routes, Route, useParams, useSearchParams } from "react-router-dom";
@@ -39,7 +38,6 @@ import {
     homeExpandedAtom,
     signInStatusAtom,
     circleAtom,
-    subcirclesAtom,
     circleDataAtom,
     circleConnectionsAtom,
     searchResultsShownAtom,
@@ -52,10 +50,9 @@ import {
     connectedCirclesAtom,
     mentionedCirclesAtom,
     circleHistoryAtom,
-    circleDashboardExpandedAtom,
-    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { displayModes } from "@/components/Constants";
+import TopMenu from "@/components/TopMenu";
 import { useDrag, useGesture, useScroll, useWheel } from "@use-gesture/react";
 import { useSpring, animated } from "react-spring";
 import useWindowDimensions from "@/components/useWindowDimensions";
@@ -68,10 +65,6 @@ import WidgetController from "@/components/WidgetController";
 import NavigationPanel from "@/components/NavigationPanel";
 import config from "@/Config";
 import CircleGlobusMap from "@/components/CircleGlobusMap";
-import CircleDashboard from "@/components/CircleDashboard";
-import { CircleChatWidget } from "@/components/CircleChat";
-import { UserDashboard } from "@/components/UserDashboard";
-import { CircleSearcher } from "@/components/CircleSearch";
 //#endregion
 
 export const globalCircle = {
@@ -93,16 +86,11 @@ export const globalCircle = {
     is_public: true,
 };
 
-export const Circle = ({ isGlobal }) => {
+export const CircleOld = ({ isGlobal }) => {
     log("Circle.render", -1);
 
-    const [isMobile] = useAtom(isMobileAtom);
-    const [toggledWidgets, setToggledWidgets] = useState(
-        isMobile ? ["user-dashboard"] : ["user-dashboard", "circle-dashboard"]
-    );
-    const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
     const { hostId, circleId } = useParams();
-
+    const [isMobile] = useAtom(isMobileAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [circle, setCircle] = useAtom(circleAtom);
     const [, setCircleData] = useAtom(circleDataAtom);
@@ -112,7 +100,6 @@ export const Circle = ({ isGlobal }) => {
     const [, setConnectedCircles] = useAtom(connectedCirclesAtom);
     const [, setMentionedCircles] = useAtom(mentionedCirclesAtom);
     const [, setCircleConnections] = useAtom(circleConnectionsAtom);
-    const [, setSubcircles] = useAtom(subcirclesAtom);
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [showHistoricCircles, setShowHistoricCircles] = useAtom(showHistoricCirclesAtom);
@@ -123,8 +110,6 @@ export const Circle = ({ isGlobal }) => {
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
-    const [initialFocusDone, setInitialFocusDone] = useState(false);
-    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const handlePinClick = () => {
         setIsPinned(!isPinned);
@@ -136,7 +121,6 @@ export const Circle = ({ isGlobal }) => {
         log("opening navigation menu", -1);
     };
 
-    // updates circle history
     useEffect(() => {
         if (!circle?.id) return;
 
@@ -161,10 +145,12 @@ export const Circle = ({ isGlobal }) => {
                 position: x.position + 1,
                 history: [...x.history, circle],
             };
+
+            // if (x.history.length > 0 && x.history[x.length - 1] === circle.id) return x;
+            // return { position: x.position + 1, history: [...x.history, circle] };
         });
     }, [circle?.id, setCircleHistory]); // ignore warning as we only want to update history when circle id changes
 
-    // subscribes to circle
     useEffect(() => {
         log("Circle.useEffect", -1);
 
@@ -188,7 +174,6 @@ export const Circle = ({ isGlobal }) => {
         }
     }, [hostId, circleId, setCircle, isGlobal]);
 
-    // subscribes to circle private data
     useEffect(() => {
         if (!circle?.id) return;
         if (!user?.id) return;
@@ -215,103 +200,62 @@ export const Circle = ({ isGlobal }) => {
         }
     }, [hostId, userData?.admin_of, userData?.owner_of, circle?.id, user?.id, setCircleData]);
 
-    // gets connected circles
     useEffect(() => {
         if (!circleId && !isGlobal) return;
 
-        // if global we get all circles of type "circle" in the system
-        let everything = circleId === "global" || isGlobal;
+        // get all circles that has recently been active in circle
+        const lastXMinutes = new Date();
+        lastXMinutes.setMinutes(lastXMinutes.getMinutes() - 60 * 24); // last 24 hours
+
+        // show all connections on the map
+        // subscribe to connected circles
         let q = null;
+
+        // subscribe to active circles
+        let everything = circleId === "global" || isGlobal;
         if (everything) {
-            // get all circles
-            q = query(collection(db, "circles"), where("type", "in", ["circle", "post", "event", "user", "task"]));
+            q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
         } else {
-            // get subcircles
             q = query(
                 collection(db, "circles"),
-                where("parent_circle.id", "==", circleId),
-                where("type", "in", ["circle", "post", "event", "user", "task"])
+                where("activity.active_in_circle.id", "==", circleId),
+                where("activity.last_activity", ">=", lastXMinutes)
             );
-
-            // get connected circles
-            axios
-                .get(`/circles/${circleId}/circles`, { params: { filter: ["connected"] } })
-                .then((response) => {
-                    let connectedCircles = response.data.connectedCircles;
-                    setConnectedCircles(connectedCircles ?? []);
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
+            // TODO here we might want to get active in sub-circles as well
         }
 
-        let unsubscribeGetSubcircles = onSnapshot(q, (snap) => {
-            let circles = snap.docs.map((doc) => {
+        // subscribe to active circles
+        let unsubscribeGetActiveCircles = onSnapshot(q, (snap) => {
+            let activeCircles = snap.docs.map((doc) => {
                 return { id: doc.id, ...doc.data() };
             });
-            setSubcircles(circles);
+            setActiveCircles(activeCircles);
         });
 
+        // get similar circles
+        axios
+            .get(`/circles/${circleId}/circles`)
+            .then((response) => {
+                let similarCircles = response.data.similarCircles;
+                setSimilarCircles(similarCircles ?? []);
+
+                //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
+
+                let connectedCircles = response.data.connectedCircles;
+                setConnectedCircles(connectedCircles ?? []);
+
+                let mentionedCircles = response.data.mentionedCircles;
+                setMentionedCircles(mentionedCircles ?? []);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
         return () => {
-            if (unsubscribeGetSubcircles) {
-                unsubscribeGetSubcircles();
+            if (unsubscribeGetActiveCircles) {
+                unsubscribeGetActiveCircles();
             }
         };
-
-        // DISCOVERY123 old discovery logic to get active, similar, mentioned and connected circles
-        // // get all circles that has recently been active in circle
-        // const lastXMinutes = new Date();
-        // lastXMinutes.setMinutes(lastXMinutes.getMinutes() - 60 * 24); // last 24 hours
-
-        // // show all connections on the map
-        // // subscribe to connected circles
-        // let q = null;
-
-        // // subscribe to active circles
-        // let everything = circleId === "global" || isGlobal;
-        // if (everything) {
-        //     q = query(collection(db, "circles"), where("activity.last_activity", ">=", lastXMinutes));
-        // } else {
-        //     q = query(
-        //         collection(db, "circles"),
-        //         where("activity.active_in_circle.id", "==", circleId),
-        //         where("activity.last_activity", ">=", lastXMinutes)
-        //     );
-        //     // TODO here we might want to get active in sub-circles as well
-        // }
-
-        // // subscribe to active circles
-        // let unsubscribeGetActiveCircles = onSnapshot(q, (snap) => {
-        //     let activeCircles = snap.docs.map((doc) => {
-        //         return { id: doc.id, ...doc.data() };
-        //     });
-        //     setActiveCircles(activeCircles);
-        // });
-
-        // // get similar circles
-        // axios
-        //     .get(`/circles/${circleId}/circles`)
-        //     .then((response) => {
-        //         let similarCircles = response.data.similarCircles;
-        //         setSimilarCircles(similarCircles ?? []);
-
-        //         //log("similar circles: " + JSON.stringify(similarCircles, null, 2), 0, true);
-
-        //         let connectedCircles = response.data.connectedCircles;
-        //         setConnectedCircles(connectedCircles ?? []);
-
-        //         let mentionedCircles = response.data.mentionedCircles;
-        //         setMentionedCircles(mentionedCircles ?? []);
-        //     })
-        //     .catch((err) => {
-        //         console.error(err);
-        //     });
-
-        // return () => {
-        //     if (unsubscribeGetActiveCircles) {
-        //         unsubscribeGetActiveCircles();
-        //     }
-        // };
     }, [
         circleId,
         setActiveCircles,
@@ -322,7 +266,6 @@ export const Circle = ({ isGlobal }) => {
         setMentionedCircles,
     ]);
 
-    // marks circle as seen
     useEffect(() => {
         log("Circle.useEffect 2", -1);
         if (!signInStatus.signedIn) return;
@@ -338,7 +281,6 @@ export const Circle = ({ isGlobal }) => {
             .catch((error) => {});
     }, [user?.id, circleId, signInStatus]);
 
-    // updates user activity
     useEffect(() => {
         if (config.disableOnActive) return;
         if (!signInStatus.signedIn || !user?.id) return;
@@ -363,72 +305,49 @@ export const Circle = ({ isGlobal }) => {
         return () => clearInterval(intervalId);
     }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);
 
-    // focuses on circle if circle is navigated to directly
-    useEffect(() => {
-        if (circleId && circle?.id && !initialFocusDone) {
-            focusCircle(circle, setFocusOnMapItem);
-            setInitialFocusDone(true); // Prevent further calls on subsequent renders
-        }
-    }, [circleId, circle, initialFocusDone]);
-
     const circlePictureSize = isMobile ? 120 : 160;
 
     const debugBg = false;
-    const topMenuHeight = 90;
-    const topMenuHeightPx = topMenuHeight + "px";
-    const contentHeight = windowHeight;
+    const coverHeight = windowHeight;
 
     return (
         <Flex flexDirection="row">
+            {isPinned && !isMobile && (
+                <Box width="300px" height="100vh">
+                    <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} />
+                </Box>
+            )}
             <Box flexGrow="1" position="relative">
-                <Flex flexDirection="column" position="relative" backgroundColor="black">
-                    <Box
-                        width={isMobile ? "100%" : "calc(100% - 360px)"}
-                        height={contentHeight + "px"}
-                        position="relative"
-                    >
-                        <CircleMap width={isMobile ? windowWidth : windowWidth - 360} height={contentHeight} />
-                        <Flex
-                            position="absolute"
-                            right="0px"
-                            top="0px"
-                            width="30px"
-                            height="100%"
-                            zIndex="1"
-                            // backgroundColor="#ffffff66"
-                            backgroundColor="transparent"
-                            style={{
-                                background: "linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1))",
-                            }}
-                        ></Flex>
+                {displayMode !== displayModes.map_only && <TopMenu onLogoClick={onLogoClick} />}
+                {/* ONB123 */}
+                <Flex flexDirection="column" position="relative">
+                    <Box width="100%" height={coverHeight + "px"} position="relative">
+                        {/* <CircleGlobusMap /> */}
+                        <CircleMap height={coverHeight} />
                     </Box>
 
-                    <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="2" pointerEvents="none">
-                        <Flex flexGrow="1" marginTop={"0px"} zIndex="10">
-                            {toggledWidgets.includes("circle-dashboard") && (
-                                <Flex
-                                    flexDirection="column"
-                                    minWidth={"24rem"}
-                                    width={circleDashboardExpanded ? "auto" : isMobile ? "100%" : "24rem"}
-                                    flexGrow={circleDashboardExpanded ? "1" : "0"}
-                                    flexShrink={0}
-                                    order="3"
-                                >
-                                    <CircleDashboard onClose={() => {}} />
-                                </Flex>
-                            )}
-
-                            {!(isMobile || circleDashboardExpanded) && (
-                                <Flex flexDirection="column" flexGrow="1" order="2">
-                                    <CircleSearcher />
-                                </Flex>
-                            )}
-                        </Flex>
-                    </Flex>
+                    <WidgetController />
+                    {/* ONB123 */}
                 </Flex>
+                {(!isPinned || isMobile) && (
+                    <Drawer
+                        isOpen={isOpen}
+                        onClose={onClose}
+                        placement="left"
+                        size={isMobile ? "full" : "xs"}
+                        closeOnOverlayClick={!isPinned}
+                    >
+                        <DrawerOverlay />
+                        <DrawerContent padding="0">
+                            <DrawerBody padding="0">
+                                <NavigationPanel isPinned={isPinned} setIsPinned={setIsPinned} onClose={onClose} />
+                            </DrawerBody>
+                        </DrawerContent>
+                    </Drawer>
+                )}
             </Box>
         </Flex>
     );
 };
 
-export default Circle;
+export default CircleOld;

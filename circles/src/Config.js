@@ -1,7 +1,7 @@
 const configs = {
     dev: {
         environment: "dev",
-        apiUrl: "http://localhost:5000/circles-a0ce1/europe-west1/api",
+        apiUrl: "http://localhost:5001/circles-a0ce1/europe-west1/api",
         firebase: {
             apiKey: "AIzaSyD4PvlvtCDQeiWJejOlqBCyWi0gItOQO2E",
             authDomain: "circles-a0ce1.firebaseapp.com",
@@ -11,9 +11,9 @@ const configs = {
             appId: "1:1036474383038:web:d733eb7b732a6b248cbcef",
             measurementId: "G-08KCLCJ8PH",
         },
-        imageKitEndpoint: "https://ik.imagekit.io/4nfhhm6unw",
+        imageKitEndpoint: "https://ik.imagekit.io/4nfhhm6unw/",
         googleId: "1036474383038-qgds5mhp5ve3osdv5m9q73fqqi7t4gsr.apps.googleusercontent.com",
-        logLevel: -2, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
+        logLevel: 0, // -2: log renders, -1: log use effects, 0: log dev/stage, 1: log less, 2: log prod
         algoliaId: "9DJTDE292B",
         algoliaSearchKey: "e55e959c8c6ada2f9f2134e4ca998235",
         algoliaCirclesIndex: "circles",
@@ -36,7 +36,7 @@ const configs = {
             appId: "1:1036474383038:web:d733eb7b732a6b248cbcef",
             measurementId: "G-08KCLCJ8PH",
         },
-        imageKitEndpoint: "https://ik.imagekit.io/4nfhhm6unw",
+        imageKitEndpoint: "https://ik.imagekit.io/4nfhhm6unw/",
         googleId: "1036474383038-qgds5mhp5ve3osdv5m9q73fqqi7t4gsr.apps.googleusercontent.com",
         logLevel: 2,
         algoliaId: "9DJTDE292B",

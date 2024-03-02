@@ -7,7 +7,7 @@ import { HiUsers } from "react-icons/hi";
 import { BsChatText } from "react-icons/bs";
 import { BiNetworkChart } from "react-icons/bi";
 import i18n from "@/i18n/Localization";
-import { isAdmin, isConnected } from "@/components/Helpers";
+import { isAdmin, isConnected, isWithinActiveThreshold } from "@/components/Helpers";
 //#endregion
 
 export const routes = {
@@ -42,10 +42,19 @@ export const routes = {
     // graph: "/graph",
 };
 
-export const openCircle = (navigate, circle, section) => {
+export const openCircle = (navigate, circle, section = null) => {
     if (!circle?.id) return;
     let path = routes.circle(circle);
     navigate(section ? path[section] : path.home);
+};
+
+export const focusCircle = (circle, setFocusOnMapItem) => {
+    // focus on circle
+    if (circle?.id === "global") {
+        setFocusOnMapItem({ zoom: 1.8, item: circle });
+    } else {
+        setFocusOnMapItem({ item: circle });
+    }
 };
 
 export const openAboutCircle = (circle, setToggleAbout) => {

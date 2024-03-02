@@ -1,7 +1,7 @@
 //#region imports
 import React, { useEffect, useMemo } from "react";
 import { Box, VStack, Text, Flex, HStack } from "@chakra-ui/react";
-import { openCircle, focusCircle } from "@/components/Navigation";
+import { openCircle } from "@/components/Navigation";
 import {
     log,
     getDateAndTimeLong,
@@ -18,7 +18,6 @@ import {
     previewCircleAtom,
     userAtom,
     toggleWidgetEventAtom,
-    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { useLocationNoUpdates, useNavigateNoUpdates } from "@/components/RouterUtils";
 import {
@@ -34,22 +33,20 @@ import { CircleTags } from "@/components/CircleElements";
 import { ActiveInCircle, RelationSetInfo } from "@/components/CirclePreview";
 import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
-import { ScrollbarsIf } from "./CircleElements";
 //#endregion
 
-const CircleAbout = ({ onClose, noScrollbars }) => {
-    log("CircleAbout.render", -1);
+export const UserDashboard = ({ onClose }) => {
+    log("UserPanel.render", -1);
 
     const [user] = useAtom(userAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const [currentCircle] = useAtom(circleAtom);
     const [previewCircle] = useAtom(previewCircleAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
-    const circle = useMemo(() => previewCircle ?? currentCircle, [previewCircle, currentCircle]);
+    const circle = user;
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
-    const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
 
     const CircleQuestion = ({ question }) => {
         return (
@@ -70,85 +67,47 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
         return "14px";
     };
 
-    const noPaddingStyle = true;
-
     return (
         <>
             {circle && (
                 <Box
-                    // bgGradient="linear(to-r,#d3d1d3,#ffffff)"
-                    // borderRadius="10px"
-                    // margin={isMobile ? "0px" : "0px 10px 10px 0px"}
-                    padding={noPaddingStyle ? "0px" : "5px"}
-                    flexGrow={noScrollbars ? "0" : "1"}
+                    bgGradient="linear(to-r,#d3d1d3,#ffffff)"
+                    borderRadius="10px"
+                    margin={isMobile ? "0px" : "10px 0px 10px 10px"}
+                    padding="5px"
+                    flexGrow="1"
                     pointerEvents="auto"
                     position="relative"
-                    overflow={noScrollbars ? "visible" : "hidden"}
-                    height={noScrollbars ? "auto" : "100%"}
+                    overflow="hidden"
+                    height="100%"
                 >
-                    {circle?.id !== "global" && (
-                        <CircleHeader
-                            circle={circle}
-                            onClose={onClose}
-                            paddingLeft={noPaddingStyle ? "5px" : "0px"}
-                            paddingRight={noPaddingStyle ? "5px" : "0px"}
-                            // position="absolute"
-                            // top="5px"
-                        />
-                    )}
-                    <ScrollbarsIf noScrollbars={noScrollbars}>
-                        <CircleCover
-                            circle={circle}
-                            coverHeight={184}
-                            coverWidth={isMobile ? null : 375}
-                            borderRadius={noPaddingStyle ? "0px" : "7px"}
-                        />
-
-                        {circle?.parent_circle && (
-                            <Flex
-                                flexDirection="row"
-                                align="center"
-                                position="absolute"
-                                top="5px"
-                                left="5px"
-                                backgroundColor="white"
-                                borderRadius="20px"
-                                paddingLeft="3px"
-                                paddingRight="10px"
-                            >
-                                <CirclePicture circle={circle.parent_circle} size={15} hasPopover={false} />
-                                <Text
-                                    fontSize={"12px"}
-                                    marginLeft="5px"
-                                    fontWeight="bold"
-                                    color="black"
-                                    _hover={{ color: "#904893" }}
-                                    noOfLines={1}
-                                    cursor="pointer"
-                                    onClick={() => {
-                                        openCircle(navigate, circle.parent_circle);
-                                        focusCircle(circle.parent_circle, setFocusOnMapItem);
-                                        setToggleWidgetEvent({ name: "about", value: true });
-                                    }}
-                                    userSelect="none"
-                                >
-                                    This circle is part of {circle?.parent_circle?.name}
-                                </Text>
-                            </Flex>
-                        )}
+                    {/* <CircleHeader circle={circle} onClose={onClose} /> */}
+                    <Scrollbars autoHide>
+                        <CircleCover circle={circle} coverHeight={184} borderRadius="7px" />
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
-                        <Flex
-                            height="54px"
-                            width="100%"
-                            flexDirection="row"
-                            position="relative"
-                            paddingLeft={noPaddingStyle ? "5px" : "0px"}
-                            paddingRight={noPaddingStyle ? "5px" : "0px"}
-                        >
+                        <Flex height="54px" width="100%" flexDirection="row" position="relative">
                             <Box width="calc(50% - 38px)" overflow="hidden">
                                 {circle.type !== "set" && (
                                     <Flex flexDirection={"column"} marginLeft="5px" marginTop="5px">
+                                        {circle?.parent_circle && (
+                                            <Text
+                                                fontSize={"12px"}
+                                                fontWeight="bold"
+                                                color="#5d5d5d"
+                                                _hover={{ color: "#904893" }}
+                                                noOfLines={1}
+                                                lineHeight="13px"
+                                                cursor="pointer"
+                                                onClick={() => {
+                                                    openCircle(navigate, circle.parent_circle);
+                                                    focusCircle(circle.parent_circle, setFocusOnMapItem);
+                                                    setToggleWidgetEvent({ name: "about", value: true });
+                                                }}
+                                            >
+                                                {circle?.parent_circle?.name}
+                                            </Text>
+                                        )}
                                         <Text
                                             fontSize={getNameFontSize(circle.name)}
                                             fontWeight="bold"
@@ -184,8 +143,6 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                             <QuickLinks circle={circle} />
                         </Flex>
 
-                        {/* </Flex> */}
-
                         {circle.type === "set" && (
                             <Box align="center">
                                 <Text fontSize="17px" fontWeight="bold" marginLeft="5px" color="black">
@@ -194,57 +151,13 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                             </Box>
                         )}
 
-                        <VStack spacing="0px">
-                            <VStack
-                                align="center"
-                                className="circle-overview-content"
-                                spacing="16px"
-                                position="relative"
-                                top="0px"
-                            >
-                                <VStack spacing="0px">
-                                    {circle.type === "event" && (
-                                        <Text
-                                            fontSize="18px"
-                                            fontWeight="700"
-                                            color="#cf1a1a"
-                                            href={location.pathname}
-                                            marginTop="0px"
-                                        >
-                                            {circle.is_all_day
-                                                ? getDateLong(circle.starts_at)
-                                                : getDateAndTimeLong(circle.starts_at)}
-                                        </Text>
-                                    )}
-                                </VStack>
-                            </VStack>
-                        </VStack>
-
-                        {isActiveInCircle(circle) && (
-                            <ActiveInCircle item={circle} location={location} marginLeft="0px" marginRight="0px" />
-                        )}
-
-                        {/* {circle?.id !== user?.id && (
-                            <RelationSetInfo
-                                circle={
-                                    circle?.type === "set"
-                                        ? circle?.circle_ids?.[0] !== user?.id
-                                            ? circle?.[circle?.circle_ids?.[0]]
-                                            : circle?.[circle?.circle_ids?.[1]]
-                                        : circle
-                                }
-                                marginLeft={noPaddingStyle ? "5px" : "0px"}
-                                marginRight={noPaddingStyle ? "5px" : "0px"}
-                            />
-                        )} */}
-
                         {circle.description && (
                             <Box
                                 align="left"
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <CircleRichText mentions={circle.mentions}>{circle.description}</CircleRichText>
                             </Box>
@@ -256,7 +169,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">Tags</Text>
                                 <CircleTags circle={circle} showAll={true} wrap="wrap" />
@@ -269,7 +182,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">Mission</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.mission}</CircleRichText>
@@ -282,7 +195,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">Offers</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.offers}</CircleRichText>
@@ -295,7 +208,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">Needs</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.needs}</CircleRichText>
@@ -308,7 +221,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">About</Text>
                                 <CircleRichText mentions={circle.mentions}>{circle.content}</CircleRichText>
@@ -316,12 +229,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                         )}
 
                         {circle.questions && (
-                            <Box
-                                backgroundColor="#ffffffaa"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
-                                borderRadius="7px"
-                                marginTop="10px"
-                            >
+                            <Box backgroundColor="#ffffffaa" padding="5px" borderRadius="7px" marginTop="10px">
                                 {circle.questions.question0 && <CircleQuestion question={circle.questions.question0} />}
                                 {circle.questions.question1 && <CircleQuestion question={circle.questions.question1} />}
                                 {circle.questions.question2 && <CircleQuestion question={circle.questions.question2} />}
@@ -336,18 +244,18 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                 marginTop="10px"
                                 backgroundColor="#ffffffaa"
                                 borderRadius="7px"
-                                padding={noPaddingStyle ? "5px 10px 5px 10px" : "5px"}
+                                padding="5px"
                             >
                                 <Text fontWeight="bold">Version</Text>
                                 <Text>{import.meta.env.VITE_APP_VERSION}</Text>
                             </Box>
                         )}
                         <Box height="35px"></Box>
-                    </ScrollbarsIf>
+                    </Scrollbars>
                 </Box>
             )}
         </>
     );
 };
 
-export default CircleAbout;
+export default UserDashboard;

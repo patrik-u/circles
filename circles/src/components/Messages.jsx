@@ -7,10 +7,17 @@ import i18n from "@/i18n/Localization";
 import Scrollbars from "react-custom-scrollbars-2";
 import { AiOutlineMessage } from "react-icons/ai";
 import { timeSince, fromFsDate, log, singleLineEllipsisStyle } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { CirclePicture, buttonHighlight } from "@/components/CircleElements";
 import { useAtom } from "jotai";
-import { isMobileAtom, userAtom, chatCircleAtom, signInStatusAtom, toggleWidgetEventAtom } from "@/components/Atoms";
+import {
+    isMobileAtom,
+    userAtom,
+    chatCircleAtom,
+    signInStatusAtom,
+    toggleWidgetEventAtom,
+    focusOnMapItemAtom,
+} from "@/components/Atoms";
 import db from "@/components/Firebase";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 //#endregion
@@ -95,7 +102,7 @@ const Messages = () => {
     const navigate = useNavigateNoUpdates();
     const [messages, setMessages] = useState([]);
     const { isOpen: messagesIsOpen, onOpen: messagesOnOpen, onClose: messagesOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 24;
+    const iconSize = 18;
     const iconSizePx = iconSize + "px";
     const messagesBoxRef = useRef(null);
     const [signInStatus] = useAtom(signInStatusAtom);
@@ -195,7 +202,7 @@ const Messages = () => {
                         <Icon
                             width={iconSizePx}
                             height={iconSizePx}
-                            color={"white"}
+                            color={"black"}
                             as={AiOutlineMessage}
                             cursor="pointer"
                         />
@@ -206,7 +213,7 @@ const Messages = () => {
                             borderRadius="20px"
                             position="absolute"
                             right="-5px"
-                            top={{ base: "-4px", md: "-5px" }}
+                            top={{ base: "-4px", md: "-4px" }}
                             cursor="pointer"
                             pointerEvents="none"
                             minWidth="17px"
@@ -214,10 +221,10 @@ const Messages = () => {
                             <Text
                                 fontWeight="500"
                                 color="white"
-                                fontSize={{ base: "12px", md: "16px" }}
-                                lineHeight={{ base: "18px", md: "20px" }}
-                                marginLeft="4px"
-                                marginRight="4px"
+                                fontSize={{ base: "10px", md: "10px" }}
+                                lineHeight={{ base: "16px", md: "16px" }}
+                                marginLeft="0px"
+                                marginRight="0px"
                             >
                                 {unreadMessagesCount(messages)}
                             </Text>
@@ -232,12 +239,11 @@ const Messages = () => {
                     zIndex="255"
                     position="absolute"
                     display={messagesIsOpen ? "flex" : "none"}
-                    borderRadius={{ base: "20px", md: "20px" }}
                     overflow="hidden"
-                    top={{ base: "43", md: "83px" }}
-                    right={{ base: "0px", md: "5px" }}
-                    width={{ base: "100%", md: "400px" }}
-                    height="calc(100vh - 88px)"
+                    top={"90px"}
+                    right={"0px"}
+                    width={"100%"}
+                    height="calc(100vh - 90px)"
                 >
                     <Scrollbars autoHide>
                         <Fade in={messagesIsOpen} height="100%" width="100%">

@@ -33,6 +33,8 @@ import { useSearchParams } from "react-router-dom";
 import { CirclePreview } from "@/components/CirclePreview";
 //#endregion
 
+const ignorePosts = true;
+
 export const LocationPickerMarker = ({ position }) => {
     return (
         <>
@@ -116,6 +118,7 @@ export const CircleMapEdges = ({ circle, circles }) => {
 
     const getFeatures = () => {
         return circles
+            ?.filter((item) => !ignorePosts || item.type !== "post")
             .filter((x) => getLocation(x))
             .map((x) => {
                 //log(x.categories?.includes("similar").toString(), 0, true);
@@ -314,6 +317,7 @@ export const CirclesMapMarkers = ({ circles, ignoreIsActive }) => {
     return (
         <>
             {circles
+                ?.filter((item) => !ignorePosts || item.type !== "post")
                 ?.filter((item) => getLocation(item))
                 .map((item) => (
                     <CircleMapMarker key={item.id} circle={item} ignoreIsActive={ignoreIsActive} />

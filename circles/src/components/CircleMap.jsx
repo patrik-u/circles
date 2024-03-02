@@ -29,7 +29,7 @@ import mapboxgl from "mapbox-gl";
 import config from "@/Config";
 //#endregion
 
-export const CircleMap = ({ height, onMapClick, children }, ref) => {
+export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
     const [mapStyle] = useAtom(mapStyleAtom);
     const [focusOnMapItem, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const mapboxToken = config.mapBoxToken;
@@ -85,23 +85,74 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         setIsMapInitialized(true);
     };
 
+    const adjustZoomForViewport = (zoomFactor) => {
+        // Dynamic adjustment factor based on viewport size
+        const baseViewportSize = 850; // a reference viewport size for which the zoomFactor is accurate
+        const currentViewportSize = Math.min(width, height);
+        let sizeRatio = currentViewportSize / baseViewportSize;
+        if (sizeRatio === 0) sizeRatio = 1;
+
+        // Calculate dynamic adjustment factor based on the size ratio
+        const dynamicAdjustmentFactor = Math.log2(1 / sizeRatio);
+
+        log(
+            "width: " + width + ", height: " + height + ", dynamicAdjustmentFactor: " + dynamicAdjustmentFactor,
+            0,
+            true
+        );
+
+        // Apply dynamic adjustment
+        return zoomFactor - dynamicAdjustmentFactor;
+    };
+
     useEffect(() => {
         if (!focusOnMapItem) return;
 
-        let zoom = focusOnMapItem.zoom ?? 15;
-        let location = getLocation(focusOnMapItem.item);
-
-        if (!location) return;
-
-        log("location: " + JSON.stringify(location));
-
         let transitionSpeed = focusOnMapItem.speed ?? 3;
         let transitionCurve = focusOnMapItem.curve ?? 2;
+        const mapInstance = mapRef.current.getMap();
+
+        let calculatedMapViewport = focusOnMapItem?.item?.calculated_map_viewport;
+        let bounds = calculatedMapViewport?.bounds;
+        if (bounds) {
+            let lngLatBounds = [
+                [bounds.southwest.longitude, bounds.southwest.latitude],
+                [bounds.northeast.longitude, bounds.northeast.latitude],
+            ];
+
+            mapInstance.fitBounds(lngLatBounds, {
+                padding: { top: 100, bottom: 10, left: 30, right: 50 },
+                animate: true,
+                speed: transitionSpeed, // make the flying slow
+                curve: transitionCurve, // change the speed at which it zooms out
+                easing: (t) => t,
+                essential: true,
+            });
+            setFocusOnMapItem(null);
+            return;
+        }
+
+        let zoom = focusOnMapItem.zoom ?? calculatedMapViewport?.zoom_factor ?? 15;
+        if (calculatedMapViewport?.zoom_factor) {
+            zoom = adjustZoomForViewport(calculatedMapViewport.zoom_factor);
+        }
+
+        let location = calculatedMapViewport?.center ?? getLocation(focusOnMapItem.item);
+
+        if (!location) {
+            if (focusOnMapItem.item?.id === "global") {
+                location = { latitude: 0, longitude: 0 };
+            } else {
+                return;
+            }
+        }
+
+        log("focusing on location: " + JSON.stringify(location) + ", zoom: " + zoom, 0, true);
 
         //setMapViewport({ ...mapViewport, latitude: location.latitude, longitude: location.longitude, zoom, transitionDuration });
 
         // fly to location
-        const mapInstance = mapRef.current.getMap();
+
         mapInstance.flyTo({
             center: [location.longitude, location.latitude],
             zoom: zoom,
@@ -149,8 +200,8 @@ export const CircleMap = ({ height, onMapClick, children }, ref) => {
         switch (mapStyle) {
             default:
             case "satellite":
-                return "mapbox://styles/timaolsson/clfe29gyd000o01o3ray8f97m";
-            //return "mapbox://styles/mapbox/satellite-streets-v11";
+                //return "mapbox://styles/timaolsson/clfe29gyd000o01o3ray8f97m";
+                return "mapbox://styles/mapbox/satellite-streets-v11";
             case "streets":
                 return "mapbox://styles/exmakina-admin/ckur9npyof1t318rzrisvj2n2";
             case "satellite-no-labels":

@@ -34,9 +34,9 @@ import {
     getImageKitUrl,
     getDefaultCirclePicture,
 } from "@/components/Helpers";
-import { openCircle } from "@/components/Navigation";
+import { openCircle, focusCircle } from "@/components/Navigation";
 import { useAtom } from "jotai";
-import { userAtom, isMobileAtom } from "@/components/Atoms";
+import { userAtom, isMobileAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { buttonHighlight } from "@/components/CircleElements";
 //#endregion
 
@@ -422,9 +422,9 @@ const Notifications = () => {
     const navigate = useNavigateNoUpdates();
     const [notifications, setNotifications] = useState([]);
     const { isOpen: notificationsIsOpen, onOpen: notificationsOnOpen, onClose: notificationsOnClose } = useDisclosure();
-    const iconSize = isMobile ? 24 : 24;
+    const iconSize = isMobile ? 18 : 18;
     const iconSizePx = iconSize + "px";
-
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const notificationsBoxRef = useRef(null);
 
     useOutsideClick({
@@ -499,6 +499,7 @@ const Notifications = () => {
                         onClick={() => {
                             notificationsOnClose();
                             openCircle(navigate, notification.source);
+                            focusCircle(notification.source, setFocusOnMapItem);
                         }}
                     />
                 );
@@ -525,7 +526,7 @@ const Notifications = () => {
                         onClick={openNotifications}
                         cursor="pointer"
                     >
-                        <Icon width={iconSizePx} height={iconSizePx} color={"white"} as={FaRegBell} cursor="pointer" />
+                        <Icon width={iconSizePx} height={iconSizePx} color={"black"} as={FaRegBell} cursor="pointer" />
                     </Flex>
                     {hasUnreadNotifications(notifications) && (
                         <Box
@@ -533,7 +534,7 @@ const Notifications = () => {
                             borderRadius="20px"
                             position="absolute"
                             right="-5px"
-                            top={{ base: "-4px", md: "-5px" }}
+                            top={{ base: "-4px", md: "-4px" }}
                             cursor="pointer"
                             pointerEvents="none"
                             minWidth="17px"
@@ -541,10 +542,10 @@ const Notifications = () => {
                             <Text
                                 fontWeight="500"
                                 color="white"
-                                fontSize={{ base: "12px", md: "16px" }}
-                                lineHeight={{ base: "18px", md: "20px" }}
-                                marginLeft="4px"
-                                marginRight="4px"
+                                fontSize={{ base: "10px", md: "10px" }}
+                                lineHeight={{ base: "16px", md: "16px" }}
+                                marginLeft="0px"
+                                marginRight="0px"
                             >
                                 {unreadNotificationsCount(notifications)}
                             </Text>
@@ -560,12 +561,11 @@ const Notifications = () => {
                     zIndex="55"
                     position="absolute"
                     display={notificationsIsOpen ? "flex" : "none"}
-                    borderRadius={{ base: "20px", md: "20px" }}
                     overflow="hidden"
-                    top={{ base: "43", md: "83px" }}
-                    right={{ base: "0px", md: "5px" }}
-                    width={{ base: "100%", md: "400px" }}
-                    height="calc(100vh - 88px)"
+                    top={"90px"}
+                    right={"0px"}
+                    width={"100%"}
+                    height="calc(100vh - 90px)"
                 >
                     <Scrollbars autoHide>
                         <Fade in={notificationsIsOpen} height="100%" width="100%">

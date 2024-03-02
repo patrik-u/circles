@@ -28,6 +28,7 @@ const NavigationButtons = ({ direction, ...props }) => {
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
     const forwardCircle = useMemo(() => circleHistory?.history?.[circleHistory.position + 1], [circleHistory]);
     const backCircle = useMemo(() => circleHistory?.history?.[circleHistory.position - 1], [circleHistory]);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const navigateBack = () => {
         if (circleHistory.position > 0) {
@@ -35,6 +36,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
+            focusCircle(circle, setFocusOnMapItem);
         }
     };
 
@@ -44,6 +46,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
+            focusCircle(circle, setFocusOnMapItem);
         }
     };
 
@@ -143,14 +146,14 @@ export const TopMenu = ({ onLogoClick }) => {
     const [circle] = useAtom(circleAtom);
     const [homeExpanded] = useAtom(homeExpandedAtom);
     const navigate = useNavigateNoUpdates();
-    const height = isMobile ? "40px" : "90px";
+    const height = isMobile ? "40px" : "40px";
     const logoHeight = isMobile ? 30 : 60; //68;
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [showNavButtons, setShowNavButtons] = useState(false);
 
     const setTitleSize = isMobile ? "10px" : "18px";
     const logoHeightPx = `${logoHeight}px`;
-    const logoWidth = isMobile ? 30 : 48; //157;
+    const logoWidth = isMobile ? 30 : 30; //157;
     const logoWidthPx = `${logoWidth}px`;
 
     const titleSize = useMemo(() => {
@@ -183,7 +186,6 @@ export const TopMenu = ({ onLogoClick }) => {
     return (
         <>
             <Flex
-                position="absolute"
                 align="center"
                 flexBasis={height}
                 height={height}
@@ -192,87 +194,15 @@ export const TopMenu = ({ onLogoClick }) => {
                 zIndex="154"
                 pointerEvents="none"
             >
-                <Flex flexDirection="row" marginLeft="20px" alignItems="center" pointerEvents="auto" cursor="pointer">
-                    <Box position="relative">
-                        <CirclePicture
-                            circle={circle}
-                            size={logoWidth}
-                            hasPopover={false}
-                            parentCircleSizeRatio={3.75}
-                            parentCircleOffset={3}
-                            onClick={onLogoClick}
-                        />
-                        {showNavButtons && !isMobile && <NavigationButtons />}
-                    </Box>
-                    {circle?.type !== "set" && (
-                        <Tooltip label="Click to switch circle" placement="bottom">
-                            <Flex
-                                flexDirection="column"
-                                position="relative"
-                                marginLeft={isMobile ? "10px" : "20px"}
-                                maxWidth={isMobile ? "150px" : "250px"}
-                            >
-                                {circle?.parent_circle && (
-                                    <Text
-                                        fontSize={isMobile ? "8px" : "12px"}
-                                        fontWeight="bold"
-                                        color="#e0e0e0"
-                                        _hover={{ color: "#aa75ab" }}
-                                        noOfLines={1}
-                                        position="absolute"
-                                        top="-10px"
-                                        onClick={() => {
-                                            openCircle(navigate, circle.parent_circle);
-                                            setToggleWidgetEvent({ name: "about", value: true });
-                                        }}
-                                    >
-                                        {circle?.parent_circle?.name}
-                                    </Text>
-                                )}
-                                <Text
-                                    fontSize={titleSize}
-                                    fontWeight="bold"
-                                    color="white"
-                                    noOfLines={2}
-                                    onClick={onLogoClick}
-                                >
-                                    {circle?.name}
-                                </Text>
-                            </Flex>
-                        </Tooltip>
-                    )}
-                    {circle?.type === "set" && (
-                        <Tooltip label="Click to switch circle" placement="bottom">
-                            <Text
-                                fontSize={setTitleSize}
-                                fontWeight="bold"
-                                color="white"
-                                marginLeft={isMobile ? "10px" : "20px"}
-                                noOfLines={2}
-                                onClick={onLogoClick}
-                            >
-                                {circle[circle.circle_ids[0]].name} &
-                                <br />
-                                {circle[circle.circle_ids[1]].name}
-                            </Text>
-                        </Tooltip>
-                    )}
-                </Flex>
-                <AboutButton circle={circle} marginLeft={isMobile ? "5px" : "10px"} pointerEvents="auto" />
-                <SettingsButton circle={circle} pointerEvents="auto" />
-
-                <Box flex="1" />
                 <Box
                     align="center"
                     height={height}
-                    marginRight={isMobile ? "12px" : "25px"}
+                    marginRight={"12px"}
                     borderRadius="10px"
                     paddingLeft="10px"
                     pointerEvents="auto"
                 >
-                    <HStack spacing={isMobile ? "10px" : "20px"} align="center" height={height}>
-                        {!homeExpanded && <CircleSearchBoxIcon marginRight={isMobile ? "0px" : "4px"} />}
-
+                    <HStack spacing="10px" align="center" height={height}>
                         {signInStatus.signedIn && (
                             <>
                                 <Messages />
@@ -281,7 +211,7 @@ export const TopMenu = ({ onLogoClick }) => {
                         )}
 
                         {(signInStatus.signedIn || signInStatus.signingIn) && (
-                            <Box width={isMobile ? "30px" : "48px"} height={isMobile ? "30px" : "48px"}>
+                            <Box width={"30px"} height={"30px"}>
                                 <ProfileMenu />
                             </Box>
                         )}

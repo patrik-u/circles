@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { getImageKitUrl, log } from "@/components/Helpers";
 import i18n from "@/i18n/Localization";
-import { routes, openCircle } from "@/components/Navigation";
+import { routes, openCircle, focusCircle } from "@/components/Navigation";
 import { useAtom } from "jotai";
 import {
     isMobileAtom,
@@ -23,6 +23,7 @@ import {
     userAtom,
     toggleSettingsAtom,
     toggleWidgetEventAtom,
+    focusOnMapItemAtom,
 } from "@/components/Atoms";
 import { defaultUserPicture } from "@/components/Constants";
 import { userSignOut } from "@/components/AccountManager";
@@ -37,11 +38,12 @@ export const ProfileMenu = () => {
     const [signInStatus] = useAtom(signInStatusAtom);
     const [user, setUser] = useAtom(userAtom);
     const [, setToggleSettings] = useAtom(toggleSettingsAtom);
-    const circlePictureSizeInt = isMobile ? 30 : 48;
+    const circlePictureSizeInt = 30;
     const circlePictureSize = `${circlePictureSizeInt}px`;
     const { isOpen: profileMenuIsOpen, onOpen: profileMenuOnOpen, onClose: profileMenuOnClose } = useDisclosure();
     const displayProfile = signInStatus.signedIn || (signInStatus.signingIn && user?.picture);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const onSignOutClick = () => {
         profileMenuOnClose();
@@ -95,6 +97,7 @@ export const ProfileMenu = () => {
                             onClick={() => {
                                 profileMenuOnClose();
                                 openCircle(navigate, user);
+                                focusCircle(user, setFocusOnMapItem);
                                 setToggleWidgetEvent({ name: "about", value: true });
                             }}
                         />
@@ -105,6 +108,7 @@ export const ProfileMenu = () => {
                         onClick={() => {
                             profileMenuOnClose();
                             openCircle(navigate, user);
+                            focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
                         }}
                     >
@@ -115,6 +119,7 @@ export const ProfileMenu = () => {
                     <MenuItem
                         onClick={() => {
                             openCircle(navigate, user);
+                            focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
                         }}
                     >
@@ -123,6 +128,7 @@ export const ProfileMenu = () => {
                     <MenuItem
                         onClick={() => {
                             openCircle(navigate, user);
+                            focusCircle(user, setFocusOnMapItem);
                             log("toggling settings to true", 0, true);
                             setToggleSettings(true);
                         }}
