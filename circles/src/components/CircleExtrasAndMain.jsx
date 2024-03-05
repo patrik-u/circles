@@ -41,28 +41,25 @@ import { useParams } from "react-router-dom";
 import { BoxIf, ScrollbarsIf } from "./CircleElements";
 //#endregion
 
-const CircleHomeFeed = ({ onClose }) => {
+const CircleExtrasAndMain = ({ onClose, extras, main, switchWhenExpanded, hideExtrasWhenCompact }) => {
     log("CircleHomeFeed.render", -1);
 
     const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
     const { hostId, circleId } = useParams();
+    const getExtras = () => {
+        if (hideExtrasWhenCompact && !circleDashboardExpanded) return <></>;
+        else return extras;
+    };
 
     return (
         <Flex flexGrow="1" width="100%" height="100%" flexDirection={circleDashboardExpanded ? "row" : "column"}>
             <ScrollbarsIf noScrollbars={circleDashboardExpanded}>
                 <BoxIf noBox={!circleDashboardExpanded} order="1" width="375px">
-                    <CircleAbout noScrollbars={!circleDashboardExpanded} />
+                    {switchWhenExpanded && circleDashboardExpanded ? getExtras() : main}
                 </BoxIf>
                 <BoxIf noBox={!circleDashboardExpanded} order="0" flexGrow="1" align="center" backgroundColor="#ededed">
                     <ScrollbarsIf noScrollbars={!circleDashboardExpanded}>
-                        <Circles
-                            type="post"
-                            types={["post", "circle"]}
-                            categories={circleId === "global" ? [] : ["connected", "subcircle"]}
-                            noScrollbars={true}
-                            sortBy="newest"
-                            asCards={true}
-                        />
+                        {switchWhenExpanded && circleDashboardExpanded ? main : getExtras()}
                     </ScrollbarsIf>
                 </BoxIf>
             </ScrollbarsIf>
@@ -70,4 +67,4 @@ const CircleHomeFeed = ({ onClose }) => {
     );
 };
 
-export default CircleHomeFeed;
+export default CircleExtrasAndMain;

@@ -182,6 +182,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             height={noScrollbars ? "auto" : "100%"}
             flexDirection={"column"}
             maxWidth="600px"
+            backgroundColor={asCards ? "#ededed" : "transparent"}
         >
             <CreateNewCircleForm type={type} asCard={asCards} />
             {filteredCircles?.length > 0 && (
@@ -194,7 +195,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                             minWidth="24px"
                             padding="0px"
                             aria-label="Compact"
-                            backgroundColor={view === "compact" ? "#e6e6e6" : "transparent"}
+                            backgroundColor={view === "compact" ? "white" : "#ededed"}
                             icon={<MdOutlineList size={18} />}
                             onClick={() => {
                                 updateCircleSettings("view", "compact");
@@ -207,7 +208,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                             minWidth="24px"
                             padding="0px"
                             aria-label="Normal"
-                            backgroundColor={view === "normal" ? "#e6e6e6" : "transparent"}
+                            backgroundColor={view === "normal" ? "white" : "#ededed"}
                             icon={<MdViewAgenda size={18} />}
                             onClick={() => {
                                 updateCircleSettings("view", "normal");

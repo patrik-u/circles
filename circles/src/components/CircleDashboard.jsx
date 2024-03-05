@@ -87,6 +87,7 @@ import { Circles } from "@/components/Circles";
 import CircleAbout from "./CircleAbout";
 import { GrAppsRounded } from "react-icons/gr";
 import CircleHomeFeed from "./CircleHomeFeed";
+import CircleExtrasAndMain from "./CircleExtrasAndMain";
 //#endregion
 
 const CircleSelector = () => {
@@ -448,26 +449,79 @@ const CircleDashboard = ({ onClose }) => {
                                     <Route
                                         path="circles"
                                         element={
-                                            <Circles type="circle" types={["circle"]} categories={["connected"]} />
+                                            <CircleExtrasAndMain
+                                                main={
+                                                    <Circles
+                                                        type="circle"
+                                                        types={["circle"]}
+                                                        categories={circleId === "global" ? [] : ["connected"]}
+                                                        asCards={true}
+                                                        noScrollbars={circleDashboardExpanded}
+                                                    />
+                                                }
+                                                extras={<CircleAbout />}
+                                                switchWhenExpanded={true}
+                                                hideExtrasWhenCompact={true}
+                                            />
                                         }
                                     />
+
                                     <Route
                                         path="members"
                                         element={
-                                            <Circles
-                                                type="user"
-                                                types={["user"]}
-                                                categories={circleId === "global" ? [] : ["connected"]}
+                                            <CircleExtrasAndMain
+                                                main={
+                                                    <Circles
+                                                        type="user"
+                                                        types={["user"]}
+                                                        categories={circleId === "global" ? [] : ["connected"]}
+                                                        asCards={true}
+                                                        noScrollbars={circleDashboardExpanded}
+                                                    />
+                                                }
+                                                extras={<CircleAbout />}
+                                                switchWhenExpanded={true}
+                                                hideExtrasWhenCompact={true}
                                             />
                                         }
                                     />
                                     <Route
                                         path="events"
-                                        element={<Circles type="event" types={["event"]} categories={["connected"]} />}
+                                        element={
+                                            <CircleExtrasAndMain
+                                                main={
+                                                    <Circles
+                                                        type="event"
+                                                        types={["event"]}
+                                                        categories={circleId === "global" ? [] : ["connected"]}
+                                                        asCards={true}
+                                                        noScrollbars={circleDashboardExpanded}
+                                                    />
+                                                }
+                                                extras={<CircleAbout />}
+                                                switchWhenExpanded={true}
+                                                hideExtrasWhenCompact={true}
+                                            />
+                                        }
                                     />
                                     <Route
                                         path="tasks"
-                                        element={<Circles type="task" types={["task"]} categories={["connected"]} />}
+                                        element={
+                                            <CircleExtrasAndMain
+                                                main={
+                                                    <Circles
+                                                        type="task"
+                                                        types={["task"]}
+                                                        categories={circleId === "global" ? [] : ["connected"]}
+                                                        asCards={true}
+                                                        noScrollbars={circleDashboardExpanded}
+                                                    />
+                                                }
+                                                extras={<CircleAbout />}
+                                                switchWhenExpanded={true}
+                                                hideExtrasWhenCompact={true}
+                                            />
+                                        }
                                     />
                                     <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin" element={<CircleAdmin />} />
