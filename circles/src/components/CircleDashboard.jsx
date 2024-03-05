@@ -448,7 +448,7 @@ const CircleDashboard = ({ onClose }) => {
                                     <Route
                                         path="circles"
                                         element={
-                                            <Circles type="circle" types={["circle"]} categories={["subcircle"]} />
+                                            <Circles type="circle" types={["circle"]} categories={["connected"]} />
                                         }
                                     />
                                     <Route
