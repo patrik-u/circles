@@ -117,7 +117,7 @@ const CircleRequestToConnectForm = ({ circle, onClose, onNext }) => {
     const CircleOption = ({ ...props }) => {
         return (
             <Option {...props}>
-                <CircleListItem item={props.data} inSelect={true} />
+                <CircleListItem item={props.data} inSelect={true} isCompact={true} />
                 {/* <HStack>
                     <CirclePicture circle={props.data} size={40} hasPopover={false} />
                     <Text>{props.data.label}</Text>

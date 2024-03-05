@@ -5,7 +5,7 @@ import { MdOutlineClose } from "react-icons/md";
 import { useAtom } from "jotai";
 import { isMobileAtom, userDataAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
-import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
+import { CircleListItem } from "@/components/CircleListItem";
 import { openCircle, focusCircle } from "@/components/Navigation";
 import { globalCircle } from "@/components/Circle";
 import Scrollbars from "react-custom-scrollbars-2";
@@ -64,24 +64,19 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
                         isDark={true}
                         inSelect={true}
                         inNav={true}
+                        isCompact={true}
                     />
 
                     {favoriteCircles
                         ?.filter((x) => x.id !== "global")
-                        ?.map((item) =>
-                            view === "compact" ? (
-                                <CircleListItem
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => onCircleClick(item)}
-                                    isDark={true}
-                                    inSelect={true}
-                                    inNav={true}
-                                />
-                            ) : (
-                                <CircleListItemNormal key={item.id} item={item} onClick={() => onCircleClick(item)} />
-                            )
-                        )}
+                        ?.map((item) => (
+                            <CircleListItem
+                                key={item.id}
+                                isCompact={view === "compact"}
+                                item={item}
+                                onClick={() => onCircleClick(item)}
+                            />
+                        ))}
 
                     {isMobile && (
                         <Flex

@@ -26,7 +26,7 @@ import i18n from "@/i18n/Localization";
 import axios from "axios";
 import { log, isConnected, isAdmin } from "@/components/Helpers";
 import { openCircle, focusCircle } from "@/components/Navigation";
-import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
+import { CircleListItem } from "@/components/CircleListItem";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CirclePicture, CircleTags, ConnectButton, CardIf } from "@/components/CircleElements";
 import { useAtom } from "jotai";
@@ -220,29 +220,18 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                 <ScrollbarsIf noScrollbars={noScrollbars}>
                     {filteredCircles
                         ?.filter((x) => x.type === type)
-                        ?.map((item) =>
-                            view === "compact" ? (
-                                <CircleListItem
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => {
-                                        openCircle(navigate, item);
-                                        focusCircle(item, setFocusOnMapItem);
-                                    }}
-                                    asCard={asCards}
-                                />
-                            ) : (
-                                <CircleListItemNormal
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => {
-                                        openCircle(navigate, item);
-                                        focusCircle(item, setFocusOnMapItem);
-                                    }}
-                                    asCard={asCards}
-                                />
-                            )
-                        )}
+                        ?.map((item) => (
+                            <CircleListItem
+                                key={item.id}
+                                item={item}
+                                onClick={() => {
+                                    openCircle(navigate, item);
+                                    focusCircle(item, setFocusOnMapItem);
+                                }}
+                                asCard={asCards}
+                                isCompact={view === "compact"}
+                            />
+                        ))}
                 </ScrollbarsIf>
                 {/* {filteredCircles?.length <= 0 && (
                     <Text marginLeft="12px" marginTop="10px" alignSelf="start">

@@ -73,7 +73,7 @@ export const CircleContentForm = ({ isUpdateForm, circle, isGuideForm, onNext, o
     const CircleOption = ({ ...props }) => {
         return (
             <Option {...props}>
-                <CircleListItem item={props.data} inSelect={true} />
+                <CircleListItem item={props.data} inSelect={true} isCompact={true} />
             </Option>
         );
     };

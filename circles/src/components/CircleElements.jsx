@@ -100,14 +100,8 @@ import gfm from "remark-gfm";
 
 export const buttonHighlight = "#bdbdbddd";
 
-export const CardIf = ({ noCard, children, ...props }) => {
-    return noCard ? (
-        children
-    ) : (
-        <Card {...props}>
-            <CardBody>{children}</CardBody>
-        </Card>
-    );
+export const CardIf = ({ noCard, children, noBody, ...props }) => {
+    return noCard ? children : <Card {...props}>{noBody ? children : <CardBody>{children}</CardBody>}</Card>;
 };
 
 export const CircleProfilePicture = ({ circle, size, ...props }) => {

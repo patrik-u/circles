@@ -27,7 +27,7 @@ import { CircleTags } from "@/components/CircleElements";
 import { ActiveInCircle, RelationSetInfo } from "@/components/CirclePreview";
 import { MdOutlineClose, MdCompare, MdLink, MdChat, MdSearch } from "react-icons/md";
 import { TbClockPlay } from "react-icons/tb";
-import CircleListItem, { CircleListItemNormal } from "./CircleListItem";
+import { CircleListItem } from "./CircleListItem";
 import { openAboutCircle, openCircle } from "@/components/Navigation";
 import Lottie from "react-lottie";
 import liveAnimation from "@/assets/lottie/live.json";
