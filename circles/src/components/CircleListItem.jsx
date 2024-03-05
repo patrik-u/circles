@@ -307,26 +307,12 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                     hasPopover={true}
                 />
             </Box>
-            {item.type === "event" && (
-                <Text
-                    textAlign="left"
-                    fontSize="12px"
-                    fontWeight="700"
-                    color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                    href={location?.pathname}
-                    marginTop="0px"
-                >
-                    {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
-                </Text>
-            )}
 
             <HStack spacing="0px" align="center">
                 <Text
-                    fontSize={item.type === "post" ? "15px" : "16px"}
+                    fontSize={"15px"}
                     fontWeight="700"
                     textAlign="left"
-                    lineHeight={item.type === "event" ? "17px" : "inherit"}
-                    marginTop={item.type === "event" ? "2px" : "0px"}
                     style={singleLineEllipsisStyle}
                     onClick={onClick}
                     cursor="pointer"
@@ -358,6 +344,17 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                             </>
                         )}
                     </>
+                )}
+                {item.type === "event" && (
+                    <Text
+                        fontSize="15px"
+                        fontWeight="400"
+                        marginLeft="5px"
+                        color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
+                        href={location?.pathname}
+                    >
+                        · {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
+                    </Text>
                 )}
             </HStack>
             <CircleDotsMenu circle={item} position="absolute" top="5px" right="5px" />
