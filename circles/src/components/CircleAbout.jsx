@@ -1,6 +1,6 @@
 //#region imports
 import React, { useEffect, useMemo } from "react";
-import { Box, VStack, Text, Flex, HStack } from "@chakra-ui/react";
+import { Box, VStack, Text, Flex, HStack, Card, CardBody } from "@chakra-ui/react";
 import { openCircle, focusCircle } from "@/components/Navigation";
 import {
     log,

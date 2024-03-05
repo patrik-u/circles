@@ -53,7 +53,7 @@ const CircleHomeFeed = ({ onClose }) => {
                 <BoxIf noBox={!circleDashboardExpanded} order="1" width="375px">
                     <CircleAbout noScrollbars={!circleDashboardExpanded} />
                 </BoxIf>
-                <BoxIf noBox={!circleDashboardExpanded} order="0" flexGrow="1" align="center">
+                <BoxIf noBox={!circleDashboardExpanded} order="0" flexGrow="1" align="center" backgroundColor="#ededed">
                     <ScrollbarsIf noScrollbars={!circleDashboardExpanded}>
                         <Circles
                             type="post"
@@ -61,6 +61,7 @@ const CircleHomeFeed = ({ onClose }) => {
                             categories={circleId === "global" ? [] : ["connected", "subcircle"]}
                             noScrollbars={true}
                             sortBy="newest"
+                            asCards={circleDashboardExpanded}
                         />
                     </ScrollbarsIf>
                 </BoxIf>

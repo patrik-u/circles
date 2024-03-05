@@ -27,6 +27,8 @@ import {
     useDisclosure,
     useOutsideClick,
     Tooltip,
+    Card,
+    CardBody,
 } from "@chakra-ui/react";
 import { useNavigateNoUpdates, useLocationNoUpdates } from "@/components/RouterUtils";
 import { IoAdd } from "react-icons/io5";
@@ -97,6 +99,16 @@ import gfm from "remark-gfm";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
+
+export const CardIf = ({ noCard, children, ...props }) => {
+    return noCard ? (
+        children
+    ) : (
+        <Card {...props}>
+            <CardBody>{children}</CardBody>
+        </Card>
+    );
+};
 
 export const CircleProfilePicture = ({ circle, size, ...props }) => {
     const borderWidth = 3;

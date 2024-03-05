@@ -19,6 +19,8 @@ import {
     ModalContent,
     ModalOverlay,
     ModalCloseButton,
+    Card,
+    CardBody,
 } from "@chakra-ui/react";
 import i18n from "@/i18n/Localization";
 import axios from "axios";
@@ -26,7 +28,7 @@ import { log, isConnected, isAdmin } from "@/components/Helpers";
 import { openCircle, focusCircle } from "@/components/Navigation";
 import { CircleListItem, CircleListItemNormal } from "@/components/CircleListItem";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
-import { CirclePicture, CircleTags, ConnectButton } from "@/components/CircleElements";
+import { CirclePicture, CircleTags, ConnectButton, CardIf } from "@/components/CircleElements";
 import { useAtom } from "jotai";
 import {
     userAtom,
@@ -48,7 +50,7 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { ScrollbarsIf } from "./CircleElements";
 //#endregion
 
-const CreateNewCircleForm = ({ type }) => {
+const CreateNewCircleForm = ({ type, asCard }) => {
     const [user] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [circle] = useAtom(circleAtom);
@@ -83,45 +85,36 @@ const CreateNewCircleForm = ({ type }) => {
     if (!user?.id || (!circle?.is_public && !isAdmin(circle, userData)) || type === "user") return null;
 
     return (
-        <Flex flexDirection="column" paddingRight="5px" paddingTop="5px">
-            <Flex flexDirection="row" height="40px" align="center">
-                <Box margin="10px" minWidth="40px" minHeight="40px" position="relative">
-                    <CirclePicture circle={user} size={40} disableClick={true} />
-                </Box>
-                <Box flexGrow="1" marginRight={isMobile ? "5px" : "2px"}>
-                    <Textarea
-                        className="messageInput"
-                        width="100%"
-                        resize="none"
-                        maxLength="650"
-                        rows="1"
-                        borderRadius="40px"
-                        placeholder={i18n.t(`Create new ${type}`)}
-                        onFocus={() => togglePopup()}
-                    />
-                </Box>
-            </Flex>
-            {/* {showInfoBox && (
-                <Alert status="info" marginBottom="10px" variant="subtle" alignItems="center" justifyContent="start" textAlign="start">
-                    <AlertIcon />
-                    <Box>
-                        <AlertTitle>AI-assisted creating</AlertTitle>
-                        <AlertDescription>
-                            Type an instruction above to create a new post. You can type any content you want to create a post with and/or you can give specific
-                            instructions, for example:
-                            <br />- <i>Post an inspirational quote from Rumi</i>
-                            <br />- <i>Write a call to action to join the circle</i>
-                            <br />
-                            Or just press enter to create a post manually.
-                        </AlertDescription>
+        <CardIf noCard={!asCard} marginTop="10px">
+            <Flex flexDirection="column" padding={asCard ? "0px" : "5px 5px 0px 0px"}>
+                <Flex flexDirection="row" height="40px" align="center">
+                    <Box
+                        margin={asCard ? "0px 10px 0px 0px" : "10px"}
+                        minWidth="40px"
+                        minHeight="40px"
+                        position="relative"
+                    >
+                        <CirclePicture circle={user} size={40} disableClick={true} />
                     </Box>
-                </Alert>
-            )} */}
-        </Flex>
+                    <Box flexGrow="1" marginRight={isMobile ? "5px" : "2px"}>
+                        <Textarea
+                            className="messageInput"
+                            width="100%"
+                            resize="none"
+                            maxLength="650"
+                            rows="1"
+                            borderRadius="40px"
+                            placeholder={i18n.t(`Create new ${type}`)}
+                            onFocus={() => togglePopup()}
+                        />
+                    </Box>
+                </Flex>
+            </Flex>
+        </CardIf>
     );
 };
 
-export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }) => {
+export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy = null }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
@@ -190,7 +183,7 @@ export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }
             flexDirection={"column"}
             maxWidth="600px"
         >
-            <CreateNewCircleForm type={type} />
+            <CreateNewCircleForm type={type} asCard={asCards} />
             {filteredCircles?.length > 0 && (
                 <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
                     <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
@@ -236,6 +229,7 @@ export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }
                                         openCircle(navigate, item);
                                         focusCircle(item, setFocusOnMapItem);
                                     }}
+                                    asCard={asCards}
                                 />
                             ) : (
                                 <CircleListItemNormal
@@ -245,6 +239,7 @@ export const Circles = ({ type, types, categories, noScrollbars, sortBy = null }
                                         openCircle(navigate, item);
                                         focusCircle(item, setFocusOnMapItem);
                                     }}
+                                    asCard={asCards}
                                 />
                             )
                         )}
