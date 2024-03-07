@@ -2077,6 +2077,35 @@ app.get("/circles/:id/circles", async (req, res) => {
     }
 });
 
+// get users that has liked circle
+app.get("/circles/:id/likes", async (req, res) => {
+    const circleId = req.params.id;
+    const likedUsersData = [];
+
+    try {
+        // query all circle_data where the target circle is liked
+        const circleDataQuerySnapshot = await db
+            .collection("circle_data")
+            .where(`circle_settings.${circleId}.liked`, "==", true)
+            .get();
+
+        // for each liked circle_data, get the public data from circles
+        for (const doc of circleDataQuerySnapshot.docs) {
+            const publicDataDoc = await db.collection("circles").doc(doc.id).get();
+            if (publicDataDoc.exists) {
+                // Add public data of the user to the array
+                likedUsersData.push(publicDataDoc.data());
+            }
+        }
+
+        // send the public data of users who liked the circle
+        res.status(200).json({ likes: likedUsersData });
+    } catch (error) {
+        console.error("Error getting liked users: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // gets zoom credentials for circle
 app.get("/circles/:id/zoom-credentials", authOptional, async (req, res) => {
     functions.logger.log("Fetching zoom credentials");
@@ -2548,6 +2577,7 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
         return { error: "Invalid input" };
     }
 
+    let user = await getCircle(authCallerId);
     let circle = await getCircle(targetCircleId);
     newSettings.circle = getSettingsCircle(circle);
 
@@ -2592,6 +2622,28 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
             likeFavoriteData.likes = settings.liked
                 ? admin.firestore.FieldValue.increment(1)
                 : admin.firestore.FieldValue.increment(-1);
+
+            let liking_user = { id: user.id, name: user.name };
+            if (user.picture) {
+                liking_user.picture = user.picture;
+            }
+
+            let like_preview_list = circle.like_preview_list ?? [];
+            let likePreviewUpdated = false;
+            if (settings.liked) {
+                // add user to like preview list unless already there or length is greater than max likes
+                if (!like_preview_list.some((x) => x.id === user.id) && like_preview_list.length < 20) {
+                    like_preview_list.push(liking_user);
+                    likePreviewUpdated = true;
+                }
+            } else if (like_preview_list.some((x) => x.id === user.id)) {
+                like_preview_list = like_preview_list.filter((x) => x.id !== user.id);
+                likePreviewUpdated = true;
+            }
+
+            if (likePreviewUpdated) {
+                likeFavoriteData.like_preview_list = like_preview_list;
+            }
         }
     }
 

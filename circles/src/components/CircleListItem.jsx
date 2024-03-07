@@ -24,8 +24,20 @@ import {
     AlertDialogContent,
     AlertDialogOverlay,
     Button,
+    Spinner,
     Card,
     CardBody,
+    Popover,
+    PopoverTrigger,
+    Modal,
+    ModalBody,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    PopoverContent,
+    PopoverBody,
+    PopoverArrow,
 } from "@chakra-ui/react";
 import {
     getDistanceString,
@@ -53,6 +65,7 @@ import {
     CircleRichText,
     CardIf,
 } from "@/components/CircleElements";
+import { routes, openSubcircle } from "@/components/Navigation";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useLocationNoUpdates } from "@/components/RouterUtils";
@@ -77,6 +90,7 @@ import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { FiEdit } from "react-icons/fi";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { circleAtom } from "./Atoms";
+import { useNavigateNoUpdates } from "@/components/RouterUtils";
 //#endregion
 
 const sliderSettings = {
@@ -280,8 +294,9 @@ export const CircleDotsMenu = ({ circle, ...props }) => {
 const contentMargin = 10;
 const contentMarginPx = contentMargin + "px";
 
-const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
+const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...props }) => {
     const [circle] = useAtom(circleAtom);
+    const navigate = useNavigateNoUpdates();
 
     return (
         <Flex
@@ -304,7 +319,7 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                 <CirclePicture
                     circle={item.type === "post" ? item.creator : item}
                     size={item.type === "post" ? 40 : 60}
-                    hasPopover={true}
+                    hasPopover={hasPopover}
                 />
             </Box>
 
@@ -314,7 +329,9 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                     fontWeight="700"
                     textAlign="left"
                     style={singleLineEllipsisStyle}
-                    onClick={onClick}
+                    onClick={(e) =>
+                        openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item)
+                    }
                     cursor="pointer"
                 >
                     {item.type === "post" ? item.creator.name : item.name}
@@ -323,8 +340,19 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                     <>
                         {/* Time since post */}
                         <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
-                            · {getPostTime(item)}
+                            ·
                         </Text>
+                        <Link
+                            href={routes.subcircle(item?.parent_circle, item)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                openSubcircle(navigate, item?.parent_circle, item);
+                            }}
+                        >
+                            <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                                {getPostTime(item)}
+                            </Text>
+                        </Link>
                         {item.parent_circle && item.parent_circle.id !== circle?.id && (
                             <>
                                 <Flex flexDir={"row"} align="center">
@@ -351,7 +379,7 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
                         fontWeight="400"
                         marginLeft="5px"
                         color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                        href={location?.pathname}
+                        href={routes.subcircle(item?.parent_circle?.id ?? "global", item?.id)}
                     >
                         · {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
                     </Text>
@@ -362,7 +390,7 @@ const CircleListItemHeader = ({ item, inSelect, onClick, ...props }) => {
     );
 };
 
-export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, ...props }) => {
+export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, hasPopover = true, ...props }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
     const location = useLocationNoUpdates();
@@ -379,7 +407,13 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, ...
     return (
         <CardIf noCard={!asCard} marginBottom="20px" noBody={true}>
             <Flex flexDirection="column" key={item.id} borderBottom={asCard ? "none" : "1px solid #ebebeb"}>
-                <CircleListItemHeader item={item} inSelect={inSelect} onClick={onClick} {...props} />
+                <CircleListItemHeader
+                    item={item}
+                    inSelect={inSelect}
+                    onClick={onClick}
+                    hasPopover={hasPopover}
+                    {...props}
+                />
 
                 <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" overflow="hidden">
                     {item.content && (
@@ -614,6 +648,10 @@ export const LikeButton = ({ circle }) => {
     const iconSizePx = iconSize + "px";
     const [isLiked, setIsLiked] = useState(false);
     const [likes, setLikes] = useState(0);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const recentLikers = [{ name: "Patrik Opacic" }, { name: "Test Testsson" }];
+    const [fetchingLikes, setFetchingLikes] = useState(false);
+    const [likers, setLikers] = useState([]);
 
     useEffect(() => {
         if (!userData?.circle_settings) {
@@ -653,6 +691,23 @@ export const LikeButton = ({ circle }) => {
             });
     };
 
+    const fetchAndShowFullLikers = async () => {
+        onOpen();
+        setFetchingLikes(true);
+
+        // do call using axios to fetch likers
+        let likersList = [];
+        try {
+            const res = await axios.get(`/circles/${circle.id}/likes`);
+            likersList = res.data.likes;
+        } catch (err) {
+            console.error(err);
+        }
+
+        setLikers(likersList); // Set full likers list to state
+        setFetchingLikes(false);
+    };
+
     // TODO if chat is private and user isn't connected, show a lock icon on the chat button
     // if (!user?.id || !isConnected(userData, circle?.id, ["connected_mutually_to"])) return;
 
@@ -660,24 +715,77 @@ export const LikeButton = ({ circle }) => {
         <>
             <Flex
                 position="relative"
-                width={iconSize + 8 + "px"}
-                height={iconSize + 8 + "px"}
+                width="32px"
+                height="32px"
                 backgroundColor="#ffffff"
-                _hover={{ backgroundColor: "#f5f5f5", color: "#ff4772" }}
                 borderRadius="50%"
                 justifyContent="center"
                 alignItems="center"
-                onClick={toggleLiked}
                 cursor="pointer"
-                color={isLiked ? "#ff4772" : "#333"}
+                onClick={toggleLiked}
             >
-                <Icon width={iconSizePx} height={iconSizePx} as={isLiked ? AiFillHeart : AiOutlineHeart} />
+                <Icon
+                    as={isLiked ? AiFillHeart : AiOutlineHeart}
+                    width="20px"
+                    height="20px"
+                    color={isLiked ? "#ff4772" : "#333"}
+                />
             </Flex>
             {likes > 0 && (
-                <Text fontSize="14px" fontWeight="400" color="#333" marginLeft="5px" marginRight="5px">
-                    {likes}
-                </Text>
+                <Popover trigger="hover" placement="bottom">
+                    <PopoverTrigger>
+                        <Text
+                            fontSize="14px"
+                            fontWeight="400"
+                            color="#333"
+                            marginLeft="0px"
+                            onClick={fetchAndShowFullLikers}
+                            cursor="pointer"
+                        >
+                            {likes}
+                        </Text>
+                    </PopoverTrigger>
+                    <Portal>
+                        <PopoverContent bg="#333" border="none" width="auto">
+                            <PopoverArrow bg="#333" border="none" />
+                            <PopoverBody>
+                                <Flex flexDirection="column">
+                                    <Text fontSize="14px" fontWeight="700" color="white">
+                                        Like
+                                    </Text>
+                                    {circle.like_preview_list?.map((liker, index) => (
+                                        <Text key={index} fontSize="12px" color="white">
+                                            {liker.name}
+                                        </Text>
+                                    ))}
+                                </Flex>
+                            </PopoverBody>
+                        </PopoverContent>
+                    </Portal>
+                </Popover>
             )}
+
+            {/* Modal for full likers list */}
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Likes</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        {fetchingLikes && <Spinner />}
+
+                        {likers?.map((liker, index) => (
+                            <CircleListItem
+                                key={liker.id}
+                                item={liker}
+                                asCard={false}
+                                isCompact={true}
+                                hasPopover={false}
+                            />
+                        ))}
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
         </>
     );
 };

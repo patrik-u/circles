@@ -10,6 +10,21 @@ import i18n from "@/i18n/Localization";
 import { isAdmin, isConnected, isWithinActiveThreshold } from "@/components/Helpers";
 //#endregion
 
+export const getCirclesSection = (circleType) => {
+    switch (circleType) {
+        default:
+            return "undefined";
+        case "circle":
+            return "circles";
+        case "user":
+            return "members";
+        case "post":
+            return "home";
+        case "event":
+            return "events";
+    }
+};
+
 export const routes = {
     home: "/",
     circle: (circle) => ({
@@ -39,7 +54,23 @@ export const routes = {
         },
         admin: `/${circle?.host ?? "circles"}/${circle?.id}/admin`,
     }),
-    // graph: "/graph",
+    subcircle: (parentCircle, subcircle) =>
+        `/${parentCircle?.host ?? "circles"}/${parentCircle?.id ?? "global"}/${getCirclesSection(subcircle?.type)}/${
+            subcircle?.id
+        }`,
+    category: (circleType) => {},
+};
+
+export const openSubcircle = (navigate, parentCircle, subcircle) => {
+    if (!subcircle?.id) return;
+    let path = routes.subcircle(parentCircle, subcircle);
+    navigate(path);
+};
+
+export const openEvent = (navigate, circle, postId) => {
+    if (!circle?.id) return;
+    let path = routes.post(circle, postId);
+    navigate(path);
 };
 
 export const openCircle = (navigate, circle, section = null) => {
