@@ -88,6 +88,7 @@ import CircleAbout from "./CircleAbout";
 import { GrAppsRounded } from "react-icons/gr";
 import CircleHomeFeed from "./CircleHomeFeed";
 import CircleExtrasAndMain from "./CircleExtrasAndMain";
+import { CircleNameAndPicture } from "./CircleElements";
 //#endregion
 
 const CircleSelector = () => {
@@ -156,14 +157,7 @@ const CircleSelector = () => {
         <Menu matchWidth margin="5px">
             <MenuButton as={Button} rightIcon={<FiChevronDown />} width="100%" bg="white">
                 <Box display="flex" alignItems="center">
-                    <Image
-                        boxSize="30px"
-                        borderRadius="full"
-                        src={selectedCircle.picture}
-                        alt={selectedCircle.name}
-                        mr={2}
-                    />
-                    <Text>{selectedCircle.name}</Text>
+                    <CircleNameAndPicture circle={selectedCircle} size={30} hasPopover={false} />
                 </Box>
             </MenuButton>
             <MenuList width="100%">
@@ -188,8 +182,11 @@ const CircleSelector = () => {
 
                 {circles.map((circle) => (
                     <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
-                        <Image boxSize="30px" borderRadius="full" src={circle.picture} alt={circle.name} mr={2} />
-                        <Text fontWeight="bold">{circle.name}</Text>
+                        <CircleNameAndPicture circle={circle} size={30} hasPopover={false} />
+                        {/* <CirclePicture circle={circle} size={30} hasPopover={false} />
+                        <Text paddingLeft="8px" fontWeight="bold">
+                            {circle.name}
+                        </Text> */}
                     </MenuItem>
                 ))}
             </MenuList>

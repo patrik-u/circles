@@ -200,7 +200,9 @@ const MessageInputBox = ({ sendMessage, onNewMention, messages }) => {
             maxWidth="500px"
             alignSelf="center"
         >
-            {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
+            {isMentioning && (
+                <CircleMention onMention={onMention} query={mentionQuery} position="absolute" bottom="50px" />
+            )}
             <Textarea
                 ref={textAreaRef}
                 id="message"

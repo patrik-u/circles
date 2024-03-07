@@ -330,9 +330,10 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
                     fontWeight="700"
                     textAlign="left"
                     style={singleLineEllipsisStyle}
-                    onClick={(e) =>
-                        openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item)
-                    }
+                    onClick={(e) => {
+                        if (inSelect) return;
+                        openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item);
+                    }}
                     cursor="pointer"
                 >
                     {item.type === "post" ? item.creator.name : item.name}
@@ -366,24 +367,33 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
                                         hasPopover={true}
                                         marginLeft="7px"
                                     />
-                                    {/* <Text fontSize="12px" marginLeft="4px">
-                                                {item?.parent_circle?.name}
-                                            </Text> */}
                                 </Flex>
                             </>
                         )}
                     </>
                 )}
                 {item.type === "event" && (
-                    <Text
-                        fontSize="15px"
-                        fontWeight="400"
-                        marginLeft="5px"
-                        color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
-                        href={routes.subcircle(item?.parent_circle?.id ?? "global", item?.id)}
-                    >
-                        · {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
-                    </Text>
+                    <>
+                        <Text fontSize="15px" fontWeight="400" color="#8d8d8d" marginLeft="5px">
+                            ·
+                        </Text>
+                        <Link
+                            href={routes.subcircle(item?.parent_circle, item)}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                openSubcircle(navigate, item?.parent_circle, item);
+                            }}
+                        >
+                            <Text
+                                fontSize="15px"
+                                fontWeight="400"
+                                marginLeft="5px"
+                                color={isPastEvent(item) ? "#8d8d8d" : "#cf1a1a"}
+                            >
+                                {item.is_all_day ? getDateLong(item.starts_at) : getDateAndTimeLong(item.starts_at)}
+                            </Text>
+                        </Link>
+                    </>
                 )}
             </HStack>
             <CircleDotsMenu circle={item} position="absolute" top="5px" right="5px" />

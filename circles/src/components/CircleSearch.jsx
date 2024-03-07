@@ -249,14 +249,14 @@ const CircleMentionsQuery = ({ query }) => {
     }, [query, refine]);
 };
 
-export const CircleMention = ({ onMention, query, fallback = null }) => {
+export const CircleMention = ({ onMention, query, fallback = null, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
 
     return (
         <InstantSearch searchClient={searchClient} indexName={config.algoliaCirclesIndex}>
             <CircleMentionsQuery query={query} />
             <EmptyQueryBoundary fallback={fallback}>
-                <Flex position="absolute" bottom="50px" zIndex="100">
+                <Flex zIndex="100" {...props}>
                     <Box width="380px" maxWidth="380px" minWidth="none">
                         <SearchHits
                             onClick={onMention}

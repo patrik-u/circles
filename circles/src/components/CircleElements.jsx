@@ -1292,6 +1292,64 @@ export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ..
     );
 };
 
+export const CircleNameAndPicture = ({
+    circle,
+    size,
+    fontSize = "16px",
+    hasPopover,
+    popoverPlacement,
+    disableClick,
+    isActive = true,
+    ...props
+}) => {
+    const getNameFontSize = (name) => {
+        if (!name) return "17px";
+        if (name.length < 16) return "17px";
+        if (name.length < 19) return "15px";
+        if (name.length < 24) return "14px";
+        return "14px";
+    };
+
+    return (
+        <Flex flexDirection="row" align="center" width="100%">
+            <CirclePicture
+                circle={circle}
+                size={size}
+                hasPopover={hasPopover}
+                popoverPlacement={popoverPlacement}
+                disableClick={disableClick}
+                isActive={isActive}
+            />
+            {circle.type !== "set" && (
+                <Box flex="1" align="left" overflow="hidden">
+                    <Text
+                        fontSize={fontSize}
+                        fontWeight="bold"
+                        color="black"
+                        style={singleLineEllipsisStyle}
+                        marginLeft="8px"
+                    >
+                        {circle.name}
+                    </Text>
+                </Box>
+            )}
+            {circle.type === "set" && (
+                <Box align="left" flex="1" overflow="hidden">
+                    <Text
+                        style={singleLineEllipsisStyle}
+                        fontSize={fontSize}
+                        fontWeight="bold"
+                        marginLeft="8px"
+                        color="black"
+                    >
+                        {circle[circle.circle_ids[0]].name + " & " + circle[circle.circle_ids[1]].name}
+                    </Text>
+                </Box>
+            )}
+        </Flex>
+    );
+};
+
 export const CirclePicture = ({
     circle,
     size,
@@ -1496,7 +1554,6 @@ export const CirclePicture = ({
             </Portal>
         </Popover>
     ) : (
-        // </Box>
         <Box width={`${width}px`} height={`${height}px`} position="relative" flexShrink="0" flexGrow="0">
             {circles.map((item, index) => (
                 <Box key={item.id}>

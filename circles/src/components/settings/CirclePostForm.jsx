@@ -411,81 +411,89 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
     if (!circle) return null;
 
     return (
-        <Box style={{ width: "100%" }}>
-            <Flex flexDirection="row" align="center">
-                <CirclePicture circle={user} size={40} hasPopover={false} />
-                <Flex flexDirection="column" marginLeft="10px">
-                    <Text fontSize="16px" fontWeight="bold">
-                        {user.name}
-                    </Text>
-                    <Flex flexDirection="row" align="center">
-                        <Text fontSize="12px">Post in</Text>
-                        <CirclePicture circle={circle?.parent_circle} size={16} hasPopover={false} marginLeft="2px" />
-                        <Text fontSize="12px" marginLeft="4px">
-                            {circle?.parent_circle?.name}
+        <>
+            <Box style={{ width: "100%" }}>
+                <Flex flexDirection="row" align="center">
+                    <CirclePicture circle={user} size={40} hasPopover={false} />
+                    <Flex flexDirection="column" marginLeft="10px">
+                        <Text fontSize="16px" fontWeight="bold">
+                            {user.name}
                         </Text>
+                        <Flex flexDirection="row" align="center">
+                            <Text fontSize="12px">Post in</Text>
+                            <CirclePicture
+                                circle={circle?.parent_circle}
+                                size={16}
+                                hasPopover={false}
+                                marginLeft="2px"
+                            />
+                            <Text fontSize="12px" marginLeft="4px">
+                                {circle?.parent_circle?.name}
+                            </Text>
+                        </Flex>
                     </Flex>
                 </Flex>
-            </Flex>
 
-            <Flex marginTop="20px" flexDirection="column" flexGrow="1">
-                {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
-                <Textarea
-                    id="content"
-                    ref={textAreaRef}
-                    value={text}
-                    placeholder="Share your story"
-                    maxLength="70000"
-                    resize="none" // Prevents manual resizing
-                    overflow="auto" // Adds scrollbar when exceeded max height
-                    h="auto" // Initial height to auto to grow with content
-                    minH="100px" // Minimum height
-                    maxH="300px" // Maximum height before scrolling
-                    border="0" // Makes it borderless
-                    fontSize="18px"
-                    margin="0px"
-                    padding="0px"
-                    _focus={{ boxShadow: "none" }} // Removes focus outline to maintain borderless appearance
-                    onChange={handleTextChange}
-                />
-            </Flex>
+                <Flex marginTop="20px" flexDirection="column" flexGrow="1" position="relative">
+                    <Textarea
+                        id="content"
+                        ref={textAreaRef}
+                        value={text}
+                        placeholder="Share your story"
+                        maxLength="70000"
+                        resize="none" // Prevents manual resizing
+                        overflow="auto" // Adds scrollbar when exceeded max height
+                        h="auto" // Initial height to auto to grow with content
+                        minH="100px" // Minimum height
+                        maxH="300px" // Maximum height before scrolling
+                        border="0" // Makes it borderless
+                        fontSize="18px"
+                        margin="0px"
+                        padding="0px"
+                        _focus={{ boxShadow: "none" }} // Removes focus outline to maintain borderless appearance
+                        onChange={handleTextChange}
+                    />
+                    {isMentioning && (
+                        <CircleMention onMention={onMention} query={mentionQuery} position="absolute" top="60px" />
+                    )}
+                </Flex>
+                <MediaUpload onFileChange={handleFileChange} initialFiles={circle.media} />
 
-            <MediaUpload onFileChange={handleFileChange} initialFiles={circle.media} />
-
-            <VStack align="center">
-                <Box>
-                    <HStack align="center" marginTop="10px">
-                        <Button
-                            colorScheme="blue"
-                            mr={3}
-                            borderRadius="25px"
-                            isLoading={isSubmitting}
-                            isDisabled={saveId}
-                            onClick={() => onSubmit()}
-                            lineHeight="0"
-                            width={isGuideForm ? "150px" : "auto"}
-                        >
-                            {isUpdateForm === true
-                                ? isGuideForm
-                                    ? i18n.t("Continue")
-                                    : i18n.t("Save")
-                                : i18n.t(`Post`)}
-                        </Button>
-                        {isUpdateForm !== true && (
+                <VStack align="center">
+                    <Box>
+                        <HStack align="center" marginTop="10px">
                             <Button
-                                variant="ghost"
+                                colorScheme="blue"
+                                mr={3}
                                 borderRadius="25px"
-                                onClick={onCancel}
-                                isDisabled={isSubmitting}
+                                isLoading={isSubmitting}
+                                isDisabled={saveId}
+                                onClick={() => onSubmit()}
                                 lineHeight="0"
+                                width={isGuideForm ? "150px" : "auto"}
                             >
-                                {i18n.t("Cancel")}
+                                {isUpdateForm === true
+                                    ? isGuideForm
+                                        ? i18n.t("Continue")
+                                        : i18n.t("Save")
+                                    : i18n.t(`Post`)}
                             </Button>
-                        )}
-                    </HStack>
-                </Box>
-            </VStack>
-        </Box>
+                            {isUpdateForm !== true && (
+                                <Button
+                                    variant="ghost"
+                                    borderRadius="25px"
+                                    onClick={onCancel}
+                                    isDisabled={isSubmitting}
+                                    lineHeight="0"
+                                >
+                                    {i18n.t("Cancel")}
+                                </Button>
+                            )}
+                        </HStack>
+                    </Box>
+                </VStack>
+            </Box>
+        </>
     );
 };
 

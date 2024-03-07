@@ -678,7 +678,9 @@ const MessageInputBox = ({
                 marginTop="auto"
                 position="relative"
             >
-                {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
+                {isMentioning && (
+                    <CircleMention onMention={onMention} query={mentionQuery} position="absolute" bottom="50px" />
+                )}
                 <AutoResizeTextarea
                     ref={textAreaRef}
                     id="message"
