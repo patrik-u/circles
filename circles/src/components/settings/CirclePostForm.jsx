@@ -48,6 +48,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { IoMdImages } from "react-icons/io";
+import { CircleMention } from "@/components/CircleSearch";
 //#endregion
 
 const sliderSettings = {
@@ -180,8 +181,13 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
     const toast = useToast();
     const [isInitialized, setIsInitialized] = useState(false);
     const contentDescriptionLength = 150;
-    const createCircleInitialRef = useRef();
-    const [mediaFiles, setMediaFiles] = useState([]);
+    const textAreaRef = useRef();
+    const [mediaFiles, setMediaFiles] = useState(circle.media ?? []);
+    const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
+    const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input text
+    const [text, setText] = useState(circle?.content ?? "");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input text
 
     const handleFileChange = (newFiles) => {
         setMediaFiles((prevFiles) => [...prevFiles, ...newFiles]);
@@ -205,8 +211,6 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
 
         const filesToUpload = differenceBy(newMedia, existingMedia, "name");
         const filesToRemove = differenceBy(existingMedia, newMedia, "name");
-
-        log(JSON.stringify(newMedia), 0, true);
 
         // upload new files
         const uploadPromises = filesToUpload.map(async (file) => {
@@ -247,214 +251,241 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
         return putCircleResult;
     };
 
+    const handleTextChange = (e) => {
+        setText(e.target.value);
+
+        if (isMentioning) {
+            const queryMatch = e.target.value.match(/(?:^|\s)@(\w*)$/); // This regex matches "@" only if it's at the start or after a space
+            if (queryMatch) {
+                setMentionQuery(queryMatch[1]);
+            }
+        }
+
+        if (e.target.value.match(/(?:^|\s)@$/)) {
+            log("mentioning", 0, true);
+            setIsMentioning(true);
+        } else if (e.target.value.endsWith(" ") || e.target.value.endsWith("\n")) {
+            log("not mentioning", 0, true);
+            setIsMentioning(false);
+        }
+    };
+
+    const onMention = (mentionedCircle) => {
+        log("mentioning circle: " + mentionedCircle.name, 0, true);
+        const updatedText = text.replace(`@${mentionQuery}`, `@${mentionedCircle.name} `);
+        setText(updatedText);
+
+        // add the mentioned circle to the mentions list
+        const newMention = {
+            id: mentionedCircle.objectID,
+            name: `@${mentionedCircle.name}`,
+            picture: mentionedCircle.picture,
+        };
+
+        setMentionsList((prevMentions) => [...prevMentions, newMention]);
+
+        setIsMentioning(false);
+        setMentionQuery("");
+
+        // Set focus back to the textarea and set cursor position
+        const newPosition = updatedText.length; // Get the length of the updated text
+        textAreaRef.current.focus(); // Focus the textarea
+        textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
+    };
+
+    const onSubmit = async () => {
+        log("submitting form", 0, true);
+
+        setIsSubmitting(true);
+        let transformedText = text;
+        mentionsList.forEach((mention) => {
+            const markdownLink = `[${mention.name.slice(1)}](codo.earth/circles/${mention.id})`; // remove the '@' from the mention name
+            transformedText = transformedText.replace(mention.name, markdownLink);
+        });
+
+        if (isUpdateForm) {
+            // update circle
+            let updatedCircleData = {
+                content: transformedText,
+                parent_circle: circle?.parent_circle,
+                type: "post",
+            };
+
+            // update circle data
+            let putCircleResult = null;
+            try {
+                putCircleResult = await updateMediaFilesAndSave(circle.id, updatedCircleData);
+            } catch (err) {
+                console.error(err);
+            }
+
+            if (putCircleResult && !putCircleResult.data?.error) {
+                toast({
+                    title: i18n.t("Post updated"),
+                    status: "success",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            } else {
+                //console.log(circleId);
+                //console.log(JSON.stringify(putCircleResult.data, null, 2));
+                toast({
+                    title: i18n.t("Failed to update post"),
+                    status: "error",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            }
+
+            //setSelectedCircle({ ...selectedCircle, circle: { ...selectedCircle.circle, name: values.name, description: values.description } });
+            if (onUpdate) {
+                onUpdate(updatedCircleData);
+            }
+            if (onNext) {
+                onNext();
+            }
+            setIsSubmitting(false);
+            return;
+        }
+
+        // create new circle
+        let newCircleData = {
+            content: transformedText,
+            parent_circle: circle?.parent_circle,
+            type: "post",
+        };
+
+        let putCircleResult = null;
+        try {
+            putCircleResult = await axios.post(`/circles`, newCircleData);
+        } catch (err) {
+            console.error(err);
+        }
+
+        // console.log(
+        //     JSON.stringify(putCircleResult.data, null, 2)
+        // );
+
+        if (putCircleResult && !putCircleResult.data?.error) {
+            toast({
+                title: i18n.t("Post created"),
+                status: "success",
+                position: "top",
+                duration: 4500,
+                isClosable: true,
+            });
+
+            // upload media
+            try {
+                putCircleResult = await updateMediaFilesAndSave(putCircleResult.data.circle.id, {});
+            } catch (err) {
+                console.error(err);
+            }
+
+            if (onUpdate) {
+                onUpdate(putCircleResult.data.circle);
+            }
+        } else {
+            toast({
+                title: i18n.t("Unable to create circle"),
+                status: "error",
+                position: "top",
+                duration: 4500,
+                isClosable: true,
+            });
+            onCancel();
+            setIsSubmitting(False);
+            return;
+        }
+
+        setIsSubmitting(false);
+
+        // proceed to next step
+        if (onNext) {
+            onNext();
+        }
+    };
+
     if (!circle) return null;
 
     return (
-        <Formik
-            enableReinitialize={true}
-            initialValues={{
-                content: circle.content ?? "",
-            }}
-            onSubmit={async (values, actions) => {
-                log("submitting form", 0, true);
-                if (isUpdateForm) {
-                    // update circle
-                    let updatedCircleData = {
-                        content: values.content,
-                        parent_circle: circle?.parent_circle,
-                        type: "post",
-                    };
-
-                    // update circle data
-                    let putCircleResult = null;
-                    try {
-                        putCircleResult = await updateMediaFilesAndSave(circle.id, updatedCircleData);
-                    } catch (err) {
-                        console.error(err);
-                    }
-
-                    if (putCircleResult && !putCircleResult.data?.error) {
-                        toast({
-                            title: i18n.t("Post updated"),
-                            status: "success",
-                            position: "top",
-                            duration: 4500,
-                            isClosable: true,
-                        });
-                    } else {
-                        //console.log(circleId);
-                        //console.log(JSON.stringify(putCircleResult.data, null, 2));
-                        toast({
-                            title: i18n.t("Failed to update post"),
-                            status: "error",
-                            position: "top",
-                            duration: 4500,
-                            isClosable: true,
-                        });
-                    }
-
-                    //setSelectedCircle({ ...selectedCircle, circle: { ...selectedCircle.circle, name: values.name, description: values.description } });
-                    if (onUpdate) {
-                        onUpdate(updatedCircleData);
-                    }
-                    if (onNext) {
-                        onNext();
-                    }
-                    actions.setSubmitting(false);
-                    return;
-                }
-
-                // create new circle
-                let newCircleData = {
-                    content: values.content,
-                    parent_circle: circle?.parent_circle,
-                    type: "post",
-                };
-
-                let putCircleResult = null;
-                try {
-                    putCircleResult = await axios.post(`/circles`, newCircleData);
-                } catch (err) {
-                    console.error(err);
-                }
-
-                // console.log(
-                //     JSON.stringify(putCircleResult.data, null, 2)
-                // );
-
-                if (putCircleResult && !putCircleResult.data?.error) {
-                    toast({
-                        title: i18n.t("Post created"),
-                        status: "success",
-                        position: "top",
-                        duration: 4500,
-                        isClosable: true,
-                    });
-
-                    // upload media
-                    try {
-                        putCircleResult = await updateMediaFilesAndSave(putCircleResult.data.circle.id, {});
-                    } catch (err) {
-                        console.error(err);
-                    }
-
-                    if (onUpdate) {
-                        onUpdate(putCircleResult.data.circle);
-                    }
-                } else {
-                    toast({
-                        title: i18n.t("Unable to create circle"),
-                        status: "error",
-                        position: "top",
-                        duration: 4500,
-                        isClosable: true,
-                    });
-                    onCancel();
-                    actions.setSubmitting(false);
-                    return;
-                }
-
-                actions.setSubmitting(false);
-
-                // proceed to next step
-                if (onNext) {
-                    onNext();
-                }
-            }}
-            validate={(values) => {
-                const errors = {};
-                return errors;
-            }}
-        >
-            {({ values, errors, touched, isSubmitting }) => (
-                <Form style={{ width: "100%" }}>
+        <Box style={{ width: "100%" }}>
+            <Flex flexDirection="row" align="center">
+                <CirclePicture circle={user} size={40} hasPopover={false} />
+                <Flex flexDirection="column" marginLeft="10px">
+                    <Text fontSize="16px" fontWeight="bold">
+                        {user.name}
+                    </Text>
                     <Flex flexDirection="row" align="center">
-                        <CirclePicture circle={user} size={40} hasPopover={false} />
-                        <Flex flexDirection="column" marginLeft="10px">
-                            <Text fontSize="16px" fontWeight="bold">
-                                {user.name}
-                            </Text>
-                            <Flex flexDirection="row" align="center">
-                                <Text fontSize="12px">Post in</Text>
-                                <CirclePicture
-                                    circle={circle?.parent_circle}
-                                    size={16}
-                                    hasPopover={false}
-                                    marginLeft="2px"
-                                />
-                                <Text fontSize="12px" marginLeft="4px">
-                                    {circle?.parent_circle?.name}
-                                </Text>
-                            </Flex>
-                        </Flex>
+                        <Text fontSize="12px">Post in</Text>
+                        <CirclePicture circle={circle?.parent_circle} size={16} hasPopover={false} marginLeft="2px" />
+                        <Text fontSize="12px" marginLeft="4px">
+                            {circle?.parent_circle?.name}
+                        </Text>
                     </Flex>
-                    <Field name="content">
-                        {({ field, form }) => (
-                            <FormControl isInvalid={form.errors.content && form.touched.content}>
-                                <InputGroup>
-                                    <Flex marginTop="20px" flexDirection="column" flexGrow="1">
-                                        <Textarea
-                                            {...field}
-                                            id="content"
-                                            ref={createCircleInitialRef}
-                                            placeholder="Share your story"
-                                            maxLength="70000"
-                                            resize="none" // Prevents manual resizing
-                                            overflow="auto" // Adds scrollbar when exceeded max height
-                                            h="auto" // Initial height to auto to grow with content
-                                            minH="100px" // Minimum height
-                                            maxH="300px" // Maximum height before scrolling
-                                            border="0" // Makes it borderless
-                                            fontSize="18px"
-                                            margin="0px"
-                                            padding="0px"
-                                            _focus={{ boxShadow: "none" }} // Removes focus outline to maintain borderless appearance
-                                        />
-                                    </Flex>
-                                </InputGroup>
-                                <FormErrorMessage>{form.errors.content}</FormErrorMessage>
-                            </FormControl>
+                </Flex>
+            </Flex>
+
+            <Flex marginTop="20px" flexDirection="column" flexGrow="1">
+                {isMentioning && <CircleMention onMention={onMention} query={mentionQuery} />}
+                <Textarea
+                    id="content"
+                    ref={textAreaRef}
+                    value={text}
+                    placeholder="Share your story"
+                    maxLength="70000"
+                    resize="none" // Prevents manual resizing
+                    overflow="auto" // Adds scrollbar when exceeded max height
+                    h="auto" // Initial height to auto to grow with content
+                    minH="100px" // Minimum height
+                    maxH="300px" // Maximum height before scrolling
+                    border="0" // Makes it borderless
+                    fontSize="18px"
+                    margin="0px"
+                    padding="0px"
+                    _focus={{ boxShadow: "none" }} // Removes focus outline to maintain borderless appearance
+                    onChange={handleTextChange}
+                />
+            </Flex>
+
+            <MediaUpload onFileChange={handleFileChange} initialFiles={circle.media} />
+
+            <VStack align="center">
+                <Box>
+                    <HStack align="center" marginTop="10px">
+                        <Button
+                            colorScheme="blue"
+                            mr={3}
+                            borderRadius="25px"
+                            isLoading={isSubmitting}
+                            isDisabled={saveId}
+                            onClick={() => onSubmit()}
+                            lineHeight="0"
+                            width={isGuideForm ? "150px" : "auto"}
+                        >
+                            {isUpdateForm === true
+                                ? isGuideForm
+                                    ? i18n.t("Continue")
+                                    : i18n.t("Save")
+                                : i18n.t(`Post`)}
+                        </Button>
+                        {isUpdateForm !== true && (
+                            <Button
+                                variant="ghost"
+                                borderRadius="25px"
+                                onClick={onCancel}
+                                isDisabled={isSubmitting}
+                                lineHeight="0"
+                            >
+                                {i18n.t("Cancel")}
+                            </Button>
                         )}
-                    </Field>
-
-                    <MediaUpload onFileChange={handleFileChange} initialFiles={circle.media} />
-
-                    <VStack align="center">
-                        <Box>
-                            <HStack align="center" marginTop="10px">
-                                <Button
-                                    colorScheme="blue"
-                                    mr={3}
-                                    borderRadius="25px"
-                                    isLoading={isSubmitting}
-                                    isDisabled={saveId}
-                                    type="submit"
-                                    lineHeight="0"
-                                    width={isGuideForm ? "150px" : "auto"}
-                                >
-                                    {isUpdateForm === true
-                                        ? isGuideForm
-                                            ? i18n.t("Continue")
-                                            : i18n.t("Save")
-                                        : i18n.t(`Post`)}
-                                </Button>
-                                {isUpdateForm !== true && (
-                                    <Button
-                                        variant="ghost"
-                                        borderRadius="25px"
-                                        onClick={onCancel}
-                                        isDisabled={isSubmitting}
-                                        lineHeight="0"
-                                    >
-                                        {i18n.t("Cancel")}
-                                    </Button>
-                                )}
-                            </HStack>
-                        </Box>
-                    </VStack>
-                </Form>
-            )}
-        </Formik>
+                    </HStack>
+                </Box>
+            </VStack>
+        </Box>
     );
 };
 

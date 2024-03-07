@@ -407,7 +407,13 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
 
     return (
         <CardIf noCard={!asCard} marginBottom="20px" noBody={true}>
-            <Flex flexDirection="column" key={item.id} borderBottom={asCard ? "none" : "1px solid #ebebeb"}>
+            <Flex
+                flexDirection="column"
+                key={item.id}
+                borderBottom={asCard ? "none" : "1px solid #ebebeb"}
+                cursor={inSelect ? "pointer" : "default"}
+                onClick={inSelect ? onClick : null}
+            >
                 <CircleListItemHeader
                     item={item}
                     inSelect={inSelect}
@@ -784,7 +790,6 @@ export const LikeButton = ({ circle }) => {
                                             asCard={false}
                                             isCompact={true}
                                             hasPopover={false}
-                                            inSelect={true}
                                         />
                                     ))}
                                 </>
