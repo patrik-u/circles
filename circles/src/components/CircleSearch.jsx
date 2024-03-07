@@ -1,5 +1,5 @@
 // #region imports
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     Box,
     HStack,
@@ -53,6 +53,7 @@ const SearchHit = ({
     const navigate = useNavigateNoUpdates();
     const [isMobile] = useAtom(isMobileAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
+    const hitWithId = useMemo(() => ({ ...hit, id: hit.objectID }), [hit]);
 
     const onHitClick = () => {
         if (openCircleOnClick) {
@@ -69,10 +70,10 @@ const SearchHit = ({
         <CircleListItem
             minWidth={isMobile ? "none" : minWidth}
             inSelect={true}
-            item={hit}
+            item={hitWithId}
             onClick={() => onHitClick()}
             maxWidth={maxWidth ?? "450px"}
-            isCompact={condensed}
+            isCompact={true}
         />
     );
 };

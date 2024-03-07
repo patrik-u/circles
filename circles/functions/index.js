@@ -2094,7 +2094,7 @@ app.get("/circles/:id/likes", async (req, res) => {
             const publicDataDoc = await db.collection("circles").doc(doc.id).get();
             if (publicDataDoc.exists) {
                 // Add public data of the user to the array
-                likedUsersData.push(publicDataDoc.data());
+                likedUsersData.push({ id: doc.id, ...publicDataDoc.data() });
             }
         }
 

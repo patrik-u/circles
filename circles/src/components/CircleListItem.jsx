@@ -91,6 +91,7 @@ import { FiEdit } from "react-icons/fi";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { circleAtom } from "./Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
+import Scrollbars from "react-custom-scrollbars-2";
 //#endregion
 
 const sliderSettings = {
@@ -312,13 +313,13 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
         >
             <Box
                 margin={contentMarginPx}
-                minWidth={item.type === "post" ? "40px" : "60px"}
-                minHeight={item.type === "post" ? "40px" : "60px"}
+                minWidth={item.type === "post" ? "40px" : "40px"}
+                minHeight={item.type === "post" ? "40px" : "40px"}
                 position="relative"
             >
                 <CirclePicture
                     circle={item.type === "post" ? item.creator : item}
-                    size={item.type === "post" ? 40 : 60}
+                    size={item.type === "post" ? 40 : 40}
                     hasPopover={hasPopover}
                 />
             </Box>
@@ -772,17 +773,23 @@ export const LikeButton = ({ circle }) => {
                     <ModalHeader>Likes</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        {fetchingLikes && <Spinner />}
-
-                        {likers?.map((liker, index) => (
-                            <CircleListItem
-                                key={liker.id}
-                                item={liker}
-                                asCard={false}
-                                isCompact={true}
-                                hasPopover={false}
-                            />
-                        ))}
+                        <Flex flexDirection="column" marginBottom="20px">
+                            {fetchingLikes && <Spinner />}
+                            {!fetchingLikes && (
+                                <>
+                                    {likers?.map((liker, index) => (
+                                        <CircleListItem
+                                            key={liker.id}
+                                            item={liker}
+                                            asCard={false}
+                                            isCompact={true}
+                                            hasPopover={false}
+                                            inSelect={true}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                        </Flex>
                     </ModalBody>
                 </ModalContent>
             </Modal>
