@@ -72,7 +72,7 @@ const SearchHit = ({
             item={hit}
             onClick={() => onHitClick()}
             maxWidth={maxWidth ?? "450px"}
-            condensed={condensed}
+            isCompact={condensed}
         />
     );
 };
