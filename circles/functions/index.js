@@ -2631,8 +2631,9 @@ const updateCircleSettings = async (authCallerId, circleId, targetCircleId, sett
             let like_preview_list = circle.like_preview_list ?? [];
             let likePreviewUpdated = false;
             if (settings.liked) {
-                // add user to like preview list unless already there or length is greater than max likes
-                if (!like_preview_list.some((x) => x.id === user.id) && like_preview_list.length < 20) {
+                // add user to like preview list unless already there or length is greater than max_preview_likes
+                let max_preview_likes = 15;
+                if (!like_preview_list.some((x) => x.id === user.id) && like_preview_list.length < max_preview_likes) {
                     like_preview_list.push(liking_user);
                     likePreviewUpdated = true;
                 }
