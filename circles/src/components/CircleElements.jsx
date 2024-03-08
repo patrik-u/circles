@@ -1211,18 +1211,6 @@ export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ..
     const cover = circle?.cover;
     const metaData = circle?.meta_data;
 
-    const getDefaultCircleCover = () => {
-        switch (type) {
-            default:
-            case "circle":
-                return "/default-circle-cover.png";
-            case "event":
-                return "/default-event-cover.png";
-            case "user":
-                return "/default-user-cover.png";
-        }
-    };
-
     const getCover = () => {
         if (cover) return cover;
         let metaImage = getMetaImage(metaData);
@@ -1249,7 +1237,7 @@ export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ..
                     width={"100%"}
                     height={"100%"}
                     src={getImageKitUrl(
-                        circle[circle.circle_ids[0]].cover ?? getDefaultCircleCover(),
+                        circle[circle.circle_ids[0]].cover ?? getDefaultCircleCover(circle),
                         coverWidth,
                         coverHeight
                     )}
@@ -1260,7 +1248,7 @@ export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ..
                     width={"100%"}
                     height={"100%"}
                     src={getImageKitUrl(
-                        circle[circle.circle_ids[1]].cover ?? getDefaultCircleCover(),
+                        circle[circle.circle_ids[1]].cover ?? getDefaultCircleCover(circle),
                         coverWidth,
                         coverHeight
                     )}
@@ -1284,7 +1272,7 @@ export const CircleCover = ({ circle, coverWidth, coverHeight, nullIfMissing, ..
         <Image
             width={coverWidth ? `${coverWidth}px` : "100%"}
             height={`${coverHeight}px`}
-            src={getImageKitUrl(getCover() ?? getDefaultCircleCover(), coverWidth, coverHeight)}
+            src={getImageKitUrl(getCover() ?? getDefaultCircleCover(circle), coverWidth, coverHeight)}
             backgroundColor="white"
             objectFit="cover"
             {...props}
@@ -1350,6 +1338,50 @@ export const CircleNameAndPicture = ({
     );
 };
 
+export const getDefaultCirclePicture = (item) => {
+    switch (item?.type) {
+        case "event":
+            return "/default-event-picture.png";
+        default:
+        case "circle":
+            return "/default-circle-picture.png";
+        case "user":
+            return "/default-user-picture.png";
+        case "tag":
+            return "/default-tag-picture.png";
+        case "link":
+            return "/default-link-picture.png";
+        case "post":
+            return "/default-user-picture.png";
+    }
+};
+
+export const getDefaultCircleCover = (item) => {
+    switch (item?.type) {
+        default:
+        case "circle":
+            return "/default-circle-cover.png";
+        case "event":
+            return "/default-event-cover.png";
+        case "user":
+            return "/default-user-cover.png";
+    }
+};
+
+export const getCirclePicture = (item, picture, size) => {
+    if (item?.id === "global") {
+        return picture ?? getDefaultCirclePicture(item);
+    }
+    return getImageKitUrl(picture ?? getDefaultCirclePicture(item), size, size);
+};
+
+export const getCircleCover = (item, cover, width, height) => {
+    if (item?.id === "global") {
+        return cover ?? getDefaultCircleCover(item);
+    }
+    return getImageKitUrl(cover ?? getDefaultCircleCover(item), width, height);
+};
+
 export const CirclePicture = ({
     circle,
     size,
@@ -1368,31 +1400,6 @@ export const CirclePicture = ({
     const [userData] = useAtom(userDataAtom);
     const [isMobile] = useAtom(isMobileAtom);
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
-
-    const getDefaultCirclePicture = (item) => {
-        switch (item?.type) {
-            case "event":
-                return "/default-event-picture.png";
-            default:
-            case "circle":
-                return "/default-circle-picture.png";
-            case "user":
-                return "/default-user-picture.png";
-            case "tag":
-                return "/default-tag-picture.png";
-            case "link":
-                return "/default-link-picture.png";
-            case "post":
-                return "/default-user-picture.png";
-        }
-    };
-
-    const getCirclePicture = (item, picture) => {
-        if (item?.id === "global") {
-            return picture ?? getDefaultCirclePicture(item);
-        }
-        return getImageKitUrl(picture ?? getDefaultCirclePicture(item), size, size);
-    };
 
     const onClick = (item) => {
         //log(JSON.stringify(item, null, 2), 0);
@@ -1497,14 +1504,14 @@ export const CirclePicture = ({
                                 left={`${imageOffset + index * (size - setOffset)}px`}
                                 width={`${imageWidth}px`}
                                 height={`${imageWidth}px`}
-                                src={getCirclePicture(item, item?.picture)}
+                                src={getCirclePicture(item, item?.picture, size)}
                                 flexShrink="0"
                                 flexGrow="0"
                                 style={getShapeStyle(item)}
                                 objectFit="cover"
                                 onClick={item ? () => onClick(item) : undefined}
                                 cursor={!disableClick ? "pointer" : "inherit"}
-                                fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item))}
+                                fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item), size)}
                                 backgroundColor="white"
                                 // opacity={isActive ? "1" : inActiveOpacity}
                                 {...props}
@@ -1576,14 +1583,14 @@ export const CirclePicture = ({
                         left={`${imageOffset + index * (size - setOffset)}px`}
                         width={`${imageWidth}px`}
                         height={`${imageWidth}px`}
-                        src={getCirclePicture(item, item?.picture)}
+                        src={getCirclePicture(item, item?.picture, size)}
                         flexShrink="0"
                         flexGrow="0"
                         style={getShapeStyle(item)}
                         objectFit="cover"
                         onClick={item ? () => onClick(item) : undefined}
                         cursor={!disableClick ? "pointer" : "inherit"}
-                        // fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item))}
+                        // fallbackSrc={getCirclePicture(item, getDefaultCirclePicture(item), size)}
                         backgroundColor="white"
                         // opacity={isActive ? "1" : inActiveOpacity}
                         {...props}

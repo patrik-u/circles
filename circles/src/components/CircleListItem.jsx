@@ -64,6 +64,7 @@ import {
     SimilarityIndicator,
     CircleRichText,
     CardIf,
+    getCircleCover,
 } from "@/components/CircleElements";
 import { routes, openSubcircle } from "@/components/Navigation";
 import { HiClock } from "react-icons/hi";
@@ -104,7 +105,7 @@ const sliderSettings = {
     arrows: true,
 };
 
-export const MediaDisplay = ({ media, meta_data, ...props }) => {
+export const MediaDisplay = ({ media, meta_data, mentions, ...props }) => {
     const SliderIf = ({ children, noSlider }) => {
         return noSlider ? children : <Slider {...sliderSettings}>{children}</Slider>;
     };
@@ -122,8 +123,17 @@ export const MediaDisplay = ({ media, meta_data, ...props }) => {
                 type: "image",
                 link: x.url,
             })) ?? [];
+        let mentionsMedia =
+            mentions?.map((x) => ({
+                name: x.name,
+                is_mention: true,
+                url: getCircleCover(x, x?.cover),
+                type: "image",
+                link: routes.subcircle(x?.parent_circle, x),
+                circle: x,
+            })) ?? [];
 
-        return [...m, ...metaMedia];
+        return [...m, ...metaMedia, ...mentionsMedia];
     }, [media, meta_data]);
 
     useEffect(() => {
@@ -164,7 +174,13 @@ export const MediaDisplay = ({ media, meta_data, ...props }) => {
                                             align="center"
                                             paddingLeft="5px"
                                             paddingRight="5px"
+                                            flexDir={"row"}
                                         >
+                                            {media.is_mention && (
+                                                <Box marginRight="5px">
+                                                    <CirclePicture circle={media.circle} size={16} hasPopover={false} />
+                                                </Box>
+                                            )}
                                             <Text style={singleLineEllipsisStyle} fontSize="12px">
                                                 {media.name}
                                             </Text>
@@ -508,7 +524,12 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                     )}
 
                     {item.media && !isCompact && (
-                        <MediaDisplay media={item.media} meta_data={item.meta_data} marginTop="10px" />
+                        <MediaDisplay
+                            media={item.media}
+                            meta_data={item.meta_data}
+                            mentions={item.mentions}
+                            marginTop="10px"
+                        />
                     )}
 
                     {item.type !== "post" && !isCompact && (
