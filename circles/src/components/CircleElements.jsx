@@ -669,12 +669,14 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
                         display="inline-flex"
                         align="center"
                         verticalAlign="middle"
-                        ml="2px"
                         onClick={() => openAboutCircle(circle, setToggleAbout)}
                     >
-                        {circleTitle && <Text marginRight="5px">{circleTitle}</Text>}
-                        <CirclePicture circle={circle} size={30} hasPopover={false} />
-                        <Text color="blue" ml="5px">
+                        {circleTitle && (
+                            <Text fontSize="15px" marginRight="5px">
+                                {circleTitle}
+                            </Text>
+                        )}
+                        <Text fontSize="15px" color="blue">
                             {circle.name}
                         </Text>
                     </Flex>
