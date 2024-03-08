@@ -448,180 +448,178 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                     {...props}
                 />
 
-                {!isCompact && (
-                    <>
-                        <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" overflow="hidden">
-                            {item.content && (
+                <>
+                    <VStack flexGrow="1" align="left" justifyContent="left" spacing="0px" overflow="hidden">
+                        {item.content && (
+                            <Box
+                                align="left"
+                                overflow="hidden"
+                                maxHeight={isExpanded ? "none" : "150px"}
+                                position="relative"
+                                width="100%"
+                            >
                                 <Box
-                                    align="left"
-                                    overflow="hidden"
-                                    maxHeight={isExpanded ? "none" : "150px"}
+                                    marginLeft={contentMarginPx}
+                                    marginRight={contentMarginPx}
                                     position="relative"
-                                    width="100%"
+                                    maxHeight={isExpanded ? "none" : "150px"}
+                                    overflow="hidden"
+                                    align="left"
                                 >
+                                    <Box marginBottom={isExpanded ? "30px" : "0px"} width="100%" overflow="hidden">
+                                        <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
+                                    </Box>
                                     <Box
-                                        marginLeft={contentMarginPx}
-                                        marginRight={contentMarginPx}
-                                        position="relative"
-                                        maxHeight={isExpanded ? "none" : "150px"}
-                                        overflow="hidden"
-                                        align="left"
+                                        position="absolute"
+                                        height={isExpanded ? "100%" : "150px"}
+                                        bottom="0px"
+                                        top="0px"
+                                        left="0px"
+                                        right="0px"
+                                        pointerEvents="none"
                                     >
-                                        <Box marginBottom={isExpanded ? "30px" : "0px"} width="100%" overflow="hidden">
-                                            <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
-                                        </Box>
-                                        <Box
+                                        {!isExpanded && (
+                                            <>
+                                                <Box
+                                                    position="absolute"
+                                                    bottom="20px"
+                                                    left="0px"
+                                                    right="0px"
+                                                    height="50px"
+                                                    background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
+                                                />
+                                                <Box
+                                                    position="absolute"
+                                                    bottom="0px"
+                                                    left="0px"
+                                                    right="0px"
+                                                    height="20px"
+                                                    background="#ffffff"
+                                                />
+                                            </>
+                                        )}
+                                        <Link
+                                            onClick={() => setIsExpanded(!isExpanded)}
                                             position="absolute"
-                                            height={isExpanded ? "100%" : "150px"}
                                             bottom="0px"
-                                            top="0px"
                                             left="0px"
                                             right="0px"
-                                            pointerEvents="none"
+                                            fontSize="12px"
+                                            fontWeight="400"
+                                            pointerEvents="auto"
+                                            color="#6491ff"
                                         >
-                                            {!isExpanded && (
-                                                <>
-                                                    <Box
-                                                        position="absolute"
-                                                        bottom="20px"
-                                                        left="0px"
-                                                        right="0px"
-                                                        height="50px"
-                                                        background="linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1))"
-                                                    />
-                                                    <Box
-                                                        position="absolute"
-                                                        bottom="0px"
-                                                        left="0px"
-                                                        right="0px"
-                                                        height="20px"
-                                                        background="#ffffff"
-                                                    />
-                                                </>
-                                            )}
-                                            <Link
-                                                onClick={() => setIsExpanded(!isExpanded)}
-                                                position="absolute"
-                                                bottom="0px"
-                                                left="0px"
-                                                right="0px"
-                                                fontSize="12px"
-                                                fontWeight="400"
-                                                pointerEvents="auto"
-                                                color="#6491ff"
-                                            >
-                                                {isExpanded ? "Show less" : "Show more"}
-                                            </Link>
-                                        </Box>
+                                            {isExpanded ? "Show less" : "Show more"}
+                                        </Link>
                                     </Box>
                                 </Box>
-                            )}
-
-                            {item.type !== "post" && item.description && (
-                                <Box paddingBottom="2px" marginLeft={contentMarginPx} marginRight={contentMarginPx}>
-                                    <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
-                                        {item.description}
-                                    </Text>
-                                </Box>
-                            )}
-
-                            {item.media && !isCompact && (
-                                <MediaDisplay
-                                    media={item.media}
-                                    meta_data={item.meta_data}
-                                    mentions={item.mentions}
-                                    marginTop="10px"
-                                />
-                            )}
-
-                            {item.type !== "post" && !isCompact && (
-                                <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" marginTop="10px" />
-                            )}
-
-                            <Box paddingTop="4px" marginLeft={contentMarginPx} marginRight={contentMarginPx}>
-                                <CircleTags circle={item} size="tiny" inSelect={inSelect} />
                             </Box>
+                        )}
 
-                            {/* <Box>
+                        {item.type !== "post" && item.description && (
+                            <Box paddingBottom="2px" marginLeft={contentMarginPx} marginRight={contentMarginPx}>
+                                <Text fontSize="14px" textAlign="left" style={singleLineEllipsisStyle}>
+                                    {item.description}
+                                </Text>
+                            </Box>
+                        )}
+
+                        {item.media && !isCompact && (
+                            <MediaDisplay
+                                media={item.media}
+                                meta_data={item.meta_data}
+                                mentions={item.mentions}
+                                marginTop="10px"
+                            />
+                        )}
+
+                        {item.type !== "post" && !isCompact && (
+                            <CircleCover circle={item} nullIfMissing={true} maxHeight="500px" marginTop="10px" />
+                        )}
+
+                        <Box paddingTop="4px" marginLeft={contentMarginPx} marginRight={contentMarginPx}>
+                            <CircleTags circle={item} size="tiny" inSelect={inSelect} />
+                        </Box>
+
+                        {/* <Box>
                 <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
             </Box> */}
-                            {/* {showChat && (
+                        {/* {showChat && (
                         <Box align="start" paddingTop="10px">
                             <CircleChat item={item} embeddedChatHeight={400} />
                         </Box>
                     )} */}
-                            {!inSelect && (
-                                <Box paddingTop="2px" marginLeft={contentMarginPx} marginBottom="5px">
-                                    <CircleActions circle={item} onChatToggle={onChatToggle} />
-                                </Box>
-                            )}
-                        </VStack>
+                        {!inSelect && (
+                            <Box paddingTop="2px" marginLeft={contentMarginPx} marginBottom="5px">
+                                <CircleActions circle={item} onChatToggle={onChatToggle} />
+                            </Box>
+                        )}
+                    </VStack>
 
-                        <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
-                            {item.type === "event" && (
-                                <Flex
-                                    borderRadius="20px"
-                                    height="18px"
-                                    paddingLeft="2px"
-                                    paddingRight="5px"
-                                    align="center"
-                                    flexDirection="row"
-                                    justifyContent="center"
-                                    onClick={(event) => {
-                                        if (inSelect) return;
+                    <VStack position="absolute" top="0px" right="7px" align="left" spacing="2px">
+                        {item.type === "event" && (
+                            <Flex
+                                borderRadius="20px"
+                                height="18px"
+                                paddingLeft="2px"
+                                paddingRight="5px"
+                                align="center"
+                                flexDirection="row"
+                                justifyContent="center"
+                                onClick={(event) => {
+                                    if (inSelect) return;
 
-                                        event.stopPropagation();
-                                        setFocusOnMapItem({ item });
-                                    }}
-                                >
-                                    <Icon
-                                        width="14px"
-                                        height="14px"
-                                        color="#929292"
-                                        as={HiClock}
-                                        cursor="pointer"
-                                        marginRight="2px"
-                                    />
-                                    <Text fontWeight="700" color="#929292" fontSize="12px">
-                                        {getEventTime(item)}
-                                    </Text>
-                                </Flex>
-                            )}
+                                    event.stopPropagation();
+                                    setFocusOnMapItem({ item });
+                                }}
+                            >
+                                <Icon
+                                    width="14px"
+                                    height="14px"
+                                    color="#929292"
+                                    as={HiClock}
+                                    cursor="pointer"
+                                    marginRight="2px"
+                                />
+                                <Text fontWeight="700" color="#929292" fontSize="12px">
+                                    {getEventTime(item)}
+                                </Text>
+                            </Flex>
+                        )}
 
-                            {item.distance && (
-                                <Flex
-                                    borderRadius="20px"
-                                    height="18px"
-                                    //backgroundColor="#c242bb"
-                                    backgroundColor="white"
-                                    paddingLeft="2px"
-                                    paddingRight="5px"
-                                    align="center"
-                                    flexDirection="row"
-                                    justifyContent="center"
-                                    onClick={(event) => {
-                                        if (inSelect) return;
+                        {item.distance && (
+                            <Flex
+                                borderRadius="20px"
+                                height="18px"
+                                //backgroundColor="#c242bb"
+                                backgroundColor="white"
+                                paddingLeft="2px"
+                                paddingRight="5px"
+                                align="center"
+                                flexDirection="row"
+                                justifyContent="center"
+                                onClick={(event) => {
+                                    if (inSelect) return;
 
-                                        event.stopPropagation();
-                                        setFocusOnMapItem({ item });
-                                    }}
-                                >
-                                    <Icon
-                                        width="14px"
-                                        height="14px"
-                                        color="#929292"
-                                        as={RiMapPinFill}
-                                        cursor="pointer"
-                                        marginRight="2px"
-                                    />
-                                    <Text fontWeight="700" color="#929292" fontSize="12px">
-                                        {getDistanceString(item.distance)}
-                                    </Text>
-                                </Flex>
-                            )}
-                        </VStack>
-                    </>
-                )}
+                                    event.stopPropagation();
+                                    setFocusOnMapItem({ item });
+                                }}
+                            >
+                                <Icon
+                                    width="14px"
+                                    height="14px"
+                                    color="#929292"
+                                    as={RiMapPinFill}
+                                    cursor="pointer"
+                                    marginRight="2px"
+                                />
+                                <Text fontWeight="700" color="#929292" fontSize="12px">
+                                    {getDistanceString(item.distance)}
+                                </Text>
+                            </Flex>
+                        )}
+                    </VStack>
+                </>
             </Flex>
         </CardIf>
     );
