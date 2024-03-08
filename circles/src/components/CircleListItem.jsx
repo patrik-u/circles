@@ -827,7 +827,7 @@ export const LikeButton = ({ circle }) => {
                                         <CircleListItem
                                             key={liker.id}
                                             item={liker}
-                                            asCard={true}
+                                            asCard={false}
                                             isCompact={true}
                                             hasPopover={false}
                                         />
