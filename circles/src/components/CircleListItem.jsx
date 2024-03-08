@@ -432,7 +432,7 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
     if (!item) return null;
 
     return (
-        <CardIf noCard={!asCard} marginBottom="20px" noBody={true}>
+        <CardIf noCard={!asCard} marginBottom={isCompact ? "5px" : "20px"} noBody={true}>
             <Flex
                 flexDirection="column"
                 key={item.id}

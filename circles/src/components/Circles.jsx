@@ -114,14 +114,74 @@ const CreateNewCircleForm = ({ type, asCard }) => {
     );
 };
 
+export const CircleListViewSettings = ({ type }) => {
+    const [circleSettings, setCircleSettings] = useAtom(circleSettingsAtom);
+    const [user] = useAtom(userAtom);
+    const [circle] = useAtom(circleAtom);
+
+    const updateCircleSettings = (property, value) => {
+        if (!circle || !user) return;
+        let newSettings = { ...circleSettings };
+        if (!newSettings[circle.id]) {
+            newSettings[circle.id] = {};
+        }
+        if (!newSettings[circle.id][type]) {
+            newSettings[circle.id][type] = {};
+        }
+        newSettings[circle.id][type][property] = value;
+        setCircleSettings(newSettings);
+    };
+    const getCircleSettings = (property) => {
+        if (!circle || !user) return;
+        return circleSettings?.[circle.id]?.[type]?.[property];
+    };
+
+    const view = getCircleSettings("view") || "normal";
+
+    return (
+        <>
+            <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
+                <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
+                    <IconButton
+                        width="28px"
+                        height="28px"
+                        margin="0px"
+                        minWidth="24px"
+                        padding="0px"
+                        aria-label="Compact"
+                        backgroundColor={view === "compact" ? "white" : "#ededed"}
+                        icon={<MdOutlineList size={18} />}
+                        onClick={() => {
+                            updateCircleSettings("view", "compact");
+                        }}
+                    />
+                    <IconButton
+                        width="28px"
+                        height="28px"
+                        margin="0px"
+                        minWidth="24px"
+                        padding="0px"
+                        aria-label="Normal"
+                        backgroundColor={view === "normal" ? "white" : "#ededed"}
+                        icon={<MdViewAgenda size={18} />}
+                        onClick={() => {
+                            updateCircleSettings("view", "normal");
+                        }}
+                    />
+                </ButtonGroup>
+            </Flex>
+        </>
+    );
+};
+
 export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy = null }) => {
     const [user] = useAtom(userAtom);
     const [circle] = useAtom(circleAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
-    const [circleSettings, setCircleSettings] = useAtom(circleSettingsAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const useCompactList = type !== "post" && type !== "event";
 
     const navigate = useNavigateNoUpdates();
 
@@ -156,25 +216,6 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             .catch((error) => {});
     }, [user?.id, circle?.id, type, signInStatus]);
 
-    const updateCircleSettings = (property, value) => {
-        if (!circle || !user) return;
-        let newSettings = { ...circleSettings };
-        if (!newSettings[circle.id]) {
-            newSettings[circle.id] = {};
-        }
-        if (!newSettings[circle.id][type]) {
-            newSettings[circle.id][type] = {};
-        }
-        newSettings[circle.id][type][property] = value;
-        setCircleSettings(newSettings);
-    };
-    const getCircleSettings = (property) => {
-        if (!circle || !user) return;
-        return circleSettings?.[circle.id]?.[type]?.[property];
-    };
-
-    const view = getCircleSettings("view") || "normal";
-
     return (
         <Flex
             flexGrow={noScrollbars ? "0" : "1"}
@@ -185,39 +226,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             backgroundColor={asCards ? "#ededed" : "transparent"}
         >
             <CreateNewCircleForm type={type} asCard={asCards} />
-            {filteredCircles?.length > 0 && (
-                <Flex borderBottom="1px solid #ebebeb" justifyContent="end" paddingRight="5px" paddingTop="5px">
-                    <ButtonGroup size="sm" isAttached variant="outline" marginBottom="5px" alignSelf="end">
-                        <IconButton
-                            width="28px"
-                            height="28px"
-                            margin="0px"
-                            minWidth="24px"
-                            padding="0px"
-                            aria-label="Compact"
-                            backgroundColor={view === "compact" ? "white" : "#ededed"}
-                            icon={<MdOutlineList size={18} />}
-                            onClick={() => {
-                                updateCircleSettings("view", "compact");
-                            }}
-                        />
-                        <IconButton
-                            width="28px"
-                            height="28px"
-                            margin="0px"
-                            minWidth="24px"
-                            padding="0px"
-                            aria-label="Normal"
-                            backgroundColor={view === "normal" ? "white" : "#ededed"}
-                            icon={<MdViewAgenda size={18} />}
-                            onClick={() => {
-                                updateCircleSettings("view", "normal");
-                            }}
-                        />
-                    </ButtonGroup>
-                </Flex>
-            )}
-            <Flex flexGrow="1" flexDirection={"column"}>
+            <Flex flexGrow="1" flexDirection={"column"} marginTop={asCards ? "10px" : "0px"}>
                 <ScrollbarsIf noScrollbars={noScrollbars}>
                     {filteredCircles
                         ?.filter((x) => x.type === type)
@@ -230,7 +239,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                                     focusCircle(item, setFocusOnMapItem);
                                 }}
                                 asCard={asCards}
-                                isCompact={view === "compact"}
+                                isCompact={useCompactList}
                             />
                         ))}
                 </ScrollbarsIf>
