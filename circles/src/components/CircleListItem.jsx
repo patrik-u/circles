@@ -66,7 +66,7 @@ import {
     CardIf,
     getCircleCover,
 } from "@/components/CircleElements";
-import { routes, openSubcircle } from "@/components/Navigation";
+import { routes, openSubcircle, openCircle } from "@/components/Navigation";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
 import { useLocationNoUpdates } from "@/components/RouterUtils";
@@ -348,7 +348,13 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
                     style={singleLineEllipsisStyle}
                     onClick={(e) => {
                         if (inSelect) return;
-                        openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item);
+                        if (item.type === "post" || item.type === "event") {
+                            // posts and events are opened in subcircle view
+                            openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item);
+                        } else {
+                            // the rest are opened in circle view
+                            openCircle(navigate, item);
+                        }
                     }}
                     cursor="pointer"
                 >
