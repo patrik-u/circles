@@ -800,7 +800,7 @@ export const LikeButton = ({ circle }) => {
                                             {liker.name}
                                         </Text>
                                     ))}
-                                    {circle.like_preview_list?.length <= circle?.likes && (
+                                    {circle.like_preview_list?.length < circle?.likes && (
                                         <Text fontSize="12px" color="white">
                                             and {circle?.likes - circle.like_preview_list?.length} more ...
                                         </Text>
