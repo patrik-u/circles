@@ -442,7 +442,18 @@ const CircleDashboard = ({ onClose }) => {
                                 <Routes>
                                     <Route path="/" element={<CircleHomeFeed />} />
                                     <Route path="home" element={<CircleHomeFeed />} />
-                                    <Route path="chat" element={<CircleChatWidget />} />
+                                    <Route
+                                        path="chat"
+                                        element={
+                                            <CircleExtrasAndMain
+                                                main={<CircleChatWidget />}
+                                                extras={<CircleAbout />}
+                                                switchWhenExpanded={true}
+                                                hideExtrasWhenCompact={true}
+                                            />
+                                        }
+                                    />
+
                                     <Route
                                         path="circles"
                                         element={
