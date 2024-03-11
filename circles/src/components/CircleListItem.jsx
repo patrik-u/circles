@@ -10,7 +10,6 @@ import {
     Link,
     Image,
     IconButton,
-    Textarea,
     Menu,
     MenuButton,
     MenuList,
@@ -39,7 +38,6 @@ import {
     PopoverContent,
     PopoverBody,
     PopoverArrow,
-    Divider,
 } from "@chakra-ui/react";
 import {
     getDistanceString,
@@ -95,7 +93,6 @@ import { DeleteIcon } from "@chakra-ui/icons";
 import { circleAtom } from "./Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import Scrollbars from "react-custom-scrollbars-2";
-import { IoMdSend } from "react-icons/io";
 //#endregion
 
 const sliderSettings = {
@@ -106,138 +103,6 @@ const sliderSettings = {
     slidesToScroll: 1,
     adaptiveHeight: true,
     arrows: true,
-};
-
-export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
-    const [currentCircle] = useAtom(circleAtom);
-    const navigate = useNavigateNoUpdates();
-
-    const LinkOrBox = ({ children }) => {
-        return useLink ? (
-            <Link
-                href={routes.subcircle(currentCircle, circle)}
-                onClick={(e) => {
-                    e.preventDefault();
-                    openSubcircle(navigate, currentCircle, circle);
-                }}
-            >
-                {children}
-            </Link>
-        ) : (
-            <Box
-                cursor="pointer"
-                onClick={() => {
-                    openSubcircle(navigate, currentCircle, circle);
-                }}
-            >
-                {children}
-            </Box>
-        );
-    };
-
-    return (
-        <LinkOrBox>
-            <Text {...props}>{circle.name}</Text>
-        </LinkOrBox>
-    );
-};
-
-export const CommentInput = ({ circle, parentComment, ...props }) => {
-    const [isMobile] = useAtom(isMobileAtom);
-    return (
-        <Flex flexDirection="row" align="center" marginBottom="10px" {...props}>
-            <Textarea placeholder="Write a comment..." />
-            {isMobile && (
-                <Flex flexDirection="row" justifyContent="right" marginTop="10px">
-                    <IconButton icon={<IoMdSend />} />
-                </Flex>
-            )}
-        </Flex>
-    );
-};
-
-export const Comments = ({ circle, isPreview, ...props }) => {
-    const [currentCircle] = useAtom(circleAtom);
-    const [comments, setComments] = useState([]);
-    const [user] = useAtom(userAtom);
-
-    useEffect(() => {
-        if (isPreview) {
-            if (circle.highlighted_comment) {
-                setComments([circle.highlighted_comment]);
-            }
-
-            // TODO for now add dummy comment
-            circle.comments_count = 10;
-            setComments([
-                {
-                    id: "1",
-                    creator: user,
-                    content:
-                        "This is a comment. It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
-                },
-            ]);
-        } else {
-            // TODO subscribe to comments
-            setComments(circle.comments);
-        }
-    });
-
-    return (
-        <Flex flexDirection="column" {...props} marginLeft="10px" marginRight="10px">
-            {/* if preview show link "Show more comments" if there are more comments */}
-            {isPreview > 1 && (
-                // TODO add: "&& circle.comments_count" after testing is done
-                <Link
-                    href={routes.subcircle(currentCircle, circle)}
-                    onClick={(e) => {
-                        e.preventDefault();
-                        openSubcircle(navigate, currentCircle, circle);
-                    }}
-                    target="_blank"
-                    marginBottom="10px"
-                >
-                    <Text fontSize="14px" fontWeight="700">
-                        Show more comments
-                    </Text>
-                </Link>
-            )}
-
-            {comments.map((comment) => (
-                <Comment key={comment.id} comment={comment} marginBottom="10px" />
-            ))}
-
-            <CommentInput circle={circle} />
-        </Flex>
-    );
-};
-
-export const Comment = ({ comment, ...props }) => {
-    return (
-        <Flex flexDirection="column" {...props}>
-            <Flex flexDirection="row" align="top">
-                <Box marginTop="5px">
-                    <CirclePicture circle={comment.creator} size={24} hasPopover={true} />
-                </Box>
-                <Flex
-                    flexDirection="column"
-                    align="left"
-                    backgroundColor="#f1f1f1"
-                    marginLeft="5px"
-                    borderRadius="10px"
-                    padding="5px 10px 5px 10px"
-                >
-                    <CircleNameLink circle={comment.creator} useLink={false} fontSize="14px" fontWeight="700" />
-                    {/* <Text fontSize="14px" fontWeight="700">
-                        {comment.creator.name}
-                    </Text> */}
-                    <Text fontSize="14px" fontWeight="400">
-                        {comment.content}
-                    </Text>
-                </Flex>
-            </Flex>
-        </Flex>
-    );
 };
 
 export const MediaDisplay = ({ media, meta_data, mentions, ...props }) => {
@@ -683,14 +548,18 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                                 <CircleTags circle={item} size="tiny" inSelect={inSelect} />
                             </Box>
 
+                            {/* <Box>
+                <LatestMembers item={item} circleId={item.id} size={16} hasPopover={true} marginTop="6px" spacing="4px" />
+            </Box> */}
+                            {/* {showChat && (
+                        <Box align="start" paddingTop="10px">
+                            <CircleChat item={item} embeddedChatHeight={400} />
+                        </Box>
+                    )} */}
                             {!inSelect && (
-                                <>
-                                    <Box paddingTop="2px" marginLeft={contentMarginPx} marginBottom="5px">
-                                        <CircleActions circle={item} onChatToggle={onChatToggle} />
-                                    </Box>
-                                    <Divider marginTop="2px" paddingLeft="10px" paddingRight="10px" />
-                                    <Comments circle={item} isPreview={true} marginTop="10px" />
-                                </>
+                                <Box paddingTop="2px" marginLeft={contentMarginPx} marginBottom="5px">
+                                    <CircleActions circle={item} onChatToggle={onChatToggle} />
+                                </Box>
                             )}
                         </VStack>
 
@@ -894,6 +763,8 @@ export const LikeButton = ({ circle }) => {
         <>
             <Flex
                 position="relative"
+                width="32px"
+                height="32px"
                 backgroundColor="#ffffff"
                 borderRadius="50%"
                 justifyContent="center"
@@ -915,7 +786,7 @@ export const LikeButton = ({ circle }) => {
                             fontSize="14px"
                             fontWeight="400"
                             color="#333"
-                            marginLeft="5px"
+                            marginLeft="0px"
                             onClick={fetchAndShowFullLikers}
                             cursor="pointer"
                         >
@@ -985,10 +856,12 @@ export const CircleActions = ({ circle, onCommentToggle, ...props }) => {
 
     return (
         <Flex position="relative" align="center" flexDirection="row">
+            <CommentButton circle={circle} onCommentToggle={onCommentToggle} />
             <LikeButton circle={circle} />
             {/* <ShareButtonMenu /> */}
             {/* <FavoriteButton />
             {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}
+            
             <ConnectButton circle={circle} hoverFadeColor="#ffffff" /> */}
         </Flex>
     );
