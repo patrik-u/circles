@@ -12,6 +12,7 @@ import {
     HStack,
     Popover,
     Link,
+    Textarea,
     PopoverContent,
     PopoverTrigger,
     PopoverArrow,
@@ -96,6 +97,7 @@ import { BiInfoCircle } from "react-icons/bi";
 import { IoInformationCircle } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
+import ResizeTextarea from "react-textarea-autosize";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -619,7 +621,22 @@ export const NewSessionButton = ({ circle, onClick, ...props }) => {
     );
 };
 
-export const CircleLink = ({ node, href, mentions, children, ...props }) => {
+export const AutoResizeTextarea = React.forwardRef((props, ref) => {
+    return (
+        <Textarea
+            minH="unset"
+            overflow="hidden"
+            w="100%"
+            resize="none"
+            ref={ref}
+            minRows={1}
+            as={ResizeTextarea}
+            {...props}
+        />
+    );
+});
+
+export const CircleLink = ({ node, href, mentions, children, fontSize = "15px", ...props }) => {
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
     const [user] = useAtom(userAtom);
 
@@ -668,15 +685,15 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
                         cursor="pointer"
                         display="inline-flex"
                         align="center"
-                        verticalAlign="middle"
+                        // verticalAlign="middle" works when picture was present
                         onClick={() => openAboutCircle(circle, setToggleAbout)}
                     >
                         {circleTitle && (
-                            <Text fontSize="15px" marginRight="5px">
+                            <Text fontSize={fontSize} marginRight="5px">
                                 {circleTitle}
                             </Text>
                         )}
-                        <Text fontSize="15px" color="blue">
+                        <Text fontSize={fontSize} color="blue">
                             {circle.name}
                         </Text>
                     </Flex>
@@ -700,7 +717,7 @@ export const CircleLink = ({ node, href, mentions, children, ...props }) => {
         );
     } else {
         return (
-            <Link href={hrefStr} {...props} color="blue" target="_blank">
+            <Link href={hrefStr} fontSize={fontSize} {...props} color="blue" target="_blank">
                 {children}
             </Link>
         );
@@ -1941,7 +1958,7 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const CircleRichText = ({ mentions, children }) => {
+export const CircleRichText = ({ mentions, mentionsFontSize = "15px", children }) => {
     return (
         <ReactMarkdown
             className="embedMarkdownContent"
@@ -1950,7 +1967,7 @@ export const CircleRichText = ({ mentions, children }) => {
             components={{
                 a: ({ node, ...props }) => {
                     return (
-                        <CircleLink node={node} href={props.href} mentions={mentions}>
+                        <CircleLink node={node} href={props.href} fontSize={mentionsFontSize} mentions={mentions}>
                             {props.children}
                         </CircleLink>
                     );

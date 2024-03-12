@@ -379,6 +379,15 @@ const getConfig = async () => {
     return configDoc.data();
 };
 
+const validateCommentRequest = (comment) => {
+    // validate request
+    let errors = {};
+    if (!comment || typeof comment !== "string" || comment.length > 6500) {
+        errors.comment = "Comment must be between 1 and 6500 characters";
+    }
+    return errors;
+};
+
 // converts firestore date to javascript date
 const fromFsDate = (date) => {
     if (!date) return date;
@@ -1977,6 +1986,207 @@ app.put("/circles/:id/chunks", auth, async (req, res) => {
     }
 });
 
+// post circle comment
+app.post("/circles/:id/comments", auth, async (req, res) => {
+    try {
+        const date = new Date();
+        var circleId = req.params.id;
+        var comment = DOMPurify.sanitize(req.body.comment);
+        var parent_comment_id = req.body.parent_comment_id;
+
+        const authCallerId = req.user.user_id;
+
+        // validate request
+        let errors = validateCommentRequest(comment);
+        if (Object.keys(errors).length !== 0) {
+            return res.json(errors);
+        }
+
+        // user is allowed to post comment if the parent circle is public or user is member of circle
+        let circle = await getCircle(circleId);
+        if (!circle) {
+            return res.json({ error: "circle not found" });
+        }
+
+        if (circle.type !== "post") {
+            // for now comments can only be posted on posts
+            return res.json({ error: "comments can only be posted on posts" });
+        }
+
+        if (!circle.is_public) {
+            let isAuthorized = await isMemberOf(authCallerId, circleId);
+            if (!isAuthorized) {
+                return res.status(403).json({ error: "unauthorized" });
+            }
+        }
+
+        const user = await getCircle(authCallerId);
+        const newComment = {
+            circle_id: circleId,
+            creator: user,
+            created_at: date,
+            content: comment,
+        };
+        if (parent_comment_id) {
+            newComment.parent_comment_id = parent_comment_id;
+        }
+        newComment.parent_circle_id = circle.parent_circle?.id ?? "global";
+
+        // does comment contain links?
+        let links = linkify.match(comment);
+        if (links) {
+            // check if link points to circle
+            let circleIds = [];
+            for (var link of links) {
+                let circleId = extractCircleId(link.url);
+                if (circleId) {
+                    circleIds.push(circleId);
+                    // remove link from links
+                    let linkUrl = link.url;
+                    links = links.filter((x) => x.url !== linkUrl);
+                }
+            }
+            if (circleIds.length > 0) {
+                // get mentions
+                let mentions = await getCirclesFromIds(circleIds);
+                if (mentions) {
+                    newComment.mentions = mentions;
+                    newComment.has_mentions = true;
+                }
+            }
+            if (links?.length > 0) {
+                newComment.has_links = true;
+            }
+        }
+
+        const commentRef = db.collection("comments").doc();
+        await commentRef.set(newComment);
+
+        // update number of comments in circle, highlighted comment and comment user preview list
+        const circleRef = db.collection("circles").doc(circleId);
+        let circleData = { comments: admin.firestore.FieldValue.increment(1) };
+        if (!circle.highlighted_comment) {
+            circleData.highlighted_comment = { id: commentRef.id, ...newComment };
+        }
+
+        let commenters_preview_list = circle.commenters_preview_list ?? [];
+        let previewListUpdated = false;
+
+        // add user to like preview list unless already there or length is greater than max_preview_likes
+        let max_preview_commenters = 15;
+        if (
+            !commenters_preview_list.some((x) => x.id === user.id) &&
+            commenters_preview_list.length < max_preview_commenters
+        ) {
+            let commenting_user = { id: user.id, name: user.name };
+            if (commenting_user.picture) {
+                commenting_user.picture = user.picture;
+            }
+            commenters_preview_list.push(commenting_user);
+            previewListUpdated = true;
+        }
+
+        if (previewListUpdated) {
+            circleData.commenters_preview_list = commenters_preview_list;
+        }
+
+        await circleRef.update(circleData);
+
+        // propagate changes?
+        // updateCircle(circleId, updatedCircle, false); // TODO we should avoid calling this with propagate updates as it will trigger a lot of updates
+
+        // check if comment contains links and add preview images
+        addPreviewImages(commentRef, links);
+
+        // TODO send notification to users mentioned in comment and to user this comment replies to
+        // getMemberConnections(circleId).then((memberConnections) => {
+        //     for (var memberConnection of memberConnections) {
+        //         if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
+        //             // ignore notifying sender and non-users
+        //             continue;
+        //         }
+        //         sendMessageNotification(memberConnection.target, circle, newMessage, previewImage, "Chat");
+        //     }
+        // });
+
+        return res.json({ message: "Comment created" });
+    } catch (error) {
+        functions.logger.error("Error while trying to add comment:", error);
+        return res.json({ error: error });
+    }
+});
+
+// update circle comment
+app.put("/circles/:circleId/comments/:commentId", auth, async (req, res) => {
+    // const date = new Date();
+    // const messageId = req.params.id;
+    // const authCallerId = req.user.user_id;
+    // const editedMessage = DOMPurify.sanitize(req.body.message);
+    // try {
+    //     const message = await getChatMessage(messageId);
+    //     if (!message) {
+    //         return res.json({ error: "chat message not found" });
+    //     }
+    //     if (message.user.id !== authCallerId) {
+    //         return res.json({
+    //             error: "chat message can only be edited by owner",
+    //         });
+    //     }
+    //     // validate request
+    //     let errors = validateChatMessageRequest(editedMessage);
+    //     if (Object.keys(errors).length !== 0) {
+    //         return res.json(errors);
+    //     }
+    //     const editedMessageObj = {
+    //         edited_at: date,
+    //         message: editedMessage,
+    //     };
+    //     // does message contain links?
+    //     let links = linkify.match(editedMessage);
+    //     if (links) {
+    //         editedMessageObj.has_links = true;
+    //     }
+    //     // update chat message
+    //     await updateChatMessage(messageId, editedMessageObj);
+    //     // check if message contains link and add preview image
+    //     const chatMessageRef = db.collection("chat_messages").doc(messageId);
+    //     addPreviewImages(chatMessageRef, links);
+    //     return res.json({ message: "message updated" });
+    // } catch (error) {
+    //     functions.logger.error("Error while updating chat message:", error);
+    //     return res.json({ error: error });
+    // }
+});
+
+// delete circle comment
+app.delete("/circles/:circleId/comments/:commentId", auth, async (req, res) => {
+    // const messageId = req.params.id;
+    // const authCallerId = req.user.user_id;
+    // try {
+    //     const message = await getChatMessage(messageId);
+    //     if (!message) {
+    //         return res.json({ error: "chat message not found" });
+    //     }
+    //     if (message.user.id !== authCallerId) {
+    //         return res.json({
+    //             error: "chat message can only be deleted by owner",
+    //         });
+    //     }
+    //     // delete chat message
+    //     await deleteChatMessage(messageId);
+    //     // add update to circle that new chat message has been sent
+    //     let updatedCircle = {
+    //         messages: admin.firestore.FieldValue.increment(-1),
+    //     };
+    //     // update circle and propagate changes
+    //     updateCircle(message.circle_id, updatedCircle);
+    //     return res.json({ message: "message deleted" });
+    // } catch (error) {
+    //     functions.logger.error("Error while deleting chat message:", error);
+    //     return res.json({ error: error });
+    // }
+});
+
 // get circles relevant to circle
 app.get("/circles/:id/circles", async (req, res) => {
     const circleId = req.params.id;
@@ -3147,87 +3357,37 @@ app.delete("/chat_messages/:id", auth, async (req, res) => {
     }
 });
 
-// create AI chat session
-// app.post("/chat_sessions", auth, async (req, res) => {
-//     const authCallerId = req.user.user_id;
-//     const aiAgentId = req.body.ai_agent_id;
-//     const parentCircleId = req.body.parent_circle_id;
-//     const date = new Date();
-
-//     try {
-//         const aiAgent = await getCircle(aiAgentId);
-//         if (!aiAgent) {
-//             return res.json({ error: "AI agent not found" });
-//         }
-//         const user = await getCircle(authCallerId);
-//         if (!user) {
-//             return res.json({ error: "User not found" });
-//         }
-
-//         const circleRef = db.collection("circles").doc();
-//         const newSession = {
-//             type: "ai_chat_session",
-//             created_at: date,
-//             name: "AI Chat Session " + date.toISOString(),
-//             ai_agent: aiAgent,
-//         };
-
-//         await circleRef.set(newSession);
-
-//         var circleId = circleRef.id;
-
-//         // add connection to circle
-//         const userDataRef = db.collection("circle_data").doc(circleId);
-//         await userDataRef.set({ connected_mutually_to: admin.firestore.FieldValue.arrayUnion(authCallerId), circle_id: circleId }, { merge: true });
-
-//         // TODO get introduction from AI agent settings
-//         triggerAiAgentResponse(
-//             circleId,
-//             parentCircleId,
-//             authCallerId,
-//             `Hej mitt namn är ${user.name}. Kan du introducera dig själv?`
-//             //`Hello my name is ${user.name}. Can you introduce yourself?`
-//             // `Hej mitt namn är ${user.name}. Kan du introducera dig själv och ge tre förslag på frågor som jag ställa till dig (påminn mig i slutet att jag kan ställa fler frågor utöver dessa och det bara är förslag)?`
-//         );
-
-//         return res.json({ id: circleId, ...newSession });
-//     } catch (error) {
-//         functions.logger.error("Error creating chat session:", error);
-//         return res.json({ error: error });
-//     }
-// });
-
 // check if message contains link and adds preview image
 const addPreviewImages = async (docRef, links) => {
+    if (!links) return null;
+
     let previewImage = null;
     // add preview images
     const metaData = [];
-    if (links) {
-        for (const link of links) {
-            let linkUrl = link.url;
-            if (!link.schema) {
-                linkUrl = "https://" + link.raw;
-            } else {
-                linkUrl = link.url;
-            }
-            let linkPreview = await getLinkPreview(linkUrl);
-            console.debug(linkPreview);
+    for (const link of links) {
+        let linkUrl = link.url;
+        if (!link.schema) {
+            linkUrl = "https://" + link.raw;
+        } else {
+            linkUrl = link.url;
+        }
+        let linkPreview = await getLinkPreview(linkUrl);
+        console.debug(linkPreview);
 
-            if (linkPreview?.mediaType) {
-                metaData.push({
-                    type: linkPreview.mediaType,
-                    title: linkPreview.title ?? "",
-                    description: linkPreview.description ?? "",
-                    images: linkPreview.images ?? [],
-                    site_name: linkPreview.siteName ?? "",
-                    content_type: linkPreview.contentType,
-                    url: linkUrl,
-                });
-            }
+        if (linkPreview?.mediaType) {
+            metaData.push({
+                type: linkPreview.mediaType,
+                title: linkPreview.title ?? "",
+                description: linkPreview.description ?? "",
+                images: linkPreview.images ?? [],
+                site_name: linkPreview.siteName ?? "",
+                content_type: linkPreview.contentType,
+                url: linkUrl,
+            });
+        }
 
-            if (linkPreview?.images?.length > 0) {
-                previewImage = linkPreview.images[0];
-            }
+        if (linkPreview?.images?.length > 0) {
+            previewImage = linkPreview.images[0];
         }
     }
 

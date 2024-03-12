@@ -67,7 +67,10 @@ import {
     CircleRichText,
     CardIf,
     getCircleCover,
+    AutoResizeTextarea,
 } from "@/components/CircleElements";
+import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId, doc } from "firebase/firestore";
+import db from "@/components/Firebase";
 import { routes, openSubcircle, openCircle } from "@/components/Navigation";
 import { HiClock } from "react-icons/hi";
 import { RiMapPinFill } from "react-icons/ri";
@@ -96,6 +99,8 @@ import { circleAtom } from "./Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoMdSend } from "react-icons/io";
+import useWindowDimensions from "./useWindowDimensions";
+import { CircleMention } from "@/components/CircleSearch";
 //#endregion
 
 const sliderSettings = {
@@ -108,35 +113,39 @@ const sliderSettings = {
     arrows: true,
 };
 
-export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
+export const LinkOrBox = ({ circle, useLink, children }) => {
     const [currentCircle] = useAtom(circleAtom);
     const navigate = useNavigateNoUpdates();
 
-    const LinkOrBox = ({ children }) => {
-        return useLink ? (
-            <Link
-                href={routes.subcircle(currentCircle, circle)}
-                onClick={(e) => {
-                    e.preventDefault();
-                    openSubcircle(navigate, currentCircle, circle);
-                }}
-            >
-                {children}
-            </Link>
-        ) : (
-            <Box
-                cursor="pointer"
-                onClick={() => {
-                    openSubcircle(navigate, currentCircle, circle);
-                }}
-            >
-                {children}
-            </Box>
-        );
-    };
+    return useLink ? (
+        <Link
+            href={routes.subcircle(currentCircle, circle)}
+            onClick={(e) => {
+                e.preventDefault();
+                openSubcircle(navigate, currentCircle, circle);
+            }}
+        >
+            {children}
+        </Link>
+    ) : (
+        <Box
+            cursor="pointer"
+            onClick={() => {
+                openSubcircle(navigate, currentCircle, circle);
+            }}
+        >
+            {children}
+        </Box>
+    );
+};
+
+export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
+    useEffect(() => {
+        log("CircleNameLink.useEffect 1", -1);
+    });
 
     return (
-        <LinkOrBox>
+        <LinkOrBox circle={circle} useLink={useLink}>
             <Text {...props}>{circle.name}</Text>
         </LinkOrBox>
     );
@@ -144,9 +153,119 @@ export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
 
 export const CommentInput = ({ circle, parentComment, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
+    const textAreaRef = useRef();
+    const { windowWidth, windowHeight } = useWindowDimensions();
+    const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
+    const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
+    const [comment, setComment] = useState("");
+    const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input text
+
+    const handleMessageChange = (e) => {
+        setComment(e.target.value);
+
+        if (isMentioning) {
+            const queryMatch = e.target.value.match(/(?:^|\s)@(\w*)$/); // This regex matches "@" only if it's at the start or after a space
+            if (queryMatch) {
+                setMentionQuery(queryMatch[1]);
+            }
+        }
+
+        if (e.target.value.match(/(?:^|\s)@$/)) {
+            setIsMentioning(true);
+        } else if (e.target.value.endsWith(" ") || e.target.value.endsWith("\n")) {
+            setIsMentioning(false);
+        }
+    };
+
+    const handleMessageKeyDown = async (e) => {
+        if (!isMobile && e.keyCode === 13 && !e.shiftKey) {
+            e.preventDefault();
+            let commentValue = comment;
+            setComment("");
+
+            // get formatted comment
+            let transformedComment = commentValue;
+            mentionsList.forEach((mention) => {
+                const markdownLink = `[${mention.name.slice(1)}](codo.earth/circles/${mention.id})`; // remove the '@' from the mention name
+                transformedComment = transformedComment.replace(mention.name, markdownLink);
+            });
+
+            // add comment to list of comments
+            let req = {
+                comment: transformedComment,
+            };
+            let newComment = {
+                creator: user,
+                content: transformedComment,
+                created_at: Timestamp.now(),
+            };
+            if (parentComment) {
+                newComment.parent_comment_id = parentComment.id;
+                req.parent_comment_id = parentComment.id;
+            }
+
+            // publish comment
+            let postCommentResult = null;
+            try {
+                postCommentResult = await axios.post(`/circles/${circle.id}/comments`, req);
+            } catch (err) {
+                console.error(err);
+            }
+        } else {
+            return;
+        }
+    };
+
+    const onCommentBlur = () => {};
+
+    const onMention = (mentionedCircle) => {
+        log("mentioning circle: " + mentionedCircle.name, 0, true);
+        const updatedComment = comment.replace(`@${mentionQuery}`, `@${mentionedCircle.name} `);
+        setComment(updatedComment);
+
+        // add the mentioned circle to the mentions list
+        const newMention = {
+            id: mentionedCircle.objectID,
+            name: `@${mentionedCircle.name}`,
+            picture: mentionedCircle.picture,
+        };
+
+        setMentionsList((prevMentions) => [...prevMentions, newMention]);
+
+        setIsMentioning(false);
+        setMentionQuery("");
+
+        // Set focus back to the textarea and set cursor position
+        const newPosition = updatedComment.length; // Get the length of the updated message
+        textAreaRef.current.focus(); // Focus the textarea
+        textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
+    };
+
     return (
-        <Flex flexDirection="row" align="center" marginBottom="10px" {...props}>
-            <Textarea placeholder="Write a comment..." />
+        <Flex flexDirection="row" align="center" marginBottom="10px" position="relative" {...props}>
+            {isMentioning && (
+                <CircleMention onMention={onMention} query={mentionQuery} position="absolute" bottom="50px" />
+            )}
+            <AutoResizeTextarea
+                ref={textAreaRef}
+                id="message"
+                className="messageInput"
+                value={comment}
+                onChange={handleMessageChange}
+                onKeyDown={handleMessageKeyDown}
+                resize="none"
+                maxLength="65000"
+                rows="1"
+                borderRadius="30px"
+                maxH={`${Math.max(windowHeight - 300, 60)}px`}
+                placeholder={user?.id ? "Write a comment..." : "Log in to comment"}
+                onBlur={onCommentBlur}
+                disabled={user?.id ? false : true}
+                backgroundColor="white"
+                fontSize="14px"
+            />
+
             {isMobile && (
                 <Flex flexDirection="row" justifyContent="right" marginTop="10px">
                     <IconButton icon={<IoMdSend />} />
@@ -160,34 +279,45 @@ export const Comments = ({ circle, isPreview, ...props }) => {
     const [currentCircle] = useAtom(circleAtom);
     const [comments, setComments] = useState([]);
     const [user] = useAtom(userAtom);
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
 
     useEffect(() => {
+        log("Comments.useEffect 1", -1);
+    });
+
+    useEffect(() => {
+        if (!circle) return;
         if (isPreview) {
             if (circle.highlighted_comment) {
                 setComments([circle.highlighted_comment]);
             }
-
-            // TODO for now add dummy comment
-            circle.comments_count = 10;
-            setComments([
-                {
-                    id: "1",
-                    creator: user,
-                    content:
-                        "This is a comment. It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
-                },
-            ]);
         } else {
-            // TODO subscribe to comments
-            setComments(circle.comments);
+            // subscribe to comments
+            const q = query(collection(db, "comments"), where("circle_id", "==", circle.id));
+            setIsLoadingComments(true);
+            const unsubscribeGetComments = onSnapshot(q, (snap) => {
+                const newComments = snap.docs.map((doc) => {
+                    return {
+                        id: doc.id,
+                        ...doc.data(),
+                    };
+                });
+                setComments(newComments);
+                setIsLoadingComments(false);
+            });
+
+            return () => {
+                if (unsubscribeGetComments) {
+                    unsubscribeGetComments();
+                }
+            };
         }
-    });
+    }, [isPreview, circle?.highlighted_comment]);
 
     return (
         <Flex flexDirection="column" {...props} marginLeft="10px" marginRight="10px">
             {/* if preview show link "Show more comments" if there are more comments */}
-            {isPreview > 1 && (
-                // TODO add: "&& circle.comments_count" after testing is done
+            {isPreview && circle.comments > 1 && (
                 <Link
                     href={routes.subcircle(currentCircle, circle)}
                     onClick={(e) => {
@@ -197,7 +327,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
                     target="_blank"
                     marginBottom="10px"
                 >
-                    <Text fontSize="14px" fontWeight="700">
+                    <Text fontSize="14px" fontWeight="700" color="#6d6d6d" textAlign="left">
                         Show more comments
                     </Text>
                 </Link>
@@ -213,6 +343,10 @@ export const Comments = ({ circle, isPreview, ...props }) => {
 };
 
 export const Comment = ({ comment, ...props }) => {
+    useEffect(() => {
+        log("Comment.useEffect 1", -1);
+    });
+
     return (
         <Flex flexDirection="column" {...props}>
             <Flex flexDirection="row" align="top">
@@ -221,7 +355,7 @@ export const Comment = ({ comment, ...props }) => {
                 </Box>
                 <Flex
                     flexDirection="column"
-                    align="left"
+                    align="start"
                     backgroundColor="#f1f1f1"
                     marginLeft="5px"
                     borderRadius="10px"
@@ -231,8 +365,10 @@ export const Comment = ({ comment, ...props }) => {
                     {/* <Text fontSize="14px" fontWeight="700">
                         {comment.creator.name}
                     </Text> */}
-                    <Text fontSize="14px" fontWeight="400">
-                        {comment.content}
+                    <Text textAlign="left" fontSize="14px" fontWeight="400">
+                        <CircleRichText mentions={comment.mentions} mentionsFontSize="14px">
+                            {comment.content}
+                        </CircleRichText>
                     </Text>
                 </Flex>
             </Flex>
@@ -566,6 +702,10 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
     const [formattedContent, setFormattedContent] = useState(item?.content);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
+    useEffect(() => {
+        log("CircleListItem.useEffect 1", -1);
+    });
+
     const onChatToggle = (showChat) => {
         setShowChat(showChat);
     };
@@ -683,13 +823,20 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                                 <CircleTags circle={item} size="tiny" inSelect={inSelect} />
                             </Box>
 
-                            {!inSelect && (
+                            {!inSelect && (item.type === "post" || item.type === "event") && (
                                 <>
-                                    <Box paddingTop="2px" marginLeft={contentMarginPx} marginBottom="5px">
+                                    <Box
+                                        paddingTop="2px"
+                                        marginLeft={contentMarginPx}
+                                        marginRight={contentMarginPx}
+                                        marginBottom="5px"
+                                    >
                                         <CircleActions circle={item} onChatToggle={onChatToggle} />
                                     </Box>
-                                    <Divider marginTop="2px" paddingLeft="10px" paddingRight="10px" />
-                                    <Comments circle={item} isPreview={true} marginTop="10px" />
+                                    <Flex marginTop="2px" paddingLeft="10px" paddingRight="10px">
+                                        <Divider />
+                                    </Flex>
+                                    <Comments circle={item} isPreview={false} marginTop="10px" />
                                 </>
                             )}
                         </VStack>
@@ -828,7 +975,6 @@ export const LikeButton = ({ circle }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [likes, setLikes] = useState(0);
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const recentLikers = [{ name: "Patrik Opacic" }, { name: "Test Testsson" }];
     const [fetchingLikes, setFetchingLikes] = useState(false);
     const [likers, setLikers] = useState([]);
 
@@ -928,7 +1074,7 @@ export const LikeButton = ({ circle }) => {
                             <PopoverBody>
                                 <Flex flexDirection="column">
                                     <Text fontSize="14px" fontWeight="700" color="white">
-                                        Like
+                                        Likes
                                     </Text>
                                     {circle.like_preview_list?.map((liker, index) => (
                                         <Text key={index} fontSize="12px" color="white">
@@ -977,6 +1123,75 @@ export const LikeButton = ({ circle }) => {
     );
 };
 
+export const CommentsButton = ({ circle }) => {
+    const [isMobile] = useAtom(isMobileAtom);
+    const iconSize = 20;
+    const iconSizePx = iconSize + "px";
+    const [comments, setComments] = useState(0);
+
+    useEffect(() => {
+        setComments(circle?.comments);
+    }, [circle?.comments]);
+
+    const openComments = () => {
+        // open comments
+    };
+
+    return (
+        <>
+            <Flex
+                position="relative"
+                backgroundColor="#ffffff"
+                borderRadius="50%"
+                justifyContent="center"
+                alignItems="center"
+                cursor="pointer"
+                onClick={openComments}
+            >
+                <Icon as={BsChat} width="16px" height="16px" marginBottom="2px" color={"#333"} />
+            </Flex>
+            {comments > 0 && (
+                <Popover trigger="hover" placement="bottom">
+                    <PopoverTrigger>
+                        <Text
+                            fontSize="14px"
+                            fontWeight="400"
+                            color="#333"
+                            marginLeft="5px"
+                            onClick={openComments}
+                            cursor="pointer"
+                        >
+                            {comments}
+                        </Text>
+                    </PopoverTrigger>
+                    <Portal>
+                        <PopoverContent bg="#333" border="none" width="auto">
+                            <PopoverArrow bg="#333" border="none" />
+                            <PopoverBody>
+                                <Flex flexDirection="column">
+                                    <Text fontSize="14px" fontWeight="700" color="white">
+                                        Comments
+                                    </Text>
+                                    {circle.commenters_preview_list?.map((commenter, index) => (
+                                        <Text key={index} fontSize="12px" color="white">
+                                            {commenter.name}
+                                        </Text>
+                                    ))}
+                                    {circle.commenters_preview_list?.length < circle?.comments && (
+                                        <Text fontSize="12px" color="white">
+                                            and {circle?.comments - circle.commenters_preview_list?.length} more ...
+                                        </Text>
+                                    )}
+                                </Flex>
+                            </PopoverBody>
+                        </PopoverContent>
+                    </Portal>
+                </Popover>
+            )}
+        </>
+    );
+};
+
 export const CircleActions = ({ circle, onCommentToggle, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [userData] = useAtom(userDataAtom);
@@ -986,6 +1201,8 @@ export const CircleActions = ({ circle, onCommentToggle, ...props }) => {
     return (
         <Flex position="relative" align="center" flexDirection="row">
             <LikeButton circle={circle} />
+            <Box flexGrow="1"></Box>
+            <CommentsButton circle={circle} />
             {/* <ShareButtonMenu /> */}
             {/* <FavoriteButton />
             {isConnected(userData, circle.id, ["connected_mutually_to"]) && <NotificationsBell />}

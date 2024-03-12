@@ -28,15 +28,13 @@ import {
     PopoverArrow,
     useToast,
 } from "@chakra-ui/react";
-// import { Textarea } from "@chakra-ui/core";
-import ResizeTextarea from "react-textarea-autosize";
 import useWindowDimensions from "@/components/useWindowDimensions";
 import i18n from "@/i18n/Localization";
 import db from "@/components/Firebase";
 import axios from "axios";
 import { getDayAndMonth, datesAreOnSameDay, log, isConnected, getSetId } from "@/components/Helpers";
 import { collection, onSnapshot, query, where, orderBy, limit, Timestamp, documentId, doc } from "firebase/firestore";
-import { CirclePicture, MetaData, NewSessionButton } from "@/components/CircleElements";
+import { CirclePicture, MetaData, NewSessionButton, AutoResizeTextarea } from "@/components/CircleElements";
 import { HiOutlineEmojiHappy } from "react-icons/hi";
 import { IoMdSend } from "react-icons/io";
 import { AiOutlineUser } from "react-icons/ai";
@@ -120,21 +118,6 @@ const getRelevantCircle = (user, circle) => {
         return circle;
     }
 };
-
-export const AutoResizeTextarea = React.forwardRef((props, ref) => {
-    return (
-        <Textarea
-            minH="unset"
-            overflow="hidden"
-            w="100%"
-            resize="none"
-            ref={ref}
-            minRows={1}
-            as={ResizeTextarea}
-            {...props}
-        />
-    );
-});
 
 export const CircleChatWidget = () => {
     const [circle] = useAtom(circleAtom);
