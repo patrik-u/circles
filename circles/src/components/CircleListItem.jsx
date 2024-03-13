@@ -151,6 +151,88 @@ export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
     );
 };
 
+export const CommentLikeButton = ({ comment, ...props }) => {
+    const [user] = useAtom(userAtom);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+
+    if (!comment?.likers || comment.likers?.length <= 0) return null;
+
+    return (
+        <Flex
+            flexDirection="row"
+            backgroundColor="white"
+            borderRadius="50px"
+            boxShadow="0px 0px 5px 0px rgba(0,0,0,0.1)"
+            align="center"
+            cursor="pointer"
+            onClick={onOpen}
+            {...props}
+        >
+            <Popover trigger="hover" placement="bottom">
+                <PopoverTrigger>
+                    <Flex flexDirection="row" align="center">
+                        <Icon
+                            as={AiFillHeart}
+                            width="16px"
+                            height="16px"
+                            color={"#ff4772"}
+                            marginLeft="2px"
+                            marginRight="2px"
+                        />
+                        {comment.likers.length > 1 && (
+                            <Text fontSize="10px" fontWeight="400" color="#333" marginRight="6px" cursor="pointer">
+                                {comment.likers.length}
+                            </Text>
+                        )}
+                    </Flex>
+                </PopoverTrigger>
+                <Portal>
+                    <PopoverContent bg="#333" border="none" width="auto">
+                        <PopoverArrow bg="#333" border="none" />
+                        <PopoverBody>
+                            <Flex flexDirection="column">
+                                <Text fontSize="14px" fontWeight="700" color="white">
+                                    Likes
+                                </Text>
+                                {comment.likers.slice(0, 15).map((liker, index) => (
+                                    <Text key={index} fontSize="12px" color="white">
+                                        {liker.name}
+                                    </Text>
+                                ))}
+                                {comment.likers.length > 15 && (
+                                    <Text fontSize="12px" color="white">
+                                        and {comment.likers.length - 15} more ...
+                                    </Text>
+                                )}
+                            </Flex>
+                        </PopoverBody>
+                    </PopoverContent>
+                </Portal>
+            </Popover>
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Likes</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Flex flexDirection="column" marginBottom="20px">
+                            {comment.likers?.map((liker, index) => (
+                                <CircleListItem
+                                    key={liker.id}
+                                    item={liker}
+                                    asCard={false}
+                                    isCompact={true}
+                                    hasPopover={false}
+                                />
+                            ))}
+                        </Flex>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+        </Flex>
+    );
+};
+
 export const CommentInput = ({
     circle,
     parentComment,
@@ -340,6 +422,26 @@ export const Comment = ({ comment, circle, ...props }) => {
     const [showSubcomments, setShowSubcomments] = useState(false);
     const [isHovering, setIsHovering] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [user] = useAtom(userAtom);
+    const [isLiked, setIsLiked] = useState(comment.likers?.find((x) => x.id === user?.id));
+    const containerRef = useRef();
+    const [containerWidth, setContainerWidth] = useState(100);
+    const isCramped = useMemo(() => containerWidth < 200, [containerWidth]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                setContainerWidth(containerRef.current.offsetWidth);
+            }
+        };
+
+        // Call resize function on component mount and add event listener for future resizes
+        handleResize();
+        window.addEventListener("resize", handleResize);
+
+        // Cleanup event listener on component unmount
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const displayText = useMemo(() => {
         if (!comment.parent_comment) {
@@ -352,7 +454,19 @@ export const Comment = ({ comment, circle, ...props }) => {
         setIsReplying(true);
     };
 
-    const onLikeClick = () => {};
+    const onLikeClick = () => {
+        // implement liking of comments
+        let likeValue = !isLiked;
+        setIsLiked(likeValue);
+
+        // update comment in database
+        axios
+            .put(`/comments/${comment.id}/like`, { like: likeValue })
+            .then((likeCommentResult) => {})
+            .catch((error) => {
+                console.error(error);
+            });
+    };
 
     useEffect(() => {
         log("Comment.useEffect 1", -1);
@@ -402,12 +516,14 @@ export const Comment = ({ comment, circle, ...props }) => {
                     <>
                         <Flex flexDirection="column">
                             <Flex
+                                ref={containerRef}
                                 flexDirection="column"
                                 align="start"
                                 backgroundColor="#f1f1f1"
                                 marginLeft="5px"
                                 borderRadius="10px"
                                 padding="5px 10px 5px 10px"
+                                position="relative"
                             >
                                 <CircleNameLink
                                     circle={comment.creator}
@@ -421,21 +537,34 @@ export const Comment = ({ comment, circle, ...props }) => {
                                         {displayText}
                                     </CircleRichText>
                                 </Box>
+                                <CommentLikeButton
+                                    comment={comment}
+                                    position="absolute"
+                                    bottom={isCramped ? "-2px" : "-10px"}
+                                    right={isCramped ? "-12px" : "5px"}
+                                />
                             </Flex>
                             <Flex flexDirection="row" marginLeft="15px" marginTop="2px">
                                 <Text fontSize="12px" color="#6f6f6f">
                                     {getPostTime(comment)}
                                 </Text>
-                                <Link
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        onLikeClick();
-                                    }}
-                                >
-                                    <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
-                                        Like
-                                    </Text>
-                                </Link>
+                                {comment?.creator?.id !== user?.id && (
+                                    <Link
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onLikeClick();
+                                        }}
+                                    >
+                                        <Text
+                                            fontSize="12px"
+                                            color={isLiked ? "#ff4772" : "#6f6f6f"}
+                                            fontWeight="700"
+                                            marginLeft="15px"
+                                        >
+                                            Like
+                                        </Text>
+                                    </Link>
+                                )}
                                 <Link
                                     onClick={(e) => {
                                         e.preventDefault();

@@ -2015,7 +2015,7 @@ app.put("/circles/:id/chunks", auth, async (req, res) => {
     }
 });
 
-// post circle comment
+// post comment
 app.post("/circles/:id/comments", auth, async (req, res) => {
     try {
         const date = new Date();
@@ -2154,7 +2154,7 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
     }
 });
 
-// update circle comment
+// update comment
 app.put("/comments/:id", auth, async (req, res) => {
     const date = new Date();
     var commentId = req.params.id;
@@ -2227,7 +2227,7 @@ const updateHighlightedComment = async (circleId) => {
     await circleRef.update(circleData);
 };
 
-// delete circle comment
+// delete comment
 app.delete("/comments/:id", auth, async (req, res) => {
     const commentId = req.params.id;
     const authCallerId = req.user.user_id;
@@ -2282,6 +2282,71 @@ app.delete("/comments/:id", auth, async (req, res) => {
         return res.json({ message: "comment deleted" });
     } catch (error) {
         functions.logger.error("Error while deleting comment:", error);
+        return res.json({ error: error });
+    }
+});
+
+// add/remove comment like
+app.put("/comments/:id/like", auth, async (req, res) => {
+    const commentId = req.params.id;
+    const authCallerId = req.user.user_id;
+    const like = req.body.like;
+
+    try {
+        const comment = await getComment(commentId);
+        if (!comment) {
+            console.log("1");
+            return res.json({ error: "comment not found" });
+        }
+
+        // check if user is allowed to like comment
+        if (comment.creator.id === authCallerId) {
+            console.log("2");
+            return res.json({ error: "user cannot like own comment" });
+        }
+
+        // user is allowed to like comment if the parent circle is public or user is member of circle
+        let parentCircleId = comment.parent_circle_id;
+        if (parentCircleId) {
+            let parentCircle = await getCircle(parentCircleId);
+            if (!parentCircle.is_public) {
+                let isAuthorized = await isMemberOf(authCallerId, parentCircle.id);
+                if (!isAuthorized) {
+                    console.log("3");
+                    return res.status(403).json({ error: "unauthorized" });
+                }
+            }
+        } else {
+            // parent circle is global and thus public
+        }
+
+        let user = await getCircle(authCallerId);
+
+        // check if user has already liked comment
+        let userLiked = false;
+        if (comment.likers) {
+            userLiked = comment.likers.some((x) => x.id === authCallerId);
+        }
+
+        let likers = comment.likers ?? [];
+        if (like && !userLiked) {
+            // add like
+            let likeObj = { id: authCallerId, name: user.name };
+            if (user.picture) {
+                likeObj.picture = user.picture;
+            }
+            likers.push(likeObj);
+
+            await updateComment(commentId, { likers, likes: admin.firestore.FieldValue.increment(1) });
+        } else if (!like && userLiked) {
+            // remove like
+            likers = likers.filter((x) => x.id !== authCallerId);
+            await updateComment(commentId, { likers, likes: admin.firestore.FieldValue.increment(-1) });
+        }
+
+        return res.json({ message: "like updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating comment like:", error);
         return res.json({ error: error });
     }
 });
