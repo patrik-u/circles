@@ -689,11 +689,11 @@ export const CircleLink = ({ node, href, mentions, children, fontSize = "15px", 
                         onClick={() => openAboutCircle(circle, setToggleAbout)}
                     >
                         {circleTitle && (
-                            <Text fontSize={fontSize} marginRight="5px">
+                            <Text fontSize={fontSize} marginRight="5px" fontWeight="700">
                                 {circleTitle}
                             </Text>
                         )}
-                        <Text fontSize={fontSize} color="blue">
+                        <Text fontSize={fontSize} fontWeight="700">
                             {circle.name}
                         </Text>
                     </Flex>

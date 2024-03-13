@@ -142,7 +142,7 @@ export const LinkOrBox = ({ circle, useLink, children }) => {
 export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
     useEffect(() => {
         log("CircleNameLink.useEffect 1", -1);
-    });
+    }, []);
 
     return (
         <LinkOrBox circle={circle} useLink={useLink}>
@@ -206,13 +206,14 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
             }
 
             // publish comment
-            let postCommentResult = null;
-            try {
-                postCommentResult = await axios.post(`/circles/${circle.id}/comments`, req);
-            } catch (err) {
-                console.error(err);
-            }
-            if (!onPublish) {
+            axios
+                .post(`/circles/${circle.id}/comments`, req)
+                .then((postCommentResult) => {})
+                .catch((error) => {
+                    console.error(error);
+                });
+
+            if (onPublish) {
                 onPublish();
             }
         } else {
@@ -290,6 +291,12 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
 export const Comment = ({ comment, circle, ...props }) => {
     const [isReplying, setIsReplying] = useState(false);
     const [showSubcomments, setShowSubcomments] = useState(false);
+    const displayText = useMemo(() => {
+        if (!comment.parent_comment) {
+            return comment.content;
+        }
+        return `[${comment.parent_comment.creator.name}](codo.earth/circles/${comment.parent_comment.creator.id}) ${comment.content}`;
+    }, [comment.content, comment.parent_comment]);
 
     const onReplyClick = () => {
         setIsReplying(true);
@@ -299,7 +306,20 @@ export const Comment = ({ comment, circle, ...props }) => {
 
     useEffect(() => {
         log("Comment.useEffect 1", -1);
-    });
+    }, []);
+
+    const getMentions = (comment) => {
+        let mentions = [];
+        if (comment.parent_comment) {
+            mentions.push(comment.parent_comment.creator);
+        }
+        if (comment.mentions) {
+            comment.mentions.forEach((mention) => {
+                mentions.push(mention);
+            });
+        }
+        return mentions;
+    };
 
     return (
         <Flex flexDirection="column" {...props}>
@@ -321,8 +341,8 @@ export const Comment = ({ comment, circle, ...props }) => {
                         {comment.creator.name}
                     </Text> */}
                         <Text textAlign="left" fontSize="14px" fontWeight="400">
-                            <CircleRichText mentions={comment.mentions} mentionsFontSize="14px">
-                                {comment.content}
+                            <CircleRichText mentions={getMentions(comment)} mentionsFontSize="14px">
+                                {displayText}
                             </CircleRichText>
                         </Text>
                     </Flex>
@@ -399,7 +419,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
 
     useEffect(() => {
         log("Comments.useEffect 1", -1);
-    });
+    }, []);
 
     useEffect(() => {
         if (!circle) return;
@@ -411,12 +431,24 @@ export const Comments = ({ circle, isPreview, ...props }) => {
             // subscribe to comments
             const q = query(collection(db, "comments"), where("circle_id", "==", circle.id));
             const unsubscribeGetComments = onSnapshot(q, (snap) => {
-                const newComments = snap.docs.map((doc) => {
+                let newComments = snap.docs.map((doc) => {
                     return {
                         id: doc.id,
                         ...doc.data(),
                     };
                 });
+
+                // create a lookup object for comment IDs to comment objects
+                const commentsLookup = newComments.reduce((acc, comment) => {
+                    acc[comment.id] = comment;
+                    return acc;
+                }, {});
+
+                // augment comments with their parent_comment object
+                newComments = newComments.map((comment) => ({
+                    ...comment,
+                    parent_comment: commentsLookup[comment.parent_comment_id] || null,
+                }));
 
                 // filter root level comments and sort by likes
                 const rootComments = newComments.filter((c) => !c.parent_comment_id).sort((a, b) => b.likes - a.likes);
@@ -812,7 +844,7 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
 
     useEffect(() => {
         log("CircleListItem.useEffect 1", -1);
-    });
+    }, []);
 
     const onChatToggle = (showChat) => {
         setShowChat(showChat);

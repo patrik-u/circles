@@ -2013,11 +2013,17 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
             return res.json({ error: "comments can only be posted on posts" });
         }
 
-        if (!circle.is_public) {
-            let isAuthorized = await isMemberOf(authCallerId, circleId);
-            if (!isAuthorized) {
-                return res.status(403).json({ error: "unauthorized" });
+        let parentCircleId = circle.parent_circle?.id;
+        if (parentCircleId) {
+            let parentCircle = await getCircle(parentCircleId);
+            if (!parentCircle.is_public) {
+                let isAuthorized = await isMemberOf(authCallerId, parentCircle.id);
+                if (!isAuthorized) {
+                    return res.status(403).json({ error: "unauthorized" });
+                }
             }
+        } else {
+            // parent circle is global and thus public
         }
 
         const user = await getCircle(authCallerId);
@@ -2030,7 +2036,7 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
         if (parent_comment_id) {
             newComment.parent_comment_id = parent_comment_id;
         }
-        newComment.parent_circle_id = circle.parent_circle?.id ?? "global";
+        newComment.parent_circle_id = parentCircleId ?? "global";
 
         // does comment contain links?
         let links = linkify.match(comment);
