@@ -901,6 +901,13 @@ const deleteCircle = async (id) => {
     } catch (error) {
         console.log(error);
     }
+
+    // delete comments
+    const commentsSnapshot = await db.collection("comments").where("circle_id", "==", id).get();
+    commentsSnapshot.forEach(async (commentDoc) => {
+        const docRef = db.collection("comments").doc(commentDoc.id);
+        await docRef.delete();
+    });
 };
 
 // deletes chat message
@@ -2057,6 +2064,9 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
         };
         if (parent_comment_id) {
             newComment.parent_comment_id = parent_comment_id;
+            newComment.is_root = false;
+        } else {
+            newComment.is_root = true;
         }
         newComment.parent_circle_id = parentCircleId ?? "global";
 
@@ -2189,33 +2199,91 @@ app.put("/comments/:id", auth, async (req, res) => {
     }
 });
 
+const updateHighlightedComment = async (circleId) => {
+    // get earliest comment with highest like count
+    let highlightedComment = null;
+    let comments = await db
+        .collection("comments")
+        .where("circle_id", "==", circleId)
+        .where("is_root", "==", true)
+        .orderBy("likes", "desc")
+        .orderBy("created_at", "asc")
+        .limit(1)
+        .get();
+    if (comments.docs.length > 0) {
+        highlightedComment = comments.docs[0].data();
+        highlightedComment.id = comments.docs[0].id;
+    }
+
+    // update circle with highlighted comment
+    const circleRef = db.collection("circles").doc(circleId);
+    let circleData = {};
+    if (highlightedComment) {
+        circleData.highlighted_comment = highlightedComment;
+    } else {
+        circleData.highlighted_comment = admin.firestore.FieldValue.delete();
+    }
+
+    await circleRef.update(circleData);
+};
+
 // delete circle comment
-app.delete("/comments/:commentId", auth, async (req, res) => {
-    // const messageId = req.params.id;
-    // const authCallerId = req.user.user_id;
-    // try {
-    //     const message = await getChatMessage(messageId);
-    //     if (!message) {
-    //         return res.json({ error: "chat message not found" });
-    //     }
-    //     if (message.user.id !== authCallerId) {
-    //         return res.json({
-    //             error: "chat message can only be deleted by owner",
-    //         });
-    //     }
-    //     // delete chat message
-    //     await deleteChatMessage(messageId);
-    //     // add update to circle that new chat message has been sent
-    //     let updatedCircle = {
-    //         messages: admin.firestore.FieldValue.increment(-1),
-    //     };
-    //     // update circle and propagate changes
-    //     updateCircle(message.circle_id, updatedCircle);
-    //     return res.json({ message: "message deleted" });
-    // } catch (error) {
-    //     functions.logger.error("Error while deleting chat message:", error);
-    //     return res.json({ error: error });
-    // }
+app.delete("/comments/:id", auth, async (req, res) => {
+    const commentId = req.params.id;
+    const authCallerId = req.user.user_id;
+    try {
+        const comment = await getComment(commentId);
+        if (!comment) {
+            return res.json({ error: "comment not found" });
+        }
+        if (comment.creator.id !== authCallerId) {
+            return res.json({
+                error: "comment can only be deleted by owner",
+            });
+        }
+
+        // see if it has any child comments
+        let childComments = await db.collection("comments").where("parent_comment_id", "==", commentId).get();
+        if (childComments.docs.length > 0) {
+            // mark comment as deleted and erase content
+            await updateComment(commentId, { deleted_at: new Date(), content: "", creator: {} });
+        } else {
+            // delete comment
+            const commentRef = db.collection("comments").doc(commentId);
+
+            // delete chat message
+            await commentRef.delete();
+        }
+
+        // update number of comments in circle, highlighted comment and comment user preview list
+        let circleId = comment.circle_id;
+        let circle = await getCircle(circleId);
+        let circleData = { comments: admin.firestore.FieldValue.increment(-1) };
+
+        let commenters_preview_list = circle.commenters_preview_list ?? [];
+        let previewListUpdated = false;
+
+        // remove user from commenters preview list if they are in it and there are no other comments from user
+        let userComments = await db.collection("comments").where("creator.id", "==", authCallerId).get();
+        if (userComments.docs.length <= 0 && commenters_preview_list.some((x) => x.id === authCallerId)) {
+            commenters_preview_list = commenters_preview_list.filter((x) => x.id !== authCallerId);
+            previewListUpdated = true;
+        }
+
+        if (previewListUpdated) {
+            circleData.commenters_preview_list = commenters_preview_list;
+        }
+
+        const circleRef = db.collection("circles").doc(circleId);
+        await circleRef.update(circleData);
+
+        await updateHighlightedComment(circleId);
+
+        return res.json({ message: "comment deleted" });
+    } catch (error) {
+        functions.logger.error("Error while deleting comment:", error);
+        return res.json({ error: error });
+    }
 });
 
 // get circles relevant to circle

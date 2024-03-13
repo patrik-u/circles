@@ -189,6 +189,10 @@ export const CirclePostForm = ({ isUpdateForm, circle, isGuideForm, onNext, onUp
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input text
 
+    useEffect(() => {
+        textAreaRef.current.focus();
+    }, []);
+
     const handleFileChange = (newFiles) => {
         setMediaFiles((prevFiles) => [...prevFiles, ...newFiles]);
     };

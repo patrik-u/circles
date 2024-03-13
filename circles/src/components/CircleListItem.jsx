@@ -722,42 +722,11 @@ export const CommentDotsMenu = ({ comment, onEditComment, isHovering, ...props }
         // delete comment
         try {
             onClose();
+
             // delete circle
             let result = null;
-            try {
-                result = await axios.delete(`/circles/${comment.circle_id}/${comment.id}`);
-            } catch (err) {
-                console.log(err);
-            }
-
-            if (!result || result.data?.error) {
-                toast({
-                    title: `Comment couldn't be deleted`,
-                    description: result?.data?.error,
-                    status: "error",
-                    position: "top",
-                    duration: 4500,
-                    isClosable: true,
-                });
-            } else {
-                toast({
-                    title: `Comment has been deleted`,
-                    status: "success",
-                    position: "top",
-                    duration: 4500,
-                    isClosable: true,
-                });
-            }
-        } catch (error) {
-            toast({
-                title: `Comment couldn't be deleted`,
-                description: error,
-                status: "error",
-                position: "top",
-                duration: 4500,
-                isClosable: true,
-            });
-        }
+            result = await axios.delete(`/comments/${comment.id}`);
+        } catch {}
     };
 
     return (
