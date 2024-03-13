@@ -151,15 +151,62 @@ export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
     );
 };
 
-export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => {
+export const CommentInput = ({
+    circle,
+    parentComment,
+    isEditing = false,
+    editedComment,
+    onCancelEdit,
+    onPublish,
+    focusOnMount = false,
+    ...props
+}) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const textAreaRef = useRef();
     const { windowWidth, windowHeight } = useWindowDimensions();
     const [isMentioning, setIsMentioning] = useState(false); // is user currently mentioning someone
     const [mentionQuery, setMentionQuery] = useState(""); // current mention query in user input message
-    const [comment, setComment] = useState("");
+    const [comment, setComment] = useState(isEditing && editedComment?.content ? editedComment.content : "");
     const [mentionsList, setMentionsList] = useState([]); // list of mentions in user input text
+
+    const upsertComment = async (commentValue) => {
+        // get formatted comment
+        let transformedComment = commentValue;
+        mentionsList.forEach((mention) => {
+            const markdownLink = `[${mention.name.slice(1)}](codo.earth/circles/${mention.id})`; // remove the '@' from the mention name
+            transformedComment = transformedComment.replace(mention.name, markdownLink);
+        });
+
+        // add comment to list of comments
+        let req = {
+            comment: transformedComment,
+        };
+        if (parentComment) {
+            req.parent_comment_id = parentComment.id;
+        }
+
+        // publish comment
+        if (isEditing) {
+            axios
+                .put(`/comments/${editedComment.id}`, req)
+                .then((postCommentResult) => {})
+                .catch((error) => {
+                    console.error(error);
+                });
+        } else {
+            axios
+                .post(`/circles/${circle.id}/comments`, req)
+                .then((postCommentResult) => {})
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+
+        if (onPublish) {
+            onPublish();
+        }
+    };
 
     const handleMessageChange = (e) => {
         setComment(e.target.value);
@@ -179,43 +226,18 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
     };
 
     const handleMessageKeyDown = async (e) => {
+        // if escape and editing we want to call onCancelEdit
+        if (e.keyCode === 27 && onCancelEdit) {
+            e.preventDefault();
+            onCancelEdit();
+        }
+
         if (!isMobile && e.keyCode === 13 && !e.shiftKey) {
             e.preventDefault();
             let commentValue = comment;
             setComment("");
 
-            // get formatted comment
-            let transformedComment = commentValue;
-            mentionsList.forEach((mention) => {
-                const markdownLink = `[${mention.name.slice(1)}](codo.earth/circles/${mention.id})`; // remove the '@' from the mention name
-                transformedComment = transformedComment.replace(mention.name, markdownLink);
-            });
-
-            // add comment to list of comments
-            let req = {
-                comment: transformedComment,
-            };
-            let newComment = {
-                creator: user,
-                content: transformedComment,
-                created_at: Timestamp.now(),
-            };
-            if (parentComment) {
-                newComment.parent_comment_id = parentComment.id;
-                req.parent_comment_id = parentComment.id;
-            }
-
-            // publish comment
-            axios
-                .post(`/circles/${circle.id}/comments`, req)
-                .then((postCommentResult) => {})
-                .catch((error) => {
-                    console.error(error);
-                });
-
-            if (onPublish) {
-                onPublish();
-            }
+            await upsertComment(commentValue);
         } else {
             return;
         }
@@ -246,6 +268,15 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
         textAreaRef.current.setSelectionRange(newPosition, newPosition); // Set the cursor position to the end of the textarea content
     };
 
+    useEffect(() => {
+        if (!focusOnMount) return;
+
+        // focus the text area when the component mounts
+        if (textAreaRef.current) {
+            textAreaRef.current.focus();
+        }
+    }, [focusOnMount]);
+
     return (
         <Flex flexDirection="column" position="relative" {...props}>
             <Flex flexDirection="row" align="center" position="relative">
@@ -267,7 +298,8 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
                     placeholder={user?.id ? "Write a comment..." : "Log in to comment"}
                     onBlur={onCommentBlur}
                     disabled={user?.id ? false : true}
-                    backgroundColor="white"
+                    // backgroundColor="white"
+                    backgroundColor="#f1f1f1"
                     fontSize="14px"
                 />
 
@@ -284,6 +316,21 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
                     </Text>
                 </Flex>
             )}
+            {isEditing && (
+                <Link
+                    onClick={(e) => {
+                        e.preventDefault();
+                        if (onCancelEdit) {
+                            onCancelEdit();
+                        }
+                    }}
+                    marginLeft="12px"
+                >
+                    <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
+                        Cancel
+                    </Text>
+                </Link>
+            )}
         </Flex>
     );
 };
@@ -291,6 +338,9 @@ export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => 
 export const Comment = ({ comment, circle, ...props }) => {
     const [isReplying, setIsReplying] = useState(false);
     const [showSubcomments, setShowSubcomments] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+
     const displayText = useMemo(() => {
         if (!comment.parent_comment) {
             return comment.content;
@@ -321,57 +371,98 @@ export const Comment = ({ comment, circle, ...props }) => {
         return mentions;
     };
 
+    const onEditComment = () => {
+        log("edit comment", 0, true);
+
+        setIsEditing(true);
+    };
+
+    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseLeave = () => setIsHovering(false);
+
     return (
-        <Flex flexDirection="column" {...props}>
+        <Flex flexDirection="column" {...props} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <Flex flexDirection="row" align="top">
                 <Box marginTop="5px">
                     <CirclePicture circle={comment.creator} size={24} hasPopover={true} />
                 </Box>
-                <Flex flexDirection="column">
-                    <Flex
-                        flexDirection="column"
-                        align="start"
-                        backgroundColor="#f1f1f1"
-                        marginLeft="5px"
-                        borderRadius="10px"
-                        padding="5px 10px 5px 10px"
-                    >
-                        <CircleNameLink circle={comment.creator} useLink={false} fontSize="14px" fontWeight="700" />
-                        {/* <Text fontSize="14px" fontWeight="700">
-                        {comment.creator.name}
-                    </Text> */}
-                        <Text textAlign="left" fontSize="14px" fontWeight="400">
-                            <CircleRichText mentions={getMentions(comment)} mentionsFontSize="14px">
-                                {displayText}
-                            </CircleRichText>
-                        </Text>
-                    </Flex>
-                    <Flex flexDirection="row" marginLeft="15px" marginTop="2px">
-                        <Text fontSize="12px" color="#6f6f6f">
-                            {getPostTime(comment)}
-                        </Text>
-                        <Link
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onLikeClick();
-                            }}
-                        >
-                            <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
-                                Like
-                            </Text>
-                        </Link>
-                        <Link
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onReplyClick();
-                            }}
-                        >
-                            <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
-                                Reply
-                            </Text>
-                        </Link>
-                    </Flex>
-                </Flex>
+
+                {isEditing && (
+                    <Box marginLeft="5px" flexGrow="1">
+                        <CommentInput
+                            isEditing={true}
+                            editedComment={comment}
+                            onCancelEdit={() => setIsEditing(false)}
+                            onPublish={() => setIsEditing(false)}
+                            focusOnMount={true}
+                        />
+                    </Box>
+                )}
+                {!isEditing && (
+                    <>
+                        <Flex flexDirection="column">
+                            <Flex
+                                flexDirection="column"
+                                align="start"
+                                backgroundColor="#f1f1f1"
+                                marginLeft="5px"
+                                borderRadius="10px"
+                                padding="5px 10px 5px 10px"
+                            >
+                                <CircleNameLink
+                                    circle={comment.creator}
+                                    useLink={false}
+                                    fontSize="14px"
+                                    fontWeight="700"
+                                />
+
+                                <Box textAlign="left" fontSize="14px" fontWeight="400">
+                                    <CircleRichText mentions={getMentions(comment)} mentionsFontSize="14px">
+                                        {displayText}
+                                    </CircleRichText>
+                                </Box>
+                            </Flex>
+                            <Flex flexDirection="row" marginLeft="15px" marginTop="2px">
+                                <Text fontSize="12px" color="#6f6f6f">
+                                    {getPostTime(comment)}
+                                </Text>
+                                <Link
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        onLikeClick();
+                                    }}
+                                >
+                                    <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
+                                        Like
+                                    </Text>
+                                </Link>
+                                <Link
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        onReplyClick();
+                                    }}
+                                >
+                                    <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
+                                        Reply
+                                    </Text>
+                                </Link>
+                                {comment.edited_at && (
+                                    <Text fontSize="12px" color="#6f6f6f" marginLeft="15px">
+                                        Edited
+                                    </Text>
+                                )}
+                            </Flex>
+                        </Flex>
+                        <CommentDotsMenu
+                            comment={comment}
+                            onEditComment={onEditComment}
+                            isHovering={isHovering}
+                            alignSelf="center"
+                            marginBottom="20px"
+                            marginLeft="2px"
+                        />
+                    </>
+                )}
             </Flex>
             {!showSubcomments && comment.subcomments && comment.subcomments.length > 0 && (
                 <Link
@@ -379,7 +470,7 @@ export const Comment = ({ comment, circle, ...props }) => {
                         e.preventDefault();
                         setShowSubcomments(true);
                     }}
-                    marginLeft="29px"
+                    marginLeft="41px"
                     marginTop="1px"
                 >
                     <Text fontSize="12px" fontWeight="700" color="#6d6d6d" textAlign="left">
@@ -405,6 +496,10 @@ export const Comment = ({ comment, circle, ...props }) => {
                     onPublish={() => {
                         setIsReplying(false);
                     }}
+                    onCancelEdit={() => {
+                        setIsReplying(false);
+                    }}
+                    focusOnMount={true}
                 />
             )}
         </Flex>
@@ -603,6 +698,111 @@ export const MediaDisplay = ({ media, meta_data, mentions, ...props }) => {
                 </SliderIf>
             </Box>
         </Box>
+    );
+};
+
+export const CommentDotsMenu = ({ comment, onEditComment, isHovering, ...props }) => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const cancelRef = useRef();
+    const [user] = useAtom(userAtom);
+    const [userData] = useAtom(userDataAtom);
+    const toast = useToast();
+
+    if (!comment) return;
+
+    const showDotsMenu = user?.id && comment?.creator?.id === user?.id;
+    if (!showDotsMenu) return null;
+
+    const editComment = () => {
+        if (onEditComment) {
+            onEditComment();
+        }
+    };
+    const deleteComment = async () => {
+        // delete comment
+        try {
+            onClose();
+            // delete circle
+            let result = null;
+            try {
+                result = await axios.delete(`/circles/${comment.circle_id}/${comment.id}`);
+            } catch (err) {
+                console.log(err);
+            }
+
+            if (!result || result.data?.error) {
+                toast({
+                    title: `Comment couldn't be deleted`,
+                    description: result?.data?.error,
+                    status: "error",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            } else {
+                toast({
+                    title: `Comment has been deleted`,
+                    status: "success",
+                    position: "top",
+                    duration: 4500,
+                    isClosable: true,
+                });
+            }
+        } catch (error) {
+            toast({
+                title: `Comment couldn't be deleted`,
+                description: error,
+                status: "error",
+                position: "top",
+                duration: 4500,
+                isClosable: true,
+            });
+        }
+    };
+
+    return (
+        <>
+            <Menu>
+                <MenuButton
+                    as={IconButton}
+                    icon={<HiOutlineDotsHorizontal color={isHovering ? "black" : "white"} />}
+                    variant="ghost"
+                    isRound="true"
+                    size="sm"
+                    {...props}
+                ></MenuButton>
+                <Portal>
+                    <MenuList zIndex={1400}>
+                        <MenuItem icon={<FiEdit />} onClick={editComment}>
+                            Edit
+                        </MenuItem>
+                        <MenuItem icon={<DeleteIcon />} onClick={onOpen}>
+                            Delete
+                        </MenuItem>
+                    </MenuList>
+                </Portal>
+            </Menu>
+            <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+                <AlertDialogOverlay>
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                            Delete comment
+                        </AlertDialogHeader>
+
+                        <AlertDialogBody>Are you sure? You can't undo this action afterwards.</AlertDialogBody>
+
+                        <AlertDialogFooter>
+                            <Button ref={cancelRef} onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="red" onClick={deleteComment} ml={3}>
+                                Delete
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
+        </>
     );
 };
 
@@ -889,7 +1089,9 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                                         align="left"
                                     >
                                         <Box marginBottom={isExpanded ? "30px" : "0px"} width="100%" overflow="hidden">
-                                            <CircleRichText mentions={item.mentions}>{formattedContent}</CircleRichText>
+                                            <CircleRichText mentions={item.mentions} mentionsFontSize="15px">
+                                                {formattedContent}
+                                            </CircleRichText>
                                         </Box>
                                         <Box
                                             position="absolute"

@@ -1958,7 +1958,7 @@ export const getConnectLabel = (circleType, connectType) => {
     }
 };
 
-export const CircleRichText = ({ mentions, mentionsFontSize = "15px", children }) => {
+export const CircleRichText = ({ mentions, mentionsFontSize = "14px", children }) => {
     return (
         <ReactMarkdown
             className="embedMarkdownContent"

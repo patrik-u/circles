@@ -663,6 +663,12 @@ const getChatMessage = async (messageId) => {
     return { id: messageId, ...messageDoc.data() };
 };
 
+const getComment = async (commentId) => {
+    let commentDoc = await db.collection("comments").doc(commentId).get();
+    if (!commentDoc.exists) return null;
+    return { id: commentId, ...commentDoc.data() };
+};
+
 const getCircleTypes = (source, target) => {
     if (!source || !target) return "";
     const types = [source.type, target.type];
@@ -825,6 +831,22 @@ const updateChatMessage = async (id, chatMessage) => {
     });
 
     // TODO update replies to message
+};
+
+// update comment
+const updateComment = async (id, comment) => {
+    const commentRef = db.collection("comments").doc(id);
+    const commentDoc = await commentRef.get();
+    if (!commentDoc.exists) {
+        return null;
+    }
+
+    delete comment.id;
+
+    // update comment
+    await commentRef.set(comment, {
+        merge: true,
+    });
 };
 
 // deletes circle
@@ -2123,49 +2145,52 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
 });
 
 // update circle comment
-app.put("/circles/:circleId/comments/:commentId", auth, async (req, res) => {
-    // const date = new Date();
-    // const messageId = req.params.id;
-    // const authCallerId = req.user.user_id;
-    // const editedMessage = DOMPurify.sanitize(req.body.message);
-    // try {
-    //     const message = await getChatMessage(messageId);
-    //     if (!message) {
-    //         return res.json({ error: "chat message not found" });
-    //     }
-    //     if (message.user.id !== authCallerId) {
-    //         return res.json({
-    //             error: "chat message can only be edited by owner",
-    //         });
-    //     }
-    //     // validate request
-    //     let errors = validateChatMessageRequest(editedMessage);
-    //     if (Object.keys(errors).length !== 0) {
-    //         return res.json(errors);
-    //     }
-    //     const editedMessageObj = {
-    //         edited_at: date,
-    //         message: editedMessage,
-    //     };
-    //     // does message contain links?
-    //     let links = linkify.match(editedMessage);
-    //     if (links) {
-    //         editedMessageObj.has_links = true;
-    //     }
-    //     // update chat message
-    //     await updateChatMessage(messageId, editedMessageObj);
-    //     // check if message contains link and add preview image
-    //     const chatMessageRef = db.collection("chat_messages").doc(messageId);
-    //     addPreviewImages(chatMessageRef, links);
-    //     return res.json({ message: "message updated" });
-    // } catch (error) {
-    //     functions.logger.error("Error while updating chat message:", error);
-    //     return res.json({ error: error });
-    // }
+app.put("/comments/:id", auth, async (req, res) => {
+    const date = new Date();
+    var commentId = req.params.id;
+    var editedComment = DOMPurify.sanitize(req.body.comment);
+    var authCallerId = req.user.user_id;
+
+    try {
+        const comment = await getComment(commentId);
+        if (!comment) {
+            return res.json({ error: "comment not found" });
+        }
+        if (comment.creator.id !== authCallerId) {
+            return res.json({
+                error: "comment can only be edited by owner",
+            });
+        }
+        // validate request
+        let errors = validateCommentRequest(editedComment);
+        if (Object.keys(errors).length !== 0) {
+            return res.json(errors);
+        }
+        const editedCommentObj = {
+            edited_at: date,
+            content: editedComment,
+        };
+        // does message contain links?
+        let links = linkify.match(editedComment);
+        if (links) {
+            editedCommentObj.has_links = true;
+        }
+
+        // update comment
+        await updateComment(commentId, editedCommentObj);
+
+        // check if comment contains link and add preview image
+        const commentRef = db.collection("comments").doc(commentId);
+        addPreviewImages(commentRef, links);
+        return res.json({ message: "comment updated" });
+    } catch (error) {
+        functions.logger.error("Error while updating comment:", error);
+        return res.json({ error: error });
+    }
 });
 
 // delete circle comment
-app.delete("/circles/:circleId/comments/:commentId", auth, async (req, res) => {
+app.delete("/comments/:commentId", auth, async (req, res) => {
     // const messageId = req.params.id;
     // const authCallerId = req.user.user_id;
     // try {
