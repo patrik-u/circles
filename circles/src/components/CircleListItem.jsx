@@ -151,7 +151,7 @@ export const CircleNameLink = ({ circle, useLink = true, ...props }) => {
     );
 };
 
-export const CommentInput = ({ circle, parentComment, ...props }) => {
+export const CommentInput = ({ circle, parentComment, onPublish, ...props }) => {
     const [isMobile] = useAtom(isMobileAtom);
     const [user] = useAtom(userAtom);
     const textAreaRef = useRef();
@@ -212,6 +212,9 @@ export const CommentInput = ({ circle, parentComment, ...props }) => {
             } catch (err) {
                 console.error(err);
             }
+            if (!onPublish) {
+                onPublish();
+            }
         } else {
             return;
         }
@@ -243,33 +246,146 @@ export const CommentInput = ({ circle, parentComment, ...props }) => {
     };
 
     return (
-        <Flex flexDirection="row" align="center" marginBottom="10px" position="relative" {...props}>
-            {isMentioning && (
-                <CircleMention onMention={onMention} query={mentionQuery} position="absolute" bottom="50px" />
-            )}
-            <AutoResizeTextarea
-                ref={textAreaRef}
-                id="message"
-                className="messageInput"
-                value={comment}
-                onChange={handleMessageChange}
-                onKeyDown={handleMessageKeyDown}
-                resize="none"
-                maxLength="65000"
-                rows="1"
-                borderRadius="30px"
-                maxH={`${Math.max(windowHeight - 300, 60)}px`}
-                placeholder={user?.id ? "Write a comment..." : "Log in to comment"}
-                onBlur={onCommentBlur}
-                disabled={user?.id ? false : true}
-                backgroundColor="white"
-                fontSize="14px"
-            />
+        <Flex flexDirection="column" position="relative" {...props}>
+            <Flex flexDirection="row" align="center" position="relative">
+                {isMentioning && (
+                    <CircleMention onMention={onMention} query={mentionQuery} position="absolute" bottom="50px" />
+                )}
+                <AutoResizeTextarea
+                    ref={textAreaRef}
+                    id="message"
+                    className="messageInput"
+                    value={comment}
+                    onChange={handleMessageChange}
+                    onKeyDown={handleMessageKeyDown}
+                    resize="none"
+                    maxLength="65000"
+                    rows="1"
+                    borderRadius="30px"
+                    maxH={`${Math.max(windowHeight - 300, 60)}px`}
+                    placeholder={user?.id ? "Write a comment..." : "Log in to comment"}
+                    onBlur={onCommentBlur}
+                    disabled={user?.id ? false : true}
+                    backgroundColor="white"
+                    fontSize="14px"
+                />
 
-            {isMobile && (
-                <Flex flexDirection="row" justifyContent="right" marginTop="10px">
-                    <IconButton icon={<IoMdSend />} />
+                {isMobile && (
+                    <Flex flexDirection="row" justifyContent="right" marginTop="10px">
+                        <IconButton icon={<IoMdSend />} />
+                    </Flex>
+                )}
+            </Flex>
+            {parentComment && (
+                <Flex flexDirection="row" marginLeft="12px">
+                    <Text fontSize="10px" color="#6f6f6f" fontWeight="700">
+                        Replying to {parentComment.creator.name}
+                    </Text>
                 </Flex>
+            )}
+        </Flex>
+    );
+};
+
+export const Comment = ({ comment, circle, ...props }) => {
+    const [isReplying, setIsReplying] = useState(false);
+    const [showSubcomments, setShowSubcomments] = useState(false);
+
+    const onReplyClick = () => {
+        setIsReplying(true);
+    };
+
+    const onLikeClick = () => {};
+
+    useEffect(() => {
+        log("Comment.useEffect 1", -1);
+    });
+
+    return (
+        <Flex flexDirection="column" {...props}>
+            <Flex flexDirection="row" align="top">
+                <Box marginTop="5px">
+                    <CirclePicture circle={comment.creator} size={24} hasPopover={true} />
+                </Box>
+                <Flex flexDirection="column">
+                    <Flex
+                        flexDirection="column"
+                        align="start"
+                        backgroundColor="#f1f1f1"
+                        marginLeft="5px"
+                        borderRadius="10px"
+                        padding="5px 10px 5px 10px"
+                    >
+                        <CircleNameLink circle={comment.creator} useLink={false} fontSize="14px" fontWeight="700" />
+                        {/* <Text fontSize="14px" fontWeight="700">
+                        {comment.creator.name}
+                    </Text> */}
+                        <Text textAlign="left" fontSize="14px" fontWeight="400">
+                            <CircleRichText mentions={comment.mentions} mentionsFontSize="14px">
+                                {comment.content}
+                            </CircleRichText>
+                        </Text>
+                    </Flex>
+                    <Flex flexDirection="row" marginLeft="15px" marginTop="2px">
+                        <Text fontSize="12px" color="#6f6f6f">
+                            {getPostTime(comment)}
+                        </Text>
+                        <Link
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onLikeClick();
+                            }}
+                        >
+                            <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
+                                Like
+                            </Text>
+                        </Link>
+                        <Link
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onReplyClick();
+                            }}
+                        >
+                            <Text fontSize="12px" color="#6f6f6f" fontWeight="700" marginLeft="15px">
+                                Reply
+                            </Text>
+                        </Link>
+                    </Flex>
+                </Flex>
+            </Flex>
+            {!showSubcomments && comment.subcomments && comment.subcomments.length > 0 && (
+                <Link
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setShowSubcomments(true);
+                    }}
+                    marginLeft="29px"
+                    marginTop="1px"
+                >
+                    <Text fontSize="12px" fontWeight="700" color="#6d6d6d" textAlign="left">
+                        Show {comment.subcomments.length} replies
+                    </Text>
+                </Link>
+            )}
+
+            {showSubcomments && comment.subcomments && comment.subcomments.length > 0 && (
+                <Flex flexDirection="column" marginLeft="29px" marginTop="5px">
+                    {comment.subcomments.map((subcomment) => (
+                        <Comment key={subcomment.id} comment={subcomment} circle={circle} marginBottom="8px" />
+                    ))}
+                </Flex>
+            )}
+
+            {isReplying && (
+                <CommentInput
+                    circle={circle}
+                    parentComment={comment}
+                    marginLeft="29px"
+                    marginTop="2px"
+                    onPublish={() => {
+                        setIsReplying(false);
+                    }}
+                />
             )}
         </Flex>
     );
@@ -279,7 +395,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
     const [currentCircle] = useAtom(circleAtom);
     const [comments, setComments] = useState([]);
     const [user] = useAtom(userAtom);
-    const [isLoadingComments, setIsLoadingComments] = useState(false);
+    const [isLoadingComments, setIsLoadingComments] = useState(true);
 
     useEffect(() => {
         log("Comments.useEffect 1", -1);
@@ -294,7 +410,6 @@ export const Comments = ({ circle, isPreview, ...props }) => {
         } else {
             // subscribe to comments
             const q = query(collection(db, "comments"), where("circle_id", "==", circle.id));
-            setIsLoadingComments(true);
             const unsubscribeGetComments = onSnapshot(q, (snap) => {
                 const newComments = snap.docs.map((doc) => {
                     return {
@@ -302,7 +417,33 @@ export const Comments = ({ circle, isPreview, ...props }) => {
                         ...doc.data(),
                     };
                 });
-                setComments(newComments);
+
+                // filter root level comments and sort by likes
+                const rootComments = newComments.filter((c) => !c.parent_comment_id).sort((a, b) => b.likes - a.likes);
+
+                // helper function to recursively find all subcomments for a root comment
+                const findAllSubcomments = (parentId) => {
+                    return newComments
+                        .filter((c) => c.parent_comment_id === parentId)
+                        .reduce((acc, subcomment) => {
+                            acc.push(subcomment, ...findAllSubcomments(subcomment.id));
+                            return acc;
+                        }, []);
+                };
+
+                // assign flattened subcomments to each root comment
+                const commentsWithSubcomments = rootComments.map((comment) => {
+                    const allSubcomments = findAllSubcomments(comment.id);
+
+                    // sort the flattened list of subcomments chronologically
+                    allSubcomments.sort((a, b) => fromFsDate(a.created_at) - fromFsDate(b.created_at));
+                    return {
+                        ...comment,
+                        subcomments: allSubcomments,
+                    };
+                });
+
+                setComments(commentsWithSubcomments);
                 setIsLoadingComments(false);
             });
 
@@ -316,6 +457,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
 
     return (
         <Flex flexDirection="column" {...props} marginLeft="10px" marginRight="10px">
+            {isLoadingComments && !isPreview && <Spinner marginBottom="10px" />}
             {/* if preview show link "Show more comments" if there are more comments */}
             {isPreview && circle.comments > 1 && (
                 <Link
@@ -334,44 +476,10 @@ export const Comments = ({ circle, isPreview, ...props }) => {
             )}
 
             {comments.map((comment) => (
-                <Comment key={comment.id} comment={comment} marginBottom="10px" />
+                <Comment key={comment.id} comment={comment} circle={circle} marginBottom="4px" />
             ))}
 
-            <CommentInput circle={circle} />
-        </Flex>
-    );
-};
-
-export const Comment = ({ comment, ...props }) => {
-    useEffect(() => {
-        log("Comment.useEffect 1", -1);
-    });
-
-    return (
-        <Flex flexDirection="column" {...props}>
-            <Flex flexDirection="row" align="top">
-                <Box marginTop="5px">
-                    <CirclePicture circle={comment.creator} size={24} hasPopover={true} />
-                </Box>
-                <Flex
-                    flexDirection="column"
-                    align="start"
-                    backgroundColor="#f1f1f1"
-                    marginLeft="5px"
-                    borderRadius="10px"
-                    padding="5px 10px 5px 10px"
-                >
-                    <CircleNameLink circle={comment.creator} useLink={false} fontSize="14px" fontWeight="700" />
-                    {/* <Text fontSize="14px" fontWeight="700">
-                        {comment.creator.name}
-                    </Text> */}
-                    <Text textAlign="left" fontSize="14px" fontWeight="400">
-                        <CircleRichText mentions={comment.mentions} mentionsFontSize="14px">
-                            {comment.content}
-                        </CircleRichText>
-                    </Text>
-                </Flex>
-            </Flex>
+            <CommentInput circle={circle} marginBottom="10px" />
         </Flex>
     );
 };
