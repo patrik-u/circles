@@ -178,6 +178,8 @@ export const CommentLikeButton = ({ comment, ...props }) => {
                             color={"#ff4772"}
                             marginLeft="2px"
                             marginRight="2px"
+                            marginTop={comment.likers.length <= 1 ? "2px" : "0px"}
+                            marginBottom={comment.likers.length <= 1 ? "2px" : "0px"}
                         />
                         {comment.likers.length > 1 && (
                             <Text fontSize="10px" fontWeight="400" color="#333" marginRight="6px" cursor="pointer">
@@ -444,7 +446,7 @@ export const Comment = ({ comment, circle, ...props }) => {
     }, []);
 
     const displayText = useMemo(() => {
-        if (!comment.parent_comment) {
+        if (!comment.parent_comment?.creator?.name) {
             return comment.content;
         }
         return `[${comment.parent_comment.creator.name}](codo.earth/circles/${comment.parent_comment.creator.id}) ${comment.content}`;
@@ -498,7 +500,10 @@ export const Comment = ({ comment, circle, ...props }) => {
         <Flex flexDirection="column" {...props} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <Flex flexDirection="row" align="top">
                 <Box marginTop="5px">
-                    <CirclePicture circle={comment.creator} size={24} hasPopover={true} />
+                    {!comment.deleted_at && <CirclePicture circle={comment.creator} size={24} hasPopover={true} />}
+                    {comment.deleted_at && (
+                        <Box width="24px" height="24px" backgroundColor="#f1f1f1" borderRadius="50%" />
+                    )}
                 </Box>
 
                 {isEditing && (
@@ -525,30 +530,41 @@ export const Comment = ({ comment, circle, ...props }) => {
                                 padding="5px 10px 5px 10px"
                                 position="relative"
                             >
-                                <CircleNameLink
-                                    circle={comment.creator}
-                                    useLink={false}
-                                    fontSize="14px"
-                                    fontWeight="700"
-                                />
+                                {!comment.deleted_at && (
+                                    <CircleNameLink
+                                        circle={comment.creator}
+                                        useLink={false}
+                                        fontSize="14px"
+                                        fontWeight="700"
+                                    />
+                                )}
 
                                 <Box textAlign="left" fontSize="14px" fontWeight="400">
-                                    <CircleRichText mentions={getMentions(comment)} mentionsFontSize="14px">
-                                        {displayText}
-                                    </CircleRichText>
+                                    {!comment.deleted_at && (
+                                        <CircleRichText mentions={getMentions(comment)} mentionsFontSize="14px">
+                                            {displayText}
+                                        </CircleRichText>
+                                    )}
+                                    {comment.deleted_at && (
+                                        <Text fontSize="14px" color="#6f6f6f">
+                                            comment removed
+                                        </Text>
+                                    )}
                                 </Box>
-                                <CommentLikeButton
-                                    comment={comment}
-                                    position="absolute"
-                                    bottom={isCramped ? "-2px" : "-10px"}
-                                    right={isCramped ? "-12px" : "5px"}
-                                />
+                                {!comment.deleted_at && (
+                                    <CommentLikeButton
+                                        comment={comment}
+                                        position="absolute"
+                                        bottom={isCramped ? "-2px" : "-10px"}
+                                        right={isCramped ? (comment.likes > 1 ? "-24px" : "-12px") : "5px"}
+                                    />
+                                )}
                             </Flex>
                             <Flex flexDirection="row" marginLeft="15px" marginTop="2px">
                                 <Text fontSize="12px" color="#6f6f6f">
                                     {getPostTime(comment)}
                                 </Text>
-                                {comment?.creator?.id !== user?.id && (
+                                {comment?.creator?.id !== user?.id && !comment.deleted_at && (
                                     <Link
                                         onClick={(e) => {
                                             e.preventDefault();

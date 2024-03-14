@@ -2246,7 +2246,7 @@ app.delete("/comments/:id", auth, async (req, res) => {
         let childComments = await db.collection("comments").where("parent_comment_id", "==", commentId).get();
         if (childComments.docs.length > 0) {
             // mark comment as deleted and erase content
-            await updateComment(commentId, { deleted_at: new Date(), content: "", creator: {} });
+            await updateComment(commentId, { deleted_at: new Date(), content: "", creator: {}, is_deleted: true });
         } else {
             // delete comment
             const commentRef = db.collection("comments").doc(commentId);
@@ -2338,10 +2338,12 @@ app.put("/comments/:id/like", auth, async (req, res) => {
             likers.push(likeObj);
 
             await updateComment(commentId, { likers, likes: admin.firestore.FieldValue.increment(1) });
+            await updateHighlightedComment(comment.circle_id);
         } else if (!like && userLiked) {
             // remove like
             likers = likers.filter((x) => x.id !== authCallerId);
             await updateComment(commentId, { likers, likes: admin.firestore.FieldValue.increment(-1) });
+            await updateHighlightedComment(comment.circle_id);
         }
 
         return res.json({ message: "like updated" });
