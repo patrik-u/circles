@@ -440,10 +440,10 @@ const CircleDashboard = ({ onClose }) => {
                         <Box flex="1" backgroundColor="white">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
-                                    <Route path="/" element={<CircleHomeFeed />} />
-                                    <Route path="home" element={<CircleHomeFeed />} />
+                                    <Route path="/*" element={<CircleHomeFeed />} />
+                                    <Route path="home/*" element={<CircleHomeFeed />} />
                                     <Route
-                                        path="chat"
+                                        path="chat/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={<CircleChatWidget />}
@@ -455,7 +455,7 @@ const CircleDashboard = ({ onClose }) => {
                                     />
 
                                     <Route
-                                        path="circles"
+                                        path="circles/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
@@ -475,7 +475,7 @@ const CircleDashboard = ({ onClose }) => {
                                     />
 
                                     <Route
-                                        path="members"
+                                        path="members/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
@@ -494,7 +494,7 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route
-                                        path="events"
+                                        path="events/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
@@ -513,7 +513,7 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route
-                                        path="tasks"
+                                        path="tasks/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
@@ -532,7 +532,7 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route path="/settings/*" element={<CircleSettings />} />
-                                    <Route path="admin" element={<CircleAdmin />} />
+                                    <Route path="admin/*" element={<CircleAdmin />} />
                                 </Routes>
                             </Suspense>
                         </Box>
