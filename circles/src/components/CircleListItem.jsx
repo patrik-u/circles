@@ -1073,7 +1073,7 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
                     style={singleLineEllipsisStyle}
                     onClick={(e) => {
                         if (inSelect) return;
-                        if (item.type === "post" || item.type === "event") {
+                        if (item.type === "post" || item.type === "event" || item.type === "project") {
                             // posts and events are opened in subcircle view
                             openSubcircle(navigate, item?.parent_circle, item.type === "post" ? item.creator : item);
                         } else {

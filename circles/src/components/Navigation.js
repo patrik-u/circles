@@ -22,6 +22,8 @@ export const getCirclesSection = (circleType) => {
             return "home";
         case "event":
             return "events";
+        case "project":
+            return "projects";
     }
 };
 

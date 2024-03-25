@@ -89,6 +89,7 @@ import { GrAppsRounded } from "react-icons/gr";
 import CircleHomeFeed from "./CircleHomeFeed";
 import CircleExtrasAndMain from "./CircleExtrasAndMain";
 import { CircleNameAndPicture } from "./CircleElements";
+import CircleProject from "./CircleProject";
 //#endregion
 
 const CircleSelector = () => {
@@ -531,6 +532,7 @@ const CircleDashboard = ({ onClose }) => {
                                             />
                                         }
                                     />
+                                    <Route path="projects/:projectId" element={<CircleProject />} />
                                     <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin/*" element={<CircleAdmin />} />
                                 </Routes>
