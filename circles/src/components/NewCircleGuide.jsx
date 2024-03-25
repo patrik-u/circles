@@ -8,6 +8,7 @@ import { useAtom } from "jotai";
 import { openCircle, openAboutCircle, focusCircle } from "@/components/Navigation";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import { CircleContentForm } from "@/components/settings/CircleContentForm";
+import { CircleProjectForm } from "@/components/settings/CircleProjectForm";
 import { CircleImagesForm } from "@/components/settings/CircleImagesForm";
 import { CircleMissionForm } from "@/components/settings/CircleMissionForm";
 import { CircleTagsForm } from "@/components/settings/CircleTagsForm";
@@ -36,6 +37,7 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
         () => ({
             // type: { id: "type", label: i18n.t("Type") },
             post: { id: "post", label: i18n.t("Post") },
+            project: { id: "project", label: i18n.t("Project") },
             about: { id: "about", label: i18n.t("About") },
             images: { id: "images", label: i18n.t("Images") },
             mission: { id: "mission", label: i18n.t("Mission") },
@@ -50,6 +52,8 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
         switch (type) {
             case "post":
                 return [allSteps.post];
+            case "project":
+                return [allSteps.project,allSteps.images];
             default:
                 return [
                     allSteps.about,
@@ -108,6 +112,23 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
                         <VStack align="start">
                             <Suspense fallback={<Spinner />}>
                                 <CirclePostForm
+                                    isUpdateForm={isUpdateForm}
+                                    circle={createdCircle}
+                                    isGuideForm={false}
+                                    onNext={next}
+                                    onUpdate={onUpdate}
+                                    onCancel={onClose}
+                                />
+                            </Suspense>
+                        </VStack>
+                    </Box>
+                );
+            case allSteps.project.id:
+                return (
+                    <Box>
+                        <VStack align="start">
+                            <Suspense fallback={<Spinner />}>
+                                <CircleProjectForm
                                     isUpdateForm={isUpdateForm}
                                     circle={createdCircle}
                                     isGuideForm={false}

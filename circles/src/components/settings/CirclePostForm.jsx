@@ -1,47 +1,27 @@
 //#region imports
-import { useRef, useState, useEffect, useMemo, useCallback } from "react";
-import { Form, Field, Formik } from "formik";
-import { components } from "react-select";
-import Select from "react-select";
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
     Box,
     Image,
-    Tooltip,
-    FormControl,
-    Icon,
-    FormLabel,
-    InputRightElement,
-    Input,
     Textarea,
-    FormErrorMessage,
     Flex,
-    InputGroup,
     HStack,
     VStack,
     Text,
-    Checkbox,
     Button,
     IconButton,
-    Select as ChakraSelect,
     useToast,
 } from "@chakra-ui/react";
-import { CheckIcon } from "@chakra-ui/icons";
-import { adminCircles, combineDateAndTime, fromFsDate, log } from "@/components/Helpers";
-import { CirclePicture, MetaData, NewSessionButton } from "@/components/CircleElements";
+import { log } from "@/components/Helpers";
+import { CirclePicture } from "@/components/CircleElements";
 import { ref, uploadBytes, deleteObject, getDownloadURL } from "firebase/storage";
 import { storage } from "@/components/Firebase";
 import axios from "axios";
-import { i18n, LanguagePicker } from "@/i18n/Localization";
-import ReactQuill from "react-quill";
-import DatePicker from "react-datepicker";
-import { DatePickerInput } from "@/components/CircleElements";
+import { i18n } from "@/i18n/Localization";
 import { useAtom } from "jotai";
-import { userAtom, requestUserConnectionsAtom, userConnectionsAtom, saveIdAtom } from "@/components/Atoms";
+import { userAtom, saveIdAtom } from "@/components/Atoms";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-quill/dist/quill.snow.css";
-import CircleListItem from "@/components/CircleListItem";
-import { IoInformationCircleSharp } from "react-icons/io5";
-import DocumentEditor from "@/components/document/DocumentEditor";
 import { useDropzone } from "react-dropzone";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";

@@ -1,0 +1,11 @@
+{
+  "name": "circles",
+  "version": "1.0.0",
+  "description": "![showcase](https://github.com/patrik-u/circles/blob/main/showcase.jpg)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -221,8 +221,8 @@ const tabs = [
         icon: FiUsers,
     },
     {
-        id: "tasks",
-        name: "Tasks",
+        id: "projects",
+        name: "Projects",
         icon: FiClipboard,
     },
     {
@@ -513,13 +513,13 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route
-                                        path="tasks/*"
+                                        path="projects"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
                                                     <Circles
-                                                        type="task"
-                                                        types={["task"]}
+                                                        type="project"
+                                                        types={["project"]}
                                                         categories={circleId === "global" ? [] : ["connected"]}
                                                         asCards={true}
                                                         noScrollbars={circleDashboardExpanded}
