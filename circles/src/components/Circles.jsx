@@ -48,6 +48,7 @@ import { TbLayoutRows } from "react-icons/tb";
 import { BsCardHeading } from "react-icons/bs";
 import Scrollbars from "react-custom-scrollbars-2";
 import { ScrollbarsIf } from "./CircleElements";
+import { Route, Routes } from "react-router-dom";
 //#endregion
 
 const CreateNewCircleForm = ({ type, asCard }) => {
@@ -224,6 +225,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             flexDirection={"column"}
             maxWidth="600px"
             backgroundColor={asCards ? "#ededed" : "transparent"}
+            position="relative"
         >
             <CreateNewCircleForm type={type} asCard={asCards} />
             <Flex flexGrow="1" flexDirection={"column"} marginTop={asCards ? "10px" : "0px"}>

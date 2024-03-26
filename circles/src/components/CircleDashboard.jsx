@@ -90,6 +90,7 @@ import CircleHomeFeed from "./CircleHomeFeed";
 import CircleExtrasAndMain from "./CircleExtrasAndMain";
 import { CircleNameAndPicture } from "./CircleElements";
 import CircleProject from "./CircleProject";
+import CirclePost from "./CirclePost";
 //#endregion
 
 const CircleSelector = () => {
@@ -438,7 +439,7 @@ const CircleDashboard = ({ onClose }) => {
                             </Box>
                         )}
 
-                        <Box flex="1" backgroundColor="white">
+                        <Box flex="1" backgroundColor="white" position="relative">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
                                     <Route path="/*" element={<CircleHomeFeed />} />
@@ -533,6 +534,7 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route path="projects/:projectId" element={<CircleProject />} />
+                                    <Route path="home/:postId" element={<CirclePost />} />
                                     <Route path="/settings/*" element={<CircleSettings />} />
                                     <Route path="admin/*" element={<CircleAdmin />} />
                                 </Routes>

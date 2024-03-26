@@ -656,6 +656,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
     const [comments, setComments] = useState([]);
     const [user] = useAtom(userAtom);
     const [isLoadingComments, setIsLoadingComments] = useState(true);
+    const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
         log("Comments.useEffect 1", -1);
@@ -1148,7 +1149,16 @@ const CircleListItemHeader = ({ item, inSelect, onClick, hasPopover = true, ...p
     );
 };
 
-export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, hasPopover = true, ...props }) => {
+export const CircleListItem = ({
+    item,
+    onClick,
+    inSelect,
+    asCard,
+    isCompact,
+    isPreview = true,
+    hasPopover = true,
+    ...props
+}) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMobile] = useAtom(isMobileAtom);
     const location = useLocationNoUpdates();
@@ -1292,7 +1302,7 @@ export const CircleListItem = ({ item, onClick, inSelect, asCard, isCompact, has
                                     <Flex marginTop="2px" paddingLeft="10px" paddingRight="10px">
                                         <Divider />
                                     </Flex>
-                                    <Comments circle={item} isPreview={false} marginTop="10px" />
+                                    <Comments circle={item} isPreview={isPreview} marginTop="10px" />
                                 </>
                             )}
                         </VStack>
@@ -1584,6 +1594,8 @@ export const CommentsButton = ({ circle }) => {
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
     const [comments, setComments] = useState(0);
+    const [currentCircle] = useAtom(circleAtom);
+    const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
         setComments(circle?.comments);
@@ -1591,6 +1603,7 @@ export const CommentsButton = ({ circle }) => {
 
     const openComments = () => {
         // open comments
+        openSubcircle(navigate, currentCircle, circle);
     };
 
     return (
