@@ -670,7 +670,11 @@ export const Comments = ({ circle, isPreview, ...props }) => {
             }
         } else {
             // subscribe to comments
-            const q = query(collection(db, "comments"), where("circle_id", "==", circle.id));
+            const q = query(
+                collection(db, "comments"),
+                where("circle_id", "==", circle.id),
+                where("parent_circle_id", "==", circle.parent_circle?.id ?? "global")
+            );
             const unsubscribeGetComments = onSnapshot(q, (snap) => {
                 let newComments = snap.docs.map((doc) => {
                     return {

@@ -38,7 +38,7 @@ service cloud.firestore {
       allow write: if false;
     }
     match /comments/{comment} {
-    	allow read: if true;
+      allow read: if resource.data.creator.id == request.auth.uid || get(/databases/$(database)/documents/circles/$(resource.data.parent_circle_id)).data.is_public || (request.auth.uid in get(/databases/$(database)/documents/circle_data/$(resource.data.parent_circle_id)).data.connected_mutually_to);
       allow write: if false;
     }
   }
