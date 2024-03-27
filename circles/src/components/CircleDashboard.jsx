@@ -515,7 +515,7 @@ const CircleDashboard = ({ onClose }) => {
                                         }
                                     />
                                     <Route
-                                        path="projects"
+                                        path="projects/*"
                                         element={
                                             <CircleExtrasAndMain
                                                 main={
