@@ -23,7 +23,7 @@ import i18n from "@/i18n/Localization";
 import { FaBell, FaRegBell } from "react-icons/fa";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoPersonAdd } from "react-icons/io5";
-import { HiCheck, HiX } from "react-icons/hi";
+import { HiCheck, HiOutlineChat, HiX } from "react-icons/hi";
 import {
     timeSince,
     fromFsDate,
@@ -38,6 +38,9 @@ import { openCircle, focusCircle } from "@/components/Navigation";
 import { useAtom } from "jotai";
 import { userAtom, isMobileAtom, focusOnMapItemAtom } from "@/components/Atoms";
 import { buttonHighlight } from "@/components/CircleElements";
+import { openSubcircle } from "./Navigation";
+import { MdChat } from "react-icons/md";
+import { singleLineEllipsisStyle } from "./Helpers";
 //#endregion
 
 export const ConnectionNotification = ({
@@ -416,6 +419,105 @@ export const ConnectionNotification = ({
     );
 };
 
+export const CommentNotification = ({
+    date,
+    onClick,
+    commentAuthor,
+    parentCommentId,
+    originalContent,
+    isMention,
+    circle,
+}) => {
+    const [user] = useAtom(userAtom);
+
+    const getNotificationText = () => {
+        if (isMention) {
+            return "has mentioned you in a comment";
+        } else {
+            if (parentCommentId) {
+                return i18n.t("has replied to your comment");
+            } else {
+                return i18n.t("has commented on your post");
+            }
+        }
+    };
+
+    if (!user) return null;
+
+    return (
+        <HStack
+            flexDirection="row"
+            align="center"
+            borderRadius="10px"
+            role="group"
+            color="black"
+            cursor={onClick ? "pointer" : "auto"}
+            bg="transparent"
+            _hover={
+                onClick
+                    ? {
+                          bg: "#f5f4f8",
+                          color: "black",
+                      }
+                    : {}
+            }
+            onClick={() => onClick()}
+            marginBottom="4px"
+            minHeight="70px"
+            spacing="12px"
+            paddingBottom="1px"
+            paddingTop="1px"
+        >
+            <Box position="relative" width="64px" height="70px" minWidth="64px" minHeight="70px">
+                <Image
+                    className="notification-picture1"
+                    src={getImageKitUrl(user.picture, 38, 38)}
+                    fallbackSrc={getImageKitUrl(getDefaultCirclePicture(user.type), 38, 38)}
+                    alt="Logo"
+                />
+                {commentAuthor.picture && (
+                    <Image
+                        className="notification-picture2"
+                        src={getImageKitUrl(commentAuthor.picture, 38, 38)}
+                        fallbackSrc={getImageKitUrl(getDefaultCirclePicture(commentAuthor.type), 38, 38)}
+                        alt="Logo"
+                    />
+                )}
+                <Image
+                    as={MdChat}
+                    width="16px"
+                    height="16px"
+                    position="absolute"
+                    color="#5bcf7f"
+                    top="13px"
+                    left="42px"
+                />
+            </Box>
+
+            <VStack align="left" spacing="0px" paddingTop="2px">
+                <Text className="circle-list-title" lineHeight="20px" fontSize="16px" align="left">
+                    <strong>{commentAuthor.name}</strong> {getNotificationText()}
+                </Text>
+                {originalContent && (
+                    <Text
+                        style={singleLineEllipsisStyle}
+                        fontSize="12px"
+                        align="left"
+                        fontStyle="italic"
+                        marginTop="5px"
+                        width="250px"
+                    >
+                        {originalContent?.substring(0, 50)}
+                    </Text>
+                )}
+                <Text className="circle-list-title" fontSize="12px" align="left" paddingTop="5px">
+                    {timeSince(fromFsDate(date))} {i18n.t("ago")}
+                </Text>
+            </VStack>
+        </HStack>
+    );
+};
+
 const Notifications = () => {
     const [user] = useAtom(userAtom);
     const [isMobile] = useAtom(isMobileAtom);
@@ -486,6 +588,22 @@ const Notifications = () => {
 
     const Notification = ({ notification }) => {
         switch (notification.type) {
+            case "comment":
+                return (
+                    <CommentNotification
+                        date={notification.date}
+                        commentAuthor={notification.comment_author}
+                        parentCommentId={notification.parent_comment_id}
+                        circle={notification.circle}
+                        originalContent={notification.original_content}
+                        isMention={notification.is_mention}
+                        onClick={() => {
+                            notificationsOnClose();
+                            openSubcircle(navigate, notification.circle?.parent_circle, notification.circle);
+                            focusCircle(notification.circle?.parent_circle, setFocusOnMapItem);
+                        }}
+                    />
+                );
             case "connection":
                 return (
                     <ConnectionNotification

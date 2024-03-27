@@ -1249,6 +1249,42 @@ const sendMessageNotification = async (target, circle, message, bigPicture, cate
     await sendPushNotification(message.user, target, message.message, circle, bigPicture, category);
 };
 
+const sendCommentNotification = async (
+    userId,
+    circle,
+    comment_author,
+    parent_comment_id = null,
+    original_content = "",
+    is_mention = false
+) => {
+    // circle is the circle (e.g. post) that the comment is made on
+    // userId is the user receiving the notification
+    // author is the user that made the comment
+    // parent_comment_id is the id of the comment that this comment is a reply to (if any)
+    // original_content is a truncated part of the content of the post/comment that the comment is made on
+
+    // comment notification looks like this:
+    //"Tim has replied to your comment/post: Post content..."
+
+    const notificationsRes = db.collection("notifications").doc();
+    const date = new Date();
+    const newNotification = {
+        user_id: userId,
+        date: date,
+        type: "comment",
+        circle: circle,
+        comment_author: comment_author,
+        is_read: false,
+        parent_comment_id: parent_comment_id ?? false,
+        original_content: original_content,
+        is_mention: is_mention,
+    };
+    await notificationsRes.set(newNotification);
+
+    // send push notification
+    //await sendPushNotification(message.user, target, message.message, circle, null, "Comment");
+};
+
 // returns true if source is administrator of target
 const isAdminOf = async (sourceId, targetId) => {
     if (sourceId === targetId) return true;
@@ -2136,16 +2172,42 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
         // check if comment contains links and add preview images
         addPreviewImages(commentRef, links);
 
-        // TODO send notification to users mentioned in comment and to user this comment replies to
-        // getMemberConnections(circleId).then((memberConnections) => {
-        //     for (var memberConnection of memberConnections) {
-        //         if (memberConnection.target.id === authCallerId || memberConnection.target.type !== "user") {
-        //             // ignore notifying sender and non-users
-        //             continue;
-        //         }
-        //         sendMessageNotification(memberConnection.target, circle, newMessage, previewImage, "Chat");
-        //     }
-        // });
+        console.log("Comment created" + JSON.stringify({ parent_comment_id }, null, 2));
+
+        let sentTo = null;
+        if (parent_comment_id) {
+            // send notification to parent comment author
+            let parentComment = await getComment(parent_comment_id);
+            let original_content = parentComment.content;
+            if (parentComment && parentComment.creator.id !== authCallerId) {
+                sendCommentNotification(
+                    parentComment.creator.id,
+                    circle,
+                    user,
+                    parent_comment_id,
+                    original_content,
+                    false
+                );
+                sentTo = parentComment.creator.id;
+            }
+        } else {
+            // send notification to post author
+            let authorId = circle.created_by;
+            let original_content = circle.content;
+            if (authorId && authorId !== authCallerId) {
+                sendCommentNotification(authorId, circle, user, null, original_content, false);
+                sentTo = authorId;
+            }
+        }
+
+        // send to mentions
+        if (newComment.has_mentions) {
+            for (let mention of newComment.mentions) {
+                if (mention.id !== authCallerId && mention.id !== sentTo) {
+                    sendCommentNotification(mention.id, circle, user, null, null, true);
+                }
+            }
+        }
 
         return res.json({ message: "Comment created" });
     } catch (error) {

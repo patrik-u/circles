@@ -221,9 +221,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
     // Filter circles based on search query
     const filteredCirclesList = filteredCircles
         ?.filter((x) => x.type === type)
-        ?.filter((item) =>
-            item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        ?.filter((item) => !searchQuery || (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())));
 
     return (
         <Flex
@@ -235,7 +233,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             backgroundColor={asCards ? "#ededed" : "transparent"}
             position="relative"
         >
-            {type !== 'post' && (
+            {type !== "post" && (
                 <Input
                     placeholder="Search..."
                     value={searchQuery}
