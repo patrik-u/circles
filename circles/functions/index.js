@@ -2140,9 +2140,10 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
         const circleRef = db.collection("circles").doc(circleId);
         let circleData = { comments: admin.firestore.FieldValue.increment(1) };
         if (!circle.highlighted_comment) {
-            circleData.highlighted_comment = { id: commentRef.id, ...newComment };
+            circleData.highlighted_comment = { id: commentRef.id, ...newComment, replies: 0 };
+        } else {
+            updateHighlightedComment(circleId);
         }
-
         let commenters_preview_list = circle.commenters_preview_list ?? [];
         let previewListUpdated = false;
 
@@ -2209,7 +2210,7 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
             }
         }
 
-        return res.json({ message: "Comment created" });
+        return res.json({ message: "Comment created", comment: { id: commentRef.id, ...newComment } });
     } catch (error) {
         functions.logger.error("Error while trying to add comment:", error);
         return res.json({ error: error });
@@ -2276,6 +2277,13 @@ const updateHighlightedComment = async (circleId) => {
         highlightedComment = comments.docs[0].data();
         highlightedComment.id = comments.docs[0].id;
     }
+
+    // get all replies to highlighted comment
+    let replies = await db.collection("comments").where("parent_comment_id", "==", highlightedComment.id).get();
+    let replyCount = replies.docs.length;
+
+    // update highlighted comment with reply count
+    highlightedComment.replies = replyCount;
 
     // update circle with highlighted comment
     const circleRef = db.collection("circles").doc(circleId);

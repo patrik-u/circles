@@ -242,6 +242,7 @@ export const CommentInput = ({
     editedComment,
     onCancelEdit,
     onPublish,
+    onCommentAdded,
     focusOnMount = false,
     ...props
 }) => {
@@ -281,7 +282,11 @@ export const CommentInput = ({
         } else {
             axios
                 .post(`/circles/${circle.id}/comments`, req)
-                .then((postCommentResult) => {})
+                .then((postCommentResult) => {
+                    if (onCommentAdded) {
+                        onCommentAdded(postCommentResult.data.comment);
+                    }
+                })
                 .catch((error) => {
                     console.error(error);
                 });
@@ -496,6 +501,10 @@ export const Comment = ({ comment, circle, ...props }) => {
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);
 
+    const onCommentAdded = (comment) => {
+        //setShowSubcomments(true);
+    };
+
     return (
         <Flex flexDirection="column" {...props} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <Flex flexDirection="row" align="top">
@@ -645,6 +654,7 @@ export const Comment = ({ comment, circle, ...props }) => {
                         setIsReplying(false);
                     }}
                     focusOnMount={true}
+                    onCommentAdded={onCommentAdded}
                 />
             )}
         </Flex>
@@ -657,6 +667,13 @@ export const Comments = ({ circle, isPreview, ...props }) => {
     const [user] = useAtom(userAtom);
     const [isLoadingComments, setIsLoadingComments] = useState(true);
     const navigate = useNavigateNoUpdates();
+    const [newComments, setNewComments] = useState([]);
+
+    // if in preview mode we want to show any new comments or replies the user adds to the post in the preview
+
+    const onCommentAdded = (comment) => {
+        setNewComments([...newComments, comment]);
+    };
 
     useEffect(() => {
         log("Comments.useEffect 1", -1);
@@ -666,7 +683,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
         if (!circle) return;
         if (isPreview) {
             if (circle.highlighted_comment) {
-                setComments([circle.highlighted_comment]);
+                setComments([circle.highlighted_comment, ...newComments]);
             }
         } else {
             // subscribe to comments
@@ -730,7 +747,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
                 }
             };
         }
-    }, [isPreview, circle?.highlighted_comment]);
+    }, [isPreview, circle?.highlighted_comment, newComments]);
 
     return (
         <Flex flexDirection="column" {...props} marginLeft="10px" marginRight="10px">
@@ -756,7 +773,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
                 <Comment key={comment.id} comment={comment} circle={circle} marginBottom="4px" />
             ))}
 
-            <CommentInput circle={circle} marginBottom="10px" />
+            <CommentInput circle={circle} marginBottom="10px" onCommentAdded={onCommentAdded} />
         </Flex>
     );
 };
