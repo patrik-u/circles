@@ -1,4 +1,3 @@
-//#region imports
 import React, { useEffect, useState } from "react";
 import {
     Box,
@@ -21,6 +20,7 @@ import {
     ModalCloseButton,
     Card,
     CardBody,
+    Input, // Added Input component for search
 } from "@chakra-ui/react";
 import i18n from "@/i18n/Localization";
 import axios from "axios";
@@ -183,6 +183,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
     const [signInStatus] = useAtom(signInStatusAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const useCompactList = type !== "post" && type !== "event";
+    const [searchQuery, setSearchQuery] = useState(""); // State for search query
 
     const navigate = useNavigateNoUpdates();
 
@@ -217,6 +218,13 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             .catch((error) => {});
     }, [user?.id, circle?.id, type, signInStatus]);
 
+    // Filter circles based on search query
+    const filteredCirclesList = filteredCircles
+        ?.filter((x) => x.type === type)
+        ?.filter((item) =>
+            item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
     return (
         <Flex
             flexGrow={noScrollbars ? "0" : "1"}
@@ -227,29 +235,31 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             backgroundColor={asCards ? "#ededed" : "transparent"}
             position="relative"
         >
+            {type !== 'post' && (
+                <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    marginTop="10px"
+                    backgroundColor="white"
+                />
+            )}
             <CreateNewCircleForm type={type} asCard={asCards} />
             <Flex flexGrow="1" flexDirection={"column"} marginTop={asCards ? "10px" : "0px"}>
                 <ScrollbarsIf noScrollbars={noScrollbars}>
-                    {filteredCircles
-                        ?.filter((x) => x.type === type)
-                        ?.map((item) => (
-                            <CircleListItem
-                                key={item.id}
-                                item={item}
-                                onClick={() => {
-                                    openCircle(navigate, item);
-                                    focusCircle(item, setFocusOnMapItem);
-                                }}
-                                asCard={asCards}
-                                isCompact={useCompactList}
-                            />
-                        ))}
+                    {filteredCirclesList?.map((item) => (
+                        <CircleListItem
+                            key={item.id}
+                            item={item}
+                            onClick={() => {
+                                openCircle(navigate, item);
+                                focusCircle(item, setFocusOnMapItem);
+                            }}
+                            asCard={asCards}
+                            isCompact={useCompactList}
+                        />
+                    ))}
                 </ScrollbarsIf>
-                {/* {filteredCircles?.length <= 0 && (
-                    <Text marginLeft="12px" marginTop="10px" alignSelf="start">
-                        {i18n.t(`No ${type}s`)}
-                    </Text>
-                )} */}
             </Flex>
         </Flex>
     );
