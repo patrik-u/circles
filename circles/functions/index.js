@@ -2097,6 +2097,7 @@ app.post("/circles/:id/comments", auth, async (req, res) => {
             creator: user,
             created_at: date,
             content: comment,
+            likes: 0,
         };
         if (parent_comment_id) {
             newComment.parent_comment_id = parent_comment_id;
@@ -2263,6 +2264,8 @@ app.put("/comments/:id", auth, async (req, res) => {
 });
 
 const updateHighlightedComment = async (circleId) => {
+    console.log("updating highlighted comment for post " + circleId);
+
     // get earliest comment with highest like count
     let highlightedComment = null;
     let comments = await db
@@ -2276,11 +2279,18 @@ const updateHighlightedComment = async (circleId) => {
     if (comments.docs.length > 0) {
         highlightedComment = comments.docs[0].data();
         highlightedComment.id = comments.docs[0].id;
+    } else {
+        console.log("found no comments");
+        return;
     }
+
+    console.log("getting all replies for comment " + highlightedComment.id);
 
     // get all replies to highlighted comment
     let replies = await db.collection("comments").where("parent_comment_id", "==", highlightedComment.id).get();
     let replyCount = replies.docs.length;
+
+    console.log("found " + replyCount + " replies");
 
     // update highlighted comment with reply count
     highlightedComment.replies = replyCount;

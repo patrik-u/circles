@@ -424,7 +424,21 @@ export const CommentInput = ({
     );
 };
 
-export const Comment = ({ comment, circle, ...props }) => {
+export const Comment = ({ comment, circle, isPreview, ...props }) => {
+    const [newComments, setNewComments] = useState([]);
+    const subcomments = useMemo(() => {
+        if (!isPreview || newComments.length <= 0) return comment?.subcomments ?? [];
+
+        let allSubcomments = comment.subcomments ?? [];
+        newComments.forEach((newComment) => {
+            // see if newCommment isn't already in list of subcomments
+            if (allSubcomments?.find((x) => x.id === newComment.id)) return;
+            allSubcomments.push(newComment);
+        });
+
+        return allSubcomments;
+    }, [comment.subcomments, newComments]);
+
     const [isReplying, setIsReplying] = useState(false);
     const [showSubcomments, setShowSubcomments] = useState(false);
     const [isHovering, setIsHovering] = useState(false);
@@ -434,6 +448,8 @@ export const Comment = ({ comment, circle, ...props }) => {
     const containerRef = useRef();
     const [containerWidth, setContainerWidth] = useState(100);
     const isCramped = useMemo(() => containerWidth < 200, [containerWidth]);
+    const [currentCircle] = useAtom(circleAtom);
+    const navigate = useNavigateNoUpdates();
 
     useEffect(() => {
         const handleResize = () => {
@@ -502,7 +518,8 @@ export const Comment = ({ comment, circle, ...props }) => {
     const handleMouseLeave = () => setIsHovering(false);
 
     const onCommentAdded = (comment) => {
-        //setShowSubcomments(true);
+        setShowSubcomments(true);
+        setNewComments([...newComments, comment]);
     };
 
     return (
@@ -618,25 +635,35 @@ export const Comment = ({ comment, circle, ...props }) => {
                     </>
                 )}
             </Flex>
-            {!showSubcomments && comment.subcomments && comment.subcomments.length > 0 && (
+            {!showSubcomments && ((subcomments && subcomments.length > 0) || (isPreview && comment.replies > 0)) && (
                 <Link
                     onClick={(e) => {
                         e.preventDefault();
-                        setShowSubcomments(true);
+                        if (isPreview) {
+                            openSubcircle(navigate, currentCircle, circle);
+                        } else {
+                            setShowSubcomments(true);
+                        }
                     }}
                     marginLeft="41px"
                     marginTop="1px"
                 >
                     <Text fontSize="12px" fontWeight="700" color="#6d6d6d" textAlign="left">
-                        Show {comment.subcomments.length} replies
+                        Show {isPreview ? comment.replies : subcomments.length} replies
                     </Text>
                 </Link>
             )}
 
-            {showSubcomments && comment.subcomments && comment.subcomments.length > 0 && (
+            {showSubcomments && subcomments && subcomments.length > 0 && (
                 <Flex flexDirection="column" marginLeft="29px" marginTop="5px">
-                    {comment.subcomments.map((subcomment) => (
-                        <Comment key={subcomment.id} comment={subcomment} circle={circle} marginBottom="8px" />
+                    {subcomments.map((subcomment) => (
+                        <Comment
+                            key={subcomment.id}
+                            comment={subcomment}
+                            circle={circle}
+                            marginBottom="8px"
+                            isPreview={isPreview}
+                        />
                     ))}
                 </Flex>
             )}
@@ -683,7 +710,10 @@ export const Comments = ({ circle, isPreview, ...props }) => {
         if (!circle) return;
         if (isPreview) {
             if (circle.highlighted_comment) {
-                setComments([circle.highlighted_comment, ...newComments]);
+                setComments([
+                    circle.highlighted_comment,
+                    ...newComments.filter((c) => c.id !== circle.highlighted_comment.id),
+                ]);
             }
         } else {
             // subscribe to comments
@@ -770,7 +800,7 @@ export const Comments = ({ circle, isPreview, ...props }) => {
             )}
 
             {comments.map((comment) => (
-                <Comment key={comment.id} comment={comment} circle={circle} marginBottom="4px" />
+                <Comment key={comment.id} comment={comment} circle={circle} isPreview={isPreview} marginBottom="4px" />
             ))}
 
             <CommentInput circle={circle} marginBottom="10px" onCommentAdded={onCommentAdded} />
