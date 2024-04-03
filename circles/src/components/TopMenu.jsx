@@ -36,7 +36,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
-            focusCircle(circle, setFocusOnMapItem);
+            // focusCircle(circle, setFocusOnMapItem);
         }
     };
 
@@ -46,7 +46,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
             openCircle(navigate, circle);
-            focusCircle(circle, setFocusOnMapItem);
+            // focusCircle(circle, setFocusOnMapItem);
         }
     };
 

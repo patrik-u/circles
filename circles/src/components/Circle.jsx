@@ -1,5 +1,5 @@
 //#region imports
-import React, { useEffect, lazy, useRef, useState, useCallback } from "react";
+import React, { useEffect, lazy, useRef, useState, useCallback, useMemo } from "react";
 import {
     Flex,
     Box,
@@ -9,6 +9,7 @@ import {
     DrawerContent,
     DrawerCloseButton,
     Button,
+    Text,
     useDisclosure,
 } from "@chakra-ui/react";
 import db from "@/components/Firebase";
@@ -68,7 +69,7 @@ import WidgetController from "@/components/WidgetController";
 import NavigationPanel from "@/components/NavigationPanel";
 import config from "@/Config";
 import CircleGlobusMap from "@/components/CircleGlobusMap";
-import CircleDashboard from "@/components/CircleDashboard";
+import { CircleDashboard, tabs } from "@/components/CircleDashboard";
 import { CircleChatWidget } from "@/components/CircleChat";
 import { UserDashboard } from "@/components/UserDashboard";
 import { CircleSearcher } from "@/components/CircleSearch";
@@ -125,6 +126,18 @@ export const Circle = ({ isGlobal }) => {
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
     const [initialFocusDone, setInitialFocusDone] = useState(false);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const location = useLocationNoUpdates();
+
+    const pathSegments = location.pathname.split("/");
+    const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
+    const selectedTab = useMemo(() => {
+        // get tab with id same as currentTabPath
+        let tab = tabs.find((x) => x.id === currentTabPath);
+        if (!tab) {
+            return tabs.find((x) => x.id === "home"); // default tab
+        }
+        return tab;
+    }, [currentTabPath, tabs, circleId]);
 
     const handlePinClick = () => {
         setIsPinned(!isPinned);
@@ -364,12 +377,12 @@ export const Circle = ({ isGlobal }) => {
     }, [signInStatus?.signedIn, user?.id, circleId, inVideoConference]);
 
     // focuses on circle if circle is navigated to directly
-    useEffect(() => {
-        if (circleId && circle?.id && !initialFocusDone) {
-            focusCircle(circle, setFocusOnMapItem);
-            setInitialFocusDone(true); // Prevent further calls on subsequent renders
-        }
-    }, [circleId, circle, initialFocusDone]);
+    // useEffect(() => {
+    //     if (circleId && circle?.id && !initialFocusDone) {
+    //         focusCircle(circle, setFocusOnMapItem);
+    //         setInitialFocusDone(true); // Prevent further calls on subsequent renders
+    //     }
+    // }, [circleId, circle, initialFocusDone]);
 
     const circlePictureSize = isMobile ? 120 : 160;
 
@@ -377,6 +390,15 @@ export const Circle = ({ isGlobal }) => {
     const topMenuHeight = 90;
     const topMenuHeightPx = topMenuHeight + "px";
     const contentHeight = windowHeight;
+
+    const onTabClick = (tab) => {
+        const path = tab?.id ?? "";
+        navigate(`/${hostId}/${circleId}/${path}`);
+    };
+
+    const isTabSelected = (tab) => {
+        return tab?.id === selectedTab?.id;
+    };
 
     return (
         <Flex flexDirection="row">
@@ -401,6 +423,48 @@ export const Circle = ({ isGlobal }) => {
                                 background: "linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1))",
                             }}
                         ></Flex>
+                        {/* Floating control panel */}
+                        {!circleDashboardExpanded && (
+                            <Flex
+                                position="absolute"
+                                bottom="20px"
+                                left="50%"
+                                transform="translateX(-50%)"
+                                borderRadius="10px"
+                                backgroundColor="white"
+                                overflow="hidden"
+                            >
+                                {tabs
+                                    .filter((x) => x.showInMap)
+                                    .map((tab) => (
+                                        <Flex
+                                            borderWidth="2px 0px 2px 0px"
+                                            borderBottomColor={isTabSelected(tab) ? "#ff2a10" : "white"}
+                                            // backgroundColor={isTabSelected(tab) ? "#a1b2c9" : "white"}
+                                            height="50px"
+                                            // #ff8b68
+                                            cursor="pointer"
+                                            flexDirection="column"
+                                            align="center"
+                                            minWidth={"70px"}
+                                            flex={1}
+                                            onClick={() => onTabClick(tab)}
+                                        >
+                                            <Flex
+                                                flexDirection="column"
+                                                align="center"
+                                                marginTop="auto"
+                                                marginBottom="auto"
+                                            >
+                                                <tab.icon />
+                                                <Text userSelect="none" fontSize="12px">
+                                                    {tab.name}
+                                                </Text>
+                                            </Flex>
+                                        </Flex>
+                                    ))}
+                            </Flex>
+                        )}
                     </Box>
 
                     <Flex flexDirection="column" w="full" h="full" pos="absolute" zIndex="2" pointerEvents="none">

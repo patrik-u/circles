@@ -101,7 +101,7 @@ export const UserDashboard = ({ onClose }) => {
                                                 cursor="pointer"
                                                 onClick={() => {
                                                     openCircle(navigate, circle.parent_circle);
-                                                    focusCircle(circle.parent_circle, setFocusOnMapItem);
+                                                    // focusCircle(circle.parent_circle, setFocusOnMapItem);
                                                     setToggleWidgetEvent({ name: "about", value: true });
                                                 }}
                                             >

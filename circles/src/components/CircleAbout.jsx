@@ -79,6 +79,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                     // bgGradient="linear(to-r,#d3d1d3,#ffffff)"
                     // borderRadius="10px"
                     // margin={isMobile ? "0px" : "0px 10px 10px 0px"}
+                    backgroundColor="white"
                     padding={noPaddingStyle ? "0px" : "5px"}
                     flexGrow={noScrollbars ? "0" : "1"}
                     pointerEvents="auto"
@@ -127,7 +128,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                     cursor="pointer"
                                     onClick={() => {
                                         openCircle(navigate, circle.parent_circle);
-                                        focusCircle(circle.parent_circle, setFocusOnMapItem);
+                                        // focusCircle(circle.parent_circle, setFocusOnMapItem);
                                         setToggleWidgetEvent({ name: "about", value: true });
                                     }}
                                     userSelect="none"

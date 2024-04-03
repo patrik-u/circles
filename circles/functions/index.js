@@ -1379,15 +1379,12 @@ const setUserSeen = async (userId, circleId, category) => {
     );
 };
 
-const updateMapViewport = async (circleId) => {
-    const circle = await getCircle(circleId);
-    if (!circle) return;
-
+const updateMapViewportForType = async (circle, circleId, type) => {
     // get all circles with this parent circle
     const circles = await db
         .collection("circles")
         .where("parent_circle.id", "==", circleId)
-        .where("type", "==", "circle")
+        .where("type", "==", type)
         .get();
 
     // get all locations
@@ -1402,7 +1399,7 @@ const updateMapViewport = async (circleId) => {
         }
     });
 
-    if (locations.length <= 0) return;
+    if (locations.length <= 0) return false;
 
     // calculate map location center
     let mapCenter = calculateMapCenter(locations);
@@ -1419,8 +1416,23 @@ const updateMapViewport = async (circleId) => {
         bounds: mapBounds,
     };
 
+    return calculated_map_viewport;
+};
+
+const updateMapViewport = async (circleId) => {
+    const circle = await getCircle(circleId);
+    if (!circle) return;
+
+    // update viewport for all types
+    let calculated_map_viewports = {};
+    calculated_map_viewports["circle"] = await updateMapViewportForType(circle, circleId, "circle");
+    calculated_map_viewports["post"] = await updateMapViewportForType(circle, circleId, "post");
+    calculated_map_viewports["event"] = await updateMapViewportForType(circle, circleId, "event");
+    calculated_map_viewports["project"] = await updateMapViewportForType(circle, circleId, "project");
+    calculated_map_viewports["user"] = await updateMapViewportForType(circle, circleId, "user");
+
     // update circle
-    await updateCircle(circleId, { calculated_map_viewport: calculated_map_viewport });
+    await updateCircle(circleId, { calculated_map_viewports: calculated_map_viewports });
 };
 
 //#endregion
@@ -1766,15 +1778,17 @@ const upsertCircle = async (authCallerId, circleReq) => {
         }
     }
 
-    if (hasNewParent || baseChanged) {
-        // calculate new map viewport for old and new parent circle
-        if (oldParentId) {
-            await updateMapViewport(oldParentId);
-        }
-        if (circle.parent_circle?.id) {
-            await updateMapViewport(circle.parent_circle.id);
-        }
-    }
+    // TODO below logic can be removed as viewport is calculated dynamically on front-end based on displayed circles' locations
+    // if we want to calculate this on the backend, we can uncomment below
+    // if (hasNewParent || baseChanged) {
+    //     // calculate new map viewport for old and new parent circle
+    //     if (oldParentId) {
+    //         await updateMapViewport(oldParentId);
+    //     }
+    //     if (circle.parent_circle?.id) {
+    //         await updateMapViewport(circle.parent_circle.id);
+    //     }
+    // }
 
     // upsert embeddings
     upsertCircleEmbedding(circle.id);

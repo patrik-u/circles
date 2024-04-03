@@ -341,7 +341,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
 
         let relationSet = getRelationSet(user, circle);
         openCircle(navigate, relationSet);
-        focusCircle(relationSet, setFocusOnMapItem);
+        // focusCircle(relationSet, setFocusOnMapItem);
         setPreviewCircle(null);
         setToggleWidgetEvent({ name: "chat", value: true });
         setToggleWidgetEvent({ name: "about", value: true });
@@ -1695,7 +1695,7 @@ export const OpenButton = ({ circle, ...props }) => {
                 onClick={(event) => {
                     event.stopPropagation();
                     openCircle(navigate, circle);
-                    focusCircle(circle, setFocusOnMapItem);
+                    // focusCircle(circle, setFocusOnMapItem);
                 }}
                 position="relative"
                 align="center"

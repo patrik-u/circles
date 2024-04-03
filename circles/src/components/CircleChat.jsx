@@ -63,6 +63,8 @@ import { AboutButton, CircleLink, CircleRichText } from "@/components/CircleElem
 import ReactMarkdown from "react-markdown";
 import Linkify from "linkify-it";
 import { CircleMention } from "@/components/CircleSearch";
+import { altBg, expBgColor } from "./Constants";
+import { circleDashboardExpandedAtom } from "./Atoms";
 
 const linkify = new Linkify();
 linkify.tlds("earth", true);
@@ -1233,13 +1235,14 @@ export const CircleChat = ({ circle }) => {
     };
 
     const circleChatBackgroundColor = "#ededed"; // "#e3e3e3";
+    const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
 
     if (!circle) return null;
 
     return (
         <Flex
             flexGrow="1"
-            backgroundColor={circleChatBackgroundColor}
+            backgroundColor={altBg && circleDashboardExpanded ? "transparent" : circleChatBackgroundColor}
             width="100%"
             height="100%"
             position="relative"

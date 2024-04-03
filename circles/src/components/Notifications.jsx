@@ -600,7 +600,7 @@ const Notifications = () => {
                         onClick={() => {
                             notificationsOnClose();
                             openSubcircle(navigate, notification.circle?.parent_circle, notification.circle);
-                            focusCircle(notification.circle?.parent_circle, setFocusOnMapItem);
+                            // focusCircle(notification.circle?.parent_circle, setFocusOnMapItem);
                         }}
                     />
                 );
@@ -617,7 +617,7 @@ const Notifications = () => {
                         onClick={() => {
                             notificationsOnClose();
                             openCircle(navigate, notification.source);
-                            focusCircle(notification.source, setFocusOnMapItem);
+                            // focusCircle(notification.source, setFocusOnMapItem);
                         }}
                     />
                 );

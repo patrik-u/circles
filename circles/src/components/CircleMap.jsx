@@ -1,5 +1,5 @@
 //#region imports
-import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef, useMemo } from "react";
 import { Flex } from "@chakra-ui/react";
 import { getLatlng, log, getLocation } from "@/components/Helpers";
 import { useAtom } from "jotai";
@@ -27,6 +27,9 @@ import {
 } from "@/components/MapMarkers";
 import mapboxgl from "mapbox-gl";
 import config from "@/Config";
+import { useLocationNoUpdates } from "./RouterUtils";
+import { tabs } from "./CircleDashboard";
+import { useParams } from "react-router-dom";
 //#endregion
 
 export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
@@ -105,20 +108,58 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
         return zoomFactor - dynamicAdjustmentFactor;
     };
 
+    const calculateMapBounds = (locations) => {
+        // get minimum and maximum latitudes and longitudes
+        let minLat = Math.min(...locations.map((loc) => loc.latitude));
+        let maxLat = Math.max(...locations.map((loc) => loc.latitude));
+        let minLng = Math.min(...locations.map((loc) => loc.longitude));
+        let maxLng = Math.max(...locations.map((loc) => loc.longitude));
+
+        // return the calculated bounds
+        const bounds = {
+            southwest: { latitude: minLat, longitude: minLng },
+            northeast: { latitude: maxLat, longitude: maxLng },
+        };
+
+        return bounds;
+    };
+
+    const getMapBoundsForCircles = () => {
+        // get all locations
+        let locations = [];
+        if (circle?.base) {
+            locations.push(getLatlng(circle.base));
+        }
+        filteredCircles?.forEach((filteredCircle) => {
+            if (filteredCircle.base) {
+                locations.push(getLatlng(filteredCircle.base));
+            }
+        });
+
+        if (locations.length <= 0) return false;
+
+        // calculate bounds
+        let mapBounds = calculateMapBounds(locations);
+        return mapBounds;
+    };
+
     useEffect(() => {
-        if (!focusOnMapItem) return;
+        const mapInstance = mapRef?.current?.getMap();
+        if (!mapInstance || !circle) return;
+        let bounds = getMapBoundsForCircles();
 
-        let transitionSpeed = focusOnMapItem.speed ?? 3;
-        let transitionCurve = focusOnMapItem.curve ?? 2;
-        const mapInstance = mapRef.current.getMap();
+        // calculate bound based on filtered circles
 
-        let calculatedMapViewport = focusOnMapItem?.item?.calculated_map_viewport;
-        let bounds = calculatedMapViewport?.bounds;
+        console.log("bounds:", JSON.stringify(bounds, null, 2));
+        // console.log("selected tab:", JSON.stringify(selectedTab, null, 2));
         if (bounds) {
             let lngLatBounds = [
                 [bounds.southwest.longitude, bounds.southwest.latitude],
                 [bounds.northeast.longitude, bounds.northeast.latitude],
             ];
+
+            let transitionSpeed = 3;
+            let transitionCurve = 2;
 
             mapInstance.fitBounds(lngLatBounds, {
                 padding: { top: 100, bottom: 10, left: 30, right: 50 },
@@ -128,16 +169,20 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
                 easing: (t) => t,
                 essential: true,
             });
-            setFocusOnMapItem(null);
             return;
         }
+    }, [filteredCircles, circle]);
 
-        let zoom = focusOnMapItem.zoom ?? calculatedMapViewport?.zoom_factor ?? 15;
-        if (calculatedMapViewport?.zoom_factor) {
-            zoom = adjustZoomForViewport(calculatedMapViewport.zoom_factor);
-        }
+    useEffect(() => {
+        if (!focusOnMapItem) return;
 
-        let location = calculatedMapViewport?.center ?? getLocation(focusOnMapItem.item);
+        let transitionSpeed = focusOnMapItem.speed ?? 3;
+        let transitionCurve = focusOnMapItem.curve ?? 2;
+        const mapInstance = mapRef.current?.getMap();
+        if (!mapInstance) return;
+
+        let zoom = focusOnMapItem.zoom ?? 15;
+        let location = getLocation(focusOnMapItem.item);
 
         if (!location) {
             if (focusOnMapItem.item?.id === "global") {

@@ -39,6 +39,7 @@ import CircleAbout from "@/components/CircleAbout";
 import Circles from "@/components/Circles";
 import { useParams } from "react-router-dom";
 import { BoxIf, ScrollbarsIf } from "./CircleElements";
+import { altBg, expBgColor } from "./Constants";
 //#endregion
 
 const CircleHomeFeed = ({ onClose }) => {
@@ -53,7 +54,13 @@ const CircleHomeFeed = ({ onClose }) => {
                 <BoxIf noBox={!circleDashboardExpanded} order="1" width="375px">
                     <CircleAbout noScrollbars={!circleDashboardExpanded} />
                 </BoxIf>
-                <BoxIf noBox={!circleDashboardExpanded} order="0" flexGrow="1" align="center" backgroundColor="#ededed">
+                <BoxIf
+                    noBox={!circleDashboardExpanded}
+                    order="0"
+                    flexGrow="1"
+                    align="center"
+                    backgroundColor={expBgColor}
+                >
                     <ScrollbarsIf noScrollbars={!circleDashboardExpanded}>
                         <Circles
                             type="post"

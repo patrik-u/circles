@@ -1,5 +1,8 @@
 import i18n from "@/i18n/Localization";
 
+export const altBg = true;
+export const expBgColor = altBg ? "#000000b5" : "#ededed";
+
 export const defaultContentWidth = "435px";
 export const defaultCoverHeight = { default: 464, mobile: 250 };
 export const signInStatusValues = {

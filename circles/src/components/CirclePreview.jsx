@@ -142,7 +142,7 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
                         onClick={() => {
                             console.log("opening circle");
                             openCircle(navigate, circle.activity.active_in_circle);
-                            focusCircle(circle.activity.active_in_circle, setFocusOnMapItem);
+                            // focusCircle(circle.activity.active_in_circle, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "video", value: true });
                         }}
                         align="center"

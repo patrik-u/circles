@@ -95,7 +95,7 @@ export const Home = () => {
                                             marginTop="5px"
                                             onClick={() => {
                                                 openCircle(navigate, item);
-                                                focusCircle(item, setFocusOnMapItem);
+                                                // focusCircle(item, setFocusOnMapItem);
                                             }}
                                         >
                                             {item.name}

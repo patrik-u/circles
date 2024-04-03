@@ -97,7 +97,7 @@ export const ProfileMenu = () => {
                             onClick={() => {
                                 profileMenuOnClose();
                                 openCircle(navigate, user);
-                                focusCircle(user, setFocusOnMapItem);
+                                // focusCircle(user, setFocusOnMapItem);
                                 setToggleWidgetEvent({ name: "about", value: true });
                             }}
                         />
@@ -108,7 +108,7 @@ export const ProfileMenu = () => {
                         onClick={() => {
                             profileMenuOnClose();
                             openCircle(navigate, user);
-                            focusCircle(user, setFocusOnMapItem);
+                            // focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
                         }}
                     >
@@ -119,7 +119,7 @@ export const ProfileMenu = () => {
                     <MenuItem
                         onClick={() => {
                             openCircle(navigate, user);
-                            focusCircle(user, setFocusOnMapItem);
+                            // focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
                         }}
                     >
@@ -128,7 +128,7 @@ export const ProfileMenu = () => {
                     <MenuItem
                         onClick={() => {
                             openCircle(navigate, user);
-                            focusCircle(user, setFocusOnMapItem);
+                            // focusCircle(user, setFocusOnMapItem);
                             log("toggling settings to true", 0, true);
                             setToggleSettings(true);
                         }}

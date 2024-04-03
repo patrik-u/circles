@@ -150,7 +150,7 @@ const CircleSelector = () => {
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
         openCircle(navigate, circle);
-        focusCircle(circle, setFocusOnMapItem);
+        // focusCircle(circle, setFocusOnMapItem);
     };
 
     if (!selectedCircle?.id) return <Box flexGrow="1" />;
@@ -196,50 +196,63 @@ const CircleSelector = () => {
     );
 };
 
-const tabs = [
+export const tabs = [
     {
         id: "home",
         name: "Home",
         icon: FiHome,
+        showInMap: true,
+        type: "circle",
     },
     {
         id: "chat",
         name: "Chat",
         icon: FiMessageCircle,
+        type: "circle",
     },
     {
         id: "circles",
         name: "Circles",
         icon: FiCircle,
+        showInMap: true,
+        type: "circle",
     },
     {
         id: "events",
         name: "Events",
         icon: FiCalendar,
+        showInMap: true,
+        type: "event",
     },
     {
         id: "members",
         name: "Members",
         icon: FiUsers,
+        showInMap: true,
+        type: "user",
     },
     {
         id: "projects",
         name: "Projects",
         icon: FiClipboard,
+        showInMap: true,
+        type: "project",
     },
     {
         id: "settings",
         name: "Settings",
         icon: FiSettings,
+        type: "circle",
     },
     {
         id: "admin",
         name: "Admin",
         icon: FiShield,
+        type: "circle",
     },
 ];
 
-const CircleDashboard = ({ onClose }) => {
+export const CircleDashboard = ({ onClose }) => {
     log("CircleDashboard.render", -1);
 
     const [user] = useAtom(userAtom);
@@ -254,6 +267,7 @@ const CircleDashboard = ({ onClose }) => {
     const navigate = useNavigateNoUpdates();
     const { hostId, circleId } = useParams();
     const dropdownRef = useRef(null);
+    const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
 
     const pathSegments = location.pathname.split("/");
     const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
@@ -322,7 +336,6 @@ const CircleDashboard = ({ onClose }) => {
                 )}
 
                 <Box
-                    bgGradient="linear(to-r,#d3d1d3,#ffffff)"
                     borderRadius={isMobile ? "0px" : "10px"}
                     padding="0px"
                     flexGrow="1"
@@ -439,7 +452,7 @@ const CircleDashboard = ({ onClose }) => {
                             </Box>
                         )}
 
-                        <Box flex="1" backgroundColor="white" position="relative">
+                        <Box flex="1" position="relative">
                             <Suspense fallback={<Box></Box>}>
                                 <Routes>
                                     <Route path="/*" element={<CircleHomeFeed />} />

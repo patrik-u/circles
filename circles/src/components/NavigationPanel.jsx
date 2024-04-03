@@ -35,7 +35,7 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
 
     const onCircleClick = (item) => {
         openCircle(navigate, item);
-        focusCircle(item, setFocusOnMapItem);
+        // focusCircle(item, setFocusOnMapItem);
         if (!isPinned) {
             onClose();
         }

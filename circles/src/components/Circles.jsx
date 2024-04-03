@@ -49,6 +49,8 @@ import { BsCardHeading } from "react-icons/bs";
 import Scrollbars from "react-custom-scrollbars-2";
 import { ScrollbarsIf } from "./CircleElements";
 import { Route, Routes } from "react-router-dom";
+import { altBg, expBgColor } from "./Constants";
+import { circleDashboardExpandedAtom } from "./Atoms";
 //#endregion
 
 const CreateNewCircleForm = ({ type, asCard }) => {
@@ -184,6 +186,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const useCompactList = type !== "post" && type !== "event";
     const [searchQuery, setSearchQuery] = useState(""); // State for search query
+    const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
 
     const navigate = useNavigateNoUpdates();
 
@@ -228,19 +231,24 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             flexGrow={noScrollbars ? "0" : "1"}
             width="100%"
             height={noScrollbars ? "auto" : "100%"}
+            minHeight="100%"
             flexDirection={"column"}
             maxWidth="600px"
-            backgroundColor={asCards ? "#ededed" : "transparent"}
+            backgroundColor={asCards ? (altBg && circleDashboardExpanded ? "transparent" : "#ededed") : "transparent"}
             position="relative"
         >
             {type !== "post" && (
-                <Input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    marginTop="10px"
-                    backgroundColor="white"
-                />
+                <Flex>
+                    <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        marginTop="10px"
+                        backgroundColor="white"
+                        marginLeft="4px"
+                        marginRight="4px"
+                    />
+                </Flex>
             )}
             <CreateNewCircleForm type={type} asCard={asCards} />
             <Flex flexGrow="1" flexDirection={"column"} marginTop={asCards ? "10px" : "0px"}>
@@ -251,7 +259,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                             item={item}
                             onClick={() => {
                                 openCircle(navigate, item);
-                                focusCircle(item, setFocusOnMapItem);
+                                // focusCircle(item, setFocusOnMapItem);
                             }}
                             asCard={asCards}
                             isCompact={useCompactList}

@@ -53,7 +53,7 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
             case "post":
                 return [allSteps.post];
             case "project":
-                return [allSteps.project,allSteps.images];
+                return [allSteps.project, allSteps.images];
             default:
                 return [
                     allSteps.about,
@@ -77,7 +77,7 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
             onClose();
             if (createdCircle.type === "circle") {
                 openCircle(navigate, createdCircle);
-                focusCircle(createdCircle, setFocusOnMapItem);
+                // focusCircle(createdCircle, setFocusOnMapItem);
                 openAboutCircle(createdCircle, setToggleAbout);
             }
         } else {
