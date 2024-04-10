@@ -236,7 +236,8 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
 
     // Filter circles based on whether they are upcoming or past events
     const filteredEvents = filteredCirclesList.filter(item => {
-        const eventDate = new Date(item.starts_at.toDate()); 
+        const eventDate = item.starts_at?.toDate(); // Using optional chaining here
+        if (!eventDate) return false; // Check if starts_at exists
         const currentDate = new Date();
         return showUpcomingEvents ? eventDate > currentDate : eventDate <= currentDate;
     });
@@ -254,19 +255,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             }
             position="relative"
         >
-            {type !== 'post' && (
-                <Flex>
-                    <Input
-                        placeholder="Search..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        marginTop="10px"
-                        backgroundColor="white"
-                        marginLeft="15px"
-                        marginRight="15px"
-                    />
-                </Flex>
-            )}
+            
             {/* Toggle buttons for displaying upcoming and past events */}
             {type === 'event' && circleDashboardExpanded && (
                 <Flex justifyContent="center" marginTop="10px" >
@@ -295,6 +284,19 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
                     >
                         Past Events
                     </button>
+                </Flex>
+            )}
+            {type !== 'post' && (
+                <Flex>
+                    <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        marginTop="10px"
+                        backgroundColor="white"
+                        marginLeft="5px"
+                        marginRight="5px"
+                    />
                 </Flex>
             )}
             <CreateNewCircleForm type={type} asCard={asCards} />
