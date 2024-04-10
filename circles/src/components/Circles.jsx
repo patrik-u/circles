@@ -237,7 +237,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
     // Filter circles based on whether they are upcoming or past events
     const filteredEvents = filteredCirclesList.filter(item => {
         const eventDate = item.starts_at?.toDate(); // Using optional chaining here
-        if (!eventDate) return false; // Check if starts_at exists
+        // if (!eventDate) return false; // Check if starts_at exists
         const currentDate = new Date();
         return showUpcomingEvents ? eventDate > currentDate : eventDate <= currentDate;
     });
@@ -302,7 +302,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
             <CreateNewCircleForm type={type} asCard={asCards} />
             <Flex flexGrow="1" flexDirection={'column'} marginTop={asCards ? '10px' : '0px'}>
                 <ScrollbarsIf noScrollbars={noScrollbars}>
-                    {filteredEvents.map(item => (
+                    {(type !== 'event' ? filteredCirclesList : filteredEvents)?.map(item => (
                         <CircleListItem
                             key={item.id}
                             item={item}
