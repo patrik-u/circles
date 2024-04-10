@@ -184,9 +184,10 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
     const [filteredCircles] = useAtom(filteredCirclesAtom);
     const [signInStatus] = useAtom(signInStatusAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
-    const useCompactList = type !== "post" && type !== "event";
-    const [searchQuery, setSearchQuery] = useState(""); // State for search query
+    const useCompactList = type !== 'post' && type !== 'event';
+    const [searchQuery, setSearchQuery] = useState('');
     const [circleDashboardExpanded, setCircleDashboardExpanded] = useAtom(circleDashboardExpandedAtom);
+    const [showUpcomingEvents, setShowUpcomingEvents] = useState(true); // State for toggling upcoming and past events
 
     const navigate = useNavigateNoUpdates();
 
@@ -196,12 +197,15 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
         // check if filter needs to update
         if (
             circlesFilter?.sortBy !== sortBy ||
-            circlesFilter?.types?.join(",") !== types.join(",") ||
-            circlesFilter?.categories?.join(",") !== categories.join(",")
+            circlesFilter?.types?.join(',') !== types.join(',') ||
+            circlesFilter?.categories?.join(',') !== categories.join(',')
         ) {
-            setCirclesFilter((currentFilter) => {
-                return { ...currentFilter, types: types, categories: categories, sortBy: sortBy };
-            });
+            setCirclesFilter(currentFilter => ({
+                ...currentFilter,
+                types: types,
+                categories: categories,
+                sortBy: sortBy
+            }));
         }
     }, [setCirclesFilter, types]);
 
@@ -215,45 +219,88 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
         axios
             .post(`/seen`, {
                 category: `${type}s`,
-                circleId: circleId,
+                circleId: circleId
             })
-            .then((x) => {})
-            .catch((error) => {});
+            .then(x => {})
+            .catch(error => {});
     }, [user?.id, circle?.id, type, signInStatus]);
 
     // Filter circles based on search query
     const filteredCirclesList = filteredCircles
-        ?.filter((x) => x.type === type)
-        ?.filter((item) => !searchQuery || (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())));
+        ?.filter(x => x.type === type)
+        ?.filter(
+            item =>
+                !searchQuery ||
+                (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+
+    // Filter circles based on whether they are upcoming or past events
+    const filteredEvents = filteredCirclesList.filter(item => {
+        const eventDate = new Date(item.starts_at.toDate()); 
+        const currentDate = new Date();
+        return showUpcomingEvents ? eventDate > currentDate : eventDate <= currentDate;
+    });
 
     return (
         <Flex
-            flexGrow={noScrollbars ? "0" : "1"}
+            flexGrow={noScrollbars ? '0' : '1'}
             width="100%"
-            height={noScrollbars ? "auto" : "100%"}
+            height={noScrollbars ? 'auto' : '100%'}
             minHeight="100%"
-            flexDirection={"column"}
+            flexDirection={'column'}
             maxWidth="600px"
-            backgroundColor={asCards ? (altBg && circleDashboardExpanded ? "transparent" : "#ededed") : "transparent"}
+            backgroundColor={
+                asCards ? (altBg && circleDashboardExpanded ? 'transparent' : '#ededed') : 'transparent'
+            }
             position="relative"
         >
-            {type !== "post" && (
+            {type !== 'post' && (
                 <Flex>
                     <Input
                         placeholder="Search..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={e => setSearchQuery(e.target.value)}
                         marginTop="10px"
                         backgroundColor="white"
-                        marginLeft="4px"
-                        marginRight="4px"
+                        marginLeft="15px"
+                        marginRight="15px"
                     />
                 </Flex>
             )}
+            {/* Toggle buttons for displaying upcoming and past events */}
+            {type === 'event' && circleDashboardExpanded && (
+                <Flex justifyContent="center" marginTop="10px" >
+                    <button 
+                        onClick={() => setShowUpcomingEvents(true)}
+                        style={{
+                            border: '2px solid white',
+                            borderRadius: '20px',
+                            padding: '5px 10px',
+                            marginRight: '10px',
+                            backgroundColor: showUpcomingEvents ? 'white' : 'transparent',
+                            color: showUpcomingEvents ? 'black' : 'white',
+                        }}
+                    >
+                        Upcoming Events
+                    </button>
+                    <button 
+                        onClick={() => setShowUpcomingEvents(false)}
+                        style={{
+                            border: '2px solid white',
+                            borderRadius: '20px',
+                            padding: '5px 10px',
+                            backgroundColor: !showUpcomingEvents ? 'white' : 'transparent',
+                            color: !showUpcomingEvents ? 'black' : 'white',
+                        }}
+                    >
+                        Past Events
+                    </button>
+                </Flex>
+            )}
             <CreateNewCircleForm type={type} asCard={asCards} />
-            <Flex flexGrow="1" flexDirection={"column"} marginTop={asCards ? "10px" : "0px"}>
+            <Flex flexGrow="1" flexDirection={'column'} marginTop={asCards ? '10px' : '0px'}>
                 <ScrollbarsIf noScrollbars={noScrollbars}>
-                    {filteredCirclesList?.map((item) => (
+                    {filteredEvents.map(item => (
                         <CircleListItem
                             key={item.id}
                             item={item}
@@ -272,3 +319,4 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
 };
 
 export default Circles;
+
