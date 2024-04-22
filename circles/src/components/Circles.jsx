@@ -51,6 +51,7 @@ import { ScrollbarsIf } from "./CircleElements";
 import { Route, Routes } from "react-router-dom";
 import { altBg, expBgColor } from "./Constants";
 import { circleDashboardExpandedAtom, disableMapAutoFocusAtom } from "./Atoms";
+import { fromFsDate } from "./Helpers";
 //#endregion
 
 const CreateNewCircleForm = ({ type, asCard }) => {
@@ -233,7 +234,7 @@ export const Circles = ({ type, types, categories, noScrollbars, asCards, sortBy
 
     // Filter circles based on whether they are upcoming or past events
     const filteredEvents = filteredCirclesList.filter((item) => {
-        const eventDate = item.starts_at?.toDate(); // Using optional chaining here
+        const eventDate = fromFsDate(item.starts_at); // Using optional chaining here
         // if (!eventDate) return false; // Check if starts_at exists
         const currentDate = new Date();
         return showUpcomingEvents ? eventDate > currentDate : eventDate <= currentDate;

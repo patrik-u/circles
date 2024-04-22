@@ -11,6 +11,7 @@ import {
     Button,
     Text,
     useDisclosure,
+    PortalManager,
 } from "@chakra-ui/react";
 import db from "@/components/Firebase";
 import axios from "axios";
@@ -74,6 +75,7 @@ import { CircleChatWidget } from "@/components/CircleChat";
 import { UserDashboard } from "@/components/UserDashboard";
 import { CircleSearcher } from "@/components/CircleSearch";
 import { disableMapAutoFocusAtom } from "./Atoms";
+import { CircleSelector } from "./CircleDashboard";
 //#endregion
 
 export const globalCircle = {
@@ -436,7 +438,10 @@ export const Circle = ({ isGlobal }) => {
                                 borderRadius="10px"
                                 backgroundColor="white"
                                 overflow="hidden"
+                                align="center"
                             >
+                                <CircleSelector compact={true} />
+
                                 {tabs
                                     .filter((x) => x.showInMap)
                                     .map((tab) => (

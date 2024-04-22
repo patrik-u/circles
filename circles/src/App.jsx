@@ -16,6 +16,7 @@ import PushNotificationsManager from "@/components/PushNotificationsManager";
 import ServerConfigManager from "@/components/ServerConfigManager";
 import { Tnc } from "@/components/TermsOfService";
 import { Circle } from "@/components/Circle";
+import { userAtom } from "@/components/Atoms";
 // import { CircleOld } from "@/components/CircleOld";
 //#endregion
 
@@ -24,6 +25,7 @@ const App = () => {
 
     //#region fields
     const [isMobile, setIsMobile] = useAtom(isMobileAtom);
+    const [user] = useAtom(userAtom);
     //#endregion
 
     //#region methods
@@ -63,7 +65,10 @@ const App = () => {
                         <Route path="/privacy" element={<Tnc showPrivacyPolicy={true} />} />
                         <Route path="/:hostId/:circleId/*" element={<Circle />} />
                         {/* <Route path="/:hostId/:circleId/*" element={<CircleOld />} /> */}
-                        <Route path="*" element={<Navigate to="/circles/global" replace />} />
+                        <Route
+                            path="*"
+                            element={<Navigate to={user ? `/circles/${user.id}` : "/circles/global"} replace />}
+                        />
                     </Routes>
                 </Suspense>
             </Flex>

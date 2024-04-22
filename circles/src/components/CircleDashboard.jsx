@@ -23,6 +23,7 @@ import {
     TabPanels,
     TabPanel,
     Tab,
+    Portal,
 } from "@chakra-ui/react";
 import { openCircle, focusCircle } from "@/components/Navigation";
 import {
@@ -91,11 +92,13 @@ import CircleExtrasAndMain from "./CircleExtrasAndMain";
 import { CircleNameAndPicture } from "./CircleElements";
 import CircleProject from "./CircleProject";
 import CirclePost from "./CirclePost";
-import { disableMapAutoFocusAtom } from "./Atoms";
+import { disableMapAutoFocusAtom, signInStatusAtom } from "./Atoms";
 //#endregion
 
-const CircleSelector = () => {
+export const CircleSelector = ({ compact = false }) => {
     // get circles from user similar to favorite menu
+    const [signInStatus, setSignInStatus] = useAtom(signInStatusAtom);
+    const [user, setUser] = useAtom(userAtom);
     const [userData] = useAtom(userDataAtom);
     const [favoriteCircles, setFavoriteCircles] = useState([]);
     const [circle] = useAtom(circleAtom);
@@ -111,7 +114,7 @@ const CircleSelector = () => {
         }
         // global circle first and then add favorite circles
         let preCircles = [];
-        if (circle?.id && circle?.id !== "global") {
+        if (circle?.id && circle?.id !== "global" && circle?.id !== user?.id) {
             preCircles = [circle];
         } else {
             preCircles = [];
@@ -159,42 +162,64 @@ const CircleSelector = () => {
     if (!selectedCircle?.id) return <Box flexGrow="1" />;
 
     return (
-        <Menu matchWidth margin="5px">
+        <Menu matchWidth margin="5px" zIndex="100">
             <MenuButton as={Button} rightIcon={<FiChevronDown />} width="100%" bg="white">
                 <Box display="flex" alignItems="center">
-                    <CircleNameAndPicture circle={selectedCircle} size={30} hasPopover={false} />
+                    {compact ? (
+                        <CirclePicture circle={selectedCircle} size={30} hasPopover={false} />
+                    ) : (
+                        <CircleNameAndPicture circle={selectedCircle} size={30} hasPopover={false} />
+                    )}
                 </Box>
             </MenuButton>
-            <MenuList width="100%">
-                <MenuItem key={global.id} onClick={() => handleSelect(global)}>
-                    <Image boxSize="30px" borderRadius="full" src={global.picture} alt={global.name} mr={2} />
-                    <Flex flexDirection="column">
-                        <Text fontWeight="bold">{global.name}</Text>
-                        <Text fontSize="10px">Explore circles</Text>
-                    </Flex>
-                </MenuItem>
+            <Portal>
+                <MenuList width="100%" zIndex="100" usePortal={true}>
+                    {user && (
+                        <MenuItem key={user.id} onClick={() => handleSelect(user)}>
+                            <Image boxSize="30px" borderRadius="full" src={user.picture} alt={user.name} mr={2} />
+                            <Flex flexDirection="column">
+                                <Text fontWeight="bold">{user.name}</Text>
+                                <Text fontSize="10px">Personal circle</Text>
+                            </Flex>
+                        </MenuItem>
+                    )}
 
-                {circles.length > 0 && (
-                    <Flex position="relative" flexDirection="row" paddingTop="14px" paddingBottom="14px" align="center">
-                        <Divider />
-                        <Flex position="absolute" left="0" top="8px" bg="white" px="4" align="center">
-                            <Text fontSize="10px" fontWeight="bold">
-                                MY CIRCLES
-                            </Text>
+                    <MenuItem key={global.id} onClick={() => handleSelect(global)}>
+                        <Image boxSize="30px" borderRadius="full" src={global.picture} alt={global.name} mr={2} />
+                        <Flex flexDirection="column">
+                            <Text fontWeight="bold">{global.name}</Text>
+                            <Text fontSize="10px">Explore circles</Text>
                         </Flex>
-                    </Flex>
-                )}
+                    </MenuItem>
 
-                {circles.map((circle) => (
-                    <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
-                        <CircleNameAndPicture circle={circle} size={30} hasPopover={false} />
-                        {/* <CirclePicture circle={circle} size={30} hasPopover={false} />
+                    {circles.length > 0 && (
+                        <Flex
+                            position="relative"
+                            flexDirection="row"
+                            paddingTop="14px"
+                            paddingBottom="14px"
+                            align="center"
+                        >
+                            <Divider />
+                            <Flex position="absolute" left="0" top="8px" bg="white" px="4" align="center">
+                                <Text fontSize="10px" fontWeight="bold">
+                                    MY CIRCLES
+                                </Text>
+                            </Flex>
+                        </Flex>
+                    )}
+
+                    {circles.map((circle) => (
+                        <MenuItem key={circle.id} onClick={() => handleSelect(circle)}>
+                            <CircleNameAndPicture circle={circle} size={30} hasPopover={false} />
+                            {/* <CirclePicture circle={circle} size={30} hasPopover={false} />
                         <Text paddingLeft="8px" fontWeight="bold">
                             {circle.name}
                         </Text> */}
-                    </MenuItem>
-                ))}
-            </MenuList>
+                        </MenuItem>
+                    ))}
+                </MenuList>
+            </Portal>
         </Menu>
     );
 };
@@ -360,67 +385,79 @@ export const CircleDashboard = ({ onClose }) => {
                         flexGrow="1"
                         height="calc(100% - 40px)" // Ensure this element takes the full height
                     >
-                        <Flex flexDirection="row" height="50px" backgroundColor="white" align="center">
-                            {visibleTabs.map((tab) => (
-                                <Flex
-                                    borderWidth="0px 0px 2px 0px"
-                                    borderBottomColor={isTabSelected(tab) ? "#ff2a10" : "white"}
-                                    height="50px"
-                                    // #ff8b68
-                                    cursor="pointer"
-                                    flexDirection="column"
-                                    align="center"
-                                    minWidth={circleDashboardExpanded ? "70px" : "none"}
-                                    flex={circleDashboardExpanded ? 0 : 1}
-                                    onClick={() => onTabClick(tab)}
-                                >
-                                    <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
-                                        <tab.icon />
-                                        <Text userSelect="none" fontSize="12px">
-                                            {tab.name}
-                                        </Text>
+                        {circle?.id !== "global" && (
+                            <Flex flexDirection="row" height="50px" backgroundColor="white" align="center">
+                                {visibleTabs.map((tab) => (
+                                    <Flex
+                                        borderWidth="0px 0px 2px 0px"
+                                        borderBottomColor={isTabSelected(tab) ? "#ff2a10" : "white"}
+                                        height="50px"
+                                        // #ff8b68
+                                        cursor="pointer"
+                                        flexDirection="column"
+                                        align="center"
+                                        minWidth={circleDashboardExpanded ? "70px" : "none"}
+                                        flex={circleDashboardExpanded ? 0 : 1}
+                                        onClick={() => onTabClick(tab)}
+                                    >
+                                        <Flex
+                                            flexDirection="column"
+                                            align="center"
+                                            marginTop="auto"
+                                            marginBottom="auto"
+                                        >
+                                            <tab.icon />
+                                            <Text userSelect="none" fontSize="12px">
+                                                {tab.name}
+                                            </Text>
+                                        </Flex>
                                     </Flex>
-                                </Flex>
-                            ))}
+                                ))}
 
-                            {!circleDashboardExpanded && (
-                                <Flex
-                                    borderWidth="0px 0px 2px 0px"
-                                    borderBottomColor={dropdownTabs.includes(selectedTab) ? "#ff2a10" : "white"}
-                                    height="50px"
-                                    cursor="pointer"
-                                    flexDirection="column"
-                                    align="center"
-                                    minWidth={circleDashboardExpanded ? "70px" : "none"}
-                                    flex={circleDashboardExpanded ? 0 : 1}
-                                    onClick={() => setShowDropdown(!showDropdown)}
-                                >
-                                    <Flex flexDirection="column" align="center" marginTop="auto" marginBottom="auto">
-                                        {dropdownTabs.includes(selectedTab) ? (
-                                            <>
-                                                <selectedTab.icon />
-                                                <Flex flexDirection="row" align="center">
-                                                    <Text userSelect="none" fontSize="12px">
-                                                        {selectedTab.name}
-                                                    </Text>
-                                                    <FiChevronDown size="10px" />
-                                                </Flex>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <GrAppsRounded />
-                                                <Flex flexDirection="row" align="center">
-                                                    <Text userSelect="none" fontSize="12px">
-                                                        More
-                                                    </Text>
-                                                    <FiChevronDown size="10px" />
-                                                </Flex>
-                                            </>
-                                        )}
+                                {!circleDashboardExpanded && circle?.id !== "global" && (
+                                    <Flex
+                                        borderWidth="0px 0px 2px 0px"
+                                        borderBottomColor={dropdownTabs.includes(selectedTab) ? "#ff2a10" : "white"}
+                                        height="50px"
+                                        cursor="pointer"
+                                        flexDirection="column"
+                                        align="center"
+                                        minWidth={circleDashboardExpanded ? "70px" : "none"}
+                                        flex={circleDashboardExpanded ? 0 : 1}
+                                        onClick={() => setShowDropdown(!showDropdown)}
+                                    >
+                                        <Flex
+                                            flexDirection="column"
+                                            align="center"
+                                            marginTop="auto"
+                                            marginBottom="auto"
+                                        >
+                                            {dropdownTabs.includes(selectedTab) ? (
+                                                <>
+                                                    <selectedTab.icon />
+                                                    <Flex flexDirection="row" align="center">
+                                                        <Text userSelect="none" fontSize="12px">
+                                                            {selectedTab.name}
+                                                        </Text>
+                                                        <FiChevronDown size="10px" />
+                                                    </Flex>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <GrAppsRounded />
+                                                    <Flex flexDirection="row" align="center">
+                                                        <Text userSelect="none" fontSize="12px">
+                                                            More
+                                                        </Text>
+                                                        <FiChevronDown size="10px" />
+                                                    </Flex>
+                                                </>
+                                            )}
+                                        </Flex>
                                     </Flex>
-                                </Flex>
-                            )}
-                        </Flex>
+                                )}
+                            </Flex>
+                        )}
 
                         {showDropdown && (
                             <Box
