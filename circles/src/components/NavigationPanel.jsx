@@ -9,6 +9,7 @@ import { CircleListItem } from "@/components/CircleListItem";
 import { openCircle, focusCircle } from "@/components/Navigation";
 import { globalCircle } from "@/components/Circle";
 import Scrollbars from "react-custom-scrollbars-2";
+import { disableMapAutoFocusAtom } from "./Atoms";
 
 const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     const iconSize = 16;
@@ -19,6 +20,7 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     const navigate = useNavigateNoUpdates();
     const view = "compact";
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     useEffect(() => {
         if (!userData?.circle_settings) return;
@@ -34,6 +36,7 @@ const NavigationPanel = ({ isPinned, setIsPinned, onClose }) => {
     }, [userData?.circle_settings]);
 
     const onCircleClick = (item) => {
+        setDisableMapAutoFocus(false);
         openCircle(navigate, item);
         // focusCircle(item, setFocusOnMapItem);
         if (!isPinned) {

@@ -28,6 +28,7 @@ import {
 import { defaultUserPicture } from "@/components/Constants";
 import { userSignOut } from "@/components/AccountManager";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const ProfileMenu = () => {
@@ -44,6 +45,7 @@ export const ProfileMenu = () => {
     const displayProfile = signInStatus.signedIn || (signInStatus.signingIn && user?.picture);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const onSignOutClick = () => {
         profileMenuOnClose();
@@ -96,6 +98,7 @@ export const ProfileMenu = () => {
                             src={getImageKitUrl(user?.picture ?? defaultUserPicture, 128, 128)}
                             onClick={() => {
                                 profileMenuOnClose();
+                                setDisableMapAutoFocus(false);
                                 openCircle(navigate, user);
                                 // focusCircle(user, setFocusOnMapItem);
                                 setToggleWidgetEvent({ name: "about", value: true });
@@ -107,6 +110,7 @@ export const ProfileMenu = () => {
                         cursor="pointer"
                         onClick={() => {
                             profileMenuOnClose();
+                            setDisableMapAutoFocus(false);
                             openCircle(navigate, user);
                             // focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
@@ -118,6 +122,7 @@ export const ProfileMenu = () => {
                     <MenuDivider />
                     <MenuItem
                         onClick={() => {
+                            setDisableMapAutoFocus(false);
                             openCircle(navigate, user);
                             // focusCircle(user, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "about", value: true });
@@ -127,6 +132,7 @@ export const ProfileMenu = () => {
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
+                            setDisableMapAutoFocus(false);
                             openCircle(navigate, user);
                             // focusCircle(user, setFocusOnMapItem);
                             log("toggling settings to true", 0, true);

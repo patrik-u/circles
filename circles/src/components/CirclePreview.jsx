@@ -40,6 +40,7 @@ import { useNavigateNoUpdates } from "./RouterUtils";
 import Lottie from "react-lottie";
 import talkdotsAnimation from "@/assets/lottie/talkdots.json";
 import axios from "axios";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const ActiveInCircle = ({ circle, location, ...props }) => {
@@ -48,6 +49,7 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [, setToggleWidgetEvent] = useAtom(toggleWidgetEventAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     if (!circle?.activity?.active_in_circle) {
         return null;
@@ -141,8 +143,8 @@ export const ActiveInCircle = ({ circle, location, ...props }) => {
                         color="white"
                         onClick={() => {
                             console.log("opening circle");
+                            setDisableMapAutoFocus(false);
                             openCircle(navigate, circle.activity.active_in_circle);
-                            // focusCircle(circle.activity.active_in_circle, setFocusOnMapItem);
                             setToggleWidgetEvent({ name: "video", value: true });
                         }}
                         align="center"

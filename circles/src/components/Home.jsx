@@ -15,6 +15,7 @@ import {
     focusOnMapItemAtom,
 } from "@/components/Atoms";
 import CircleSearchBox from "@/components/CircleSearch";
+import { disableMapAutoFocusAtom } from "./Atoms";
 // #endregion
 
 export const Home = () => {
@@ -26,6 +27,7 @@ export const Home = () => {
     const navigate = useNavigateNoUpdates();
     const [searchResultsShown] = useAtom(searchResultsShownAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const getFavoriteCircles = (userData) => {
         if (!userData) return [];
@@ -94,6 +96,7 @@ export const Home = () => {
                                             fontSize="12px"
                                             marginTop="5px"
                                             onClick={() => {
+                                                setDisableMapAutoFocus(false);
                                                 openCircle(navigate, item);
                                                 // focusCircle(item, setFocusOnMapItem);
                                             }}

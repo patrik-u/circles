@@ -91,6 +91,7 @@ import CircleExtrasAndMain from "./CircleExtrasAndMain";
 import { CircleNameAndPicture } from "./CircleElements";
 import CircleProject from "./CircleProject";
 import CirclePost from "./CirclePost";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 const CircleSelector = () => {
@@ -99,6 +100,7 @@ const CircleSelector = () => {
     const [favoriteCircles, setFavoriteCircles] = useState([]);
     const [circle] = useAtom(circleAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
     let global = { id: "global", name: "Explore", picture: "/explore3.png" };
     const circles = useMemo(() => {
         let newCircles = [];
@@ -149,6 +151,7 @@ const CircleSelector = () => {
 
     const handleSelect = (circle) => {
         setSelectedCircle(circle);
+        setDisableMapAutoFocus(false);
         openCircle(navigate, circle);
         // focusCircle(circle, setFocusOnMapItem);
     };
@@ -268,6 +271,7 @@ export const CircleDashboard = ({ onClose }) => {
     const { hostId, circleId } = useParams();
     const dropdownRef = useRef(null);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const pathSegments = location.pathname.split("/");
     const currentTabPath = pathSegments[3]; // assuming the structure is always /{hostId}/{circleId}/{tabPath}/... the relevant segment for tab should be the third one (index 2)
@@ -309,6 +313,7 @@ export const CircleDashboard = ({ onClose }) => {
 
     const onTabClick = (tab) => {
         const path = tab?.id ?? "";
+        setDisableMapAutoFocus(false);
         navigate(`/${hostId}/${circleId}/${path}`);
     };
 

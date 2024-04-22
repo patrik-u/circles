@@ -95,7 +95,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { FiEdit } from "react-icons/fi";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { circleAtom } from "./Atoms";
+import { circleAtom, disableMapAutoFocusAtom } from "./Atoms";
 import { useNavigateNoUpdates } from "@/components/RouterUtils";
 import Scrollbars from "react-custom-scrollbars-2";
 import { IoMdSend } from "react-icons/io";
@@ -1216,6 +1216,7 @@ export const CircleListItem = ({
     const [showChat, setShowChat] = useState(false);
     const [formattedContent, setFormattedContent] = useState(item?.content);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     useEffect(() => {
         log("CircleListItem.useEffect 1", -1);

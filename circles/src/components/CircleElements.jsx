@@ -98,6 +98,7 @@ import { IoInformationCircle } from "react-icons/io5";
 import ReactMarkdown from "react-markdown";
 import gfm from "remark-gfm";
 import ResizeTextarea from "react-textarea-autosize";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const buttonHighlight = "#bdbdbddd";
@@ -332,6 +333,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
     const iconSize = 20;
     const iconSizePx = iconSize + "px";
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const onOpenChat = () => {
         // init set circle
@@ -340,6 +342,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
         });
 
         let relationSet = getRelationSet(user, circle);
+        setDisableMapAutoFocus(false);
         openCircle(navigate, relationSet);
         // focusCircle(relationSet, setFocusOnMapItem);
         setPreviewCircle(null);
@@ -372,6 +375,7 @@ export const MessageButton = ({ circle, inPreview, ...props }) => {
 
 export const LocationButton = ({ circle, inPreview, ...props }) => {
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
     const [userLocation] = useAtom(userLocationAtom);
     const [user] = useAtom(userAtom);
     const [, setToggleAbout] = useAtom(toggleAboutAtom);
@@ -1683,6 +1687,7 @@ export const OpenButton = ({ circle, ...props }) => {
     const navigate = useNavigateNoUpdates();
     const height = "28px";
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     return (
         <Tooltip label={"Enter into circle"} aria-label="A tooltip">
@@ -1694,6 +1699,7 @@ export const OpenButton = ({ circle, ...props }) => {
                 color="white"
                 onClick={(event) => {
                     event.stopPropagation();
+                    setDisableMapAutoFocus(false);
                     openCircle(navigate, circle);
                     // focusCircle(circle, setFocusOnMapItem);
                 }}

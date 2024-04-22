@@ -35,6 +35,7 @@ import { ActiveInCircle, RelationSetInfo } from "@/components/CirclePreview";
 import ReactMarkdown from "react-markdown";
 import { AboutButton, CircleLink } from "@/components/CircleElements";
 import { ScrollbarsIf } from "./CircleElements";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 const CircleAbout = ({ onClose, noScrollbars }) => {
@@ -49,6 +50,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
     const location = useLocationNoUpdates();
     const navigate = useNavigateNoUpdates();
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
     const [circlesFilter, setCirclesFilter] = useAtom(circlesFilterAtom);
 
     const CircleQuestion = ({ question }) => {
@@ -128,6 +130,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                     cursor="pointer"
                                     onClick={() => {
                                         openCircle(navigate, circle.parent_circle);
+                                        setDisableMapAutoFocus(false);
                                         // focusCircle(circle.parent_circle, setFocusOnMapItem);
                                         setToggleWidgetEvent({ name: "about", value: true });
                                     }}

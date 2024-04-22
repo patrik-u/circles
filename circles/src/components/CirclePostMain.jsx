@@ -75,16 +75,7 @@ const CirclePostMain = ({ post }) => {
 
             <Flex flexGrow="1" flexDirection={"column"}>
                 <ScrollbarsIf noScrollbars={noScrollbars}>
-                    <CircleListItem
-                        item={post}
-                        // onClick={() => {
-                        //     openCircle(navigate, item);
-                        //     focusCircle(item, setFocusOnMapItem);
-                        // }}
-                        asCard={asCards}
-                        isCompact={useCompactList}
-                        isPreview={false}
-                    />
+                    <CircleListItem item={post} asCard={asCards} isCompact={useCompactList} isPreview={false} />
                 </ScrollbarsIf>
             </Flex>
         </Flex>

@@ -30,6 +30,7 @@ import config from "@/Config";
 import { useLocationNoUpdates } from "./RouterUtils";
 import { tabs } from "./CircleDashboard";
 import { useParams } from "react-router-dom";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
@@ -37,6 +38,8 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
     const [focusOnMapItem, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const mapboxToken = config.mapBoxToken;
     const [isMobile] = useAtom(isMobileAtom);
+    const [disableMapAutoFocus, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
+
     // const defaultViewport = {
     //     width: "100%",
     //     height: "100%",
@@ -146,6 +149,8 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
     useEffect(() => {
         const mapInstance = mapRef?.current?.getMap();
         if (!mapInstance || !circle) return;
+        if (disableMapAutoFocus) return;
+
         let bounds = getMapBoundsForCircles();
 
         // calculate bound based on filtered circles
@@ -263,7 +268,13 @@ export const CircleMap = ({ width, height, onMapClick, children }, ref) => {
                 width="100%"
                 height="100%"
                 mapStyle={getMapStyle()}
-                onMove={(evt) => updateViewport(evt.viewState)}
+                onDragStart={(evt) => {
+                    log("onDrag", 0, true);
+                    setDisableMapAutoFocus(true);
+                }}
+                onMove={(evt) => {
+                    updateViewport(evt.viewState);
+                }}
                 mapboxAccessToken={mapboxToken}
                 onLoad={initializeMap}
                 onClick={mapClick}

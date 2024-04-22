@@ -16,6 +16,7 @@ import { CircleOffersAndNeedsForm } from "@/components/settings/CircleOffersAndN
 import { CircleBasePopupForm } from "@/components/settings/CircleBasePopupForm";
 import { CircleTypeForm } from "@/components/settings/CircleTypeForm";
 import { CirclePostForm } from "@/components/settings/CirclePostForm";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, toggleMapInteract, isUpdateForm }) => {
@@ -69,6 +70,7 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
     const steps = getStepsForType(type);
     const [activeStep, setActiveStep] = useState(steps[0]);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const next = () => {
         let nextIndex = steps.indexOf(activeStep) + 1;
@@ -76,6 +78,7 @@ export const NewCircleGuide = ({ onClose, type, circle, parent_circle, message, 
             complete();
             onClose();
             if (createdCircle.type === "circle") {
+                setDisableMapAutoFocus(false);
                 openCircle(navigate, createdCircle);
                 // focusCircle(createdCircle, setFocusOnMapItem);
                 openAboutCircle(createdCircle, setToggleAbout);

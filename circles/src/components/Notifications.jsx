@@ -41,6 +41,7 @@ import { buttonHighlight } from "@/components/CircleElements";
 import { openSubcircle } from "./Navigation";
 import { MdChat } from "react-icons/md";
 import { singleLineEllipsisStyle } from "./Helpers";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const ConnectionNotification = ({
@@ -527,6 +528,7 @@ const Notifications = () => {
     const iconSize = isMobile ? 18 : 18;
     const iconSizePx = iconSize + "px";
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
     const notificationsBoxRef = useRef(null);
 
     useOutsideClick({
@@ -599,6 +601,7 @@ const Notifications = () => {
                         isMention={notification.is_mention}
                         onClick={() => {
                             notificationsOnClose();
+                            setDisableMapAutoFocus(false);
                             openSubcircle(navigate, notification.circle?.parent_circle, notification.circle);
                             // focusCircle(notification.circle?.parent_circle, setFocusOnMapItem);
                         }}
@@ -616,6 +619,7 @@ const Notifications = () => {
                         requestUpdatedAt={notification.request_updated_at}
                         onClick={() => {
                             notificationsOnClose();
+                            setDisableMapAutoFocus(false);
                             openCircle(navigate, notification.source);
                             // focusCircle(notification.source, setFocusOnMapItem);
                         }}

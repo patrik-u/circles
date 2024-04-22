@@ -21,6 +21,7 @@ import { CircleSearchBoxIcon } from "@/components/CircleSearch";
 import { CirclePicture, SettingsButton, AboutButton } from "@/components/CircleElements";
 import { Routes, Route } from "react-router-dom";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 const NavigationButtons = ({ direction, ...props }) => {
@@ -29,12 +30,14 @@ const NavigationButtons = ({ direction, ...props }) => {
     const forwardCircle = useMemo(() => circleHistory?.history?.[circleHistory.position + 1], [circleHistory]);
     const backCircle = useMemo(() => circleHistory?.history?.[circleHistory.position - 1], [circleHistory]);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
 
     const navigateBack = () => {
         if (circleHistory.position > 0) {
             const newPosition = circleHistory.position - 1;
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
+            setDisableMapAutoFocus(false);
             openCircle(navigate, circle);
             // focusCircle(circle, setFocusOnMapItem);
         }
@@ -45,6 +48,7 @@ const NavigationButtons = ({ direction, ...props }) => {
             const newPosition = circleHistory.position + 1;
             const circle = circleHistory.history[newPosition];
             setCircleHistory({ ...circleHistory, position: newPosition });
+            setDisableMapAutoFocus(false);
             openCircle(navigate, circle);
             // focusCircle(circle, setFocusOnMapItem);
         }

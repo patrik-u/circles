@@ -73,6 +73,7 @@ import { CircleDashboard, tabs } from "@/components/CircleDashboard";
 import { CircleChatWidget } from "@/components/CircleChat";
 import { UserDashboard } from "@/components/UserDashboard";
 import { CircleSearcher } from "@/components/CircleSearch";
+import { disableMapAutoFocusAtom } from "./Atoms";
 //#endregion
 
 export const globalCircle = {
@@ -125,6 +126,7 @@ export const Circle = ({ isGlobal }) => {
     const [inVideoConference] = useAtom(inVideoConferenceAtom);
     const [circleHistory, setCircleHistory] = useAtom(circleHistoryAtom);
     const [initialFocusDone, setInitialFocusDone] = useState(false);
+    const [, setDisableMapAutoFocus] = useAtom(disableMapAutoFocusAtom);
     const [, setFocusOnMapItem] = useAtom(focusOnMapItemAtom);
     const location = useLocationNoUpdates();
 
@@ -393,6 +395,7 @@ export const Circle = ({ isGlobal }) => {
 
     const onTabClick = (tab) => {
         const path = tab?.id ?? "";
+        setDisableMapAutoFocus(false);
         navigate(`/${hostId}/${circleId}/${path}`);
     };
 
