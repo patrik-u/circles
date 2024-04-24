@@ -1,6 +1,6 @@
 import i18n from "@/i18n/Localization";
 
-export const altBg = true;
+export const altBg = false;
 export const expBgColor = altBg ? "#000000b5" : "#ededed";
 
 export const defaultContentWidth = "435px";

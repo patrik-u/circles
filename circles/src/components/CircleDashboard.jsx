@@ -342,6 +342,8 @@ export const CircleDashboard = ({ onClose }) => {
         navigate(`/${hostId}/${circleId}/${path}`);
     };
 
+    const altLayout = true;
+
     return (
         <>
             <Box
@@ -379,7 +381,15 @@ export const CircleDashboard = ({ onClose }) => {
                         <TopMenu />
                     </Flex>
 
-                    <CircleCover circle={circle} maxHeight="275px" />
+                    <Flex backgroundColor="white" maxHeight="275px" flexDirection="column">
+                        <Flex
+                            margin={altLayout ? "5px" : "0px"}
+                            borderRadius={altLayout ? "10px" : "0px"}
+                            overflow="hidden"
+                        >
+                            <CircleCover circle={circle} />
+                        </Flex>
+                    </Flex>
 
                     <Box
                         display="flex"
