@@ -55,12 +55,12 @@ const CircleExtrasAndMain = ({ onClose, extras, main, switchWhenExpanded, hideEx
     return (
         <Flex flexGrow="1" width="100%" height="100%" flexDirection={circleDashboardExpanded ? "row" : "column"}>
             <ScrollbarsIf noScrollbars={circleDashboardExpanded}>
-                <BoxIf noBox={!circleDashboardExpanded} order="1" width="375px">
+                <BoxIf noBox={!circleDashboardExpanded} order="0" width="375px">
                     {switchWhenExpanded && circleDashboardExpanded ? getExtras() : main}
                 </BoxIf>
                 <BoxIf
                     noBox={!circleDashboardExpanded}
-                    order="0"
+                    order="1"
                     flexGrow="1"
                     align="center"
                     backgroundColor={expBgColor}
