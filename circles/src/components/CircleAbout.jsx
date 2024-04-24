@@ -100,12 +100,12 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                         />
                     )}
                     <ScrollbarsIf noScrollbars={noScrollbars}>
-                        <CircleCover
+                        {/* <CircleCover
                             circle={circle}
                             coverHeight={184}
                             coverWidth={isMobile ? null : 375}
                             borderRadius={noPaddingStyle ? "0px" : "7px"}
-                        />
+                        /> */}
 
                         {circle?.parent_circle && (
                             <Flex
@@ -142,7 +142,7 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                         )}
 
                         {/* <Flex flexDirection="row" marginLeft="20px" onClick={onLogoClick} alignItems="center" pointerEvents="auto" cursor="pointer"> */}
-                        <Flex
+                        {/* <Flex
                             height="54px"
                             width="100%"
                             flexDirection="row"
@@ -181,12 +181,11 @@ const CircleAbout = ({ onClose, noScrollbars }) => {
                                     parentCircleSizeRatio={3.75}
                                     parentCircleOffset={3}
                                     disableClick={true}
-                                    // circleBorderColors={["#ffffff"]}
                                 />
                             </Box>
                             <Box flexGrow="1" />
                             <QuickLinks circle={circle} />
-                        </Flex>
+                        </Flex> */}
 
                         {/* </Flex> */}
 

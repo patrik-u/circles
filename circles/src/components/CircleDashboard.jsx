@@ -379,6 +379,8 @@ export const CircleDashboard = ({ onClose }) => {
                         <TopMenu />
                     </Flex>
 
+                    <CircleCover circle={circle} maxHeight="275px" />
+
                     <Box
                         display="flex"
                         flexDirection="column"
