@@ -40,6 +40,7 @@ import Circles from "@/components/Circles";
 import { useParams } from "react-router-dom";
 import { BoxIf, ScrollbarsIf } from "./CircleElements";
 import { altBg, expBgColor } from "./Constants";
+import { NavigationTabs } from "./CircleDashboard";
 //#endregion
 
 const CircleExtrasAndMain = ({ onClose, extras, main, switchWhenExpanded, hideExtrasWhenCompact }) => {
@@ -65,6 +66,7 @@ const CircleExtrasAndMain = ({ onClose, extras, main, switchWhenExpanded, hideEx
                     align="center"
                     backgroundColor={expBgColor}
                 >
+                    {circleDashboardExpanded && <NavigationTabs />}
                     <ScrollbarsIf noScrollbars={!circleDashboardExpanded}>
                         {switchWhenExpanded && circleDashboardExpanded ? main : getExtras()}
                     </ScrollbarsIf>
